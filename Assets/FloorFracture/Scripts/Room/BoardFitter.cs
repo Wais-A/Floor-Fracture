@@ -123,7 +123,7 @@ namespace FloorFracture
             foreach (float existing in angles)
             {
                 float difference = Mathf.Abs(existing - angle);
-                if (Mathf.Min(difference, 90f - difference) < 0.01f) return;
+                if (Mathf.Min(difference, 90f - difference) < 0.00005f) return;
             }
             angles.Add(angle);
         }
@@ -149,8 +149,12 @@ namespace FloorFracture
 
         private readonly struct Segment
         {
-            public readonly Vector2 A, B;
-            public Segment(Vector2 a, Vector2 b) { A = a; B = b; }
+            public readonly Vector2 A, B, Min, Max;
+            public Segment(Vector2 a, Vector2 b)
+            {
+                A = a; B = b;
+                Min = Vector2.Min(a, b); Max = Vector2.Max(a, b);
+            }
         }
 
         private sealed class Frame
@@ -235,6 +239,7 @@ namespace FloorFracture
                     center = candidate;
                     return true;
                 }
+                contacts.Sort((a, b) => a.Min.x.CompareTo(b.Min.x));
                 for (int i = 0; i < contacts.Count; i++)
                 {
                     cancellation.ThrowIfCancellationRequested();
@@ -242,6 +247,8 @@ namespace FloorFracture
                     for (int j = i + 1; j < contacts.Count; j++)
                     {
                         var b = contacts[j];
+                        if (b.Min.x > a.Max.x + e) break;
+                        if (b.Max.y < a.Min.y - e || b.Min.y > a.Max.y + e) continue;
                         if (!FloorGeometry.Intersection(a.A, a.B, b.A, b.B, out var candidate) ||
                             !Admits(candidate, half)) continue;
                         center = candidate;

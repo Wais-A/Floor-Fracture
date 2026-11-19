@@ -53,10 +53,10 @@ namespace FloorFracture.Tests
             Assert.That(BoardFitter.Fits(Floor(boundary, Rectangle(0.9f,0.1f,1f,0.2f)), MinimumBoard()), Is.True);
         }
 
-        [Test]
-        public void RotatedExactWidthFloorPreservesPoseAndMetricPitch()
+        [TestCase(23.68f)]
+        [TestCase(0.005f)]
+        public void RotatedExactWidthFloorPreservesPoseAndMetricPitch(float angle)
         {
-            const float angle = 23.68f;
             var actual = new BoardPlacement(P(3.1f,-2.7f), 0.12f, angle, 4, 2);
             var floor = new RoomFloor(actual.ClearanceOutline(), new List<Vector2[]>(), 0.12f);
             Assert.That(BoardFitter.TryFind(new[] { floor }, P(0,0), out var found), Is.True);

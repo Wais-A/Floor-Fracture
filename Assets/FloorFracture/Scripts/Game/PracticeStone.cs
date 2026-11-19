@@ -51,11 +51,14 @@ namespace FloorFracture
         {
             // Disabling an interactable releases any old selection before respawning it.
             stone.gameObject.SetActive(false); held=thrown=passed=false; stone.useGravity=false;
-            stone.isKinematic=false; stone.linearVelocity=Vector3.zero; stone.angularVelocity=Vector3.zero;
+            stone.isKinematic=false;
             Vector3 forward=Vector3.ProjectOnPlane(input.Head.forward,Vector3.up).normalized;
             if(forward.sqrMagnitude<.5f) forward=surface.forward;
-            stone.position=input.Head.position+forward*.34f+Vector3.down*.27f;
+            Vector3 spawn=input.Head.position+forward*.34f+Vector3.down*.27f;
+            stone.transform.position=spawn;
             stone.gameObject.SetActive(true);
+            stone.position=spawn;
+            stone.linearVelocity=Vector3.zero; stone.angularVelocity=Vector3.zero;
 #if UNITY_EDITOR
             Array.Clear(simulatedSelection,0,simulatedSelection.Length);
 #endif

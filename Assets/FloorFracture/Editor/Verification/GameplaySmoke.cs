@@ -174,11 +174,13 @@ namespace FloorFracture.Editor
                 stoneBlock.InstallationRoutineCheckpoint?.InstallationRoutineId == "f8338144-8280-4ff6-9455-ae2bb9c20fe8",
                 "The practice stone did not retain its Grab Interaction block installation.");
             yield return DropStone(tutorial, false);
+            yield return Frames(3);
             Vector3 forward = Vector3.ProjectOnPlane(game.Panel.Head.forward, Vector3.up).normalized;
             Vector3 reachablePoint = game.Panel.Head.position + forward * 0.34f + Vector3.down * 0.27f;
             Require(game.Stage == GameStage.PracticeStone && tutorial.Body.gameObject.activeInHierarchy &&
                 !tutorial.Body.useGravity && Vector3.Distance(tutorial.Body.position, reachablePoint) < 0.04f,
-                "A miss failed to restore the stone within reach of the simulated player.");
+                $"Miss recovery expected {reachablePoint:F3}, observed {tutorial.Body.position:F3}, " +
+                $"gravity {tutorial.Body.useGravity}, active {tutorial.Body.gameObject.activeInHierarchy}, stage {game.Stage}.");
             yield return DropStone(tutorial, true);
             yield return Stage(GameStage.PracticeStep);
             Record("The left grip picked up and released a real Rigidbody. A miss reset it and a hit advanced the tutorial.");
