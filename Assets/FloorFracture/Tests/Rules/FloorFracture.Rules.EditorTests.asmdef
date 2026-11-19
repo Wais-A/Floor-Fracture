@@ -1,0 +1,7 @@
+{
+    "name": "FloorFracture.Rules.EditorTests",
+    "rootNamespace": "FloorFracture.Tests",
+    "references": ["FloorFracture.Rules"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"]
+}

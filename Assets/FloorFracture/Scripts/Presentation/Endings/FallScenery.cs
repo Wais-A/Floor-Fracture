@@ -1,0 +1,251 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Rendering;
+
+/// <summary>World-anchored presentation geometry and a separate, stereo view fade.</summary>
+internal sealed class FallScenery
+{
+    static readonly int Tint = Shader.PropertyToID("_Tint"), Role = Shader.PropertyToID("_Role"),
+        Theme = Shader.PropertyToID("_Theme"), Age = Shader.PropertyToID("_Age"),
+        Reveal = Shader.PropertyToID("_Reveal"), Level = Shader.PropertyToID("_Level"),
+        Motion = Shader.PropertyToID("_Motion"), Opacity = Shader.PropertyToID("_Opacity");
+    static readonly Color[] wallTints = {
+        new Color(.19f,.28f,.30f), new Color(.25f,.15f,.12f), new Color(.18f,.17f,.25f),
+        new Color(.18f,.19f,.26f), new Color(.44f,.31f,.19f), new Color(.26f,.40f,.53f)
+    };
+    static readonly Color[] skyTints = {
+        new Color(.018f,.049f,.060f), new Color(.040f,.019f,.014f), new Color(.027f,.019f,.048f),
+        new Color(.009f,.012f,.030f), new Color(.061f,.039f,.021f), new Color(.16f,.25f,.36f)
+    };
+
+    readonly Transform world;
+    readonly Material surfaceMaterial, fadeMaterial;
+    readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
+    readonly MeshRenderer walls, background, floor, nativeWater, pillars, motes, opening;
+    MeshRenderer veil;
+    readonly List<Mesh> ownedMeshes = new List<Mesh>();
+    readonly Mesh[] moteMeshes = new Mesh[6];
+    readonly Mesh boxMesh, crystalMesh, flameMesh;
+    readonly GameObject splashPrefab, replacementFire;
+    GameObject splash;
+    FloorEnding kind;
+    Transform head;
+    float eyeHeight, startRadius, radius;
+
+    internal FallScenery(Material waterOverride, GameObject splashOverride, GameObject fireOverride)
+    {
+        world = new GameObject("Fall chamber").transform;
+        surfaceMaterial = new Material(Resources.Load<Shader>("Endings/Chamber"));
+        fadeMaterial = new Material(Resources.Load<Shader>("Endings/ViewFade"));
+        boxMesh = Own(FallMeshes.Box());
+        Mesh disk = Own(FallMeshes.Disk());
+        crystalMesh = Own(FallMeshes.Spires(false)); flameMesh = Own(FallMeshes.Spires(true));
+        walls = Part("Shaft walls", Own(FallMeshes.Shaft()), surfaceMaterial);
+        background = Part("Chamber darkness", boxMesh, surfaceMaterial);
+        floor = Part("Hazard surface", disk, surfaceMaterial);
+        var native = waterOverride ? waterOverride : Resources.Load<Material>("Endings/MetaFloorZone/materials/Water");
+        if (native && native.shader && native.shader.isSupported) nativeWater = Part("Floor Zone water ripples", disk, native);
+        pillars = Part("Flames or crystals", crystalMesh, surfaceMaterial);
+        motes = Part("Particles", null, surfaceMaterial);
+        opening = Part("Last light overhead", disk, surfaceMaterial);
+        veil = Part("View fade", boxMesh, fadeMaterial);
+        splashPrefab = splashOverride ? splashOverride : Resources.Load<GameObject>("Endings/MetaFloorZone/prefabs/Splash");
+        if (fireOverride)
+        {
+            replacementFire = Object.Instantiate(fireOverride, world);
+            replacementFire.SetActive(false);
+        }
+        background.transform.localScale = new Vector3(12,13,12);
+        Hide();
+    }
+
+    Mesh Own(Mesh mesh) { ownedMeshes.Add(mesh); return mesh; }
+
+    MeshRenderer Part(string name, Mesh mesh, Material material)
+    {
+        var obj = new GameObject(name);
+        obj.transform.SetParent(world, false);
+        obj.AddComponent<MeshFilter>().sharedMesh = mesh;
+        var renderer = obj.AddComponent<MeshRenderer>();
+        renderer.sharedMaterial = material;
+        renderer.shadowCastingMode = ShadowCastingMode.Off; renderer.receiveShadows = false;
+        renderer.lightProbeUsage = LightProbeUsage.Off; renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+        renderer.allowOcclusionWhenDynamic = false;
+        return renderer;
+    }
+
+    internal void Begin(Transform viewer, FloorEnding chosen, Vector3 center, float width, float yaw)
+    {
+        head = viewer; kind = chosen;
+        world.SetPositionAndRotation(center, Quaternion.Euler(0,yaw,0));
+        eyeHeight = Mathf.Max(.25f, viewer.position.y-center.y);
+        startRadius = Mathf.Max(.08f, width*.5f);
+        Vector3 offset = viewer.position-center; offset.y=0;
+        radius = Mathf.Max(1.65f, offset.magnitude + 1.2f);
+        pillars.GetComponent<MeshFilter>().sharedMesh = kind == FloorEnding.Lava ? flameMesh : crystalMesh;
+        if (kind != FloorEnding.Crystal)
+        {
+            if (!moteMeshes[(int)kind]) moteMeshes[(int)kind] = Own(FallMeshes.Motes(kind));
+            motes.GetComponent<MeshFilter>().sharedMesh = moteMeshes[(int)kind];
+        }
+        world.gameObject.SetActive(true);
+        if (!veil) veil = Part("View fade",boxMesh,fadeMaterial);
+        veil.transform.SetParent(head, false);
+        veil.transform.localPosition = Vector3.zero;
+        veil.transform.localRotation = Quaternion.identity;
+        veil.transform.localScale = Vector3.one * 1.5f;
+        SetVeil(Color.black, 0);
+    }
+
+    // Returns the submersion factor at the viewer's actual height.
+    internal float Draw(float age, float progress, bool reduced, float entrance)
+    {
+        bool visible = !reduced || age >= .32f;
+        float chamber = reduced ? 1 : Smooth(entrance);
+        float shaftRadius = Mathf.Lerp(startRadius,radius,chamber);
+        float top = Mathf.Lerp(0,eyeHeight+3.45f,chamber);
+        float surfaceY = -3.4f;
+        Color wallColor = wallTints[(int)kind], sky = skyTints[(int)kind];
+        float wallAlpha = 1, particleAlpha = Ease(.01f,.22f,progress);
+        float floorAlpha = 0, pillarsAlpha = 0, light = 0;
+        int floorRole = 0;
+        Color surfaceColor = Color.white;
+        float immersion = 0;
+        switch (kind)
+        {
+            case FloorEnding.Water:
+                surfaceY = reduced ? eyeHeight-1.12f : RisingWater(progress);
+                immersion = reduced ? Ease(.50f,.73f,progress) :
+                    Mathf.SmoothStep(0,1,Mathf.InverseLerp(-.09f,.14f,world.position.y+surfaceY-head.position.y));
+                floorAlpha = 1; floorRole = 2; surfaceColor = new Color(.035f,.20f,.22f);
+                particleAlpha *= immersion;
+                break;
+            case FloorEnding.Lava:
+                surfaceY = reduced ? eyeHeight-1.17f : Mathf.Lerp(-3.4f,eyeHeight-.67f,Ease(.10f,.81f,progress));
+                floorAlpha = Ease(.10f,.27f,progress); floorRole = 3;
+                pillarsAlpha = Ease(.32f,.57f,progress);
+                break;
+            case FloorEnding.Crystal:
+                surfaceY = -.37f; pillarsAlpha = Ease(.01f,.12f,progress);
+                break;
+            case FloorEnding.Space:
+                float retreat = Ease(.04f,.54f,progress);
+                if (!reduced) { top -= retreat*9f; shaftRadius += retreat*1.2f; }
+                wallAlpha = 1-retreat;
+                particleAlpha *= 1-Ease(.78f,.97f,progress);
+                break;
+            case FloorEnding.Sand:
+                surfaceY = reduced ? eyeHeight-1.2f : Mathf.Lerp(-2.5f,eyeHeight-.14f,Ease(.06f,.79f,progress));
+                float lastLight = Ease(.62f,.87f,progress);
+                wallColor = Color.Lerp(wallColor, Color.black, lastLight);
+                sky = Color.Lerp(sky,Color.black,lastLight);
+                surfaceColor = Color.Lerp(new Color(.72f,.49f,.24f), Color.black,lastLight);
+                particleAlpha *= 1-lastLight;
+                floorAlpha = Ease(.01f,.12f,progress); floorRole = 4;
+                light = Ease(.04f,.30f,progress)*(1-Ease(.84f,.99f,progress));
+                break;
+            case FloorEnding.Snow:
+                sky = Color.Lerp(sky,new Color(.53f,.66f,.77f),Ease(.06f,.64f,progress));
+                break;
+        }
+        float level = world.position.y + surfaceY;
+        float motion = reduced ? .10f : 1;
+        properties.Clear();
+        properties.SetFloat(Theme,(int)kind); properties.SetFloat(Age,age);
+        properties.SetFloat(Reveal,progress); properties.SetFloat(Level,level); properties.SetFloat(Motion,motion);
+        Paint(background,kind == FloorEnding.Space ? 8 : 0,sky,visible ? Ease(.10f,.93f,chamber) : 0);
+        walls.transform.localPosition = new Vector3(0,top,0);
+        walls.transform.localScale = new Vector3(shaftRadius,1,shaftRadius);
+        Paint(walls,1,wallColor,visible ? wallAlpha : 0);
+        float surfaceRadius = shaftRadius*1.46f;
+        floor.transform.localPosition = new Vector3(0,surfaceY,0);
+        floor.transform.localScale = new Vector3(surfaceRadius,1,surfaceRadius);
+        Paint(floor,floorRole,surfaceColor,visible ? floorAlpha : 0);
+        if (nativeWater)
+        {
+            nativeWater.enabled = visible && kind == FloorEnding.Water;
+            nativeWater.transform.localPosition = floor.transform.localPosition + Vector3.up*.009f;
+            nativeWater.transform.localScale = floor.transform.localScale;
+        }
+        pillars.transform.localPosition = Vector3.up*(kind == FloorEnding.Lava ? surfaceY-.11f : eyeHeight-1.65f);
+        Paint(pillars,kind == FloorEnding.Lava ? 7 : 5,Color.white, visible ? pillarsAlpha : 0);
+        if (replacementFire)
+        {
+            bool lit = visible && kind == FloorEnding.Lava && pillarsAlpha > .20f;
+            if (lit != replacementFire.activeSelf) replacementFire.SetActive(lit);
+            replacementFire.transform.localPosition = new Vector3(1.25f,surfaceY,0);
+        }
+        Paint(motes,6,Color.white,visible && kind != FloorEnding.Crystal ? particleAlpha : 0);
+        opening.transform.localPosition = new Vector3(0,eyeHeight+3.35f,0);
+        opening.transform.localScale = Vector3.one * Mathf.Lerp(1.05f,.28f,Ease(.4f,.88f,progress));
+        Paint(opening,0,new Color(1,.83f,.54f),visible ? light : 0);
+        return immersion;
+    }
+
+    void Paint(MeshRenderer renderer, int role, Color tint, float opacity)
+    {
+        renderer.enabled = opacity > .001f;
+        if (!renderer.enabled) return;
+        properties.SetFloat(Role,role); properties.SetColor(Tint,tint);
+        properties.SetFloat(Opacity,Mathf.Clamp01(opacity)); renderer.SetPropertyBlock(properties);
+    }
+
+    internal Vector3 SplashPosition()
+    {
+        Vector3 direction = Vector3.ProjectOnPlane(head.forward,Vector3.up);
+        if (direction.sqrMagnitude < .01f) direction = world.forward;
+        Vector3 center = head.position + direction.normalized*.72f;
+        center.y = floor.transform.position.y;
+        return center;
+    }
+
+    internal bool WaterAtEntryFloor => floor.transform.localPosition.y >= 0;
+
+    float RisingWater(float progress)
+    {
+        if (progress < .39f) return Mathf.Lerp(-3.4f,.02f,Ease(0,.39f,progress));
+        float belowEyes = Mathf.Max(.04f,eyeHeight-.42f);
+        if (progress < .58f) return Mathf.Lerp(.02f,belowEyes,Ease(.39f,.58f,progress));
+        return Mathf.Lerp(belowEyes,eyeHeight+.40f,Ease(.58f,.87f,progress));
+    }
+
+    internal void Splash(Vector3 point)
+    {
+        if (!splashPrefab) return;
+        if (!splash) splash = Object.Instantiate(splashPrefab,world);
+        splash.transform.SetPositionAndRotation(point,world.rotation*splashPrefab.transform.localRotation);
+        splash.SetActive(true);
+        var system = splash.GetComponent<ParticleSystem>();
+        if (system)
+        {
+            system.Stop(true,ParticleSystemStopBehavior.StopEmittingAndClear);
+            system.Play(true);
+        }
+    }
+
+    internal void SetVeil(Color color, float alpha)
+    {
+        color.a = Mathf.Clamp01(alpha);
+        veil.enabled = color.a > .001f;
+        if (!veil.enabled) return;
+        properties.Clear(); properties.SetColor(Tint,color); veil.SetPropertyBlock(properties);
+    }
+
+    internal void Hide()
+    {
+        if (veil) { veil.enabled = false; veil.transform.SetParent(world,false); }
+        if (splash) { splash.SetActive(false); }
+        if (replacementFire) replacementFire.SetActive(false);
+        world.gameObject.SetActive(false); head = null;
+    }
+
+    internal void Dispose()
+    {
+        Hide();
+        Object.Destroy(world.gameObject); Object.Destroy(surfaceMaterial); Object.Destroy(fadeMaterial);
+        foreach (Mesh owned in ownedMeshes) Object.Destroy(owned);
+    }
+
+    internal static float Ease(float from, float to, float value) => Smooth(Mathf.InverseLerp(from,to,value));
+    static float Smooth(float value) => Mathf.SmoothStep(0,1,value);
+}
