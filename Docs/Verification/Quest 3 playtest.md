@@ -13,6 +13,8 @@ Wais tested the first playable development APK in his room. Unity build `build_a
 
 ## Surrounding-floor review
 
+The signed water-floor development build launched on the Quest 3. The installed APK hash matched the tested file and the app recorded its Unity build GUID using Vulkan. On this build, the Quest recorded Welcome and the tutorial with 7 × 2 panes at 67 cm each, a glass footprint of 4.69 × 1.34 m. The runtime reported depth-image acquisition errors at startup and during later XR session activity. Use the chair check below to assess physical occlusion. [Water build record](<./Surrounding floor Quest build.json>) · [OpenXR depth image acquisition](https://registry.khronos.org/OpenXR/specs/1.1/man/html/xrAcquireEnvironmentDepthImageMETA.html)
+
 On the water-floor build, stand on the glass and look across the room toward a wall and behind a chair. Water should fill the scanned floor right up to its edges. After a neighboring pane falls, look into the shaft from a safe pane. Record any water across the shaft, water in front of real furniture, flicker, or uncovered patches. Wearer feedback is pending.
 
 ## Repeat on the revised build
