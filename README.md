@@ -55,6 +55,12 @@ In a separate run, 96 consecutive losses and restarts returned to one registered
 
 The physical Quest also rendered a controlled 64-pane run with 32 panes breaking together. Unity averaged 72.04 FPS across 740 gameplay frames. Individual frames exceeded the 13.9 ms target. All six endings reached Results in Full and Reduced on the headset. In the separate Mac simulator, both controller rays and both fingertip pokes operated the actual menus. [Quest performance measurements](<./Docs/Quest performance.md>) · [Native simulator inputs](<./Docs/Verification/Overnight simulator.json>)
 
+### Known issues and next playtests
+
+The wearer reported losing on safe glass and seeing the edge of furniture flicker against the brick while turning. The revised stance and depth rendering have passed Editor comparisons. The next real-room trial repeats an ordinary step at a seam, a head turn beside a chair and an off-center fall through the Water and Space chambers. Two first-time players will then try the tutorial, an advanced wave and Restart. [Wearer observations and retest steps](<./Docs/Verification/Quest 3 playtest.md>) · [Outside playtest sheet](<./Docs/Quest playtest.md>)
+
+Frame pacing is still uneven in some captures. A 22-pane shatter reached 65.36 ms on Quest. Two subsequent 32-pane runs peaked at 18.82 and 21.00 ms. The remaining performance test compares first and repeated shatters in the same worn room. [Quest measurements](<./Docs/Quest performance.md>)
+
 ## Views from the Unity playthrough
 
 | Just before the glass breaks | Looking back up during a fall |
