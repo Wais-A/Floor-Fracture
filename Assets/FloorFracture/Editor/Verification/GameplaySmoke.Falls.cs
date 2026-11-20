@@ -41,10 +41,10 @@ namespace FloorFracture.Editor
             MeshRenderer previewSurface = null;
             if (!skip && !reduced)
             {
-                StandOn(0);
-                game.BoardView.PracticeBreak(1);
+                StandOn(CornerPane);
+                game.BoardView.PracticeBreak(AdjacentPane(CornerPane));
                 yield return Delay(1.80);
-                LookAtTile(1,false);
+                LookAtTile(AdjacentPane(CornerPane),false);
                 var previewChamber = GameObject.Find("Fall chamber");
                 Require(previewChamber && !game.Ending.IsPlaying, "A safe pane did not reveal the shared chamber before loss.");
                 previewSurface = previewChamber.transform.Find("Hazard surface").GetComponent<MeshRenderer>();
@@ -110,8 +110,8 @@ namespace FloorFracture.Editor
             Require(game.Level == 1 && game.WaveNumber == 1 && game.State.WavesSurvived == 0 &&
                 game.State.ActiveWave == null && game.BoardView.gameObject.activeSelf, trial + " left an incomplete board reset.");
             for (int cell = 0; cell < game.State.Count; cell++)
-                Require(game.State.IsIntact(cell), trial + " left a broken pane at " + cell);
-            VerifyFloorVisibility(true);
+                Require(game.State.IsIntact(cell) == game.State.Layout.Contains(cell), trial + " left a broken pane at " + cell);
+            VerifyFloorVisibility(false);
             report.endingExits.Add(new EndingExitEvidence { ending = ending, reduced = reduced, skipped = skip, seconds = duration });
             Save();
         }
@@ -153,8 +153,8 @@ namespace FloorFracture.Editor
                 camera.backgroundColor=Color.magenta;
                 camera.nearClipPlane=.05f; camera.farClipPlane=180; camera.fieldOfView=50; camera.aspect=1;
                 camera.targetTexture=target;
-                var center = board.TransformPoint(GlassGeometry.Ground(game.State.Center(1)));
-                var standing = board.TransformPoint(GlassGeometry.Ground(game.State.Center(0)))+Vector3.up*1.55f;
+                var center = board.TransformPoint(GlassGeometry.Ground(game.State.Center(AdjacentPane(CornerPane))));
+                var standing = board.TransformPoint(GlassGeometry.Ground(game.State.Center(CornerPane)))+Vector3.up*1.55f;
                 Quaternion rotation = Quaternion.LookRotation(center-standing, Vector3.up);
                 foreach (float offset in new[] { -.032f, .032f })
                 {
@@ -222,19 +222,20 @@ namespace FloorFracture.Editor
             Choose("Seed 379 · level 1"); yield return Stage(GameStage.Ready);
 
             // A real deadline loss shatters the occupied tile before the rim shot.
-            StandAt(game.State.Center(0) + new Vector2(-.34f,.26f) * game.State.Pitch);
-            Vector3 bearing = Vector3.ProjectOnPlane(game.BoardView.Board.position - head.position, Vector3.up);
-            Vector3 eyePosition = head.position;
-            eyePosition.y = game.BoardView.Board.position.y + (reduced ? 1.6f : ending == "Lava" ? 2.2f : 1.5f);
-            SetHead(new Pose(eyePosition, Quaternion.LookRotation(bearing, Vector3.up) * Quaternion.Euler(32f, 0f, 0f)));
+            var stance = game.State.Center(CornerPane) + new Vector2(-.34f,.26f) * game.State.Pitch;
+            var board = game.BoardView.Board;
+            Vector3 bearing = board.TransformDirection(-GlassGeometry.Ground(stance));
+            SetStandingHead(stance, Quaternion.LookRotation(bearing, Vector3.up) * Quaternion.Euler(32f, 0f, 0f),
+                reduced ? 1.6f : ending == "Lava" ? 2.2f : 1.5f);
+            yield return Frames(2);
             Pose trackedAtStart = head;
             Pose rigAtStart = new Pose(game.Rig.transform.position, game.Rig.transform.rotation);
             var arena = new FallArenaWitness(trackedAtStart, reduced);
             // Exercise a connected opening at a board corner on the actual deadline-loss path.
-            if (!reduced) game.BoardView.PracticeBreak(1);
+            if (!reduced) game.BoardView.PracticeBreak(AdjacentPane(CornerPane));
             Choose("Start wave"); yield return Stage(GameStage.Countdown);
             yield return Stage(GameStage.Fall, 8);
-            Require(!game.State.IsIntact(0) && game.Ending.IsPlaying && game.Ending.LastEndingName == ending,
+            Require(!game.State.IsIntact(CornerPane) && game.Ending.IsPlaying && game.Ending.LastEndingName == ending,
                 "The chosen ending did not follow the real starting tile's deadline loss: " + ending);
 
             var witness = new FallWitness(ending, reduced, trackedAtStart, rigAtStart, arena);

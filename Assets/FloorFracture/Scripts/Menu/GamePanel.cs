@@ -145,16 +145,17 @@ namespace FloorFracture
             ShowPage(heading, message, options, false);
         }
 
-        public void ShowRoomRecovery(string message, Action checkAgain, Action openSpaceSetup)
+        public void ShowRoomRecovery(string message, Action checkAgain, Action openSpaceSetup, Action togglePlacement = null)
         {
-            var options = new[] { new MenuChoice("Check again", checkAgain), new MenuChoice("Space Setup", openSpaceSetup) };
-            ShowPage("Find a clear floor", message, options, true);
+            var options = new List<MenuChoice> { new MenuChoice("Check again", checkAgain), new MenuChoice("Space Setup", openSpaceSetup) };
+            if (togglePlacement != null) options.Add(new MenuChoice("Show / hide placement", togglePlacement));
+            ShowPage("Find a clear floor", message + "\nCheck again uses your saved scan. Space Setup opens the Quest scanner, where you can use a Touch controller.", options.ToArray(), true);
         }
 
         private void ShowPage(string heading, string message, MenuChoice[] options, bool isRoomRecovery)
         {
             bool position = !Visible;
-            bool updatingRecovery = isRoomRecovery && roomRecovery && Visible;
+            bool updatingRecovery = isRoomRecovery && roomRecovery && Visible && choices.Length == options.Length;
             roomRecovery = isRoomRecovery;
             choices = options ?? Array.Empty<MenuChoice>();
             if (updatingRecovery)

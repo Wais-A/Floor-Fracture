@@ -16,7 +16,7 @@ namespace FloorFracture.Editor
             var preview = canvas.Find("Title/Warning preview");
             Require(preview && preview.GetComponent<GlassTile>() && !preview.GetComponentInChildren<Collider>(),
                 "Settings should show a real glass sample that cannot intercept selections.");
-            var ordinary = game.BoardView.Board.Find("Glass 0, 0");
+            var ordinary = game.BoardView.Board.Find($"Glass {CornerPane % game.State.Width}, {CornerPane / game.State.Width}");
             var reference = game.BoardView.Board.Find("Sliding pane").GetComponent<GlassTile>();
             var intactRim = ordinary.Find("Rim").GetComponent<MeshFilter>().sharedMesh;
             var sliderRim = reference.transform.Find("Rim").GetComponent<MeshFilter>();
@@ -34,7 +34,7 @@ namespace FloorFracture.Editor
             sound.EditorMenuClick += HearClick;
             try
             {
-                var corner = game.State.Center(game.State.Count - 1);
+                var corner = game.State.Center(PlayablePanes.Last());
                 foreach (var stance in new[] { corner, corner + Vector2.one * (game.State.Pitch * 2) })
                 {
                     StandAt(stance);
@@ -136,7 +136,7 @@ namespace FloorFracture.Editor
                 yield return VerifyRecenterOnPage(display, canvas, GameStage.Settings, 135f);
                 Choose("Back");
                 Choose("Start");
-                StandOn(game.State.Count / 2);
+                StandOn(MiddlePane);
                 Choose("Start wave");
                 Require(game.Stage == GameStage.Countdown && !game.Panel.Visible, "The countdown should hide the menu.");
                 var hiddenPose = WorldPose(canvas);

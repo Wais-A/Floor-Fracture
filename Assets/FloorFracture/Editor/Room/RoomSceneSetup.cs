@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Meta.XR;
 using Meta.XR.BuildingBlocks;
 using Meta.XR.BuildingBlocks.Editor;
 using Meta.XR.EnvironmentDepth;
@@ -116,6 +117,7 @@ namespace FloorFracture.Editor
             Record(mruk);
             var placement = mruk.GetComponent<RoomBoardPlacement>();
             if (!placement) placement = Undo.AddComponent<RoomBoardPlacement>(mruk.gameObject);
+            ConfigureFloorRaycasts(placement, rig);
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(OutlineShader);
             if (!shader) throw new InvalidOperationException("Missing placement preview shader at " + OutlineShader);
             var data = new SerializedObject(placement);
@@ -178,8 +180,7 @@ namespace FloorFracture.Editor
             block.gameObject.SetActive(false);
             Record(block.gameObject);
 
-            // The Occlusion Dependencies prefab owns depth acquisition. A separate
-            // environment raycast example would introduce a second depth manager.
+            // The Occlusion Dependencies prefab owns depth acquisition for the whole scene.
             var providerBlock = MetaRoomBlocks.Ensure(scene, CoreBlocks + "Occlusion/OcclusionDependencyBlock.asset",
                 MetaRoomBlocks.DepthProviderId, 1)[0];
             var depth = providerBlock.GetComponent<EnvironmentDepthManager>();
@@ -190,6 +191,29 @@ namespace FloorFracture.Editor
             depth.OcclusionShadersMode = OcclusionShadersMode.SoftOcclusion;
             depth.RemoveHands = false;
             Record(depth);
+        }
+
+        public static void ConfigureFloorRaycasts(RoomBoardPlacement placement, OVRCameraRig rig)
+        {
+            var scene = placement.gameObject.scene;
+            const string definition = "Packages/com.meta.xr.mrutilitykit/Editor/BuildingBlocks/InstantContentPlacement/EnvironmentRaycastManager.asset";
+            var sharedDepth = Single<EnvironmentDepthManager>(scene);
+            if (!sharedDepth || sharedDepth.GetComponent<BuildingBlock>()?.BlockId != MetaRoomBlocks.DepthProviderId)
+                throw new InvalidOperationException("Floor raycasts require the installed Occlusion Dependencies block.");
+            var block = MetaRoomBlocks.Ensure(scene, definition, MetaRoomBlocks.EnvironmentRaycastId, 1)[0];
+            // The stock raycast prefab bundles its own depth provider. Share the scene's calibrated provider.
+            var bundledDepth = block.GetComponent<EnvironmentDepthManager>();
+            if (bundledDepth) Undo.DestroyObjectImmediate(bundledDepth);
+            var manager = block.GetComponent<EnvironmentRaycastManager>();
+            manager.CustomTrackingSpace = rig.trackingSpace;
+            block.gameObject.SetActive(false); // Activate only once the headset reports support.
+            Record(block.gameObject);
+            Record(manager);
+            var data = new SerializedObject(placement);
+            data.FindProperty("liveManager").objectReferenceValue = manager;
+            data.ApplyModifiedPropertiesWithoutUndo();
+            Record(placement);
+            EditorSceneManager.MarkSceneDirty(scene);
         }
 
         private static void ConfigureInteractions(OVRCameraRig rig, GameObject interaction)

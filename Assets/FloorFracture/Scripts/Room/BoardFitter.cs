@@ -7,8 +7,9 @@ namespace FloorFracture
 {
     public readonly struct BoardPlacement
     {
-        public readonly int Columns;
-        public readonly int Rows;
+        public readonly BoardLayout Layout;
+        public int Columns => Layout.Columns;
+        public int Rows => Layout.Rows;
         public readonly Vector2 Center;
         public readonly float FloorHeight;
         public readonly float AngleDegrees;
@@ -19,12 +20,14 @@ namespace FloorFracture
 
         public BoardPlacement(Vector2 center, float floorHeight, float angleDegrees, int columns, int rows,
             float pitch = BoardState.MinPitch)
+            : this(center, floorHeight, angleDegrees, BoardLayout.Rectangle(columns, rows), pitch) { }
+
+        internal BoardPlacement(Vector2 center, float floorHeight, float angleDegrees, BoardLayout layout, float pitch)
         {
             Center = center;
             FloorHeight = floorHeight;
             AngleDegrees = angleDegrees;
-            Columns = columns;
-            Rows = rows;
+            Layout = layout;
             Pitch = pitch;
         }
 
@@ -40,6 +43,19 @@ namespace FloorFracture
             float x = Columns * Pitch / 2f;
             float z = Rows * Pitch / 2f;
             return new[] { ToWorldXZ(-x, -z), ToWorldXZ(x, -z), ToWorldXZ(x, z), ToWorldXZ(-x, z) };
+        }
+
+        internal Vector2[] TileOutline(int column, int row, float margin)
+        {
+            float x = (column - Columns * .5f) * Pitch;
+            float z = (row - Rows * .5f) * Pitch;
+            return new[]
+            {
+                ToWorldXZ(x - margin, z - margin),
+                ToWorldXZ(x + Pitch + margin, z - margin),
+                ToWorldXZ(x + Pitch + margin, z + Pitch + margin),
+                ToWorldXZ(x - margin, z + Pitch + margin)
+            };
         }
     }
 
@@ -111,7 +127,8 @@ namespace FloorFracture
         // The room reader joins native contours on the main thread before dispatching this
         // managed rectangle search. Revalidation reads fresh contours through the same reader.
         internal static bool TryFindOnSurfaces(IReadOnlyList<RoomFloor> floors, Vector2 preferredCenter, out BoardPlacement placement,
-            CancellationToken cancellation = default, IReadOnlyList<Vector2> suggestedCenters = null)
+            CancellationToken cancellation = default, IReadOnlyList<Vector2> suggestedCenters = null,
+            float margin = 0, bool alignedSurveyRectangles = false)
         {
             placement = default;
             if (floors == null || !FloorGeometry.Finite(preferredCenter)) return false;
@@ -125,15 +142,18 @@ namespace FloorFracture
             {
                 cancellation.ThrowIfCancellationRequested();
                 if (!IsUsable(floor)) continue;
-                var angles = new List<float> { 0f };
+                var angles = new List<float>();
+                if (!alignedSurveyRectangles) angles.Add(0f);
                 AddEdgeDirections(floor.Boundary, angles);
-                foreach (var obstacle in floor.Obstacles) AddEdgeDirections(obstacle, angles);
-                // Furniture can make the best rectangle fall between scan-edge directions.
-                for (int angle = 1; angle < 90; ++angle) AddAngle(angle, angles);
+                if (!alignedSurveyRectangles)
+                {
+                    foreach (var obstacle in floor.Obstacles) AddEdgeDirections(obstacle, angles);
+                    for (int angle = 1; angle < 90; ++angle) AddAngle(angle, angles);
+                }
                 foreach (float angle in angles)
                 {
                     cancellation.ThrowIfCancellationRequested();
-                    var frame = new Frame(floor, angle);
+                    var frame = new Frame(floor, angle, margin);
                     frame.PrepareSearch(preferredCenter, suggestions);
                     // Every legal footprint contains this one. In a cluttered scan a
                     // single failed search removes this orientation for every shape.
@@ -206,15 +226,25 @@ namespace FloorFracture
             return bestOrder != int.MaxValue;
         }
 
-        public static bool Fits(RoomFloor floor, BoardPlacement placement)
+        public static bool Fits(RoomFloor floor, BoardPlacement placement, float margin = 0)
         {
             if (!IsUsable(floor) || !FloorGeometry.Finite(placement.Center) ||
                 !FloorGeometry.Finite(placement.AngleDegrees) || !FloorGeometry.Finite(placement.FloorHeight) ||
                 Mathf.Abs(floor.Height - placement.FloorHeight) > 0.025f ||
-                placement.Rows < BoardState.MinAxis || placement.Rows > BoardState.MaxRowsFor(placement.Columns) ||
-                !(placement.Pitch >= BoardState.MinPitch && placement.Pitch <= BoardState.MaxPitch)) return false;
+                !placement.Layout.IsPlayable ||
+                !(placement.Pitch >= BoardState.CompactMinPitch && placement.Pitch <= BoardState.MaxPitch)) return false;
             var frame = new Frame(floor, placement.AngleDegrees);
-            return frame.Admits(frame.ToLocal(placement.Center), HalfSize(placement.Columns, placement.Rows, placement.Pitch));
+            var center = frame.ToLocal(placement.Center);
+            if (placement.Layout.IsRectangle)
+                return frame.Admits(center, HalfSize(placement.Columns, placement.Rows, placement.Pitch) + Vector2.one * margin);
+            for (int row = 0; row < placement.Rows; row++)
+                for (int col = 0; col < placement.Columns; col++)
+                {
+                    if (!placement.Layout.HasPane(col, row)) continue;
+                    var offset = new Vector2(col + .5f - placement.Columns * .5f, row + .5f - placement.Rows * .5f);
+                    if (!frame.Admits(center + offset * placement.Pitch, Vector2.one * (placement.Pitch * .5f + margin))) return false;
+                }
+            return true;
         }
 
         internal static bool IsUsable(RoomFloor floor)
@@ -364,8 +394,11 @@ namespace FloorFracture
             private Vector2 preferred;
             private ClearanceGrid clearanceGrid;
 
-            public Frame(RoomFloor source, float angle)
+            private readonly float footMargin;
+
+            public Frame(RoomFloor source, float angle, float margin = 0)
             {
+                footMargin = margin;
                 Angle = angle;
                 Height = source.Height;
                 right = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
@@ -413,7 +446,8 @@ namespace FloorFracture
             {
                 float limit = BoardState.MaxPitch;
                 foreach (var span in spanLimits)
-                    limit = Mathf.Min(limit, span.z / (columns * span.x + rows * span.y));
+                    limit = Mathf.Min(limit, (span.z - 2f * footMargin * (span.x + span.y)) /
+                        (columns * span.x + rows * span.y));
                 return limit;
             }
 
@@ -449,6 +483,7 @@ namespace FloorFracture
 
             public bool TryFindCenter(Vector2 half, CancellationToken cancellation, out Vector2 center)
             {
+                half += Vector2.one * footMargin;
                 if (clearanceGrid != null && !clearanceGrid.MayFit(half))
                 {
                     center = default;

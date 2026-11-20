@@ -130,6 +130,11 @@ namespace FloorFracture.Editor
             if (Application.isBatchMode) EditorApplication.Exit(SessionState.GetBool(Key + "passed", false) ? 0 : 1);
         }
 
+        private static IEnumerable<int> PlayablePanes => Enumerable.Range(0, game.State.Count).Where(game.State.Layout.Contains);
+        private static int MiddlePane => PlayablePanes.OrderBy(i => game.State.Center(i).sqrMagnitude).First();
+        private static int CornerPane => PlayablePanes.First();
+        private static int AdjacentPane(int i) => PlayablePanes.First(j => game.State.Neighbors(i, j));
+
         private static IEnumerator Scenario()
         {
             yield return Wait(() => (game = Object.FindAnyObjectByType<GameFlow>()) && game.Panel && game.Room, "game initialization", 30);
@@ -149,7 +154,7 @@ namespace FloorFracture.Editor
             Require(report.sdkFloorCandidates > 0, "The roomy MRUK fixture did not produce a candidate center through the installed Find Spawn Positions block.");
             Require(game.State.Width == placement.Columns && game.State.Height == placement.Rows && Mathf.Abs(game.State.Pitch - placement.Pitch) < 0.001f &&
                 Mathf.Abs(Vector2.Distance(game.State.Center(0), game.State.Center(1)) - placement.Pitch) < 0.001f,
-                "The playing board did not use the rectangular dimensions and actual tile pitch measured during fitting.");
+                "The playing board did not use the fitted dimensions and pane width.");
             var outlines = game.Room.transform.Find("Placement outlines");
             Require(outlines && outlines.gameObject.activeInHierarchy && outlines.GetComponent<MeshFilter>().sharedMesh.vertexCount > 0,
                 "The Welcome screen did not show the fitted board's perimeter.");
@@ -157,8 +162,20 @@ namespace FloorFracture.Editor
             yield return VerifyHandRecoveryMenu();
             VerifyOccupancyRingMesh();
             VerifySpawnMarkersCleared();
-            Record($"MRUK Rec Room supplied floor and furniture. The {placement.Columns} × {placement.Rows} board at {placement.Pitch:F3} m pitch appeared at Welcome without a clearance approval prompt.");
+            Record($"The recorded MRUK living room supplied its floor, furniture and global mesh. The {placement.Columns} × {placement.Rows} board at {placement.Pitch:F3} m pitch appeared at Welcome without a clearance approval prompt.");
             Capture("room-preview", SmokeView.BoardObserver);
+            game.Room.TogglePlacementDebug();
+            var diagnostics = game.Room.transform.Find("Placement diagnostics");
+            var colors = diagnostics.GetComponent<MeshFilter>().sharedMesh.colors32;
+            Require(diagnostics.gameObject.activeInHierarchy &&
+                colors.Any(c => c.g == 255 && c.r == 64) &&
+                colors.Any(c => c.r == 255 && c.g == 72) &&
+                colors.Any(c => c.r == 255 && c.g == 156),
+                "Placement diagnostics must show accepted panes, detected furniture and mesh obstacles. Observed colors: " + string.Join(", ", colors.Distinct()));
+            Capture("floor-placement-debug", SmokeView.RoomOverview, FloorSurface.EffectMeshObjects.Values.First().effectMeshGO.GetComponent<Renderer>().bounds);
+            game.Room.TogglePlacementDebug();
+            Require(!diagnostics.gameObject.activeSelf, "Placement diagnostics must disappear when switched off.");
+            Record("The recorded room displayed accepted panes, furniture and mesh obstacles in their diagnostic colors. Switching it off restored the normal view.");
             VerifySurroundingBrick(placement);
             yield return VerifyMenuRecenter();
             yield return RayChoose(3, false); yield return Stage(GameStage.Settings);
@@ -176,12 +193,12 @@ namespace FloorFracture.Editor
             report.seed = game.State.Seed;
             Record("Welcome and Settings routed through their visible menu choices. The development menu selected seed 379.");
 
-            int first = (game.State.Height / 2) * game.State.Width + game.State.Width / 2;
+            int first = MiddlePane;
             yield return VerifyTutorial(first);
             Choose("Start wave"); yield return Stage(GameStage.Countdown);
 
             bool sawMemory = false, sawLastTile = false;
-            int initialCount = game.State.Count;
+            int initialCount = game.State.Layout.PaneCount;
             for (int index = 0; index < initialCount; index++)
             {
                 var plan = game.State.ActiveWave;
@@ -288,10 +305,10 @@ namespace FloorFracture.Editor
                 Require(i==0 ? resultsBody.Contains("glass under the ring shattered") : resultsBody.Contains("Ending preview"),
                     "The Results panel must distinguish the resolved physical wave from a development preview.");
                 Choose("Restart"); yield return Stage(GameStage.Ready);
-                VerifyFloorVisibility(true);
+                VerifyFloorVisibility(false);
                 Require(!game.Ending.IsPlaying && game.Level == 1 && game.State.WavesSurvived == 0 &&
                     game.State.ActiveWave == null && game.BoardView.gameObject.activeSelf, "Restart left scoring, ending, or board state behind.");
-                for (int cell = 0; cell < game.State.Count; cell++) Require(game.State.IsIntact(cell), "Restart left a hole.");
+                for (int cell = 0; cell < game.State.Count; cell++) Require(game.State.IsIntact(cell) == game.State.Layout.Contains(cell), "Restart changed the mapped pane layout.");
             }
             Require(new HashSet<string>(order.GetRange(0,6)).Count == 6 && order[5] != order[6],
                 "The six-ending shuffle repeated early or across its boundary.");
@@ -312,7 +329,7 @@ namespace FloorFracture.Editor
             VerifyFloorVisibility(false);
             Choose("Check again");
             yield return Wait(() => game.Room.Status == RoomPlacementStatus.Confirmed && game.Stage == GameStage.Welcome, "fresh verified fit after floor update", 55);
-            VerifyFloorVisibility(true);
+            VerifyFloorVisibility(false);
             VerifySpawnMarkersCleared();
             Record("A simulated significant MRUK floor-anchor event withdrew the board. Reloading the real fixture produced a new verified fit and returned directly to Welcome.");
 
@@ -322,9 +339,91 @@ namespace FloorFracture.Editor
                 RoomPlacementStatus.NoRoom, "Space Setup", "Check again");
             yield return VerifyEmptyRoomOnWake();
             yield return VerifyLateFloorBoundary();
+            yield return VerifyRoomChangeDuringSurvey();
+            yield return VerifyScanUpdateAfterRejectedFit();
             // Audition uses the optional stone. Check it after the first-time stepping
             // lesson has established that a fresh run does not instantiate the stone.
             yield return VerifyOfflineNarration();
+        }
+
+        private static IEnumerator VerifyRoomChangeDuringSurvey()
+        {
+            bool interrupted = false;
+            void OnSurveyStarted()
+            {
+                if (game.Room.Status != RoomPlacementStatus.Loading ||
+                    !game.Room.Message.StartsWith("Floor found.", StringComparison.Ordinal)) return;
+                game.Room.Changed -= OnSurveyStarted;
+                System.Threading.SynchronizationContext.Current.Post(_ =>
+                {
+                    var room = MRUK.Instance.Rooms.Single();
+                    room.AnchorUpdatedEvent.Invoke(room.FloorAnchors[0]);
+                    interrupted = true;
+                }, null);
+            }
+            game.Room.Changed += OnSurveyStarted;
+            try
+            {
+                game.Room.Retry();
+                yield return Wait(() => interrupted && game.Room.Status == RoomPlacementStatus.Confirmed &&
+                    game.Stage == GameStage.Welcome, "automatic recovery after an in-flight anchor update", 55);
+            }
+            finally { game.Room.Changed -= OnSurveyStarted; }
+            Record("An MRUK anchor update interrupted the running fit. Its result was discarded and the updated room reached Welcome automatically.");
+        }
+
+        private static IEnumerator VerifyScanUpdateAfterRejectedFit()
+        {
+            MRUKAnchor floor = null;
+            Vector2[] fullBoundary = null;
+            int surveys = 0;
+            void SupplySmallFloor()
+            {
+                floor = MRUK.Instance.Rooms.Single().FloorAnchors.Single();
+                fullBoundary = floor.PlaneBoundary2D.ToArray();
+                var center = fullBoundary.Aggregate(Vector2.zero, (sum, point) => sum + point) / fullBoundary.Length;
+                const float half = .35f;
+                floor.PlaneBoundary2D.Clear();
+                floor.PlaneBoundary2D.AddRange(new[] { center + new Vector2(-half, -half), center + new Vector2(half, -half),
+                    center + new Vector2(half, half), center + new Vector2(-half, half) });
+            }
+            void CountFits()
+            {
+                if (game.Room.Status == RoomPlacementStatus.Loading && game.Room.Message.StartsWith("Floor found.", StringComparison.Ordinal))
+                    surveys++;
+            }
+            MRUK.Instance.SceneLoadedEvent.AddListener(SupplySmallFloor);
+            try
+            {
+                game.Room.Retry();
+                yield return Wait(() => game.Room.Status == RoomPlacementStatus.NoFit, "small observed floor rejected", 30);
+                Require(!game.BoardView.gameObject.activeSelf, "A 70 cm floor exposed playable glass.");
+                game.Room.Changed += CountFits;
+                var room = MRUK.Instance.Rooms.Single();
+                room.AnchorUpdatedEvent.Invoke(floor);
+                yield return Wait(() => surveys == 1 && game.Room.Status == RoomPlacementStatus.NoFit, "unchanged scan rejected after an update", 30);
+                Require(!game.BoardView.gameObject.activeSelf, "An update with insufficient space exposed the board.");
+
+                floor.PlaneBoundary2D.Clear();
+                floor.PlaneBoundary2D.AddRange(fullBoundary);
+                room.AnchorUpdatedEvent.Invoke(floor);
+                room.AnchorUpdatedEvent.Invoke(room.GlobalMeshAnchor);
+                MRUK.Instance.RoomUpdatedEvent.Invoke(room);
+                yield return Wait(() => game.Stage == GameStage.Welcome && game.Room.Status == RoomPlacementStatus.Confirmed,
+                    "newly supported floor recovered after rejection", 55);
+                Require(surveys == 2, "The floor, mesh and room notifications started more than one fit for the same update.");
+            }
+            finally
+            {
+                MRUK.Instance.SceneLoadedEvent.RemoveListener(SupplySmallFloor);
+                game.Room.Changed -= CountFits;
+                if (floor && fullBoundary != null)
+                {
+                    floor.PlaneBoundary2D.Clear();
+                    floor.PlaneBoundary2D.AddRange(fullBoundary);
+                }
+            }
+            Record("An updated 70 cm scan still withheld glass. Publishing the full saved floor then reached Welcome automatically. The floor, mesh and room notifications produced one fit.");
         }
 
         private static IEnumerator VerifyLateFloorBoundary()
@@ -385,7 +484,7 @@ namespace FloorFracture.Editor
                 }
                 yield return Wait(() => game.Room.Status == RoomPlacementStatus.Confirmed && game.Stage == GameStage.Welcome,
                     "automatic fit after " + signal, 55);
-                VerifyFloorVisibility(true);
+                VerifyFloorVisibility(false);
             }
             Record("After an empty room query, a late MRUK RoomCreated event, putting on the headset, and positional tracking acquisition each restored Welcome independently. No menu press or rescan was used.");
         }
@@ -406,13 +505,18 @@ namespace FloorFracture.Editor
                 Canvas.ForceUpdateCanvases();
                 var buttons = canvas.GetComponentsInChildren<UnityEngine.UI.Button>();
                 Require(buttons.Select(b => b.GetComponentInChildren<UnityEngine.UI.Text>().text)
-                    .SequenceEqual(new[] { "Check again", "Space Setup" }), "Tracking status changed which recovery action was under the hand.");
+                    .SequenceEqual(new[] { "Check again", "Space Setup", "Show / hide placement" }), "Tracking status changed which recovery action was under the hand.");
                 var positions = buttons.Select(b => (RectTransform)b.transform).Select(r => r.TransformPoint(r.rect.center)).ToArray();
                 if (firstPositions == null) firstPositions = positions;
                 for (int i = 0; i < positions.Length; i++)
                     Require(Vector3.Distance(firstPositions[i], positions[i]) < .0005f,
                         "A change in tracking message length moved the recovery buttons.");
             }
+            Choose("Show / hide placement");
+            Require(game.Room.PlacementDebug && game.Stage == GameStage.Room && !game.BoardView.gameObject.activeSelf,
+                "Inspecting a rejected room must keep the glass hidden.");
+            Choose("Show / hide placement");
+            Require(!game.Room.PlacementDebug, "The recovery overlay could not be switched off.");
             Record("Check again and Space Setup kept the same order and world positions across missing room, unsafe floor and no fit, including a multiline change in the tracking message.");
         }
 
@@ -428,7 +532,8 @@ namespace FloorFracture.Editor
             var labels = game.Panel.GetComponentsInChildren<UnityEngine.UI.Text>()
                 .Where(label => label.isActiveAndEnabled).Select(label => label.text).ToArray();
             Require(game.Room.Status == status && game.Stage == GameStage.Room && !game.BoardView.gameObject.activeSelf &&
-                labels.Contains(recoveryLabel) && labels.Contains(retryLabel) && labels.Contains(game.Room.Message),
+                labels.Contains(recoveryLabel) && labels.Contains(retryLabel) &&
+                labels.Any(text => text == game.Room.Message || text.StartsWith(game.Room.Message + "\n", StringComparison.Ordinal)),
                 "The room failure must hide the board and display its explanation and both recovery actions.");
             VerifyFloorVisibility(false);
             yield return Frames(2);
@@ -437,7 +542,7 @@ namespace FloorFracture.Editor
                 "a valid room after " + result, 55);
             Require(game.BoardView.gameObject.activeSelf && game.State.ActiveWave == null,
                 "Retry must restore the board and leave the next round idle.");
-            VerifyFloorVisibility(true);
+            VerifyFloorVisibility(false);
             Record("Injected MRUK " + result + ". The blocked board showed " + recoveryLabel +
                 " and " + retryLabel + ". Retry loaded the fixture and restored Welcome.");
         }
@@ -492,7 +597,7 @@ namespace FloorFracture.Editor
             Require(game.Room.IsRoomLocalized && game.Stage == GameStage.Ready && game.BoardView.gameObject.activeInHierarchy &&
                 !moving.gameObject.activeSelf && !ring.enabled && !fog.enabled && timer.text.Length == 0,
                 "Showing the board exposed the canceled moving pane, ring, fog or countdown.");
-            VerifyFloorVisibility(true);
+            VerifyFloorVisibility(false);
             StandOn(canceled.StartingTile);
             Choose("Start wave");
             wave = game.State.ActiveWave;
@@ -580,9 +685,9 @@ namespace FloorFracture.Editor
         {
             // Select a reproducible physical starting tile on the fitted board. Only the real
             // head poses and production countdown drive the subsequent gameplay assertions.
-            for (int start = 0; start < game.State.Count; start++)
+            foreach (int start in PlayablePanes)
             {
-                var simulation = new BoardState(game.State.Width, game.State.Height, game.State.Seed, game.State.Pitch);
+                var simulation = new BoardState(game.State.Layout, game.State.Seed, game.State.Pitch);
                 int current = start;
                 double time = 0;
                 for (int number = 1; number <= simulation.Count; number++)
@@ -653,10 +758,10 @@ namespace FloorFracture.Editor
 
         // Turning a simulated head pivots the eye around a planted stance, just as the
         // production support estimate expects when the wearer looks down.
-        private static void SetStandingHead(Vector2 stance, Quaternion rotation)
+        private static void SetStandingHead(Vector2 stance, Quaternion rotation, float eyeHeight = 1.6f)
         {
             var board = game.BoardView.Board;
-            var eye = board.TransformPoint(new Vector3(stance.x,1.6f,stance.y));
+            var eye = board.TransformPoint(new Vector3(stance.x,eyeHeight,stance.y));
             var projected = PlayerTileTracker.ProjectStance(board.worldToLocalMatrix,eye,rotation,ProfileEyeDepth());
             eye += board.TransformVector(GlassGeometry.Ground(stance-projected));
             SetHead(new Pose(eye,rotation));
@@ -792,9 +897,9 @@ namespace FloorFracture.Editor
         private sealed class SmokeReport
         {
             public string result = "running", startedUtc, finishedUtc, unityVersion, scene, failure;
-            public string fixture = "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode";
+            public string fixture = "Installed MRUK MeshLivingRoom1, Editor Play Mode";
             public string input = "Simulated world poses, grip state, and visible menu selection. Unity physics and unscaled game time.";
-            public string imagesDescribe = "Monoscopic Editor renders of the actual scene. Player-view images use the simulated center eye. Whole-room-brick looks down on the scanned floor. Room-preview, classic-glass, and neighboring-hole are elevated observer shots. Fall sequences use the same stationary eye position, looking toward the opening, slightly downward, and straight ahead as labeled.";
+            public string imagesDescribe = "Monoscopic Editor renders of the actual scene. Player-view images use the simulated center eye. Play-area-passthrough looks down on the glass and the surrounding real floor. Room-preview, classic-glass, and neighboring-hole are elevated observer shots. Fall sequences use the same stationary eye position, looking toward the opening, slightly downward, and straight ahead as labeled.";
             public int columns, rows, seed, sdkFloorCandidates;
             public float pitch;
             public bool depthProviderEnabledInAuthoredScene, depthSupportedInFixture;

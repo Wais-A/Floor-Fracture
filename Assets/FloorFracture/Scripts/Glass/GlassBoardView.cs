@@ -46,6 +46,7 @@ namespace FloorFracture
             var fittedScale=new Vector3(paneScale,1,paneScale);
             for(int i=0;i<tiles.Length;i++)
             {
+                if (!board.Layout.Contains(i)) continue;
                 var t=Instantiate(prefab,transform); t.name="Glass "+(i%board.Width)+", "+(i/board.Width);
                 t.transform.localPosition=GlassGeometry.Ground(board.Center(i));
                 t.transform.localScale=fittedScale; t.Initialize(); tiles[i]=t;
@@ -62,14 +63,22 @@ namespace FloorFracture
             holes=GlassTile.Part(transform,"Opening stencil",cutouts,maskMaterial);
             underground=GlassTile.Part(transform,"Glass opening edges",shaft,wallsMaterial);
             shards=gameObject.AddComponent<ShardPool>(); shards.Initialize(shardMaterial,paneScale);
-            float x=board.Width*board.Pitch*.5f, z=board.Height*board.Pitch*.5f;
             var b=new GlassGeometry.Builder();
-            Vector2[] corners={new(-x,-z),new(x,-z),new(x,z),new(-x,z)};
-            for(int i=0;i<4;i++) b.Stroke(corners[i],corners[(i+1)%4],.012f,.006f);
+            foreach (var edge in board.Layout.Perimeter(board.Pitch)) b.Stroke(edge.a,edge.b,.012f,.006f);
             boundary=b.Create("Board perimeter"); var border=GlassTile.Part(transform,"Perimeter",boundary,GlassTile.Surface);
             GlassTile.Tint(border,new Color(.61f,.82f,.85f,.96f));
             b=new GlassGeometry.Builder();
-            b.Quad(new(-x,.052f,-z),new(x,.052f,-z),new(x,.052f,z),new(-x,.052f,z),Color.white,Color.white);
+            float half=board.Pitch*.5f;
+            for (int i=0;i<tiles.Length;i++)
+            {
+                if (!tiles[i]) continue;
+                var p=board.Center(i);
+                b.Quad(new(p.x-half,.052f,p.y-half),new(p.x+half,.052f,p.y-half),
+                    new(p.x+half,.052f,p.y+half),new(p.x-half,.052f,p.y+half),Color.white,Color.white);
+                // Keep one continuous fog bank across the connected panes.
+                for (int v=b.Uv.Count-4; v<b.Uv.Count; v++)
+                    b.Uv[v]=new Vector2((i%board.Width+b.Uv[v].x)/board.Width,(i/board.Width+b.Uv[v].y)/board.Height);
+            }
             fogPlane=b.Create("Fog bank"); fog=GlassTile.Part(transform,"Low fog",fogPlane,fogMaterial); fog.enabled=false;
             readout=CreateReadout(); ClearTransient(); RebuildHoles(0);
         }
@@ -148,6 +157,7 @@ namespace FloorFracture
             bool shown=wave!=null&&wave.ShowsWarnings(now);
             for(int i=0;i<tiles.Length;i++)
             {
+                if (!tiles[i]) continue;
                 if(!model.IsIntact(i)) bits|=1UL<<i;
                 bool visible=(bits&(1UL<<i))==0;
                 if(tiles[i].gameObject.activeSelf!=visible) tiles[i].gameObject.SetActive(visible);
@@ -177,7 +187,7 @@ namespace FloorFracture
         }
         public void Shatter(int index)
         {
-            if (index >= 0 && index < model.Count) Shatter(index,model.Center(index));
+            if (model.Layout.Contains(index)) Shatter(index,model.Center(index));
         }
         internal Vector3 Shatter(int index, Vector2 center)
         {
@@ -185,13 +195,13 @@ namespace FloorFracture
             shards.Drop(local,index,Time.unscaledTime);
             return transform.TransformPoint(local);
         }
-        public void PracticeBreak(int index) { practiceHole=index; Shatter(index); }
+        public void PracticeBreak(int index) { if (model.Layout.Contains(index)) { practiceHole=index; Shatter(index); } }
         public void ClearTransient() { practiceHole=-1; if(shards) shards.Clear(); }
         public void RestorePracticePane() { practiceHole=-1; }
         public void RevealLossAperture(int cell)
         {
             occupancy.enabled=false;
-            if (cell < 0 || cell >= tiles.Length) return;
+            if (!model.Layout.Contains(cell)) return;
             tiles[cell].gameObject.SetActive(false);
             RebuildHoles(holeBits | (1UL << cell));
         }
@@ -201,10 +211,11 @@ namespace FloorFracture
         internal Vector3? OpenOutsidePane(Vector3 entry)
         {
             Vector2 local = PlayerTileTracker.Project(transform,entry);
-            if (model.IndexAt(local) >= 0) return null;
             float pitch = model.Pitch;
             var half = new Vector2(model.Width, model.Height) * .5f;
             var cell = local/pitch + half;
+            // Interior gaps were excluded by room placement, including gaps occupied by furniture.
+            if (cell.x >= 0f && cell.x < model.Width && cell.y >= 0f && cell.y < model.Height) return null;
             var center = (new Vector2(Mathf.Floor(cell.x)+.5f,Mathf.Floor(cell.y)+.5f) - half) * pitch;
             outsideOpening = center;
             RebuildHoles(holeBits);

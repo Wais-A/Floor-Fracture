@@ -25,6 +25,7 @@ namespace FloorFracture
             Vector3? outside = board.OpenOutsidePane(entry);
             if (!room || !room.FloorEffect || !room.FloorEffect.MeshMaterial) return;
 
+            room.SetPlayAreaVisible(true, showFallFloor: true);
             var effect = room.FloorEffect;
             if (outside.HasValue)
             {
@@ -39,6 +40,8 @@ namespace FloorFracture
             brick = GlassTile.MakeMaterial("Endings/FallFloor");
             brick.SetVector("_BoardFrame", effect.MeshMaterial.GetVector("_BoardFrame"));
             brick.SetVector("_BoardHalfSize", effect.MeshMaterial.GetVector("_BoardHalfSize"));
+            brick.SetInteger("_BoardMaskLow", effect.MeshMaterial.GetInteger("_BoardMaskLow"));
+            brick.SetInteger("_BoardMaskHigh", effect.MeshMaterial.GetInteger("_BoardMaskHigh"));
             if (outside is Vector3 center)
                 brick.SetVector("_OutsideOpening", new Vector4(center.x,center.z,board.PaneWidth*.5f,0));
             foreach (var patch in effect.EffectMeshObjects.Values)
@@ -56,7 +59,7 @@ namespace FloorFracture
             if (!board || (reduced ? !entered : travel <= 0f)) return;
             if (!replacedRoom)
             {
-                if (room) room.ShowFloorSurface(false);
+                if (room) room.SetPlayAreaVisible(false);
                 if (brickFloor) brickFloor.gameObject.SetActive(true);
                 if (reduced) board.gameObject.SetActive(false);
                 replacedRoom = true;
@@ -87,7 +90,7 @@ namespace FloorFracture
                 if (belowRim) board.ShowShardsBelowRim(false);
                 if (reduced && replacedRoom) board.gameObject.SetActive(true);
             }
-            if (replacedRoom && room && room.isActiveAndEnabled) room.ShowFloorSurface(true);
+            if (room && room.isActiveAndEnabled) room.SetPlayAreaVisible(true);
         }
     }
 }

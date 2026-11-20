@@ -18,7 +18,7 @@ namespace FloorFracture.Editor
             Require(stone && !stone.Body, "The movement lesson spawned the optional stone.");
             yield return Frames(3);
             Require(game.State.CurrentSample.Index == first, "The tutorial did not mark the first pane underfoot.");
-            int neighbor = first % game.State.Width == 0 ? first + 1 : first - 1;
+            int neighbor = AdjacentPane(first);
             var board = game.BoardView.Board;
             var startingPane = board.Find("Glass " + first % game.State.Width + ", " + first / game.State.Width);
             var fissures = startingPane.Find("Fissures").GetComponent<MeshRenderer>();
@@ -84,7 +84,7 @@ namespace FloorFracture.Editor
                 yield return Wait(() => StoneReady(body), "cancelled stone returning to reach", 5);
                 Require(throws == 0 && game.Stage == GameStage.PracticeStone, "Cancelling a grab counted as a throw.");
 
-                int edge = (neighbor / game.State.Width) * game.State.Width + game.State.Width - 1;
+                int edge = PlayablePanes.First(i => i % game.State.Width == game.State.Width - 1);
                 yield return WalkToStonePane(edge);
                 yield return GrabPracticeStone(body, grab);
                 Vector3 outside = new Vector3(game.State.Width * .5f * game.State.Pitch + .16f,
@@ -94,7 +94,7 @@ namespace FloorFracture.Editor
                 yield return Wait(() => throws == 1 && StoneReady(body), "missed throw returning to reach", 6);
                 Require(game.Stage == GameStage.PracticeStone, "An off-board throw changed game stage.");
 
-                int far = first == 0 ? game.State.Count - 1 : 0;
+                int far = PlayablePanes.OrderByDescending(i => (game.State.Center(i) - game.State.Center(first)).sqrMagnitude).First();
                 var pane = board.Find("Glass " + far % game.State.Width + ", " + far / game.State.Width).gameObject;
                 var center = game.State.Center(far);
                 yield return WalkToStonePane(far);
@@ -123,7 +123,7 @@ namespace FloorFracture.Editor
                 yield return Wait(() => !startingPane.gameObject.activeSelf, "stationary release landing on the original pane", 5);
                 yield return Wait(() => startingPane.gameObject.activeSelf && StoneReady(body), "resting drop recovery", 6);
 
-                int middle = game.State.Height / 2 * game.State.Width + game.State.Width / 2;
+                int middle = MiddlePane;
                 center = game.State.Center(middle);
                 Vector3 tossPoint = board.TransformPoint(new Vector3(center.x, .85f, center.y));
                 yield return WalkToStonePane(middle);

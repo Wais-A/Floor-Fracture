@@ -12,6 +12,8 @@ namespace FloorFracture
         public readonly List<Vector2[]> Obstacles;
         public readonly float Height;
         internal readonly float LowestY, HighestY;
+        internal readonly float MeshFloorHeight;
+        internal float LabelHeight => (LowestY + HighestY) * .5f;
 
         public RoomFloor(Vector2[] boundary, List<Vector2[]> obstacles, float height = 0f)
             : this(boundary, obstacles, height, height) { }
@@ -22,7 +24,17 @@ namespace FloorFracture
             Obstacles = obstacles;
             LowestY = lowestY;
             HighestY = highestY;
-            Height = (lowestY + highestY) * .5f;
+            Height = MeshFloorHeight = LabelHeight;
+        }
+
+        internal RoomFloor(RoomFloor labelled, float meshHeight, float boardHeight)
+        {
+            Boundary = labelled.Boundary;
+            Obstacles = labelled.Obstacles;
+            LowestY = labelled.LowestY;
+            HighestY = labelled.HighestY;
+            MeshFloorHeight = meshHeight;
+            Height = boardHeight;
         }
     }
 

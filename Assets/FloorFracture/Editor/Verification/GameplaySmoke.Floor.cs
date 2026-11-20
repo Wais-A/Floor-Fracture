@@ -62,9 +62,9 @@ namespace FloorFracture.Editor
                 "Brick must use only the current room's native floor meshes and supply no gameplay colliders.");
             var renderers = anchors.Values.Select(o => o.effectMeshGO.GetComponent<MeshRenderer>()).ToArray();
             var material = effect.MeshMaterial;
-            Require(renderers.All(r => r && r.enabled && r.sharedMaterial == material) &&
+            Require(effect.HideMesh && renderers.All(r => r && !r.enabled && r.sharedMaterial == material) &&
                 material.shader.name == "Floor Fracture/Surrounding Brick" && material.HasProperty("_RequireEnvironmentDepth"),
-                "The native floor patches must use the shaft-style brick material.");
+                "The fall's native floor patches must stay invisible during ordinary play.");
 
             // Isolate the real scanned floor for a top-down GPU readback. Use the same mesh as its own reference.
             const int size = 192;
@@ -105,6 +105,8 @@ namespace FloorFracture.Editor
                     image.Apply();
                     return image.GetPixels32();
                 }
+                Require(!Read().Any(IsBrick), "Room-wide masonry was visible outside the fall animation.");
+                game.Room.SetPlayAreaVisible(true, showFallFloor: true);
                 material.SetVector("_BoardHalfSize", new Vector4(-1,-1,0,0));
                 var completeFloor = Read();
                 var colors = completeFloor.Where(IsBrick).ToArray();
@@ -117,12 +119,11 @@ namespace FloorFracture.Editor
                 VerifyFloorDepth(renderers, material, camera, size, Read, completeFloor);
                 material.SetFloat("_RequireEnvironmentDepth", 0);
                 material.SetVector("_BoardHalfSize", originalHalfSize);
-                CheckOpening(Read(), fit);
-                var rotated = new BoardPlacement(fit.Center, fit.FloorHeight, fit.AngleDegrees + 31f,
-                    fit.Columns, fit.Rows, fit.Pitch);
-                var angle = rotated.AngleDegrees * Mathf.Deg2Rad;
+                CheckOpening(Read(), fit, fit.AngleDegrees);
+                float rotated = fit.AngleDegrees + 31f;
+                var angle = rotated * Mathf.Deg2Rad;
                 material.SetVector("_BoardFrame", new Vector4(fit.Center.x, fit.Center.y, Mathf.Cos(angle), Mathf.Sin(angle)));
-                CheckOpening(Read(), rotated);
+                CheckOpening(Read(), fit, rotated);
                 // An overlapping XZ footprint on a separate storey must still have complete brick coverage.
                 var differentLevel = originalHalfSize;
                 differentLevel.z += 1f;
@@ -131,11 +132,12 @@ namespace FloorFracture.Editor
                 Require(otherStorey.Select(IsBrick).SequenceEqual(completeFloor.Select(IsBrick)),
                     "A board on a different storey punched a hole in this floor.");
 
-                void CheckOpening(Color32[] visible, BoardPlacement board)
+                void CheckOpening(Color32[] visible, BoardPlacement board, float angleDegrees)
                 {
                     int inside = 0, outside = 0, offFloor = 0;
                     float pixel = 2f * camera.orthographicSize / size;
-                    var inverse = Quaternion.Inverse(board.Pose.rotation);
+                    var inverse = Quaternion.Euler(0, angleDegrees, 0);
+                    var outline = board.Layout.Perimeter(board.Pitch).ToArray();
                     for (int y = 0; y < size; ++y)
                     for (int x = 0; x < size; ++x)
                     {
@@ -149,11 +151,17 @@ namespace FloorFracture.Editor
                         }
                         var world = camera.ViewportToWorldPoint(new Vector3((x+.5f)/size, (y+.5f)/size, 3f));
                         var local = inverse * (world - board.Pose.position);
-                        float distance = Mathf.Max(Mathf.Abs(local.x) - board.Columns * board.Pitch * .5f,
-                            Mathf.Abs(local.z) - board.Rows * board.Pitch * .5f);
-                        if (Mathf.Abs(distance) < pixel * 2) continue;
-                        if (distance < 0) { inside++; Require(!brick, "Brick covers a playable pane or open shaft."); }
+                        var point = new Vector2(local.x, local.z);
+                        if (outline.Any(edge => (point - ClosestOnEdge(point, edge.a, edge.b)).sqrMagnitude < 4 * pixel * pixel)) continue;
+                        int col = Mathf.FloorToInt(local.x / board.Pitch + board.Columns * .5f);
+                        int row = Mathf.FloorToInt(local.z / board.Pitch + board.Rows * .5f);
+                        if (board.Layout.HasPane(col, row)) { inside++; Require(!brick, "Brick covers a playable pane or open shaft."); }
                         else { outside++; Require(brick, "The surrounding scanned floor has an uncovered patch."); }
+                    }
+                    static Vector2 ClosestOnEdge(Vector2 p, Vector2 a, Vector2 b)
+                    {
+                        var v = b - a;
+                        return a + v * Mathf.Clamp01(Vector2.Dot(p - a, v) / v.sqrMagnitude);
                     }
                     Require(inside > 100 && outside > 100 && offFloor > 100, "The floor readback did not cover all three regions.");
                 }
@@ -163,15 +171,16 @@ namespace FloorFracture.Editor
                 material.SetFloat("_RequireEnvironmentDepth", 0);
                 material.SetVector("_BoardFrame", originalFrame);
                 material.SetVector("_BoardHalfSize", originalHalfSize);
+                game.Room.SetPlayAreaVisible(true);
                 for (int i=0; i<renderers.Length; ++i) renderers[i].gameObject.layer = layerBefore[i];
                 RenderTexture.active = previous;
                 Object.DestroyImmediate(image);
                 Object.DestroyImmediate(go);
                 RenderTexture.ReleaseTemporary(target);
             }
-            Capture("whole-room-brick", SmokeView.RoomOverview, bounds);
-            Capture("brick-player-height", SmokeView.FloorEdge);
-            Record("GPU readbacks of the actual MRUK floor showed masonry to its scanned edges with a clear glass footprint at the fitted orientation and a further 31-degree rotation. A board one metre above the floor left the full floor covered.");
+            VerifyFloorVisibility(false);
+            Capture("play-area-passthrough", SmokeView.RoomOverview, bounds);
+            Record("The ordinary-play GPU readback drew zero pixels from the exterior brick. The fall floor still rendered its masonry to the scanned edges and around the fitted glass during the animation check.");
         }
 
         // Compare the actual shaders at identical metre coordinates and with neutral light.
@@ -322,7 +331,7 @@ namespace FloorFracture.Editor
                         $"{counts[1]} couch, {counts[2]} chair-leg and {counts[3]} bin pixels in passthrough; " +
                         $"{legGap} visible brick pixels between the legs, {oldBin} at the vacated bin center.");
                 }
-                if (!moved) VerifySharedFloorEdge(fixture, renderers, read);
+                if (!moved) VerifySharedFloorEdge(fixture, renderers, camera, read);
             }
 
             // A tapered furniture foot meets the floor at a fixed world X. Intersect each moving
@@ -401,7 +410,7 @@ namespace FloorFracture.Editor
             Require(fixture.Surface.GetFloat("_FloorPreviousWeight") == 0, "Old depth history survived a sensor pause.");
         }
 
-        private static void VerifySharedFloorEdge(FloorDepthReadback fixture, MeshRenderer[] renderers,
+        private static void VerifySharedFloorEdge(FloorDepthReadback fixture, MeshRenderer[] renderers, Camera camera,
             System.Func<Color32[]> read)
         {
             var original = renderers[0];
@@ -440,7 +449,21 @@ namespace FloorFracture.Editor
 
                         // On a single physical plane either covering patch must give the same
                         // color. Pixels drawn by only one of the two must retain its coverage.
-                        int changed = 0, unique = 0, rawMax = 0, afterMax = 0;
+                        int changed = 0, unique = 0, rawMax = 0, afterMax = 0, mismatch = 0;
+                        float worstEdgeDistance = 0;
+                        float DistanceToScannedEdge(Vector3 world, MRUKAnchor patch)
+                        {
+                            Vector2 local = patch.transform.InverseTransformPoint(world);
+                            var boundary = patch.PlaneBoundary2D;
+                            float best = float.PositiveInfinity;
+                            for (int j = 0, k = boundary.Count - 1; j < boundary.Count; k = j++)
+                            {
+                                var edge = boundary[j] - boundary[k];
+                                float t = Mathf.Clamp01(Vector2.Dot(local - boundary[k], edge) / edge.sqrMagnitude);
+                                best = Mathf.Min(best, Vector2.Distance(local, boundary[k] + edge * t));
+                            }
+                            return best;
+                        }
                         var clear = new Color32(255,0,255,255);
                         for (int i = 0; i < firstOnly.Length; ++i)
                         {
@@ -450,10 +473,22 @@ namespace FloorFracture.Editor
                             int difference = Difference(expected, doubled[i]);
                             if (difference > 3) ++changed;
                             rawMax = Mathf.Max(rawMax, difference);
-                            afterMax = Mathf.Max(afterMax, Difference(expected, repaired[i]));
+                            int after = Difference(expected, repaired[i]);
+                            afterMax = Mathf.Max(afterMax, after);
+                            if (after > 3)
+                            {
+                                mismatch++;
+                                int size = camera.targetTexture.width;
+                                var world = camera.ViewportToWorldPoint(new Vector3(((i % size) + .5f) / size, ((i / size) + .5f) / size, 3f));
+                                worstEdgeDistance = Mathf.Max(worstEdgeDistance, Mathf.Min(
+                                    DistanceToScannedEdge(world, anchor), DistanceToScannedEdge(world, secondAnchor)));
+                            }
                         }
-                        Record($"Overlapping floor soft edge, eye {eye}, offset {shift:F1} m: {changed} double-blended pixels, {unique} pixels unique to the second patch; maximum error {rawMax}/255 to {afterMax}/255.");
-                        Require(changed > 30 && (shift == 0 || unique > 30) && afterMax <= 3,
+                        Record($"Overlapping floor soft edge, eye {eye}, offset {shift:F1} m: {changed} double-blended pixels, {unique} pixels unique to the second patch; maximum error {rawMax}/255 to {afterMax}/255, {mismatch} mismatches, farthest {1000*worstEdgeDistance:F3} mm from a native edge.");
+                        // The native floor renderer and millimetre-quantized clipper rasterize a slanted
+                        // silhouette differently at a pixel center on the edge. Keep every interior pixel exact.
+                        Require(changed > 30 && (shift == 0 || unique > 30) &&
+                            (afterMax <= 3 || (shift != 0 && mismatch <= 2 && worstEdgeDistance <= .0001f)),
                             "Overlapping floor meshes changed native soft occlusion or removed their unique surface.");
                     }
                 }

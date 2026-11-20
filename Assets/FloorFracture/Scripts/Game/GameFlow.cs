@@ -68,7 +68,8 @@ namespace FloorFracture
             if(Room.Status==RoomPlacementStatus.Confirmed)
             {
                 if(Stage!=GameStage.Room) return;
-                StartBoard(); Home(); return;
+                if (StartBoard()) Home();
+                return;
             }
             if(Ending&&Ending.IsPlaying) Ending.ResetSequence();
             if(State!=null) { State.Pause(); if(BoardView) BoardView.gameObject.SetActive(false); }
@@ -81,21 +82,34 @@ namespace FloorFracture
                 case RoomPlacementStatus.NoRoom:
                 case RoomPlacementStatus.UnsafeRoom:
                 case RoomPlacementStatus.NoFit:
-                    Panel.ShowRoomRecovery(Room.Message, Room.Retry, Room.RequestSpaceSetup); break;
+                    Panel.ShowRoomRecovery(Room.PlacementDebug ? Room.Message + "\n" + RoomBoardPlacement.DebugLegend : Room.Message,
+                        Room.Retry, Room.RequestSpaceSetup, Application.isEditor || Debug.isDebugBuild ? ToggleRoomDiagnostics : null); break;
                 default: Panel.Show("Reading your room",Room.Message); break;
             }
         }
-        void StartBoard()
+        void ToggleRoomDiagnostics()
         {
+            Room.TogglePlacementDebug();
+            RoomChanged();
+        }
+
+        bool StartBoard()
+        {
+            if (Room.Status != RoomPlacementStatus.Confirmed || !Room.IsRoomLocalized)
+            {
+                Room.Retry();
+                return false;
+            }
             if(BoardView) { BoardView.gameObject.SetActive(false); Destroy(BoardView.gameObject); }
-            var fit=Room.Placement; State=new BoardState(fit.Columns,fit.Rows,SelectedSeed,fit.Pitch);
+            var fit=Room.Placement; State=new BoardState(fit.Layout,SelectedSeed,fit.Pitch);
             var board=new GameObject("Confirmed glass board"); BoardView=board.AddComponent<GlassBoardView>(); BoardView.Build(State,fit.Pose);
             Ending.SetBoard(BoardView,Room);
             Level=WaveNumber=1; levelFinished=false;
+            return true;
         }
         void Home()
         {
-            Room.ShowFloorSurface(true);
+            Room.SetPlayAreaVisible(true);
             Stage=GameStage.Welcome; tutorial.End(); BoardView.ClearTransient(); BoardView.gameObject.SetActive(true);
             Room.ShowClearance(true);
             var choices=new System.Collections.Generic.List<MenuChoice>{
@@ -108,8 +122,12 @@ namespace FloorFracture
         {
             Stage=GameStage.PlayArea;
             Room.ShowClearance(true);
-            Panel.Show("Play area",Room.Message+"\nCheck that the outlined play area is still clear. If furniture moved since the scan, choose another spot or update your room.",
-                Choice("Back",Home),Choice("Try another spot",Room.Decline),Choice("Space Setup",Room.RequestSpaceSetup));
+            var choices=new System.Collections.Generic.List<MenuChoice>{
+                Choice("Back",Home),Choice("Refit saved floor",Room.Retry),Choice("Try another spot",Room.Decline),Choice("Space Setup",Room.RequestSpaceSetup)};
+            if (Application.isEditor||Debug.isDebugBuild)
+                choices.Add(Choice("Placement debug  ·  "+(Room.PlacementDebug?"On":"Off"),()=>{Room.TogglePlacementDebug();PlayArea();}));
+            Panel.Show("Play area",Room.Message+"\n"+(Room.PlacementDebug ? RoomBoardPlacement.DebugLegend :
+                "Check that the outlined panes are clear. Space Setup opens the Quest scanner. You can use a Touch controller there."),choices.ToArray());
         }
         void Settings()
         {
@@ -173,11 +191,11 @@ namespace FloorFracture
         }
         void Ready(string text,bool offerStone=false)
         {
-            Room.ShowFloorSurface(true);
+            Room.SetPlayAreaVisible(true);
             Room.ShowClearance(false);
             Stage=GameStage.Ready; BoardView.gameObject.SetActive(true);
             var start=Choice("Start wave",TryStart);
-            var menu=Choice("Main menu",()=>{StartBoard(); Home();});
+            var menu=Choice("Main menu",()=>{if (StartBoard()) Home();});
             Panel.Show("Level "+Level,text,offerStone ? new[]{start,Choice("Try the stone (optional)",StartStonePractice),menu} : new[]{start,menu});
         }
         void TryStart()
@@ -302,7 +320,7 @@ namespace FloorFracture
             BoardView.Draw(null,State.CurrentSample,Now,gentle);
             BoardView.SetReadout("",Panel.Head);
             sound.ResetSounds();
-            Room.ShowFloorSurface(false);
+            Room.SetPlayAreaVisible(false);
             Panel.Show("Paused","Find the cleared board area. Show the glass when tracking is stable.",Choice("Show board",ShowBoardAfterPause));
         }
         void ShowBoardAfterPause()
@@ -350,7 +368,7 @@ namespace FloorFracture
         void ShowResults()
         {
             if(Stage!=GameStage.Fall) return;
-            Room.ShowFloorSurface(false);
+            Room.SetPlayAreaVisible(false);
             Stage=GameStage.Results; BoardView.gameObject.SetActive(false); Panel.Recenter();
             string score = State.WavesSurvived == 1 ? "1 wave survived" : $"{State.WavesSurvived} waves survived";
             string result = State.LastLoss switch
@@ -369,7 +387,7 @@ namespace FloorFracture
         void Restart()
         {
             Ending.ResetSequence(); sound.ResetSounds(); tutorial.End(); SelectedSeed=Environment.TickCount&int.MaxValue;
-            StartBoard(); Ready("The glass is back. Return to the board and start when ready.");
+            if (StartBoard()) Ready("The glass is back. Return to the board and start when ready.");
         }
         void Development()
         {
@@ -383,7 +401,8 @@ namespace FloorFracture
         }
         void DevelopmentRun(int level)
         {
-            SelectedSeed=379; StartBoard(); Level=level; Ready("Fixed seed 379. Stand on an intact pane to reproduce this run.");
+            SelectedSeed=379; if (!StartBoard()) return;
+            Level=level; Ready("Fixed seed 379. Stand on an intact pane to reproduce this run.");
         }
         void OnApplicationPause(bool pause) { appPaused=pause; if(pause) InterruptRound(); }
         void OnApplicationFocus(bool focus) { if(!focus) InterruptRound(); }

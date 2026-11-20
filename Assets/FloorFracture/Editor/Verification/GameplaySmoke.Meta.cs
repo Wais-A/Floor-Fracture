@@ -52,6 +52,11 @@ namespace FloorFracture.Editor
 
             var depth = roots.SelectMany(root => root.GetComponentsInChildren<EnvironmentDepthManager>(true)).Single();
             var block = markers.Single(marker => marker.BlockId == MetaRoomBlocks.DepthProviderId);
+            var raycast = markers.Single(marker => marker.BlockId == MetaRoomBlocks.EnvironmentRaycastId)
+                .GetComponent<Meta.XR.EnvironmentRaycastManager>();
+            Require(raycast && raycast.CustomTrackingSpace == game.Rig.trackingSpace &&
+                new SerializedObject(game.Room).FindProperty("liveManager").objectReferenceValue == raycast,
+                "Placement must use Meta's installed Environment Raycast Manager in the headset tracking space.");
             report.depthSupportedInFixture = EnvironmentDepthManager.IsSupported;
             Require(report.depthProviderEnabledInAuthoredScene && depth.gameObject.activeInHierarchy &&
                 (depth.transform == block.transform || depth.transform.IsChildOf(block.transform)) && (!report.depthSupportedInFixture || depth.enabled),
@@ -216,7 +221,12 @@ namespace FloorFracture.Editor
             Require(retry == 1 && rescan == 1, "Both left and right recovery actions must be exercised.");
             game.Room.Retry();
             yield return Wait(() => game.Stage == GameStage.Welcome, "Welcome after hand input checks", 55);
+            Choose("Play area");
+            Choose("Refit saved floor");
+            yield return Wait(() => game.Stage == GameStage.Welcome && game.Room.Status == RoomPlacementStatus.Confirmed,
+                "saved room refit from the in-game Play area menu", 55);
             Record("Both authored Meta hand-ray prefabs selected their intended recovery row once using synthetic system aim and index pinch with the palm pointing upward. Both targets were under 30 degrees above a chest-height hand. A pinch held across a page change triggered no new action.");
+            Record("Refit saved floor in the Play area menu rechecked the same MRUK room and returned to Welcome.");
         }
     }
 }
