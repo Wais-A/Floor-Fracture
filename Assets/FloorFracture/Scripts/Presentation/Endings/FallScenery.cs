@@ -24,14 +24,16 @@ internal sealed class FallScenery
     };
 
     readonly Transform world;
-    readonly Material surfaceMaterial, fadeMaterial;
+    readonly Material surfaceMaterial, backgroundMaterial, fadeMaterial;
     readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
+    readonly MaterialPropertyBlock waterProperties = new MaterialPropertyBlock();
     readonly MeshRenderer walls, landmarks, background, floor, nativeWater, pillars, motes, opening;
     MeshRenderer veil;
     readonly List<Mesh> ownedMeshes = new List<Mesh>();
     readonly Mesh[] moteMeshes = new Mesh[6];
     readonly Mesh boxMesh, crystalMesh, flameMesh;
     readonly GameObject splashPrefab, replacementFire;
+    readonly Color sourceWaterColor;
     GameObject splash;
     FloorEnding kind;
     Transform head;
@@ -44,18 +46,24 @@ internal sealed class FallScenery
         world = new GameObject("Fall chamber").transform;
         surfaceMaterial = new Material(Resources.Load<Shader>("Endings/Chamber"));
         surfaceMaterial.SetFloat("_WideningPerMetre",WideningPerMetre);
+        // Establish the sky's projection alpha before fading walls or the landing can write depth.
+        backgroundMaterial = new Material(surfaceMaterial) { renderQueue = surfaceMaterial.renderQueue - 1 };
         fadeMaterial = new Material(Resources.Load<Shader>("Endings/ViewFade"));
         boxMesh = Own(FallMeshes.Box());
         Mesh disk = Own(FallMeshes.Disk());
         crystalMesh = Own(FallMeshes.Spires(false)); flameMesh = Own(FallMeshes.Spires(true));
         walls = Part("Shaft walls", Own(FallMeshes.Shaft(ShaftDepth)), surfaceMaterial);
         landmarks = Part("Shaft landmarks", Own(FallMeshes.Landmarks(ShaftDepth)), surfaceMaterial);
-        background = Part("Chamber darkness", boxMesh, surfaceMaterial);
+        background = Part("Chamber darkness", boxMesh, backgroundMaterial);
         floor = Part("Hazard surface", disk, surfaceMaterial);
         var native = waterOverride ? waterOverride : Resources.Load<Material>("Endings/MetaFloorZone/materials/Water");
         if (native && native.HasProperty("_WaterNormal"))
             surfaceMaterial.SetTexture("_WaterNormal",native.GetTexture("_WaterNormal"));
-        if (native && native.shader && native.shader.isSupported) nativeWater = Part("Floor Zone water ripples", disk, native);
+        if (native && native.shader && native.shader.isSupported)
+        {
+            nativeWater = Part("Floor Zone water ripples", disk, native);
+            if (native.HasProperty("_Color")) sourceWaterColor = native.GetColor("_Color");
+        }
         pillars = Part("Flames or crystals", crystalMesh, surfaceMaterial);
         motes = Part("Particles", null, surfaceMaterial);
         opening = Part("Last light overhead", disk, surfaceMaterial);
@@ -136,9 +144,10 @@ internal sealed class FallScenery
         // The chamber and its destination are one moving world until the feet reach the surface.
         // Only the upper metre of the throat widens as the lip draws near.
         float top = reduced ? 5f : travel;
-        // Above the board, all broken panes are windows into this world. Once the rim
-        // moves, clip it to the falling player's moving entry until the eyes are inside.
-        bool useStencil = hasFloorApertures && !reduced && top <= .001f;
+        float rimY = world.position.y + top;
+        // Keep every real opening in place as the board rises. Release the stencil as its
+        // plane crosses the near clip distance so it cannot clip the view from inside.
+        bool useStencil = hasFloorApertures && !reduced && rimY < head.position.y - .05f;
         if (stencilEnabled != useStencil)
         {
             stencilEnabled = useStencil;
@@ -196,10 +205,9 @@ internal sealed class FallScenery
         properties.Clear();
         properties.SetFloat(Theme,(int)kind); properties.SetFloat(Age,age);
         properties.SetFloat(Reveal,progress); properties.SetFloat(Level,level); properties.SetFloat(Motion,motion);
-        float rimY = world.position.y+top;
         entered = reduced ? visible : rimY >= head.position.y;
         properties.SetVector(Mouth,new Vector4(entryWorld.x,rimY,entryWorld.z,mouthRadius));
-        properties.SetVector(MouthRight,new Vector4(mouthRight.x,mouthRight.z,0,reduced || useStencil ? 0 : 1));
+        properties.SetVector(MouthRight,new Vector4(mouthRight.x,mouthRight.z,0,reduced || hasFloorApertures ? 0 : 1));
         // The shaft stays lit. Only the view past its walls gradually loses the room light.
         float overhead = reduced ? 1 : Ease(.15f,26f,rimY-head.position.y);
         Paint(background,kind == FloorEnding.Space ? 8 : 0,sky,visible ? overhead : 0);
@@ -211,10 +219,17 @@ internal sealed class FallScenery
         Paint(floor,floorRole,surfaceColor,visible ? floorAlpha : 0);
         if (nativeWater)
         {
-            // The source graph uses transparency and cannot apply our per-eye opening mask.
-            // Its overlay joins the already visible procedural water once both eyes are inside.
-            nativeWater.enabled = visible && !useStencil && kind == FloorEnding.Water && (reduced || rimY > head.position.y+.12f);
+            // The same rippling surface stays visible all the way from the glass to impact.
+            // The transparent Floor Zone layer adds close-up detail as the splash starts.
+            nativeWater.enabled = visible && kind == FloorEnding.Water && progress > 0;
             nativeWater.transform.localPosition = floor.transform.localPosition + Vector3.up*.009f;
+            if (nativeWater.enabled && nativeWater.sharedMaterial.HasProperty("_Color"))
+            {
+                Color tint = sourceWaterColor;
+                tint.a *= Ease(0,.08f,progress);
+                waterProperties.SetColor("_Color",tint);
+                nativeWater.SetPropertyBlock(waterProperties);
+            }
         }
         pillars.transform.localPosition = entryLocal + Vector3.up*(kind == FloorEnding.Lava ? surfaceY-.11f : 0);
         Paint(pillars,kind == FloorEnding.Lava ? 7 : 5,Color.white, visible ? pillarsAlpha : 0);
@@ -286,7 +301,7 @@ internal sealed class FallScenery
     internal void Dispose()
     {
         Hide();
-        Object.Destroy(world.gameObject); Object.Destroy(surfaceMaterial); Object.Destroy(fadeMaterial);
+        Object.Destroy(world.gameObject); Object.Destroy(surfaceMaterial); Object.Destroy(backgroundMaterial); Object.Destroy(fadeMaterial);
         foreach (Mesh owned in ownedMeshes) Object.Destroy(owned);
     }
 

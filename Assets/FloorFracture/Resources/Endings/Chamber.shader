@@ -138,20 +138,29 @@ Shader "Floor Fracture/Ending chamber"
                         float flooded = 1-smoothstep(_Level-.035,_Level+.035,i.world.y);
                         float caustic = .5+.5*sin(xz.x*4.8+i.world.y*2.4+_Age*1.1)*sin(xz.y*4.1-i.world.y*3.2-_Age*.7);
                         color = lerp(color, color*half3(.27,.73,.83)+half3(.012,.12,.15)*caustic, flooded);
+                        // Reflected light on the low masonry keeps the pool readable at a shallow angle.
+                        float above = max(0,i.world.y-_Level);
+                        float poolLight = 1-smoothstep(.5,14,above);
+                        float reflectedWave = sin(dot(xz,float2(.39,.24))+above*.86-_Time.y*1.65
+                                                  +.62*sin(xz.y*.53+_Time.y*.8));
+                        color += half3(.018,.13,.16)*poolLight*smoothstep(.28,.94,reflectedWave);
                     }
                 }
                 else if (_Role == 2)
                 {
-                    // The same approved ripple map supplies moving reflections through
-                    // the floor portal and on the approach to the native water surface.
+                    // Map scale is in metres. Long swells read from the rim; the approved
+                    // Floor Zone ripple normals resolve gradually as the same water approaches.
                     float2 uv = xz * .085;
                     half2 a = UnpackNormal(SAMPLE_TEXTURE2D(_WaterNormal,sampler_WaterNormal,uv+_Time.y*float2(.014,.009))).xy;
                     half2 b = UnpackNormal(SAMPLE_TEXTURE2D(_WaterNormal,sampler_WaterNormal,uv.yx*1.67+_Time.y*float2(-.009,.012))).xy;
-                    half3 normal = normalize(half3(a.x+.46*b.y,.90,a.y+.46*b.x));
+                    half2 swell = UnpackNormal(SAMPLE_TEXTURE2D(_WaterNormal,sampler_WaterNormal,
+                        uv*.29+_Time.y*float2(.003,-.004))).xy;
+                    half3 normal = normalize(half3(a.x+.46*b.y+.38*swell.x,.95,a.y+.46*b.x+.38*swell.y));
                     half3 view = GetWorldSpaceNormalizeViewDir(i.world);
                     half glint = smoothstep(.62,.94,dot(reflect(-view,normal),normalize(half3(.27,.81,.51))));
                     half reflection = saturate(.2+.42*(1-dot(view,normal))+.32*normal.z);
-                    color = lerp(half3(.015,.11,.17),half3(.09,.42,.49),reflection) + half3(.22,.34,.36)*glint*glint;
+                    color = lerp(half3(.014,.08,.13),half3(.065,.38,.46),reflection)
+                          + half3(.035,.095,.11)*saturate(.50+.95*swell.y) + half3(.22,.34,.36)*glint*glint;
                 }
                 else if (_Role == 3)
                 {

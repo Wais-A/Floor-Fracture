@@ -9,7 +9,12 @@ namespace FloorFracture
     {
         public RoomBoardPlacement Room;
         public OVRCameraRig Rig;
-        public GameStage Stage { get; private set; } = GameStage.Room;
+        GameStage stage = GameStage.Room;
+        public GameStage Stage
+        {
+            get => stage;
+            private set { if (stage != value && narration) narration.Stop(); stage = value; }
+        }
         public int Level { get; private set; } = 1;
         public int WaveNumber { get; private set; } = 1;
         public BoardState State { get; private set; }
@@ -17,21 +22,23 @@ namespace FloorFracture
         public GamePanel Panel { get; private set; }
         public FallSequence Ending { get; private set; }
         GameSound sound;
+        OfflineNarration narration;
         QuestRunMetrics metrics;
         PracticeStone tutorial;
         OVRHand[] trackedHands;
         bool skipPinchHeld;
-        bool reduced, gentle, levelFinished, appPaused;
+        bool reduced, gentle, narrated, levelFinished, appPaused;
         int volume, lastBeat=-1, practiceStart=-1, endingIndex=-1;
         double waitUntil;
         string roundText,clockText;
         bool lastReveal;
         static readonly string[] EndingNames={"Water","Lava","Crystal","Space","Sand","Snow"};
-        const string StoneInstructions="Grab the stone with your hand or controller. Drop or gently toss it onto any intact glass pane.";
+        const string StoneInstructions="Grab the stone with your hand or controller. " + OfflineNarration.StoneCaption;
         static MenuChoice Choice(string text,Action action) => new(text,action);
         static double Now => Time.unscaledTimeAsDouble;
         bool Tracked => !appPaused&&Panel&&Panel.Tracked&&Room&&Room.IsRoomLocalized;
-        Vector2 HeadXZ => PlayerTileTracker.Project(BoardView.Board,Panel.Head.position);
+        float eyeDepth = .08f;
+        Vector2 HeadXZ => PlayerTileTracker.ProjectStance(BoardView.Board.worldToLocalMatrix, Panel.Head.position, Panel.Head.rotation, eyeDepth);
         public int SelectedSeed { get; private set; }
 
         void Start()
@@ -39,12 +46,15 @@ namespace FloorFracture
             if(!Room) Room=FindFirstObjectByType<RoomBoardPlacement>();
             if(!Rig) Rig=FindFirstObjectByType<OVRCameraRig>();
             if(!Room||!Rig) throw new InvalidOperationException("Floor Fracture scene requires its room provider and one OVRCameraRig.");
+            float profileDepth = OVRPlugin.eyeDepth;
+            if (profileDepth >= .035f && profileDepth <= .14f) eyeDepth = profileDepth;
             trackedHands = Rig.GetComponentsInChildren<OVRHand>(true);
             reduced=PlayerPrefs.GetInt("ff.reduced",0)!=0; gentle=PlayerPrefs.GetInt("ff.gentle",0)!=0;
             volume=PlayerPrefs.GetInt("ff.volume",3);
             sound=gameObject.AddComponent<GameSound>(); sound.SetVolume(volume/4f);
+            narrated=PlayerPrefs.GetInt("ff.narration",0)!=0;
+            narration=gameObject.AddComponent<OfflineNarration>(); narration.Configure(narrated,volume/4f);
             Ending=gameObject.AddComponent<FallSequence>(); tutorial=gameObject.AddComponent<PracticeStone>();
-            Ending.ChamberEntered+=()=>{ if(BoardView) BoardView.gameObject.SetActive(false); Room.ShowFloorSurface(false); };
             Panel=gameObject.AddComponent<GamePanel>(); Panel.Initialize(Rig,sound);
 #if DEVELOPMENT_BUILD
             metrics=gameObject.AddComponent<QuestRunMetrics>();
@@ -52,6 +62,7 @@ namespace FloorFracture
             SelectedSeed=Environment.TickCount&int.MaxValue; Room.Changed+=RoomChanged; RoomChanged();
         }
         void OnDestroy() { if(Room) Room.Changed-=RoomChanged; }
+        void OnDisable() { if(narration) narration.Stop(); }
         void RoomChanged()
         {
             if(Room.Status==RoomPlacementStatus.Confirmed)
@@ -59,9 +70,9 @@ namespace FloorFracture
                 if(Stage!=GameStage.Room) return;
                 StartBoard(); Home(); return;
             }
+            if(Ending&&Ending.IsPlaying) Ending.ResetSequence();
             if(State!=null) { State.Pause(); if(BoardView) BoardView.gameObject.SetActive(false); }
             if(tutorial) tutorial.End();
-            if(Ending&&Ending.IsPlaying) Ending.ResetSequence();
             Stage=GameStage.Room;
             switch(Room.Status)
             {
@@ -79,7 +90,7 @@ namespace FloorFracture
             if(BoardView) { BoardView.gameObject.SetActive(false); Destroy(BoardView.gameObject); }
             var fit=Room.Placement; State=new BoardState(fit.Columns,fit.Rows,SelectedSeed,fit.Pitch);
             var board=new GameObject("Confirmed glass board"); BoardView=board.AddComponent<GlassBoardView>(); BoardView.Build(State,fit.Pose);
-            Ending.SetBoard(BoardView);
+            Ending.SetBoard(BoardView,Room);
             Level=WaveNumber=1; levelFinished=false;
         }
         void Home()
@@ -107,11 +118,13 @@ namespace FloorFracture
                 Choice("Fall motion  ·  "+(reduced?"Reduced":"Full"),()=>{reduced=!reduced; SaveSettings(); Settings();}),
                 Choice("Warning  ·  "+(gentle?"Gentle":"Standard"),()=>{gentle=!gentle; SaveSettings(); Settings();}),
                 Choice("Volume  ·  "+volume*25+"%",()=>{volume=(volume+1)%5; SaveSettings(); sound.SetVolume(volume/4f); sound.Click(); Settings();}),
+                Choice("Narration  ·  "+(narrated?"On":"Off"),()=>{narrated=!narrated; SaveSettings(); Settings();}),
                 Choice("Back",Home));
         }
         void SaveSettings()
         {
             PlayerPrefs.SetInt("ff.reduced",reduced?1:0); PlayerPrefs.SetInt("ff.gentle",gentle?1:0);
+            PlayerPrefs.SetInt("ff.narration",narrated?1:0); narration.Configure(narrated,volume/4f);
             PlayerPrefs.SetInt("ff.volume",volume); PlayerPrefs.Save();
         }
         void StartPractice()
@@ -122,21 +135,25 @@ namespace FloorFracture
             Stage=GameStage.PracticeStep;
             waitUntil=0;
             practiceStart=-1;
-            Panel.Show("Practice stepping","Stand on intact glass and find the ring beneath you. Your pane will light up with cracks. Step onto clear glass beside it.",
+            Panel.Show("Practice stepping","Stand on intact glass and find the ring beneath you. " + OfflineNarration.StepCaption,
                 Choice("Try the stone (optional)",StartStonePractice),Choice("Go to game",LeavePractice));
+            narration.Speak(Stage,Panel.Head);
         }
         void StartStonePractice()
         {
             Room.ShowClearance(false);
+            bool entering = Stage != GameStage.PracticeStone;
             Stage=GameStage.PracticeStone;
             waitUntil=0;
             BoardView.RestorePracticePane();
             tutorial.Begin(State,BoardView.Board,Panel,StoneLanded);
             Panel.Show("Stone practice",StoneInstructions,
                 Choice("Return stone",StartStonePractice),Choice("Practice stepping",StartPractice),Choice("Go to game",LeavePractice));
+            if (entering) narration.Speak(Stage,Panel.Head);
         }
         void StoneLanded(int tile)
         {
+            narration.Stop();
             if(tile<0)
             {
                 Panel.SetBody("The stone missed the glass. Pick it up for another try on any intact pane.");
@@ -171,6 +188,9 @@ namespace FloorFracture
             BoardView.AnchorReadout(Panel.Head);
             Stage=GameStage.Countdown; lastBeat=-1; clockText=null; Panel.Hide();
             roundText=plan.Mode switch {WaveMode.Memory=>"MEMORY",WaveMode.LastTile=>"LAST TILE",_=>"CLASSIC"};
+            // The first warning, occupancy ring and countdown tone belong to the
+            // same frame that starts the timer, including a just-locked moving pane.
+            UpdateWave(plan.StartsAt);
             Debug.Log($"[Floor Fracture] seed={State.Seed} waveSeed={plan.Seed} level={Level} wave={WaveNumber} mode={plan.Mode} start={sample.Index} stationary={string.Join(",",plan.StationarySafe)} deadline={plan.Deadline:F3}");
         }
         void Update()
@@ -212,10 +232,11 @@ namespace FloorFracture
                 else if(waitUntil==0&&sample.Kind==SupportKind.Glass&&practiceStart<0)
                 {
                     practiceStart=sample.Index;
-                    Panel.SetBody("Your ring is on cracked glass. Step onto a clear pane that shares an edge with it. Take your time.");
+                    Panel.SetBody(OfflineNarration.StepCaption + " Choose a pane that shares an edge with yours. Take your time.");
                 }
                 else if(waitUntil==0&&sample.Kind==SupportKind.Glass&&State.Neighbors(practiceStart,sample.Index))
                 {
+                    narration.Stop();
                     BoardView.PracticeBreak(practiceStart);
                     sound.Break(BoardView.Board.TransformPoint(GlassGeometry.Ground(State.Center(practiceStart))),1);
                     sound.Completion();
@@ -232,6 +253,7 @@ namespace FloorFracture
         void UpdateWave(double now)
         {
             var plan=State.ActiveWave;
+            var resolvingSlider=State.Slider;
             WaveResult result=State.Tick(HeadXZ,Tracked,now);
             if(result==WaveResult.Paused) { PauseRound(); return; }
             if(result==WaveResult.Pending)
@@ -254,8 +276,9 @@ namespace FloorFracture
                 Vector3 near=Vector3.zero; float best=float.PositiveInfinity;
                 foreach(int cell in plan.BreakingTiles)
                 {
-                    BoardView.Shatter(cell);
-                    var point=BoardView.transform.TransformPoint(GlassGeometry.Ground(State.Center(cell)));
+                    Vector2 center = resolvingSlider != null && resolvingSlider.Tile == cell
+                        ? resolvingSlider.CenterAt(plan.Deadline) : State.Center(cell);
+                    var point=BoardView.Shatter(cell,center);
                     float distance=(point-Panel.Head.position).sqrMagnitude;
                     if(distance<best) { best=distance; near=point; }
                 }
@@ -263,7 +286,8 @@ namespace FloorFracture
             }
             BoardView.Draw(null,State.CurrentSample,now,gentle);
             BoardView.SetReadout("",Panel.Head);
-            Debug.Log($"[Floor Fracture] result={result} tile={State.CurrentSample.Index} waves={State.WavesSurvived}");
+            var support = State.CurrentSample;
+            Debug.Log($"[Floor Fracture] result={result} tile={support.Index} support={support.Kind} slider={support.IsSlider} stanceCell={State.IndexAt(support.Stance)} scheduledSafe={plan.IsSafe(support.Index)} waves={State.WavesSurvived}");
             if(result==WaveResult.Lost) { BeginFall(); return; }
             levelFinished=result==WaveResult.LevelCleared;
             if(levelFinished) sound.Completion(); else ++WaveNumber;
@@ -279,14 +303,12 @@ namespace FloorFracture
         void BeginFall()
         {
             Stage=GameStage.Fall; tutorial.End();
-            var point=Panel.Head.position; point.y=BoardView.transform.position.y;
-            int cell=State.CurrentSample.Index;
-            if(cell>=0)
-            {
-                point=BoardView.transform.TransformPoint(GlassGeometry.Ground(State.Center(cell)));
-                BoardView.RevealLossAperture(cell);
-            }
-            Ending.SetOpening(point,State.Pitch,BoardView.transform.eulerAngles.y);
+            var board=BoardView.Board;
+            Vector2 hit=PlayerTileTracker.Project(board,Panel.Head.position);
+            // Natural losses already exposed the actual broken panes. A leaning eye may
+            // project across a seam onto surviving glass, which must stay in the arena.
+            if (State.LastLoss==WaveLossReason.None) BoardView.RevealLossAperture(State.IndexAt(hit));
+            Ending.SetOpening(board.TransformPoint(GlassGeometry.Ground(hit)),State.Pitch,board.eulerAngles.y);
             Panel.Hide(); Ending.Begin(Panel.Head,reduced,ShowResults);
             skipPinchHeld = HasSkipPinch();
             BoardView.SetReadout("Pinch or A / X  ·  Skip",Panel.Head);
@@ -320,7 +342,19 @@ namespace FloorFracture
             if(Stage!=GameStage.Fall) return;
             Room.ShowFloorSurface(false);
             Stage=GameStage.Results; BoardView.gameObject.SetActive(false); Panel.Recenter();
-            Panel.Show("Run complete",$"Level {Level}   ·   {State.WavesSurvived} waves survived\n{Ending.LastEndingName}",Choice("Restart",Restart),Choice("Quit",Quit));
+            string score = State.WavesSurvived == 1 ? "1 wave survived" : $"{State.WavesSurvived} waves survived";
+            string result = State.LastLoss switch
+            {
+                WaveLossReason.GapGraceExpired => $"The ring was over an open hole for {PlayerTileTracker.GapGrace:0.0} seconds.",
+                WaveLossReason.GapAtZero => "At zero, the ring was over an open hole.",
+                WaveLossReason.MovingPane => "At zero, the moving glass under the ring shattered.",
+                WaveLossReason.MemoryPane => "At zero, the ring was on glass that cracked during the Memory reveal.",
+                WaveLossReason.CrackedPane => "At zero, the glass under the ring shattered.",
+                _ => "Ending preview"
+            };
+            Panel.Show("Run complete",$"Level {Level}   ·   {score}   ·   {Ending.LastEndingName}\n{result}\n{OfflineNarration.ResultsCaption}",
+                Choice("Restart",Restart),Choice("Quit",Quit));
+            if (!Ending.LastWasSkipped) narration.Speak(Stage,Panel.Head);
         }
         void Restart()
         {

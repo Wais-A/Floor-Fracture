@@ -10,36 +10,38 @@ namespace FloorFracture
         public SupportKind Kind { get; }
         public int Index { get; }
         public bool IsSlider { get; }
+        public Vector2 Stance { get; }
 
-        internal TileSample(SupportKind kind, int index = -1, bool isSlider = false)
+        internal TileSample(SupportKind kind, int index = -1, bool isSlider = false, Vector2 stance = default)
         {
             Kind = kind;
             Index = index;
             IsSlider = isSlider;
+            Stance = stance;
         }
     }
 
     public sealed class SlidingPane
     {
-        public float Travel { get; }
         public float HalfSize { get; }
         public int Tile { get; }
+        public int OtherHole { get; }
         public Vector2 Direction { get; }
         public double MotionStartsAt { get; }
         public bool Locked { get; private set; }
 
-        private readonly Vector2 holeCenter;
+        private readonly Vector2 startCenter, endCenter;
         private Vector2 lockedCenter;
         private const double OneWaySeconds = 1.20;
 
-        internal SlidingPane(int tile, Vector2 holeCenter, Vector2 direction, float pitch, double start)
+        internal SlidingPane(BoardState board, int tile, int otherHole, double start)
         {
             Tile = tile;
-            this.holeCenter = holeCenter;
-            Direction = direction;
-            // Even at its turning point the moving pane clears the edge of its original hole.
-            Travel = pitch * 0.18f;
-            HalfSize = pitch * 0.30f;
+            OtherHole = otherHole;
+            startCenter = board.Center(tile);
+            endCenter = board.Center(otherHole);
+            Direction = (endCenter-startCenter).normalized;
+            HalfSize = board.Pitch * BoardState.PaneHalfPitch;
             MotionStartsAt = start + 0.65;
         }
 
@@ -48,7 +50,20 @@ namespace FloorFracture
             if (Locked) return lockedCenter;
             double phase = (Math.Max(0, now - MotionStartsAt) / OneWaySeconds) % 2.0;
             double fraction = phase <= 1 ? phase : 2 - phase;
-            return holeCenter + Direction * (float)((2 * fraction - 1) * Travel);
+            return Vector2.LerpUnclamped(startCenter, endCenter, (float)fraction);
+        }
+
+        internal ulong ExitMask(BoardState board)
+        {
+            // Each end has a side-by-side permanent pane. At mid-travel either side step
+            // can add up to half a pane along the lane to one pane across it.
+            ulong candidates = (board.NeighborMask(Tile) | board.NeighborMask(OtherHole)) & board.StationaryMask;
+            ulong exits = 0;
+            float limit = board.Pitch * board.Pitch * 1.2501f;
+            for (int i=0; candidates!=0; i++, candidates >>= 1)
+                if ((candidates & 1UL)!=0 && (board.Center(i)-lockedCenter).sqrMagnitude <= limit)
+                    exits |= 1UL << i;
+            return exits;
         }
 
         internal bool TryLand(Vector2 point, double now)
@@ -65,7 +80,9 @@ namespace FloorFracture
 
     public sealed class PlayerTileTracker
     {
-        public const float BorderTolerance = 0.008f;
+        // In metres. A supported stance survives small head shifts across an internal seam.
+        public const float BorderTolerance = 0.035f;
+        public const float SupportReach = 0.09f;
         public const double GapGrace = 0.3;
         public TileSample Current { get; private set; } = new TileSample(SupportKind.Untracked);
 
@@ -87,6 +104,13 @@ namespace FloorFracture
             if (Math.Abs(up.y) < 0.00001f) return new Vector2(float.NaN, float.NaN);
             local -= up * (local.y / up.y);
             return new Vector2(local.x, local.z);
+        }
+
+        // The center eye rotates around the neck when looking down. Project that pivot,
+        // rather than the eye or gaze ray, to estimate a planted stance from the tracked rig.
+        public static Vector2 ProjectStance(Matrix4x4 worldToBoard, Vector3 eye, Quaternion rotation, float eyeDepth)
+        {
+            return Project(worldToBoard, eye + rotation * new Vector3(0f, -.075f, -eyeDepth));
         }
 
         internal void Reset()
@@ -113,7 +137,7 @@ namespace FloorFracture
         internal TileSample Sample(BoardState board, Vector2 point, bool tracked, double now)
         {
             TileSample sample = Classify(board, point, tracked, now);
-            Current = sample;
+            Current = new TileSample(sample.Kind, sample.Index, sample.IsSlider, point);
             if (sample.Kind == SupportKind.Glass || sample.Kind == SupportKind.Gap)
             {
                 previousPoseTime = now;
@@ -123,19 +147,16 @@ namespace FloorFracture
             {
                 previousPoseTime = double.NaN;
             }
-            return sample;
+            return Current;
         }
 
-        internal bool GraceExpired(double now)
+        internal void UpdateGap(double now)
         {
-            // An arrival exactly at the end of grace is late. Compare deadlines in their time domain.
-            if (!double.IsNaN(gapStartedAt) && now >= gapStartedAt + GapGrace) return true;
             if (Current.Kind == SupportKind.Gap)
             {
                 if (double.IsNaN(gapStartedAt)) gapStartedAt = now;
             }
             else gapStartedAt = double.NaN;
-            return false;
         }
 
         private TileSample Classify(BoardState board, Vector2 point, bool tracked, double now)
@@ -143,32 +164,43 @@ namespace FloorFracture
             if (!tracked || !Finite(point)) return new TileSample(SupportKind.Untracked);
             int index = board.IndexAt(point);
             if (index < 0) return new TileSample(SupportKind.Outside);
-            if (!board.IsIntact(index))
-            {
-                if (board.Slider != null && board.Slider.Tile == index && board.Slider.TryLand(point, now))
-                    return new TileSample(SupportKind.Glass, index, true);
-                return new TileSample(SupportKind.Gap, index);
-            }
+            bool intact = board.IsIntact(index);
+            var slider = board.Slider;
+            if (slider != null && !intact && slider.TryLand(point, now))
+                return new TileSample(SupportKind.Glass, slider.Tile, true);
 
-            int previous = Current.Index;
-            WavePlan wave = board.ActiveWave;
-            // At readiness and the deadline, use the exact pane. Otherwise an unchanged head
-            // on the far side of a seam could start the next wave on a different safe cell.
-            if (wave != null && now < wave.Deadline && Current.Kind == SupportKind.Glass &&
-                !Current.IsSlider && previous != index &&
-                board.IsIntact(previous) && board.Neighbors(previous, index) &&
-                wave.IsBreaking(previous) == wave.IsBreaking(index))
+            float half = board.Pitch * BoardState.PaneHalfPitch;
+            float reach = intact ? BorderTolerance : SupportReach;
+            if (Current.Kind == SupportKind.Glass &&
+                (Current.IsSlider ? slider != null && slider.Locked && slider.Tile == Current.Index : board.IsIntact(Current.Index)))
             {
-                // A single sample drives the marker and the verdict. A dangerous edge, hole, or
-                // perimeter always uses the exact footprint; two equivalent panes can share a seam.
-                Vector2 oldCenter = board.Center(previous);
-                Vector2 newCenter = board.Center(index);
-                bool alongX = previous % board.Width != index % board.Width;
-                float seam = alongX ? (oldCenter.x + newCenter.x) * 0.5f : (oldCenter.y + newCenter.y) * 0.5f;
-                if (Math.Abs((alongX ? point.x : point.y) - seam) <= BorderTolerance)
-                    index = previous;
+                Vector2 old = Current.IsSlider ? slider.CenterAt(now) : board.Center(Current.Index);
+                if (DistanceToPaneSquared(point, old, half) <= reach * reach) return Current;
             }
-            return new TileSample(SupportKind.Glass, index);
+            if (intact) return new TileSample(SupportKind.Glass, index);
+
+            // Only the immediate neighbours can meet this circular footprint, even on
+            // the narrowest board. A full gap center always remains unsupported.
+            int nearest = -1, col = index % board.Width, row = index / board.Width;
+            float best = SupportReach * SupportReach;
+            for (int y = Math.Max(0,row-1); y <= Math.Min(board.Height-1,row+1); ++y)
+            for (int x = Math.Max(0,col-1); x <= Math.Min(board.Width-1,col+1); ++x)
+            {
+                int tile = y * board.Width + x;
+                if (!board.IsIntact(tile)) continue;
+                float distance = DistanceToPaneSquared(point,board.Center(tile),half);
+                if (distance >= best) continue;
+                best = distance;
+                nearest = tile;
+            }
+            return nearest < 0 ? new TileSample(SupportKind.Gap, index) : new TileSample(SupportKind.Glass, nearest);
+        }
+
+        private static float DistanceToPaneSquared(Vector2 point, Vector2 center, float half)
+        {
+            float x = Math.Max(0f,Math.Abs(point.x-center.x)-half);
+            float y = Math.Max(0f,Math.Abs(point.y-center.y)-half);
+            return x*x+y*y;
         }
 
         internal static bool Finite(Vector2 point)

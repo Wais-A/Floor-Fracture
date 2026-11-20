@@ -68,7 +68,7 @@ namespace FloorFracture.Editor
             }
             Require(!markers.Any(marker => marker.BlockId == "7358e191-33b7-43ca-b066-b2f00531ac66" ||
                 marker.BlockId == "975428dc-db04-4e43-be4a-232f192cd3eb"), "An SDK example cube or shared spatial anchor block was installed in the main scene.");
-            Record("The gameplay scene keeps the app’s wall and furniture overlay inactive. MRUK still fits the board and the floor has its own depth mask. The saved scene enables one SDK environment depth provider and contains no example cube, occlusion root, raycast marker, or shared anchor.");
+            Record("The gameplay scene keeps the app’s wall and furniture overlay inactive. MRUK fits the board and the brick samples the live stereo environment depth. The saved scene enables one SDK environment depth provider and contains no example cube, occlusion root, raycast marker, or shared anchor.");
         }
 
         private static void VerifyStoneOcclusion(PracticeStone tutorial)

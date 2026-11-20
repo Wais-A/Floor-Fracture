@@ -19,7 +19,7 @@ namespace FloorFracture.Editor
     {
         private const string Key = "FloorFracture.GameplaySmoke.";
         private const string ScenePath = "Assets/FloorFracture/Scenes/FloorFracture.unity";
-        private static readonly string[] Preferences = { "ff.reduced", "ff.gentle", "ff.volume" };
+        private static readonly string[] Preferences = { "ff.reduced", "ff.gentle", "ff.volume", "ff.narration" };
         private static readonly Stack<IEnumerator> Steps = new Stack<IEnumerator>();
         private static GameFlow game;
         private static Pose head, left, right;
@@ -53,6 +53,7 @@ namespace FloorFracture.Editor
                 SessionState.SetBool(Key + name + ".exists", PlayerPrefs.HasKey(name));
                 SessionState.SetInt(Key + name + ".value", PlayerPrefs.GetInt(name));
             }
+            PlayerPrefs.DeleteKey("ff.narration");
             report = new SmokeReport { startedUtc = DateTime.UtcNow.ToString("O"), unityVersion = Application.unityVersion, scene = ScenePath };
             report.depthProviderEnabledInAuthoredScene = AuthoredDepthEnabled();
             Save();
@@ -160,7 +161,7 @@ namespace FloorFracture.Editor
             yield return VerifyMenuRecenter();
             yield return RayChoose(3, false); yield return Stage(GameStage.Settings);
             Require(!outlines.gameObject.activeSelf, "The Welcome board perimeter stayed visible inside Settings.");
-            yield return RayChoose(4, true); yield return Stage(GameStage.Welcome);
+            yield return RayChoose(5, true); yield return Stage(GameStage.Welcome);
             Record("The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.");
             Choose("Settings"); yield return Stage(GameStage.Settings);
             int oldMotion = PlayerPrefs.GetInt("ff.reduced",0), oldWarning = PlayerPrefs.GetInt("ff.gentle",0), oldVolume = PlayerPrefs.GetInt("ff.volume",3);
@@ -190,7 +191,7 @@ namespace FloorFracture.Editor
                 {
                     Require(plan.Mode == WaveMode.Classic, "First wave was not Classic.");
                     yield return Frames(2); Capture("classic-glass", SmokeView.BoardObserver);
-                    LookAtTile(plan.StartingTile, true);
+                    FrameRingAndClock();
                     yield return Frames(2); Capture("classic-player-view", SmokeView.CenterEye);
                 }
                 if (plan.Mode == WaveMode.Memory) sawMemory = true;
@@ -270,6 +271,9 @@ namespace FloorFracture.Editor
                 if (i != 1) game.Ending.Skip();
                 yield return Stage(GameStage.Results, 10);
                 VerifyFloorVisibility(false);
+                var resultsBody=game.Panel.transform.Find("Floor Fracture Menu/Instructions").GetComponent<UnityEngine.UI.Text>().text;
+                Require(i==0 ? resultsBody.Contains("glass under the ring shattered") : resultsBody.Contains("Ending preview"),
+                    "The Results panel must distinguish the resolved physical wave from a development preview.");
                 Choose("Restart"); yield return Stage(GameStage.Ready);
                 VerifyFloorVisibility(true);
                 Require(!game.Ending.IsPlaying && game.Level == 1 && game.State.WavesSurvived == 0 &&
@@ -283,6 +287,7 @@ namespace FloorFracture.Editor
 
             yield return VerifyEveryEndingExit();
             yield return ObserveSelectedFall("Water", false, 1);
+            yield return VerifyOutsideBrickPreview();
             yield return ObserveSelectedFall("Lava", false, 1);
             yield return ObserveSelectedFall("Water", true, 5);
             yield return LevelThree();
@@ -302,6 +307,9 @@ namespace FloorFracture.Editor
                 RoomPlacementStatus.PermissionDenied, "App permissions", "Try again");
             yield return VerifyRoomRecovery(MRUK.LoadDeviceResult.NoRoomsFound,
                 RoomPlacementStatus.NoRoom, "Space Setup", "Check again");
+            // Audition uses the optional stone. Check it after the first-time stepping
+            // lesson has established that a fresh run does not instantiate the stone.
+            yield return VerifyOfflineNarration();
         }
 
         private static IEnumerator VerifyRoomRecovery(MRUK.LoadDeviceResult result, RoomPlacementStatus status,
@@ -351,17 +359,25 @@ namespace FloorFracture.Editor
             }
             var slide = game.State.Slider;
             var moving = game.BoardView.transform.Find("Sliding pane");
-            var arrow = moving.Find("Direction").GetComponent<MeshRenderer>();
+            var ordinary = game.BoardView.transform.Find($"Glass {wave.GuaranteedTile%game.State.Width}, {wave.GuaranteedTile/game.State.Width}");
             int score = game.State.WavesSurvived;
             Require(!slide.Locked && !game.State.IsIntact(slide.Tile) && game.State.IsIntact(wave.GuaranteedTile),
                 "The optional moving pane must occupy an existing hole with a permanent alternative.");
             yield return Frames(2);
-            Require(moving.gameObject.activeInHierarchy && arrow.enabled && fog.enabled == wave.Fog, "The moving pane, its direction cue, or the planned fog state was missing.");
+            Require(moving.gameObject.activeInHierarchy && moving.childCount==ordinary.childCount &&
+                moving.localScale==ordinary.localScale && Mathf.Abs(moving.localPosition.y-ordinary.localPosition.y)<.0001f &&
+                fog.enabled==wave.Fog, "The moving pane must match the ordinary glass height, scale and surfaces.");
+            foreach (string part in new[]{"Smoky pane","Rim","Fissures"})
+            {
+                var movingPart=moving.Find(part);
+                var fixedPart=ordinary.Find(part);
+                Require(movingPart.GetComponent<MeshFilter>().sharedMesh==fixedPart.GetComponent<MeshFilter>().sharedMesh &&
+                    movingPart.GetComponent<MeshRenderer>().sharedMaterial==fixedPart.GetComponent<MeshRenderer>().sharedMaterial,
+                    "The two glass types use different "+part+" geometry or material.");
+            }
 
-            // Miss across the direction of travel, which cannot intersect the moving footprint.
-            var across = new Vector2(-slide.Direction.y, slide.Direction.x);
-            float missOffset = (game.State.Pitch * 0.5f + slide.HalfSize) * 0.5f;
-            StandAt(game.State.Center(slide.Tile) + across * missOffset);
+            // The pane starts at the other end of its two-hole lane.
+            StandAt(game.State.Center(slide.OtherHole));
             yield return Wait(() => game.State.CurrentSample.Kind == SupportKind.Gap, "projected head missed moving glass", 2);
             StandOn(wave.GuaranteedTile); yield return Frames(2);
             Require(game.Stage == GameStage.Countdown && !slide.Locked && game.State.CurrentSample.Index == wave.GuaranteedTile &&
@@ -369,11 +385,16 @@ namespace FloorFracture.Editor
             yield return Wait(() => Now > slide.MotionStartsAt + 0.10, "sliding pane to move", 3);
             Vector3 oldCenter = moving.localPosition;
             LookAtTile(slide.Tile, false); yield return Delay(0.2);
-            Require((moving.localPosition - oldCenter).sqrMagnitude > 0.00005f, "The rendered slide marker did not travel along its cue.");
+            Require((moving.localPosition - oldCenter).sqrMagnitude > 0.00005f, "The glass did not travel along the two-hole lane.");
             Capture("level3-moving-pane-player-view", SmokeView.CenterEye);
             StandAt(slide.CenterAt(Now)); yield return Frames(2);
-            Require(slide.Locked && game.State.CurrentSample.IsSlider && !arrow.enabled, "Landing on moving glass did not lock the pane and remove its arrow.");
+            Require(slide.Locked && game.State.CurrentSample.IsSlider, "Landing on moving glass did not lock it.");
             Vector3 caught = moving.localPosition;
+            var ring = game.BoardView.transform.Find("Occupied square").GetComponent<MeshRenderer>();
+            Vector3 ringOffset = ring.transform.localPosition-caught;
+            float ringEdge = (GlassGeometry.RingRadius+GlassGeometry.RingWidth*.5f)*ring.transform.localScale.x;
+            Require(ring.enabled && Mathf.Abs(ringOffset.x)+ringEdge<=slide.HalfSize &&
+                Mathf.Abs(ringOffset.z)+ringEdge<=slide.HalfSize, "The occupied ring extends beyond the glass supporting the player.");
             LookAtTile(slide.Tile, true); yield return Delay(0.20);
             Require((moving.localPosition - caught).sqrMagnitude < 0.000001f, "The caught sliding pane kept moving.");
             Capture("level3-locked-pane-player-view", SmokeView.CenterEye);
@@ -381,7 +402,34 @@ namespace FloorFracture.Editor
             Require(game.State.WavesSurvived == score + 1 && !game.State.IsIntact(slide.Tile) && game.State.Slider == slide && slide.Locked,
                 "The deadline did not retain the caught pane over its original opening.");
             RecordWave(wave, true);
-            Record($"Level 3 seed 379 showed fog, then a moving pane over hole {slide.Tile}. A deliberate miss recovered on permanent tile {wave.GuaranteedTile}. Catching the moving glass locked its position and survived the deadline.");
+            yield return Stage(GameStage.Countdown, 4);
+            var closing=game.State.ActiveWave;
+            Require(closing.IsBreaking(slide.Tile) && moving.Find("Fissures").GetComponent<MeshRenderer>().enabled,
+                "The previously caught moving pane must display ordinary warning cracks before it breaks.");
+            int breaking=closing.BreakingTiles.First(i=>i!=slide.Tile);
+            var ordinaryBreak=game.BoardView.transform.Find($"Glass {breaking%game.State.Width}, {breaking/game.State.Width}");
+            var movingWarning=new MaterialPropertyBlock();
+            var stationaryWarning=new MaterialPropertyBlock();
+            moving.Find("Rim").GetComponent<MeshRenderer>().GetPropertyBlock(movingWarning);
+            ordinaryBreak.Find("Rim").GetComponent<MeshRenderer>().GetPropertyBlock(stationaryWarning);
+            Require(ordinaryBreak.Find("Fissures").GetComponent<MeshRenderer>().enabled &&
+                movingWarning.GetColor("_Color")==stationaryWarning.GetColor("_Color"),
+                "The moving and stationary panes must show the same crack shape and warning pulse.");
+            StandOn(closing.GuaranteedTile);
+            yield return Stage(GameStage.BetweenWaves, 8);
+            yield return Frames(1);
+            var pieces=game.BoardView.transform.Find("Falling fragments").GetComponent<MeshFilter>().sharedMesh.vertices;
+            int verticesPerPane=GlassGeometry.Pieces.Sum(face=>face.Length);
+            int paneIndex=closing.BreakingTiles.Reverse().ToList().IndexOf(slide.Tile);
+            var paneVertices=pieces.Skip(paneIndex*verticesPerPane).Take(verticesPerPane).ToArray();
+            Require(paneVertices.Length==verticesPerPane && !moving.gameObject.activeSelf && game.State.Slider==null,
+                "The moving glass must turn into the same sixteen fragments as the stationary glass.");
+            var bounds=new Bounds(paneVertices[0],Vector3.zero);
+            foreach(var vertex in paneVertices) bounds.Encapsulate(vertex);
+            Require(Mathf.Abs(bounds.center.x-caught.x)<.035f && Mathf.Abs(bounds.center.z-caught.z)<.035f &&
+                Mathf.Abs(bounds.size.x-slide.HalfSize*2)<.045f && Mathf.Abs(bounds.size.z-slide.HalfSize*2)<.045f,
+                "Moving glass fragments did not start at the caught pose and full visible width.");
+            Record($"Level 3 seed 379 moved ordinary full-sized glass between holes {slide.Tile} and {slide.OtherHole}. A miss recovered, a catch held through zero, and the warned pane broke into {GlassGeometry.Pieces.Length} fitted shards at ({caught.x:F3}, {caught.z:F3}) m with measured width {bounds.size.x:F3} m.");
         }
 
         private static int FindSliderRoute()
@@ -450,7 +498,24 @@ namespace FloorFracture.Editor
         private static void StandAt(Vector2 c)
         {
             var board = game.BoardView.Board;
-            SetHead(new Pose(board.TransformPoint(new Vector3(c.x,1.6f,c.y)), board.rotation * Quaternion.Euler(15f,0f,0f)));
+            SetStandingHead(c,board.rotation * Quaternion.Euler(15f,0f,0f));
+        }
+
+        private static float ProfileEyeDepth()
+        {
+            float depth = OVRPlugin.eyeDepth;
+            return depth >= .035f && depth <= .14f ? depth : .08f;
+        }
+
+        // Turning a simulated head pivots the eye around a planted stance, just as the
+        // production support estimate expects when the wearer looks down.
+        private static void SetStandingHead(Vector2 stance, Quaternion rotation)
+        {
+            var board = game.BoardView.Board;
+            var eye = board.TransformPoint(new Vector3(stance.x,1.6f,stance.y));
+            var projected = PlayerTileTracker.ProjectStance(board.worldToLocalMatrix,eye,rotation,ProfileEyeDepth());
+            eye += board.TransformVector(GlassGeometry.Ground(stance-projected));
+            SetHead(new Pose(eye,rotation));
         }
 
         private static void LookAtTile(int tile, bool includeClock)
@@ -458,13 +523,49 @@ namespace FloorFracture.Editor
             var board = game.BoardView.Board;
             var cell = game.State.Center(tile);
             var target = board.TransformPoint(new Vector3(cell.x, 0f, cell.y));
+            var marker = board.Find("Occupied square").GetComponent<MeshRenderer>();
+            if (marker.enabled && game.State.CurrentSample.Index == tile) target = marker.bounds.center;
             Vector3 direction = (target - head.position).normalized;
             if (includeClock)
             {
                 var clock = board.Find("Countdown and score").GetComponent<MeshRenderer>();
                 direction += (clock.bounds.center - head.position).normalized;
             }
-            SetHead(new Pose(head.position, Quaternion.LookRotation(direction, Vector3.up)));
+            var stance = PlayerTileTracker.ProjectStance(board.worldToLocalMatrix,head.position,head.rotation,ProfileEyeDepth());
+            SetStandingHead(stance,Quaternion.LookRotation(direction,Vector3.up));
+        }
+
+        private static void FrameRingAndClock()
+        {
+            var board = game.BoardView.Board;
+            var ring = board.Find("Occupied square").GetComponent<MeshRenderer>();
+            var clock = board.Find("Countdown and score").GetComponent<MeshRenderer>();
+            var backing = clock.transform.Find("Contrast backing").GetComponent<MeshRenderer>();
+            var floor = game.Room.FloorEffect;
+            Require(backing.enabled && clock.sortingOrder>backing.sortingOrder &&
+                floor.EffectMeshObjects.Values.Select(p=>p.effectMeshGO.GetComponent<MeshRenderer>())
+                    .Where(r=>r).All(r=>backing.sortingOrder>r.sortingOrder),
+                "The room floor can overpaint the countdown backing.");
+            Vector2 stance = PlayerTileTracker.ProjectStance(board.worldToLocalMatrix,head.position,head.rotation,ProfileEyeDepth());
+            // Fit the screen-space extremes, since the clock can be several metres farther
+            // away than the ring. Repeat once after the eye has pivoted above the planted feet.
+            for (int pass = 0; pass < 2; pass++)
+            {
+                var forward = Vector3.ProjectOnPlane(clock.bounds.center-head.position,Vector3.up).normalized;
+                float low=180f, high=-180f;
+                foreach (var renderer in new[]{ring,clock})
+                {
+                    Bounds bounds=renderer.bounds;
+                    for (int i=0;i<8;i++)
+                    {
+                        var corner=new Vector3((i&1)==0?bounds.min.x:bounds.max.x,(i&2)==0?bounds.min.y:bounds.max.y,
+                            (i&4)==0?bounds.min.z:bounds.max.z)-head.position;
+                        float down=Mathf.Atan2(-corner.y,Vector3.Dot(corner,forward))*Mathf.Rad2Deg;
+                        low=Mathf.Min(low,down); high=Mathf.Max(high,down);
+                    }
+                }
+                SetStandingHead(stance,Quaternion.LookRotation(forward,Vector3.up)*Quaternion.Euler((low+high)*.5f,0,0));
+            }
         }
 
         private static void SetHead(Pose value)
@@ -559,6 +660,7 @@ namespace FloorFracture.Editor
             public List<EndingExitEvidence> endingExits = new List<EndingExitEvidence>();
             public string previewBeforeNaturalLoss;
             public List<LandingReadback> openLandings = new List<LandingReadback>();
+            public List<LandingView> landingViews = new List<LandingView>();
         }
 
         [Serializable]

@@ -21,7 +21,7 @@ namespace FloorFracture.Editor
             var registered = depth.MaskMeshFilters;
             Require(effect.HideMesh != visible && (!visible || meshes.Length > 0) &&
                 meshes.All(o => o.effectMeshGO.GetComponent<MeshRenderer>().enabled == visible) &&
-                meshes.All(o => registered.Count(m => m == o.effectMeshGO.GetComponent<MeshFilter>()) == (visible ? 1 : 0)),
+                meshes.All(o => !registered.Contains(o.effectMeshGO.GetComponent<MeshFilter>())),
                 "Unexpected surrounding brick visibility at " + game.Stage + " / " + game.Room.Status);
         }
 
@@ -216,146 +216,300 @@ namespace FloorFracture.Editor
         // Magenta is the sentinel for passthrough. No virtual geometry was drawn there.
         private static bool IsBrick(Color32 pixel) => !(pixel.r > 245 && pixel.g < 8 && pixel.b > 245);
 
+
         private enum DepthObject { Floor, Couch, ChairLeg, Bin }
 
-        private static DepthObject ObjectAt(float u, float v, bool binMoved)
+        private static DepthObject ObjectAt(Vector2 p, bool moved)
         {
-            float y = Mathf.Abs(v - .5f);
-            if (u > .14f && u < .33f && y < .23f) return DepthObject.Couch;
-            if (y < .15f && (Mathf.Abs(u - .435f) < .022f || Mathf.Abs(u - .555f) < .022f))
+            float y = Mathf.Abs(p.y - .5f);
+            if (p.x > .14f && p.x < .33f && y < .23f) return DepthObject.Couch;
+            if (y < .15f && (Mathf.Abs(p.x - .435f) < .022f || Mathf.Abs(p.x - .555f) < .022f))
                 return DepthObject.ChairLeg;
-            if (new Vector2(u - (binMoved ? .81f : .69f), y).sqrMagnitude < .053f * .053f)
-                return DepthObject.Bin;
-            return DepthObject.Floor;
-        }
-
-        private static bool HasUniformNeighborhood(float u, float v, float edge, bool binMoved, DepthObject shape)
-        {
-            for (int y = -1; y <= 1; y++)
-                for (int x = -1; x <= 1; x++)
-                    if (ObjectAt(u + x * edge, v + y * edge, binMoved) != shape) return false;
-            return true;
+            return new Vector2(p.x - (moved ? .81f : .69f), y).sqrMagnitude < .053f * .053f
+                ? DepthObject.Bin : DepthObject.Floor;
         }
 
         private static void VerifyFloorDepth(MeshRenderer[] renderers, Material brick, Camera camera,
             int imageSize, System.Func<Color32[]> read, Color32[] reference)
         {
-            const int size = 96;
-            const float near = .1f, floorDistance = 3f;
-            var depth = Object.FindAnyObjectByType<Meta.XR.EnvironmentDepth.EnvironmentDepthManager>(FindObjectsInactive.Include);
             VerifyFloorVisibility(true);
-            Require(depth.MaskBias > 0 && depth.MaskBias < .04f, "The floor mask would erase low foreground objects.");
-            var raw = new Texture2DArray(size, size, 2, TextureFormat.RGBAFloat, false, true) { filterMode = FilterMode.Point };
-            var floor = new Texture2DArray(size, size, 2, TextureFormat.RGBAFloat, false, true) { filterMode = FilterMode.Point };
-            var soft = new Texture2DArray(size, size, 2, TextureFormat.RGBAFloat, false, true)
-                { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
-            var combined = new RenderTexture(size, size, 0, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear)
-                { dimension = TextureDimension.Tex2DArray, volumeDepth = 2 };
-            var mask = new Material(Shader.Find("Meta/EnvironmentDepth/DepthMask")) { enableInstancing = true };
-            var surface = new Material(brick);
-            using var commands = new CommandBuffer();
-            try
-            {
-                var projection = Matrix4x4.zero;
-                projection.m00 = projection.m12 = 1f / camera.orthographicSize;
-                projection.m03 = -camera.transform.position.x * projection.m00;
-                projection.m13 = -camera.transform.position.z * projection.m12;
-                projection.m23 = 1 - 2 * near / floorDistance;
-                projection.m33 = 1;
-                surface.SetMatrixArray("_EnvironmentDepthReprojectionMatrices", new[] { projection, projection });
-                surface.SetVector("_EnvironmentDepthZBufferParams", new Vector4(-2 * near, -1, 0, 0));
-                surface.SetTexture("_PreprocessedEnvironmentDepthTexture", soft);
-                surface.SetVector("_PreprocessedEnvironmentDepthTexture_TexelSize", new Vector4(1f/size, 1f/size, size, size));
-                surface.EnableKeyword("SOFT_OCCLUSION");
-                foreach (var renderer in renderers) renderer.sharedMaterial = surface;
-                combined.Create();
-                mask.SetTexture("_EnvironmentDepthTexture", raw);
-                mask.SetTexture("_MaskTexture", floor);
-                commands.SetRenderTarget(new RenderTargetIdentifier(combined, 0, CubemapFace.Unknown, -1));
-                commands.DrawProcedural(Matrix4x4.identity, mask, 1, MeshTopology.Triangles, 3, 2);
+            const int sensor = 128;
+            const float near = .1f, distance = 3f;
+            float width = 2 * camera.orthographicSize;
+            var projection = Matrix4x4.Perspective(2 * Mathf.Atan(camera.orthographicSize / distance) * Mathf.Rad2Deg, 1, near, 100);
+            projection.m22 = -1; // Infinite far plane, matching the synthetic Z parameters.
+            projection.m23 = -2 * near;
+            Matrix4x4 Pose(float x) => projection * Matrix4x4.TRS(camera.transform.position + Vector3.right * x,
+                camera.transform.rotation, new Vector3(1,1,-1)).inverse;
+            Vector2 Pixel(int i, int size) => new Vector2((i % size) + .5f, (i / size) + .5f) / size;
 
-                foreach (bool moved in new[] { false, true })
+            using var fixture = new FloorDepthReadback(brick, renderers, sensor, near, distance);
+            var depths = new[] {new float[sensor*sensor], new float[sensor*sensor]};
+            var poses = new Matrix4x4[2];
+            double now = 1;
+            foreach (bool moved in new[] {false, true})
+            {
+                for (int eye = 0; eye < 2; eye++)
                 {
-                    var expectedDepth = new float[2][];
-                    for (int eye = 0; eye < 2; eye++)
+                    poses[eye] = Pose(0);
+                    for (int i = 0; i < depths[eye].Length; i++)
                     {
-                        var samples = new Color[size * size];
-                        var scanned = new Color[samples.Length];
-                        expectedDepth[eye] = new float[samples.Length];
-                        for (int i = 0; i < samples.Length; i++)
+                        float metres = ObjectAt(Pixel(i, sensor), moved) switch
                         {
-                            var shape = ObjectAt(((i % size) + .5f)/size, ((i / size) + .5f)/size, moved);
-                            float metres = shape switch
-                            {
-                                DepthObject.Couch => 1.50f + eye * .05f,
-                                DepthObject.ChairLeg => 2.40f + eye * .03f,
-                                DepthObject.Bin => 2.85f + eye * .01f,
-                                _ => i % 2 == 0 ? 2.96f : 3.04f
-                            };
-                            samples[i].r = 1 - near / metres;
-                            scanned[i].r = 1 - near / (floorDistance * (1 - depth.MaskBias));
-                            expectedDepth[eye][i] = shape == DepthObject.Floor ? 1 : samples[i].r;
-                        }
-                        raw.SetPixels(samples, eye);
-                        floor.SetPixels(scanned, eye);
+                            DepthObject.Couch => 1.50f + eye * .05f,
+                            DepthObject.ChairLeg => 2.40f + eye * .03f,
+                            DepthObject.Bin => 2.85f + eye * .01f,
+                            _ => i % 2 == 0 ? 2.96f : 3.04f
+                        };
+                        depths[eye][i] = 1 - near / metres;
                     }
-                    raw.Apply(false);
-                    floor.Apply(false);
-                    Graphics.ExecuteCommandBuffer(commands);
-                    var download = AsyncGPUReadback.Request(combined, 0);
-                    download.WaitForCompletion();
-                    Require(!download.hasError, "Failed to read Meta's depth mask output.");
-                    for (int eye = 0; eye < 2; eye++)
-                    {
-                        var channel = download.GetData<float>(eye);
-                        var filtered = new Color[channel.Length];
-                        for (int i = 0; i < filtered.Length; i++)
-                        {
-                            Require(Mathf.Abs(channel[i] - expectedDepth[eye][i]) < .0001f,
-                                $"Native mask changed the wrong sample in eye {eye}, pixel {i}.");
-                            // Encode the uniform local depth in Meta's preprocessed min/max format.
-                            float encoded = 1 - channel[i];
-                            filtered[i] = new Color(encoded, encoded, 0, 0);
-                        }
-                        soft.SetPixels(filtered, eye);
-                    }
-                    soft.Apply(false);
-                    var actual = read();
-                    var counts = new int[4];
-                    int legGap = 0, previousBin = 0;
+                }
+                fixture.Capture(depths, poses, now += 1d / 30);
+                for (int eye = 0; eye < 2; eye++)
+                {
+                    var actual = fixture.ReadEye(eye, false, read);
+                    int[] counts = new int[4];
+                    int legGap = 0, oldBin = 0;
                     for (int i = 0; i < actual.Length; i++)
                     {
                         if (!IsBrick(reference[i])) continue;
-                        float u = ((i % imageSize) + .5f) / imageSize, v = ((i / imageSize) + .5f) / imageSize;
-                        var shape = ObjectAt(u, v, moved);
-                        // Boundary pixels are softened by the sensor and can belong to either sample.
-                        if (!HasUniformNeighborhood(u, v, 2f / size, moved, shape)) continue;
+                        var uv = Pixel(i, imageSize);
+                        var shape = ObjectAt(uv, moved);
+                        const float radius = 2.5f / sensor;
+                        if (ObjectAt(uv+new Vector2(-radius,-radius), moved) != shape ||
+                            ObjectAt(uv+new Vector2(-radius, radius), moved) != shape ||
+                            ObjectAt(uv+new Vector2( radius,-radius), moved) != shape ||
+                            ObjectAt(uv+new Vector2( radius, radius), moved) != shape) continue;
                         if (shape == DepthObject.Floor)
                         {
-                            Require(Mathf.Abs(actual[i].r-reference[i].r) <= 3 && Mathf.Abs(actual[i].g-reference[i].g) <= 3,
-                                $"Visible brick changed at UV ({u:F3}, {v:F3}): expected {reference[i]}, read {actual[i]}.");
-                            if (u > .48f && u < .51f && Mathf.Abs(v-.5f) < .10f) legGap++;
-                            if (moved && Mathf.Abs(u-.69f) < .02f && Mathf.Abs(v-.5f) < .02f) previousBin++;
+                            Require(Mathf.Abs(actual[i].r - reference[i].r) <= 3 && Mathf.Abs(actual[i].g - reference[i].g) <= 3,
+                                $"Eye {eye} lost bare floor at {uv}: {actual[i]} vs {reference[i]}.");
+                            if (uv.x > .48f && uv.x < .51f && Mathf.Abs(uv.y - .5f) < .1f) legGap++;
+                            if (moved && Mathf.Abs(uv.x - .69f) < .02f && Mathf.Abs(uv.y - .5f) < .02f) oldBin++;
                         }
-                        else Require(!IsBrick(actual[i]), $"Brick covered {shape} at UV ({u:F3}, {v:F3}): read {actual[i]}.");
+                        else Require(!IsBrick(actual[i]), $"Eye {eye} painted {shape} at {uv}: {actual[i]}.");
                         counts[(int)shape]++;
                     }
-                    Require(counts.All(count => count >= 4) && legGap > 4 && (!moved || previousBin > 4),
-                        "The floor fixture must exercise each object, the gap between chair legs and the moved bin.");
-                    Record($"Two-eye native mask and brick GPU checks with the bin {(moved ? "moved" : "at its starting position")}: " +
-                        $"{counts[0]} floor, {counts[1]} couch, {counts[2]} chair-leg and {counts[3]} bin pixels. " +
-                        $"{legGap} pixels of brick remained visible between the chair legs.");
+                    Require(counts.All(n => n >= 4) && legGap > 4 && (!moved || oldBin > 4),
+                        "The fixture must exercise the couch, separate chair legs, bin and vacated floor.");
+                    Record($"Native soft GPU readback, eye {eye}, bin {(moved ? "moved" : "in place")}: " +
+                        $"{counts[1]} couch, {counts[2]} chair-leg and {counts[3]} bin pixels in passthrough; " +
+                        $"{legGap} visible brick pixels between the legs, {oldBin} at the vacated bin center.");
                 }
             }
-            finally
+
+            // A tapered furniture foot meets the floor at a fixed world X. Intersect each moving
+            // depth-camera ray with that slope; compare only identical floor points in the final images.
+            const float slope = .45f;
+            float edge = width * .04f;
+            float[] headX = {-.042f, -.021f, .010f, .045f, .022f, -.009f, -.038f};
+            foreach (var error in new[] {new float[7], new[] {.018f,-.018f,.018f,-.018f,.018f,-.018f,.018f},
+                         new[] {.014f,-.006f,-.015f,.004f,.018f,-.009f,.002f}})
             {
+                fixture.History.Clear();
+                var sum = new float[2];
+                var peak = new float[2];
+                var edgeDrift = new float[2];
+                var lastEdge = new float[2,2];
+                var previous = new Color32[2,2][];
+                int pairs = 0, edgePairs = 0;
+                for (int frame = 0; frame < headX.Length; frame++)
+                {
+                    for (int eye = 0; eye < 2; eye++)
+                    {
+                        float x = headX[frame] + (eye == 0 ? -.032f : .032f);
+                        poses[eye] = Pose(x);
+                        for (int i = 0; i < depths[eye].Length; i++)
+                        {
+                            float rayX = (Pixel(i, sensor).x - .5f) * width / distance;
+                            float range = Mathf.Clamp((distance - slope * (edge - x)) / (1 - slope * rayX), distance - .30f, distance);
+                            range += error[frame] + (error[0] == 0 ? 0 : .004f * Mathf.Sin((i / sensor) * .22f + frame));
+                            depths[eye][i] = 1 - near / range;
+                        }
+                    }
+                    fixture.Capture(depths, poses, now += 1d / 30);
+                    for (int mode = 0; mode < 2; mode++)
+                    for (int eye = 0; eye < 2; eye++)
+                    {
+                        var actual = fixture.ReadEye(eye, mode == 0, read);
+                        float edgeSum = 0;
+                        int rows = 0;
+                        float Contrast(int i) => (255f - actual[i].r) / (255f - reference[i].r);
+                        for (int i = 1; i < actual.Length; i++)
+                        {
+                            if (!IsBrick(reference[i]) || !IsBrick(reference[i-1])) continue;
+                            float floorX = (Pixel(i, imageSize).x - .5f) * width;
+                            float height = slope * (edge - floorX);
+                            if (height < .012f || height > .15f) continue;
+                            if (Contrast(i) >= .5f && Contrast(i-1) < .5f)
+                            {
+                                edgeSum += floorX - width/imageSize * (1 - Mathf.InverseLerp(Contrast(i-1), Contrast(i), .5f));
+                                rows++;
+                            }
+                            if (frame == 0) continue;
+                            float change = Mathf.Abs(actual[i].r - previous[mode,eye][i].r) / (255f - reference[i].r);
+                            sum[mode] += change;
+                            peak[mode] = Mathf.Max(peak[mode], change);
+                            if (mode == 0) pairs++;
+                        }
+                        Require(rows >= 8, "The contact readback must contain a measurable half-contrast contour.");
+                        float contour = edgeSum / rows;
+                        if (frame > 0)
+                        {
+                            edgeDrift[mode] += Mathf.Abs(contour - lastEdge[mode,eye]);
+                            if (mode == 0) edgePairs++;
+                        }
+                        lastEdge[mode,eye] = contour;
+                        previous[mode,eye] = actual;
+                    }
+                }
+                string sequence = error[0] == 0 ? "lateral motion" : error[0] == .018f ? "alternating range error" : "irregular range error";
+                Record($"Furniture contact, {sequence}, {pairs} matched floor-pixel pairs across both eyes: " +
+                    $"mean contrast change {sum[0]/pairs:F4} to {sum[1]/pairs:F4}, peak {peak[0]:F4} to {peak[1]:F4}, " +
+                    $"mean half-contrast edge travel {1000*edgeDrift[0]/edgePairs:F1} to {1000*edgeDrift[1]/edgePairs:F1} mm.");
+                Require(pairs > 100 && sum[1] < sum[0] * .85f && peak[1] < peak[0] * .85f && edgeDrift[1] < edgeDrift[0] * .85f,
+                    "The furniture contact must improve on the released mask at matched world points for " + sequence);
+            }
+            fixture.History.Update(now + .15);
+            Require(fixture.Surface.GetFloat("_FloorPreviousWeight") == 0, "Old depth history survived a sensor pause.");
+        }
+
+        // Runs the same GPU passes and packed stereo textures as the SDK. The old mask is the A/B control.
+        private sealed class FloorDepthReadback : System.IDisposable
+        {
+            internal readonly Material Surface;
+            internal readonly FloorDepthHistory History;
+            private readonly MeshRenderer[] renderers;
+            private readonly Material brick, mask, preprocess;
+            private readonly Texture2DArray[] raw = new Texture2DArray[2];
+            private readonly Texture2DArray floor;
+            private readonly RenderTexture masked, legacy, current, mono, previousMono;
+            private readonly CommandBuffer commands = new CommandBuffer();
+            private readonly Vector4 texel;
+            private readonly float bias;
+            private readonly bool asyncWasAllowed = ShaderUtil.allowAsyncCompilation;
+            private readonly bool softWasEnabled = Shader.IsKeywordEnabled("SOFT_OCCLUSION");
+            private readonly Texture oldRaw = Shader.GetGlobalTexture("_EnvironmentDepthTexture");
+            private readonly Texture oldSoft = Shader.GetGlobalTexture("_PreprocessedEnvironmentDepthTexture");
+            private readonly Vector4 oldZ = Shader.GetGlobalVector("_EnvironmentDepthZBufferParams");
+            private readonly Matrix4x4[] oldMatrices = Shader.GetGlobalMatrixArray("_EnvironmentDepthReprojectionMatrices");
+            private Matrix4x4[] poses, previousPoses;
+            private Texture previous;
+            private float weight;
+            private int frame;
+
+            internal FloorDepthReadback(Material brick, MeshRenderer[] renderers, int size, float near, float distance)
+            {
+                ShaderUtil.allowAsyncCompilation = false;
+                this.brick = brick;
+                this.renderers = renderers;
+                texel = new Vector4(1f/size, 1f/size, size, size);
+                Surface = new Material(brick);
+                bias = Surface.GetFloat("_EnvironmentDepthBias");
+                History = new FloorDepthHistory(Surface);
+                foreach (var renderer in renderers) renderer.sharedMaterial = Surface;
+                for (int i = 0; i < 2; i++) raw[i] = Raw();
+                floor = Raw();
+                var scanned = Enumerable.Repeat(1 - near / (distance * .98f), size * size).ToArray();
+                for (int eye = 0; eye < 2; eye++) floor.SetPixelData(scanned, 0, eye);
+                floor.Apply(false);
+                masked = Target(RenderTextureFormat.RFloat);
+                legacy = Target(RenderTextureFormat.ARGBHalf);
+                current = Target(RenderTextureFormat.ARGBHalf);
+                mono = Target(RenderTextureFormat.ARGBHalf);
+                previousMono = Target(RenderTextureFormat.ARGBHalf);
+                mask = new Material(Shader.Find("Meta/EnvironmentDepth/DepthMask"));
+                mask.SetTexture("_MaskTexture", floor);
+                preprocess = new Material(Shader.Find("Meta/EnvironmentDepth/Preprocessing"));
+                preprocess.SetVector("_EnvironmentDepthTexture_TexelSize", texel);
+                Shader.EnableKeyword("SOFT_OCCLUSION");
+                Surface.EnableKeyword("SOFT_OCCLUSION");
+                Surface.SetTexture("_PreprocessedEnvironmentDepthTexture", mono);
+                Surface.SetVector("_PreprocessedEnvironmentDepthTexture_TexelSize", texel);
+                var z = new Vector4(-2 * near, -1, 0, 0);
+                Surface.SetVector("_EnvironmentDepthZBufferParams", z);
+                Shader.SetGlobalVector("_EnvironmentDepthZBufferParams", z);
+
+                Texture2DArray Raw() => new Texture2DArray(size, size, 2, TextureFormat.RFloat, false, true)
+                    {filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp};
+                RenderTexture Target(RenderTextureFormat format)
+                {
+                    var target = new RenderTexture(size, size, 0, format, RenderTextureReadWrite.Linear)
+                        {dimension = TextureDimension.Tex2DArray, volumeDepth = 2, wrapMode = TextureWrapMode.Clamp};
+                    target.Create();
+                    return target;
+                }
+            }
+
+            internal void Capture(float[][] samples, Matrix4x4[] matrices, double now)
+            {
+                var capture = raw[frame++ % raw.Length];
+                for (int eye = 0; eye < 2; eye++) capture.SetPixelData(samples[eye], 0, eye);
+                capture.Apply(false);
+                mask.SetTexture("_EnvironmentDepthTexture", capture);
+                Draw(mask, 1, masked);
+                preprocess.SetTexture("_EnvironmentDepthTexture", masked);
+                Draw(preprocess, 0, legacy);
+                preprocess.SetTexture("_EnvironmentDepthTexture", capture);
+                Draw(preprocess, 0, current);
+                Shader.SetGlobalTexture("_EnvironmentDepthTexture", capture);
+                Shader.SetGlobalTexture("_PreprocessedEnvironmentDepthTexture", current);
+                Shader.SetGlobalMatrixArray("_EnvironmentDepthReprojectionMatrices", matrices);
+                History.Update(now);
+                poses = matrices;
+                previous = Surface.GetTexture("_FloorPreviousDepth");
+                previousPoses = Surface.GetMatrixArray("_FloorPreviousReprojection");
+                weight = Surface.GetFloat("_FloorPreviousWeight");
+                History.Update(now + .005);
+                Require(Surface.GetTexture("_FloorPreviousDepth") == previous && Surface.GetFloat("_FloorPreviousWeight") == weight,
+                    "Rendering another display frame advanced the depth history without a new sensor capture.");
+            }
+
+            private void Draw(Material material, int pass, RenderTexture target)
+            {
+                ShaderUtil.SetAsyncCompilation(commands, false);
+                commands.SetRenderTarget(new RenderTargetIdentifier(target, 0, CubemapFace.Unknown, -1));
+                commands.DrawProcedural(Matrix4x4.identity, material, pass, MeshTopology.Triangles, 3, 2);
+                Graphics.ExecuteCommandBuffer(commands);
+                commands.Clear();
+            }
+
+            internal Color32[] ReadEye(int eye, bool released, System.Func<Color32[]> read)
+            {
+                // A mono Editor camera reads slice zero. Present each actual stereo slice and its own pose there.
+                Graphics.CopyTexture(released ? legacy : current, eye, 0, mono, 0, 0);
+                Surface.SetMatrixArray("_EnvironmentDepthReprojectionMatrices", new[] {poses[eye], poses[eye]});
+                Surface.SetFloat("_EnvironmentDepthBias", released ? 0 : bias);
+                Surface.SetFloat("_FloorPreviousWeight", released ? 0 : weight);
+                if (weight > 0)
+                {
+                    Graphics.CopyTexture(previous, eye, 0, previousMono, 0, 0);
+                    Surface.SetTexture("_FloorPreviousDepth", previousMono);
+                    Surface.SetMatrixArray("_FloorPreviousReprojection", new[] {previousPoses[eye], previousPoses[eye]});
+                }
+                // The preceding check rendered with depth unavailable. Settle that first variant switch
+                // once; each subsequent read is the first draw of its new capture, camera pose or eye.
+                if (frame == 1 && eye == 0 && !released) read();
+                var pixels = read();
+                Surface.SetTexture("_FloorPreviousDepth", previous);
+                Surface.SetFloat("_FloorPreviousWeight", weight);
+                return pixels;
+            }
+
+            public void Dispose()
+            {
+                ShaderUtil.allowAsyncCompilation = asyncWasAllowed;
+                History.Dispose();
                 foreach (var renderer in renderers) renderer.sharedMaterial = brick;
-                Object.DestroyImmediate(surface);
-                Object.DestroyImmediate(mask);
-                Object.DestroyImmediate(combined);
-                Object.DestroyImmediate(soft);
-                Object.DestroyImmediate(floor);
-                Object.DestroyImmediate(raw);
+                Shader.SetGlobalTexture("_EnvironmentDepthTexture", oldRaw);
+                Shader.SetGlobalTexture("_PreprocessedEnvironmentDepthTexture", oldSoft);
+                Shader.SetGlobalVector("_EnvironmentDepthZBufferParams", oldZ);
+                Shader.SetGlobalMatrixArray("_EnvironmentDepthReprojectionMatrices",
+                    oldMatrices != null && oldMatrices.Length > 0 ? oldMatrices : new[] {Matrix4x4.identity, Matrix4x4.identity});
+                if (!softWasEnabled) Shader.DisableKeyword("SOFT_OCCLUSION");
+                commands.Dispose();
+                foreach (Object item in new Object[] {Surface, mask, preprocess, raw[0], raw[1], floor, masked, legacy, current, mono, previousMono})
+                    Object.DestroyImmediate(item);
             }
         }
     }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace FloorFracture
 {
@@ -25,13 +24,13 @@ namespace FloorFracture
         public IReadOnlyList<int> StationarySafe { get; }
         internal ulong StationaryMask { get; }
         internal int NewSliderTile { get; }
-        internal Vector2 SlideDirection { get; }
+        internal int OtherSliderHole { get; }
 
         private readonly ulong breakingMask;
         private readonly ulong safeMask;
 
         internal WavePlan(BoardState board, int level, int number, int seed, int start, int guaranteed,
-            ulong stationary, int newSlider, Vector2 slideDirection, WaveMode mode, double now)
+            ulong stationary, int newSlider, int otherSliderHole, WaveMode mode, double now)
         {
             Level = level;
             Number = number;
@@ -45,7 +44,7 @@ namespace FloorFracture
             Mode = mode;
             StationaryMask = stationary;
             NewSliderTile = newSlider;
-            SlideDirection = slideDirection;
+            OtherSliderHole = otherSliderHole;
 
             // An earlier, locked pane can break over its old hole. A new optional pane is
             // separate from the permanent survivors, so its underlying hole never fills in.
@@ -89,7 +88,7 @@ namespace FloorFracture
             int seed = PatternSeed(board, start, level, number, opening);
             var random = new Generator(seed);
             ulong eligible = board.StationaryMask & ~(1UL << start);
-            ulong adjacent = board.NeighborMask(start) & eligible;
+            ulong adjacent = board.StepMask(start) & eligible;
             ulong visited = 0, options = 0;
             int largest = 0;
             for (int tile = 0; tile < board.Count; ++tile)
@@ -130,20 +129,32 @@ namespace FloorFracture
             WaveMode mode = survivors == (1UL << guaranteed)
                 ? WaveMode.LastTile : ChooseMode(board.Seed, regularWavesSurvived);
             int sliderTile = -1;
-            Vector2 slideDirection = Vector2.zero;
+            int otherHole = -1;
             if (mode != WaveMode.LastTile && level >= 3 && board.Slider == null)
             {
-                // Only use old holes, and only cells sharing an edge with a permanent survivor.
-                ulong candidates = board.AdjacentMask(survivors) & board.FullMask & ~board.StationaryMask;
-                if (candidates != 0)
+                // A full pane travels between two old holes. At each end, a permanent
+                // side step must remain so a player can lock the pane anywhere along it.
+                ulong holes = board.AdjacentMask(survivors) & ~board.StationaryMask;
+                int lanes = 0;
+                for (int a = 0; a < board.Count; ++a)
                 {
-                    sliderTile = Pick(candidates, ref random, false);
-                    slideDirection = random.Next(2) == 0 ? Vector2.right : Vector2.up;
-                    if (random.Next(2) == 0) slideDirection = -slideDirection;
+                    if ((holes & (1UL<<a)) == 0) continue;
+                    ulong adjacentHoles = board.NeighborMask(a) & holes;
+                    for (int b = a+1; b < board.Count; ++b)
+                    {
+                        if ((adjacentHoles & (1UL<<b)) == 0) continue;
+                        bool horizontal = a / board.Width == b / board.Width;
+                        if ((board.SideNeighbors(a,horizontal) & survivors) == 0 ||
+                            (board.SideNeighbors(b,horizontal) & survivors) == 0) continue;
+                        if (random.Next(++lanes) != 0) continue;
+                        bool reverse = random.Next(2) != 0;
+                        sliderTile = reverse ? b : a;
+                        otherHole = reverse ? a : b;
+                    }
                 }
             }
             return new WavePlan(board, level, number, seed, start, guaranteed, survivors,
-                sliderTile, slideDirection, mode, now);
+                sliderTile, otherHole, mode, now);
         }
 
         private static WaveMode ChooseMode(int seed, int regularWavesSurvived)

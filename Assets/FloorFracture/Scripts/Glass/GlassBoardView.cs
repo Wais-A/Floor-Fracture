@@ -9,19 +9,30 @@ namespace FloorFracture
         BoardState model;
         GlassTile[] tiles;
         GlassTile moving;
-        MeshRenderer direction, occupancy, fog, holes, underground;
+        MeshRenderer occupancy, fog, holes, underground;
         ShardPool shards;
         Mesh cutouts, shaft, fogPlane, boundary, labelBackground;
         Material maskMaterial, wallsMaterial, fogMaterial, shardMaterial;
         TextMesh readout;
         Transform labelPlate;
         bool clockPositionSet;
+        float readoutWidth=.68f, readoutHeight=.23f;
         ulong holeBits;
+        Vector2? outsideOpening;
         int practiceHole=-1;
         string lastText;
         public Transform Board => transform;
-        internal bool HasOpenPanes => isActiveAndEnabled && holeBits != 0;
-        internal float ChamberRadius => Mathf.Max(1.48f, Mathf.Max(model.Width,model.Height)*model.Pitch*.5f/.76f+.4f);
+        internal bool HasOpenPanes => isActiveAndEnabled && (holeBits != 0 || outsideOpening.HasValue);
+        internal float ChamberRadius
+        {
+            get
+            {
+                float extent = Mathf.Max(model.Width,model.Height)*model.Pitch*.5f;
+                if (outsideOpening is Vector2 center)
+                    extent = Mathf.Max(extent, Mathf.Max(Mathf.Abs(center.x),Mathf.Abs(center.y)) + model.Pitch*.5f);
+                return Mathf.Max(1.48f, extent/.76f+.4f);
+            }
+        }
         internal float PaneWidth => model.Pitch;
 
         public void Build(BoardState board,Pose pose)
@@ -39,9 +50,8 @@ namespace FloorFracture
                 t.transform.localPosition=GlassGeometry.Ground(board.Center(i));
                 t.transform.localScale=fittedScale; t.Initialize(); tiles[i]=t;
             }
-            moving=Instantiate(prefab,transform); moving.name="Sliding pane"; moving.Initialize(); moving.gameObject.SetActive(false);
-            direction=GlassTile.Part(moving.transform,"Direction",GlassGeometry.Direction,GlassTile.Surface);
-            GlassTile.Tint(direction,new Color(.8f,1f,.67f));
+            moving=Instantiate(prefab,transform); moving.name="Sliding pane"; moving.transform.localScale=fittedScale;
+            moving.Initialize(); moving.gameObject.SetActive(false);
             occupancy=GlassTile.Part(transform,"Occupied square",GlassGeometry.Ring,GlassTile.Surface);
             occupancy.transform.localScale=fittedScale;
             GlassTile.Tint(occupancy,new Color(.90f,1f,.73f)); occupancy.enabled=false;
@@ -67,13 +77,17 @@ namespace FloorFracture
         {
             var go=new GameObject("Countdown and score"); go.transform.SetParent(transform,false);
             var text=go.AddComponent<TextMesh>(); text.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.GetComponent<MeshRenderer>().sharedMaterial=text.font.material;
+            var letters=text.GetComponent<MeshRenderer>();
+            letters.sharedMaterial=text.font.material;
+            letters.sortingOrder=2;
             text.fontSize=96; text.characterSize=.026f; text.anchor=TextAnchor.LowerCenter; text.alignment=TextAlignment.Center;
             var b=new GlassGeometry.Builder();
             b.Quad(new(-.5f,-.5f,0),new(.5f,-.5f,0),new(.5f,.5f,0),new(-.5f,.5f,0),Color.white,Color.white);
             labelBackground=b.Create("Readout backing");
             var plate=GlassTile.Part(go.transform,"Contrast backing",labelBackground,GlassTile.Surface);
-            plate.sortingOrder=-1; GlassTile.Tint(plate,new Color(.017f,.055f,.067f,.91f)); labelPlate=plate.transform;
+            // Both draws follow the transparent room floor. Drawing the backing first in
+            // the scene lets the bricks paint over it and leaves white numbers on mortar.
+            plate.sortingOrder=1; GlassTile.Tint(plate,new Color(.017f,.055f,.067f,.94f)); labelPlate=plate.transform;
             text.color=new Color(.91f,1,.94f); return text;
         }
         public void AnchorReadout(Transform head)
@@ -84,11 +98,29 @@ namespace FloorFracture
             float x=model.Width*model.Pitch*.5f, z=model.Height*model.Pitch*.5f;
             var p=Mathf.Abs(bearing.x)/x>Mathf.Abs(bearing.z)/z?
                 new Vector3(Mathf.Sign(bearing.x)*(x+.08f),.11f,0):new Vector3(0,.11f,Mathf.Sign(bearing.z)*(z+.08f));
+            // On a long strip put the sign on the side ahead of the player. The far end
+            // can be many metres away, even though the guaranteed move is a single step.
+            var onFloor = new Vector2(local.x,local.z);
+            if (Vector2.Distance(onFloor,new Vector2(p.x,p.z))>3.1f)
+            {
+                var gaze=transform.InverseTransformDirection(head.forward);
+                if (x>=z)
+                    p=new Vector3(Mathf.Clamp(local.x+Mathf.Sign(bearing.x)*1.15f,-x,x),.11f,
+                        Mathf.Sign(Mathf.Abs(gaze.z)>.25f?gaze.z:local.z)*(z+.08f));
+                else
+                    p=new Vector3(Mathf.Sign(Mathf.Abs(gaze.x)>.25f?gaze.x:local.x)*(x+.08f),.11f,
+                        Mathf.Clamp(local.z+Mathf.Sign(bearing.z)*1.15f,-z,z));
+            }
             readout.transform.localPosition=p; clockPositionSet=true;
+            float distance=Vector3.Distance(p,local);
+            readoutWidth=Mathf.Clamp(distance*.30f,.63f,1.05f);
+            readoutHeight=Mathf.Clamp(distance*.11f,.22f,.36f);
+            lastText=null;
         }
         public void SetReadout(string text,Transform head)
         {
             if(!readout) return;
+            if(!clockPositionSet && head && text.Length>0) AnchorReadout(head);
             if(text!=lastText)
             {
                 readout.text=text; lastText=text;
@@ -98,7 +130,7 @@ namespace FloorFracture
                     var bounds=readout.GetComponent<MeshRenderer>().localBounds;
                     if(bounds.size.x>.001f&&bounds.size.y>.001f)
                     {
-                        float scale=Mathf.Min(.68f/bounds.size.x,.23f/bounds.size.y);
+                        float scale=Mathf.Min(readoutWidth/bounds.size.x,readoutHeight/bounds.size.y);
                         readout.transform.localScale=Vector3.one*scale;
                         labelPlate.localPosition=bounds.center+Vector3.forward*(.003f/scale);
                         labelPlate.localScale=new Vector3(bounds.size.x+.048f/scale,bounds.size.y+.025f/scale,1);
@@ -106,9 +138,8 @@ namespace FloorFracture
                 }
             }
             if(!head||text.Length==0) return;
-            if(!clockPositionSet) AnchorReadout(head);
             Vector3 away=readout.transform.position-head.position;
-            if(away.sqrMagnitude>.001f) readout.transform.rotation=Quaternion.LookRotation(away,head.up);
+            if(away.sqrMagnitude>.001f) readout.transform.rotation=Quaternion.LookRotation(away,Vector3.up);
         }
         public void Draw(WavePlan wave,TileSample sample,double now,bool gentle,int practiceWarning=-1)
         {
@@ -127,34 +158,72 @@ namespace FloorFracture
             moving.gameObject.SetActive(slide!=null);
             if(slide!=null)
             {
-                moving.transform.localPosition=GlassGeometry.Ground(slide.CenterAt(now),.014f);
-                moving.transform.localScale=new Vector3(slide.HalfSize/GlassGeometry.Half,1,slide.HalfSize/GlassGeometry.Half);
+                moving.transform.localPosition=GlassGeometry.Ground(slide.CenterAt(now));
                 moving.ShowWarning(shown&&wave.IsBreaking(slide.Tile),(float)(now%10)*.8f,gentle);
-                direction.enabled=!slide.Locked;
-                direction.transform.localRotation=Quaternion.LookRotation(GlassGeometry.Ground(slide.Direction),Vector3.up);
             }
-            occupancy.enabled=sample.Kind==SupportKind.Glass && sample.Index>=0 && sample.Index!=practiceHole && (sample.IsSlider||model.IsIntact(sample.Index));
+            occupancy.enabled=sample.Kind==SupportKind.Glass && sample.Index>=0 && sample.Index!=practiceHole &&
+                (sample.IsSlider ? slide!=null && slide.Tile==sample.Index : model.IsIntact(sample.Index));
             if(occupancy.enabled)
             {
-                var pos=sample.IsSlider&&slide!=null?slide.CenterAt(now):model.Center(sample.Index);
-                occupancy.transform.localPosition=GlassGeometry.Ground(pos,.014f);
+                var center=sample.IsSlider&&slide!=null?slide.CenterAt(now):model.Center(sample.Index);
+                // Keep the whole ring on the supporting glass when a foot overlaps a seam.
+                float inset=(GlassGeometry.Half-GlassGeometry.RingRadius-GlassGeometry.RingWidth)*occupancy.transform.localScale.x;
+                Vector2 contact=sample.Stance-center;
+                contact.x=Mathf.Clamp(contact.x,-inset,inset);
+                contact.y=Mathf.Clamp(contact.y,-inset,inset);
+                occupancy.transform.localPosition=GlassGeometry.Ground(center+contact,.014f);
             }
             fog.enabled=wave!=null&&wave.Fog;
         }
         public void Shatter(int index)
         {
-            if(index<0||index>=model.Count) return;
-            shards.Drop(GlassGeometry.Ground(model.Center(index),-.005f),index,Time.unscaledTime);
+            if (index >= 0 && index < model.Count) Shatter(index,model.Center(index));
+        }
+        internal Vector3 Shatter(int index, Vector2 center)
+        {
+            var local = GlassGeometry.Ground(center);
+            shards.Drop(local,index,Time.unscaledTime);
+            return transform.TransformPoint(local);
         }
         public void PracticeBreak(int index) { practiceHole=index; Shatter(index); }
         public void ClearTransient() { practiceHole=-1; if(shards) shards.Clear(); }
         public void RestorePracticePane() { practiceHole=-1; }
         public void RevealLossAperture(int cell)
         {
+            occupancy.enabled=false;
             if (cell < 0 || cell >= tiles.Length) return;
             tiles[cell].gameObject.SetActive(false);
-            occupancy.enabled=false;
             RebuildHoles(holeBits | (1UL << cell));
+        }
+
+        // A development preview or a leaning eye can be just outside the fitted grid.
+        // Continue its grid lines into the brick so this opening never covers an intact pane.
+        internal Vector3? OpenOutsidePane(Vector3 entry)
+        {
+            Vector2 local = PlayerTileTracker.Project(transform,entry);
+            if (model.IndexAt(local) >= 0) return null;
+            float pitch = model.Pitch;
+            var half = new Vector2(model.Width, model.Height) * .5f;
+            var cell = local/pitch + half;
+            var center = (new Vector2(Mathf.Floor(cell.x)+.5f,Mathf.Floor(cell.y)+.5f) - half) * pitch;
+            outsideOpening = center;
+            RebuildHoles(holeBits);
+            return transform.TransformPoint(GlassGeometry.Ground(center));
+        }
+
+        internal void CloseOutsidePane()
+        {
+            if (!outsideOpening.HasValue) return;
+            outsideOpening = null;
+            RebuildHoles(holeBits);
+        }
+
+        internal void ShowShardsBelowRim(bool belowRim)
+        {
+            var comparison = belowRim ? UnityEngine.Rendering.CompareFunction.Always : UnityEngine.Rendering.CompareFunction.Equal;
+            // The flared preview throat belongs inside the open panes even from below.
+            // Its back faces would otherwise cover the rising brick and intact glass.
+            shardMaterial.SetInt("_PortalComparison", (int)comparison);
         }
         void RebuildHoles(ulong bits)
         {
@@ -197,7 +266,15 @@ namespace FloorFracture
                     }
                 }
             }
-            m.Write(cutouts); w.Write(shaft); holes.enabled=underground.enabled=bits!=0;
+            if (outsideOpening is Vector2 outside)
+            {
+                float h = model.Pitch*.5f;
+                Vector3 p = GlassGeometry.Ground(outside);
+                m.Quad(p + new Vector3(-h,0,-h), p + new Vector3(h,0,-h), p + new Vector3(h,0,h), p + new Vector3(-h,0,h), Color.white,Color.white);
+            }
+            m.Write(cutouts); w.Write(shaft);
+            holes.enabled = bits!=0 || outsideOpening.HasValue;
+            underground.enabled = bits!=0;
         }
         void OnDestroy()
         {

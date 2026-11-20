@@ -1,13 +1,18 @@
 Shader "Floor Fracture/Shaft and falling glass"
 {
-    Properties { _Color("Tint", Color)=(1,1,1,1) _Courses("Wall detail", Range(0,1))=0 }
+    Properties
+    {
+        _Color("Tint", Color)=(1,1,1,1)
+        _Courses("Wall detail", Range(0,1))=0
+        [Enum(UnityEngine.Rendering.CompareFunction)] _PortalComparison("Floor aperture test", Float) = 3
+    }
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Geometry+2" }
         Pass
         {
             Cull Off ZWrite On
-            Stencil { Ref 4 ReadMask 4 WriteMask 0 Comp Equal Pass Keep }
+            Stencil { Ref 4 ReadMask 4 WriteMask 0 Comp [_PortalComparison] Pass Keep }
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag

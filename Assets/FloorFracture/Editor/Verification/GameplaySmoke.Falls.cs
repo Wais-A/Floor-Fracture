@@ -75,10 +75,17 @@ namespace FloorFracture.Editor
                 game.Ending.Skip();
             }
             bool sawBlack = false;
+            float[] viewTimes = skip ? Array.Empty<float>() : LandingViewTimes(ending,reduced);
+            int nextView = 0;
             while (game.Stage == GameStage.Fall)
             {
                 double age = Now - started;
                 Require(age < (skip ? 1.5 : expectedSeconds + 1.0), trial + " timed out.");
+                if (nextView < viewTimes.Length && age >= viewTimes[nextView])
+                {
+                    VerifyLandingViews(chamber.transform,ending,reduced,(float)age,nextView);
+                    nextView++;
+                }
                 if (skip || age >= expectedSeconds - .25)
                 {
                     veil.GetPropertyBlock(material);
@@ -88,6 +95,7 @@ namespace FloorFracture.Editor
                 yield return null;
             }
             double duration = Now - started;
+            Require(nextView == viewTimes.Length, trial + " ended before its landing views were checked.");
             Require((skip || duration >= expectedSeconds - .12) && sawBlack && game.Stage == GameStage.Results && game.Panel.Visible,
                 trial + " did not present its final black frame and Results at the expected time.");
             Require(chamber && !chamber.activeSelf && !veil.enabled && !game.Ending.IsPlaying, trial + " left the ending visible after Results.");
@@ -214,19 +222,22 @@ namespace FloorFracture.Editor
             Choose("Seed 379 · level 1"); yield return Stage(GameStage.Ready);
 
             // A real deadline loss shatters the occupied tile before the rim shot.
-            StandOn(0);
+            StandAt(game.State.Center(0) + new Vector2(-.34f,.26f) * game.State.Pitch);
             Vector3 bearing = Vector3.ProjectOnPlane(game.BoardView.Board.position - head.position, Vector3.up);
             Vector3 eyePosition = head.position;
             eyePosition.y = game.BoardView.Board.position.y + (reduced ? 1.6f : ending == "Lava" ? 2.2f : 1.5f);
             SetHead(new Pose(eyePosition, Quaternion.LookRotation(bearing, Vector3.up) * Quaternion.Euler(32f, 0f, 0f)));
             Pose trackedAtStart = head;
             Pose rigAtStart = new Pose(game.Rig.transform.position, game.Rig.transform.rotation);
+            var arena = new FallArenaWitness(trackedAtStart, reduced);
+            // Exercise a connected opening at a board corner on the actual deadline-loss path.
+            if (!reduced) game.BoardView.PracticeBreak(1);
             Choose("Start wave"); yield return Stage(GameStage.Countdown);
             yield return Stage(GameStage.Fall, 8);
             Require(!game.State.IsIntact(0) && game.Ending.IsPlaying && game.Ending.LastEndingName == ending,
                 "The chosen ending did not follow the real starting tile's deadline loss: " + ending);
 
-            var witness = new FallWitness(ending, reduced, trackedAtStart, rigAtStart);
+            var witness = new FallWitness(ending, reduced, trackedAtStart, rigAtStart, arena);
             report.falls.Add(witness.evidence);
             yield return FallFrame(witness, "rim", 0.10, SmokeView.FallRim);
             yield return FallFrame(witness, "early-shaft", reduced ? 0.40 : 1.20, reduced ? Array.Empty<SmokeView>() : new[] { SmokeView.FallForward });
@@ -247,6 +258,7 @@ namespace FloorFracture.Editor
             Require(game.Stage == GameStage.Results, "The ending did not reach its results screen.");
             witness.Finish();
             Choose("Restart"); yield return Stage(GameStage.Ready);
+            arena.VerifyReset();
             Record(reduced
                 ? ending + " reduced motion kept the chamber geometry stationary before contact and reached results."
                 : $"{ending} showed the moving walls for {witness.evidence.visibleWallSeconds:F2} s after entry at {witness.evidence.eyeHeight:F2} m eye height, before impact.");
@@ -281,6 +293,7 @@ namespace FloorFracture.Editor
             internal double Age => Now - start;
             private readonly double start, contact;
             private readonly bool reduced, water;
+            private readonly FallArenaWitness arena;
             private readonly Pose eyePose, rigPose;
             private readonly Transform chamber, eye;
             private readonly MeshRenderer marks, walls, floor, flames, sky, veil;
@@ -291,8 +304,9 @@ namespace FloorFracture.Editor
             private float lastTravel, speedSampleTravel;
             private double lastAge, speedSampleAge;
 
-            internal FallWitness(string ending, bool reduced, Pose initialEye, Pose initialRig)
+            internal FallWitness(string ending, bool reduced, Pose initialEye, Pose initialRig, FallArenaWitness arena)
             {
+                this.arena = arena;
                 this.reduced = reduced; water = ending == "Water";
                 start = Now; contact = reduced ? 0.82 : 4.44061; expectedFinish = reduced ? 3.93 : 9.44061;
                 eyePose = initialEye; rigPose = initialRig; eye = game.Rig.centerEyeAnchor;
@@ -312,6 +326,7 @@ namespace FloorFracture.Editor
                     $"The hazard began at {firstFloor:F2} m for an opening at {openingY:F2} m.");
                 evidence = new FallEvidence { ending = ending, motion = reduced ? "reduced" : "full", plannedContact = contact,
                     eyeHeight = eye.position.y - openingY, landmarkSpan = firstSpan, floorOpeningY = openingY, startingHazardY = firstFloor };
+                arena.VerifyEntry(walls);
                 if (!reduced)
                 {
                     Require(walls.enabled && marks.enabled && !veil.enabled, "The recognition beat did not expose the shaft lip and its walls.");
@@ -401,11 +416,11 @@ namespace FloorFracture.Editor
                 evidence.maxRigRotation = Mathf.Max(evidence.maxRigRotation, rigAngle);
                 Require(rigTravel < 0.002f && rigAngle < 0.2f, $"The XR rig moved {rigTravel:F3} m / {rigAngle:F2}° during the loss.");
                 bool effect = SecondaryEffect();
-                bool entered = !game.BoardView.gameObject.activeSelf;
+                bool entered = reduced ? !game.BoardView.gameObject.activeSelf : walls.transform.position.y >= eye.position.y;
                 if (entered && evidence.chamberEnteredAt < 0) evidence.chamberEnteredAt = age;
+                arena.Observe(evidence, travel, walls);
                 if (!reduced)
                 {
-                    Require(entered == (walls.transform.position.y >= eye.position.y), $"The board/chamber handoff missed the rim passing the eye at {age:F3} s.");
                     CheckGravity(age, travel);
                     if (floor.transform.position.y >= evidence.floorOpeningY - .0001f && evidence.surfaceReachedAt < 0)
                         evidence.surfaceReachedAt = age;
@@ -553,6 +568,8 @@ namespace FloorFracture.Editor
             public double visibleWallSeconds, skyFirstDimAt = -1, skyMostlyDarkAt = -1, fadeStartedAt = -1, fadeDarkAt = -1;
             public float eyeHeight, greatestLedgeSpacing;
             public int testedWallRays;
+            public int overheadGlassPixels, overheadBrickPixels;
+            public float offCenterMetres, maxArenaRegistrationError, maxRoomAnchorDisplacement;
             public float landmarkSpan, floorOpeningY, startingHazardY, contactHazardY, immersionTintAlpha, maxPreContactOffsetError;
             public float maxTrackedHeadDisplacement, maxTrackedHeadRotation, maxRigDisplacement, maxRigRotation, peakAirborneSpeed, windAtImpact;
             public List<FallMeasurement> samples = new List<FallMeasurement>();

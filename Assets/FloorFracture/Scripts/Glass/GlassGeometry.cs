@@ -7,7 +7,8 @@ namespace FloorFracture
     public static class GlassGeometry
     {
         public const float AuthoredPitch = .50f;
-        public const float Half = .242f;
+        public const float Half = AuthoredPitch * BoardState.PaneHalfPitch;
+        public const float RingRadius = .069f, RingWidth = .007f;
         public static readonly Vector2[] Points = {
             new(-Half,-Half), new(.038f,-Half), new(Half,-Half), new(Half,.068f),
             new(Half,Half), new(-.050f,Half), new(-Half,Half), new(-Half,-.035f),
@@ -16,12 +17,11 @@ namespace FloorFracture
             new(-.019f,.012f)
         };
         public static readonly int[][] Pieces = MakePieces();
-        private static Mesh face, rim, cracks, ring, marker;
+        private static Mesh face, rim, cracks, ring;
         public static Mesh Face => face ? face : face = Sheet(false);
         public static Mesh Rim => rim ? rim : rim = Sheet(true);
         public static Mesh Cracks => cracks ? cracks : cracks = CrackMesh();
-        public static Mesh Ring => ring ? ring : ring = Circle(.069f,.007f, false);
-        public static Mesh Direction => marker ? marker : marker = Arrow();
+        public static Mesh Ring => ring ? ring : ring = Circle(RingRadius,RingWidth, false);
         public static Vector3 Ground(Vector2 v,float height=0) => new(v.x,height,v.y);
 
         static int[][] MakePieces()
@@ -86,7 +86,7 @@ namespace FloorFracture
                 int a=piece[i], c=piece[(i+1)%piece.Length];
                 if(a<8 && c<8) continue;
                 int key=Mathf.Min(a,c)*32+Mathf.Max(a,c);
-                if(edges.Add(key)) b.Stroke(Points[a],Points[c],(a==16||c==16)?.0028f:.0037f,.006f);
+                if(edges.Add(key)) b.Stroke(Points[a],Points[c],(a==16||c==16)?.0040f:.0050f,.006f);
             }
             return b.Create("Fitted fracture lines");
         }
@@ -101,12 +101,6 @@ namespace FloorFracture
                 b.Stroke(new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius,new Vector2(Mathf.Cos(z),Mathf.Sin(z))*radius,width,.018f);
             }
             return b.Create("Occupancy ring");
-        }
-        static Mesh Arrow()
-        {
-            var b=new Builder(); b.Stroke(new(0,-.09f),new(0,.085f),.012f,.012f);
-            b.Stroke(new(0,.085f),new(-.043f,.034f),.014f,.012f); b.Stroke(new(0,.085f),new(.043f,.034f),.014f,.012f);
-            return b.Create("Slider direction");
         }
     }
 }

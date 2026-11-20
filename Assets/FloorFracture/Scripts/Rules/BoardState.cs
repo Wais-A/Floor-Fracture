@@ -3,10 +3,13 @@ using UnityEngine;
 
 namespace FloorFracture
 {
+    public enum WaveLossReason { None, GapGraceExpired, GapAtZero, CrackedPane, MemoryPane, MovingPane }
+
     public sealed class BoardState
     {
         public const int MinAxis = 2, MaxPanes = 64, MaxAxis = MaxPanes / MinAxis;
         public const float MinPitch = 0.50f, MaxPitch = 0.67f;
+        public const float PaneHalfPitch = .484f;
         public float Pitch { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
@@ -17,6 +20,7 @@ namespace FloorFracture
         public SlidingPane Slider { get; private set; }
         public TileSample CurrentSample => tracker.Current;
         public bool BreaksApplied { get; private set; }
+        public WaveLossReason LastLoss { get; private set; }
         internal ulong StationaryMask { get; private set; }
         internal ulong FullMask => ulong.MaxValue >> (MaxPanes - Count);
 
@@ -59,6 +63,7 @@ namespace FloorFracture
             Slider = null;
             levelEnded = false;
             BreaksApplied = false;
+            LastLoss = WaveLossReason.None;
             tracker.Reset();
         }
 
@@ -95,6 +100,19 @@ namespace FloorFracture
 
         internal ulong NeighborMask(int tile) => AdjacentMask(1UL << tile);
 
+        internal ulong SideNeighbors(int tile, bool horizontalLane)
+        {
+            ulong bit = 1UL << tile;
+            ulong vertical = (bit >> Width) | (bit << Width);
+            return NeighborMask(tile) & (horizontalLane ? vertical : ~vertical);
+        }
+
+        public bool CanStepFrom(int from, int to) =>
+            (uint)to < (uint)Count && (uint)from < (uint)Count && (StepMask(from) & (1UL << to)) != 0;
+
+        internal ulong StepMask(int from) =>
+            Slider != null && Slider.Locked && from == Slider.Tile ? Slider.ExitMask(this) : NeighborMask(from);
+
         internal ulong AdjacentMask(ulong group)
         {
             ulong horizontal = ((group & ~leftColumn) >> 1) | ((group & ~rightColumn) << 1);
@@ -121,7 +139,7 @@ namespace FloorFracture
 
             var plan = WavePlanner.Plan(this, startingTile, level, waveNumber, regularWavesSurvived, now);
             if (plan.NewSliderTile >= 0)
-                Slider = new SlidingPane(plan.NewSliderTile, Center(plan.NewSliderTile), plan.SlideDirection, Pitch, now);
+                Slider = new SlidingPane(this, plan.NewSliderTile, plan.OtherSliderHole, now);
             ActiveWave = plan;
             BreaksApplied = false;
             tracker.ResetTiming();
@@ -131,7 +149,6 @@ namespace FloorFracture
         public void Pause()
         {
             ActiveWave = null;
-            if (Slider != null && !Slider.Locked) Slider = null;
             tracker.ResetTiming();
         }
 
@@ -152,25 +169,35 @@ namespace FloorFracture
 
             bool atDeadline = now >= wave.Deadline;
             double sampleTime = atDeadline ? wave.Deadline : now;
+            double gapDeadline = tracker.GapDeadline;
+            if (gapDeadline <= sampleTime && gapDeadline < wave.Deadline)
+            {
+                Vector2 atExpiry = tracker.PoseAtDeadline(localXZ, now, gapDeadline);
+                if (tracker.Sample(this, atExpiry, true, gapDeadline).Kind == SupportKind.Gap)
+                {
+                    ActiveWave = null;
+                    levelEnded = true;
+                    LastLoss = WaveLossReason.GapGraceExpired;
+                    return WaveResult.Lost;
+                }
+                tracker.UpdateGap(gapDeadline);
+            }
             Vector2 point = atDeadline ? tracker.PoseAtDeadline(localXZ, now, wave.Deadline) : localXZ;
             TileSample sample = tracker.Sample(this, point, true, sampleTime);
-            bool graceExpired = tracker.GraceExpired(sampleTime);
-            if (graceExpired && (!atDeadline || tracker.GapDeadline < wave.Deadline))
-            {
-                ActiveWave = null;
-                levelEnded = true;
-                return WaveResult.Lost;
-            }
+            tracker.UpdateGap(sampleTime);
             if (!atDeadline) return WaveResult.Pending;
 
-            bool survived = !graceExpired && sample.Kind == SupportKind.Glass && wave.IsSafe(sample.Index);
+            bool survived = sample.Kind == SupportKind.Glass && wave.IsSafe(sample.Index);
             StationaryMask = wave.StationaryMask;
-            if (Slider != null && (!Slider.Locked || wave.IsBreaking(Slider.Tile))) Slider = null;
+            if (Slider != null && wave.IsBreaking(Slider.Tile)) Slider = null;
             BreaksApplied = true;
             ActiveWave = null;
             if (!survived)
             {
                 levelEnded = true;
+                LastLoss = sample.Kind == SupportKind.Gap ? WaveLossReason.GapAtZero :
+                    sample.IsSlider ? WaveLossReason.MovingPane :
+                    wave.Mode == WaveMode.Memory ? WaveLossReason.MemoryPane : WaveLossReason.CrackedPane;
                 return WaveResult.Lost;
             }
             ++WavesSurvived;

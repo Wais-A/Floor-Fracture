@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Meta.XR.EnvironmentDepth;
 using Meta.XR.MRUtilityKit;
 using UnityEngine;
+using UnityEngine.Rendering;
 #if UNITY_ANDROID && !UNITY_EDITOR
 using UnityEngine.Android;
 #endif
@@ -33,6 +34,7 @@ namespace FloorFracture
         public string Message { get; private set; } = "Loading your room…";
         public BoardPlacement Placement { get; private set; }
         public int ScannedSpawnCount { get; private set; }
+        public EffectMesh FloorEffect => floorEffect;
         public event Action Changed;
 
         private const string DeniedMessage = "Allow spatial data for Floor Fracture in app permissions, then retry.";
@@ -43,11 +45,7 @@ namespace FloorFracture
         private List<RoomFloor> floors;
         private RoomOutlineView outlines;
         private Material floorMaterial;
-        private EnvironmentDepthManager environmentDepth;
-        private readonly List<MeshFilter> floorMasks = new List<MeshFilter>();
-        // Meta's mask bias is a fraction of eye distance. At 3 m this protects a 6 cm floor band.
-        private const float FloorDepthTolerance = .02f;
-        private float previousMaskBias;
+        private FloorDepthHistory floorDepth;
         private MRUKRoom decoratedRoom;
         private int decoratedRevision = -1;
         private bool busy;
@@ -77,7 +75,7 @@ namespace FloorFracture
                 floorEffect.MeshMaterial = floorMaterial;
                 // A Quest without live depth shows passthrough until furniture can occlude the brick.
                 floorMaterial.SetFloat("_RequireEnvironmentDepth", Application.platform == RuntimePlatform.Android ? 1f : 0f);
-                environmentDepth = FindAnyObjectByType<EnvironmentDepthManager>(FindObjectsInactive.Include);
+                floorDepth = new FloorDepthHistory(floorMaterial);
             }
         }
 
@@ -86,6 +84,13 @@ namespace FloorFracture
             mruk.RoomUpdatedEvent.AddListener(RoomChanged);
             mruk.RoomRemovedEvent.AddListener(RoomChanged);
             AddAnchorListeners();
+            RenderPipelineManager.beginCameraRendering += UpdateFloorDepth;
+        }
+
+        private void UpdateFloorDepth(ScriptableRenderContext context, Camera camera)
+        {
+            if (camera.cameraType == CameraType.Game && floorEffect && !floorEffect.HideMesh)
+                floorDepth?.Update(Time.realtimeSinceStartupAsDouble);
         }
 
         private void Start() => Retry();
@@ -95,12 +100,14 @@ namespace FloorFracture
             mruk.RoomUpdatedEvent.RemoveListener(RoomChanged);
             mruk.RoomRemovedEvent.RemoveListener(RoomChanged);
             RemoveAnchorListeners();
+            RenderPipelineManager.beginCameraRendering -= UpdateFloorDepth;
             ShowFloorSurface(false);
         }
 
         private void OnDestroy()
         {
             outlines?.Dispose();
+            floorDepth?.Dispose();
             if (floorMaterial) Destroy(floorMaterial);
 #if UNITY_EDITOR
             if (restoreBackgroundSetting) Application.runInBackground = false;
@@ -112,7 +119,7 @@ namespace FloorFracture
         {
             if (!visible || Status != RoomPlacementStatus.Confirmed || !room || !floorEffect || !floorMaterial)
             {
-                RemoveFloorMasks();
+                floorDepth?.Clear();
                 if (floorEffect) floorEffect.HideMesh = true;
 #if UNITY_EDITOR
                 if (simulatorOcclusion) simulatorOcclusion.gameObject.SetActive(false);
@@ -128,7 +135,7 @@ namespace FloorFracture
             if (decoratedRoom != room || decoratedRevision != revision)
             {
                 // Apply the same reviewed scan as the glass, including every native floor patch.
-                RemoveFloorMasks();
+                floorDepth?.Clear();
                 floorEffect.DestroyMesh();
                 foreach (var floor in room.FloorAnchors)
                     if (floor) floorEffect.CreateEffectMesh(floor);
@@ -145,32 +152,6 @@ namespace FloorFracture
             if (simulatorOcclusion) simulatorOcclusion.gameObject.SetActive(true);
 #endif
             floorEffect.HideMesh = false;
-            if (!environmentDepth || floorMasks.Count > 0) return;
-            // Meta's DepthMask sample removes matching scene surfaces from live depth.
-            // Only register floor meshes here so foreground hands and furniture can still occlude brick.
-            foreach (var patch in floorEffect.EffectMeshObjects.Values)
-            {
-                if (!patch.effectMeshGO || !patch.effectMeshGO.TryGetComponent<MeshFilter>(out var filter)) continue;
-                if (environmentDepth.MaskMeshFilters.Contains(filter)) continue;
-                environmentDepth.MaskMeshFilters.Add(filter);
-                floorMasks.Add(filter);
-            }
-            if (floorMasks.Count > 0)
-            {
-                previousMaskBias = environmentDepth.MaskBias;
-                environmentDepth.MaskBias = FloorDepthTolerance;
-            }
-        }
-
-        private void RemoveFloorMasks()
-        {
-            if (environmentDepth && floorMasks.Count > 0)
-            {
-                foreach (var filter in floorMasks) environmentDepth.MaskMeshFilters.Remove(filter);
-                if (Mathf.Approximately(environmentDepth.MaskBias, FloorDepthTolerance))
-                    environmentDepth.MaskBias = previousMaskBias;
-            }
-            floorMasks.Clear();
         }
 
         public void Retry()

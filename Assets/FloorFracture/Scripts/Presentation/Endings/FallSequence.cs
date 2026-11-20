@@ -18,6 +18,8 @@ public sealed class FallSequence : MonoBehaviour
 #endif
     EndingShuffle shuffle = new EndingShuffle(Environment.TickCount);
     FloorFracture.GlassBoardView board;
+    FloorFracture.RoomBoardPlacement room;
+    FloorFracture.FallingArena arena;
     FallScenery scenery;
     GameSound sound;
     Transform head;
@@ -32,21 +34,26 @@ public sealed class FallSequence : MonoBehaviour
 
     public bool IsPlaying { get; private set; }
     public string LastEndingName { get; private set; } = string.Empty;
+    public bool LastWasSkipped { get; private set; }
     public event Action ChamberEntered;
 
-    /// <summary>Sets the next entry aperture to the actual tile center and rotation.</summary>
-    public void SetOpening(Vector3 centerOnFloor, float tileWidth, float yawDegrees = 0f)
+    /// <summary>Sets the next entry to the tracked head's vertical projection on the board.</summary>
+    public void SetOpening(Vector3 pointOnFloor, float tileWidth, float yawDegrees = 0f)
     {
-        opening = centerOnFloor; width = Mathf.Max(.1f,tileWidth); yaw = yawDegrees; hasOpening = true;
+        opening = pointOnFloor; width = Mathf.Max(.1f,tileWidth); yaw = yawDegrees; hasOpening = true;
     }
 
     public void SetShuffleSeed(int seed) => shuffle = new EndingShuffle(seed);
 
-    internal void SetBoard(FloorFracture.GlassBoardView nextBoard)
+    internal void SetBoard(FloorFracture.GlassBoardView nextBoard, FloorFracture.RoomBoardPlacement room)
     {
         if (visiblePreview >= 0) scenery.Hide();
         visiblePreview = -1;
         board = nextBoard;
+        this.room = room;
+        // First use loads the sample water and builds the shaft meshes. Do it while the
+        // board is being set up so the first timed shatter can show its destination immediately.
+        if (board) PrepareChamber();
     }
 
     int SelectEnding(bool consume)
@@ -70,10 +77,15 @@ public sealed class FallSequence : MonoBehaviour
 
     void OpenChamber(Transform viewer, FloorEnding destination, Vector3 entry, float tileWidth, float yawDegrees)
     {
-        if (scenery == null) scenery = new FallScenery(waterSurfaceOverride,splashPrefabOverride,lavaFlamesOverride);
+        PrepareChamber();
         Vector3 center = board ? board.transform.position : entry;
         float radius = board ? board.ChamberRadius : Mathf.Max(1.48f, tileWidth*.5f+.65f);
         scenery.Begin(viewer,destination,center,entry,tileWidth,yawDegrees,radius,board && board.HasOpenPanes);
+    }
+
+    void PrepareChamber()
+    {
+        scenery ??= new FallScenery(waterSurfaceOverride,splashPrefabOverride,lavaFlamesOverride);
     }
 
     /// <summary>Water through snow are indices zero through five. A negative index restores the bag.</summary>
@@ -91,6 +103,7 @@ public sealed class FallSequence : MonoBehaviour
         bool supplied = hasOpening;
         float nextWidth = width, nextYaw = yaw;
         ResetSequence();
+        LastWasSkipped = false;
         this.head = head ? head : Camera.main ? Camera.main.transform : null;
         if (!this.head || !isActiveAndEnabled)
         {
@@ -113,6 +126,7 @@ public sealed class FallSequence : MonoBehaviour
             nextOpening = this.head.position - Vector3.up*1.55f;
             nextWidth = .5f; nextYaw = 0;
         }
+        if (!emptyBag && board) arena = new FloorFracture.FallingArena(board,room,reduced,nextOpening);
         OpenChamber(this.head,kind,nextOpening,nextWidth,nextYaw);
         if (emptyBag) { Blackout(); return; }
         sound.BeginFall(kind);
@@ -140,6 +154,7 @@ public sealed class FallSequence : MonoBehaviour
         float fallingTime = Mathf.Clamp(age - RimHold, 0f, FreeFallTime);
         float travel = age >= contact ? FallScenery.ShaftDepth : .5f * Gravity * fallingTime * fallingTime;
         float immersion = scenery.Draw(age, p, reduced, travel, out bool entered);
+        arena?.Draw(travel,entered);
         if (!entryReported && entered)
         {
             entryReported = true;
@@ -211,7 +226,11 @@ public sealed class FallSequence : MonoBehaviour
 
     public void Skip()
     {
-        if (IsPlaying && blackFrame < 0) Blackout();
+        if (IsPlaying && blackFrame < 0)
+        {
+            LastWasSkipped = true;
+            Blackout();
+        }
     }
 
     void Blackout()
@@ -224,21 +243,15 @@ public sealed class FallSequence : MonoBehaviour
     void Finish()
     {
         var callback = finished;
-        int finishingGeneration = generation;
-        finished = null; IsPlaying = false;
-        sound.StopFall();
-        try { callback?.Invoke(); }
-        finally
-        {
-            // A callback may already have restarted or opened the next preview.
-            if (generation == finishingGeneration) ResetSequence();
-        }
+        ResetSequence();
+        callback?.Invoke();
     }
 
     public void ResetSequence()
     {
         generation++; IsPlaying = false; visiblePreview = -1; finished = null; head = null;
         blackFrame = -1; hasOpening = impactPlayed = chimePlayed = entryReported = false;
+        arena?.Restore(); arena = null;
         if (sound) sound.StopFall();
         scenery?.Hide();
     }

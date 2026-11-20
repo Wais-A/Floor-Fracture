@@ -10,7 +10,9 @@ namespace FloorFracture.Tests
         public static string RunAll()
         {
             CoordinatesAndSeams();
+            PlantedStanceAndGapEdges();
             DeadlinesAndPause();
+            ReportsResolvedLoss();
             ModesAndReset();
             SlidingAndGrace();
             return CheckSequences() + " " + CheckLargerBoards();
@@ -61,6 +63,11 @@ namespace FloorFracture.Tests
             int oldSlider = board.Slider == null ? -1 : board.Slider.Tile;
             ulong state = (uint)oldMask | ((ulong)(uint)start << 16) |
                 ((ulong)(uint)(oldSlider + 1) << 20) | ((ulong)(uint)path.Count << 25);
+            if (board.Slider != null)
+            {
+                state |= (ulong)(uint)(board.Slider.OtherHole+1) << 30;
+                if (board.Slider.Locked) state |= 1UL << 35;
+            }
             if (!visited.Add(state)) return;
             ++plans;
             WavePlan plan = board.BeginWave(start, level, path.Count + 1, path.Count * 10);
@@ -138,8 +145,8 @@ namespace FloorFracture.Tests
         private static void ValidatePlan(BoardState board, WavePlan plan, int start, ulong oldMask)
         {
             Check(plan.StartingTile == start && plan.IsBreaking(start) && !plan.IsSafe(start), "Start must break.");
-            Check(Adjacent(plan.GuaranteedTile, start, board.Width) && board.IsIntact(plan.GuaranteedTile) &&
-                Has(plan.StationarySafe, plan.GuaranteedTile), "Mandatory step must be orthogonal and permanent.");
+            Check(board.CanStepFrom(start,plan.GuaranteedTile) && board.IsIntact(plan.GuaranteedTile) &&
+                Has(plan.StationarySafe, plan.GuaranteedTile), "The mandatory step must reach permanent glass from the actual support.");
             ulong survivors = 0;
             foreach (int tile in plan.StationarySafe) survivors |= 1UL << tile;
             Check(survivors != oldMask && (survivors & ~oldMask) == 0, "Permanent glass must strictly shrink.");
@@ -242,14 +249,14 @@ namespace FloorFracture.Tests
             Vector2 across = new Vector2(0.003f, 0.25f);
             b.Tick(across, true, 2);
             Check(b.CurrentSample.Index == 2, "Equivalent panes should stabilize the marker near the seam.");
-            b.Tick(new Vector2(0.009f, 0.25f), true, 3);
+            b.Tick(new Vector2(0.05f, 0.25f), true, 3);
             Check(b.CurrentSample.Index == 3, "Marker should follow a real step.");
             b.Tick(b.Center(0), true, 4);
             b.Tick(new Vector2(0.001f, -0.25f), true, 4.5);
-            Check(b.CurrentSample.Index == 1, "A safe/unsafe seam must use its exact footprint.");
+            Check(b.CurrentSample.Index == 0, "A seam must not move a planted stance just because the wave marks a neighbour safe.");
             b.Tick(b.Center(2), true, 4.9);
-            Check(b.Tick(across, true, wave.Deadline) == WaveResult.Survived && b.CurrentSample.Index == 3,
-                "At zero the marker and verdict must use the exact support.");
+            Check(b.Tick(across, true, wave.Deadline) == WaveResult.Survived && b.CurrentSample.Index == 2,
+                "The marker must retain the same support through zero.");
             var second = b.BeginWave(b.CurrentSample.Index, 1, 2, 6);
             Check(b.Tick(across, true, second.Deadline) == WaveResult.Lost, "Standing still at a seam cannot win the next wave.");
         }
@@ -264,8 +271,9 @@ namespace FloorFracture.Tests
             Check(board.Tick(safe, true, 14.9999) == WaveResult.Pending && IntactMask(board) == full &&
                 ReferenceEquals(first, board.ActiveWave), "Early safety must not advance or reroll the wave.");
             Check(board.Tick(board.Center(0), true, 15) == WaveResult.Lost && board.BreaksApplied &&
-                board.WavesSurvived == 0, "Remaining on the start at zero must lose.");
+                board.WavesSurvived == 0 && board.LastLoss == WaveLossReason.CrackedPane, "Remaining on the start at zero must lose to its marked glass.");
             board.Reset(4, 4, 3);
+            Check(board.LastLoss == WaveLossReason.None,"A previous loss explanation survived Restart.");
             first = board.BeginWave(0, 1, 1, 10);
             board.Tick(board.Center(0), true, 14.99);
             Check(board.Tick(safe, true, 15.99) == WaveResult.Lost, "A late frame cannot grant an extra step after zero.");
@@ -292,6 +300,69 @@ namespace FloorFracture.Tests
                 Check(fresh.Deadline == 45 && fresh.IsBreaking(4) && Adjacent(4, fresh.GuaranteedTile, 4),
                     "Resume needs a full timer and a legal move from the current pose.");
             }
+        }
+
+        public static void PlantedStanceAndGapEdges()
+        {
+            // Use the 5 x 3 / 53.9 cm physical footprint, then both supported pitch limits.
+            foreach (float pitch in new[]{.539f,.50f,.67f})
+            {
+                foreach (Vector2 side in new[]{Vector2.left,Vector2.right,Vector2.up,Vector2.down,
+                    new Vector2(-1,-1),new Vector2(-1,1),new Vector2(1,-1),new Vector2(1,1)})
+                {
+                    var board=EdgeFixture(pitch,side,out int safe,out int hole);
+                    var wave=board.ActiveWave;
+                    Vector2 edge=board.Center(safe)+side*(pitch*.5f+.04f);
+                    Check(board.IndexAt(edge)==hole && !board.IsIntact(hole),"The simulated lean must project inside an old hole.");
+                    board.Tick(board.Center(safe),true,11);
+                    board.Tick(edge,true,12);
+                    Check(board.CurrentSample.Kind==SupportKind.Glass && board.CurrentSample.Index==safe &&
+                        board.CurrentSample.Stance==edge,
+                        "A planted stance near an inside edge or corner lost its visible support.");
+                    Check(board.Tick(edge,true,wave.Deadline)==WaveResult.Survived && board.CurrentSample.Index==safe,
+                        "The pane carrying the marker before zero must carry the player through zero.");
+
+                    var missed=EdgeFixture(pitch,side,out safe,out hole);
+                    var opening=missed.Center(hole);
+                    missed.Tick(missed.Center(safe),true,11);
+                    missed.Tick(opening,true,12);
+                    Check(missed.CurrentSample.Kind==SupportKind.Gap && missed.Tick(opening,true,12.301)==WaveResult.Lost,
+                        "An unsupported hole center must still cause a loss.");
+                }
+                var stepped=EdgeFixture(pitch,Vector2.right,out int glass,out int gap);
+                var center=stepped.Center(glass);
+                stepped.Tick(stepped.Center(gap),true,11);
+                stepped.Tick(stepped.Center(gap),true,11.20);
+                Check(stepped.Tick(center,true,11.32)==WaveResult.Pending && stepped.CurrentSample.Index==glass,
+                    "A frame after grace expiry must preserve a step that crossed to support before expiry.");
+            }
+            var neck=new Vector3(.30f,1.50f,-.24f);
+            foreach (double degrees in new[]{0d,25d,55d,85d})
+            {
+                double angle=degrees*Math.PI/360d;
+                var rot=new Quaternion((float)Math.Sin(angle),0,0,(float)Math.Cos(angle));
+                var eye=neck+rot*new Vector3(0,.075f,.08f);
+                var standing=PlayerTileTracker.ProjectStance(Matrix4x4.identity,eye,rot,.08f);
+                Check((standing-new Vector2(neck.x,neck.z)).sqrMagnitude<1e-10f,"Looking down around a fixed neck moved the stance.");
+            }
+        }
+
+        private static BoardState EdgeFixture(float pitch,Vector2 side,out int safe,out int hole)
+        {
+            for(int start=0;start<15;start++)
+            {
+                var board=new BoardState(5,3,379,pitch);
+                var first=board.BeginWave(start,1,1,0);
+                Resolve(board,first,new Step(first.GuaranteedTile,false));
+                var next=board.BeginWave(first.GuaranteedTile,1,2,10);
+                foreach(int tile in next.StationarySafe)
+                {
+                    int other=board.IndexAt(board.Center(tile)+side*pitch);
+                    if(other<0 || board.IsIntact(other)) continue;
+                    safe=tile; hole=other; return board;
+                }
+            }
+            throw new InvalidOperationException("Missing deterministic inside-edge fixture for "+side);
         }
 
         public static void ModesAndReset()
@@ -342,6 +413,28 @@ namespace FloorFracture.Tests
             }
         }
 
+        public static void ReportsResolvedLoss()
+        {
+            var board = new BoardState(5,3,379,.539f);
+            var classic = board.BeginWave(0,1,1,0);
+            board.Tick(board.Center(classic.GuaranteedTile),true,classic.Deadline);
+            var memory = board.BeginWave(classic.GuaranteedTile,1,2,10);
+            Check(memory.Mode==WaveMode.Memory && !memory.ShowsWarnings(memory.Deadline),
+                "The explanation fixture needs a hidden Memory warning.");
+            Check(board.Tick(board.Center(memory.StartingTile),true,memory.Deadline)==WaveResult.Lost &&
+                board.LastLoss==WaveLossReason.MemoryPane,"The Memory loss must identify its earlier warning.");
+
+            board = SlidingFixture();
+            var wave = board.ActiveWave;
+            var pane = board.Slider;
+            var point = pane.CenterAt(wave.StartsAt+.1);
+            board.Tick(point,true,wave.StartsAt+.1);
+            Check(board.Tick(point,true,wave.Deadline)==WaveResult.Survived,"The moving-pane fixture did not catch its pane.");
+            var next = board.BeginWave(pane.Tile,3,3,20);
+            Check(board.Tick(point,true,next.Deadline)==WaveResult.Lost && board.LastLoss==WaveLossReason.MovingPane,
+                "A caught pane that shatters on the next wave needs its own accurate explanation.");
+        }
+
         public static void SlidingAndGrace()
         {
             foreach (float pitch in new[] {0.50f, 0.61f, 0.67f})
@@ -350,20 +443,24 @@ namespace FloorFracture.Tests
                 BoardState board = SlidingFixture(pitch);
                 var pane = board.Slider;
                 var wave = board.ActiveWave;
-                Check(Math.Abs(pane.HalfSize - 0.30f * pitch) < 1e-6f &&
-                    Math.Abs(pane.Travel - 0.18f * pitch) < 1e-6f, "The moving pane must scale with physical pitch.");
-                double t = pane.MotionStartsAt + 0.3;
+                Check(Math.Abs(pane.HalfSize - BoardState.PaneHalfPitch * pitch) < 1e-6f &&
+                    !board.IsIntact(pane.OtherHole) && board.Neighbors(pane.Tile,pane.OtherHole),
+                    "The full-sized pane needs two contiguous existing holes.");
+                double t = pane.MotionStartsAt + 0.6;
                 Vector2 center = pane.CenterAt(t);
                 Check(pane.CenterAt(wave.StartsAt).Equals(pane.CenterAt(pane.MotionStartsAt)) &&
                     !center.Equals(pane.CenterAt(t + 0.3)), "The slide must telegraph direction before moving.");
-                foreach (double time in new[] { t - 1, t, t + 0.3, t + 1.8, t + 6 })
+                for (int frame=0; frame<=180; ++frame)
                 {
-                    Vector2 d = pane.CenterAt(time) - board.Center(pane.Tile);
-                    Check(Math.Abs(d.x) + pane.HalfSize <= pitch * 0.5f && Math.Abs(d.y) + pane.HalfSize <= pitch * 0.5f,
-                        "Every moving pane edge must stay inside the old hole.");
+                    Vector2 p = pane.CenterAt(pane.MotionStartsAt+frame/72.0);
+                    foreach (Vector2 corner in new[]{new Vector2(-1,-1),new Vector2(1,-1),new Vector2(-1,1),new Vector2(1,1)})
+                    {
+                        int cell = board.IndexAt(p+corner*pane.HalfSize);
+                        Check(cell==pane.Tile || cell==pane.OtherHole,"Moving glass overlaps solid glass or the exterior.");
+                    }
                 }
                 board.Tick(center + side * (pane.HalfSize + 0.002f), true, t);
-                Check(board.CurrentSample.Kind == SupportKind.Gap && !pane.Locked, "A near miss must expose the hole.");
+                Check(!board.CurrentSample.IsSlider && !pane.Locked, "A near miss must not catch the moving glass.");
                 double caught = t + 0.1;
                 Vector2 fixedCenter = pane.CenterAt(caught);
                 board.Tick(fixedCenter + side * (pane.HalfSize - 0.002f), true, caught);
@@ -372,7 +469,8 @@ namespace FloorFracture.Tests
                 Check(board.Tick(fixedCenter, true, wave.Deadline) == WaveResult.Survived && !board.IsIntact(pane.Tile),
                     "A locked slider is safe while its underlying hole persists.");
                 var onward = board.BeginWave(pane.Tile, 3, 3, 20);
-                Check(onward.IsBreaking(pane.Tile) && Adjacent(pane.Tile, onward.GuaranteedTile, board.Width),
+                Check(onward.IsBreaking(pane.Tile) && board.CanStepFrom(pane.Tile,onward.GuaranteedTile) &&
+                    (board.Center(onward.GuaranteedTile)-fixedCenter).sqrMagnitude <= pitch*pitch*1.2501f,
                     "The next wave must force a legal ordinary step off the locked pane.");
                 Resolve(board, onward, new Step(onward.GuaranteedTile, false));
                 Check(board.Slider == null, "A scheduled locked pane must shatter at zero.");
@@ -383,24 +481,58 @@ namespace FloorFracture.Tests
                 var wave = board.ActiveWave;
                 var pane = board.Slider;
                 double t = outcome == 2 ? wave.Deadline - 0.04 : wave.StartsAt + 0.01;
-                Vector2 corner = board.Center(pane.Tile) + new Vector2(0.245f, 0.245f);
+                Vector2 a=board.Center(pane.Tile), b=board.Center(pane.OtherHole), live=pane.CenterAt(t);
+                Vector2 corner = (a-live).sqrMagnitude > (b-live).sqrMagnitude ? a : b;
                 Check(board.Tick(corner, true, t) == WaveResult.Pending && board.CurrentSample.Kind == SupportKind.Gap,
                     "The first frame over an existing hole starts grace.");
                 Vector2 safe = board.Center(wave.GuaranteedTile);
                 if (outcome == 0)
                     Check(board.Tick(safe, true, t + 0.299) == WaveResult.Pending, "A timely step must recover from a miss.");
                 else if (outcome == 1)
-                    Check(board.Tick(corner, true, t + 0.3) == WaveResult.Lost && !board.BreaksApplied, "Grace expires before the timer.");
+                    Check(board.Tick(corner, true, t + 0.3) == WaveResult.Lost && !board.BreaksApplied &&
+                        board.LastLoss == WaveLossReason.GapGraceExpired, "Grace expires before the timer.");
                 else if (outcome == 2)
-                    Check(board.Tick(corner, true, wave.Deadline) == WaveResult.Lost && board.BreaksApplied, "Grace cannot protect a gap at zero.");
+                    Check(board.Tick(corner, true, wave.Deadline) == WaveResult.Lost && board.BreaksApplied &&
+                        board.LastLoss == WaveLossReason.GapAtZero, "Grace cannot protect a gap at zero.");
                 else
-                    Check(board.Tick(safe, true, t + 0.3) == WaveResult.Lost, "Landing at grace expiry is too late.");
+                {
+                    board.Tick(corner,true,t+0.295);
+                    Check(board.Tick(safe,true,t+0.7)==WaveResult.Lost,"A late step cannot recover after the player was still over the gap at expiry.");
+                }
+            }
+            var ignored=SlidingFixture();
+            var first=ignored.ActiveWave;
+            var uncaught=ignored.Slider;
+            Resolve(ignored,first,new Step(first.GuaranteedTile,false));
+            Check(ignored.Slider==uncaught && !uncaught.Locked,"Uncaught glass must remain visible across the deadline.");
+            var closing=ignored.BeginWave(first.GuaranteedTile,3,3,20);
+            Check(closing.IsBreaking(uncaught.Tile) && closing.ShowsWarnings(closing.StartsAt),"The uncaught pane needs an ordinary warned break.");
+            Resolve(ignored,closing,new Step(closing.GuaranteedTile,false));
+            Check(ignored.Slider==null,"The uncaught pane must be removed at its warned deadline.");
+
+            foreach (double fraction in new[]{0d,.25d,.5d,.75d,1d})
+            {
+                var board=SlidingFixture(.539f);
+                var pane=board.Slider;
+                var plan=board.ActiveWave;
+                double at=pane.MotionStartsAt+fraction*1.20;
+                Vector2 center=pane.CenterAt(at);
+                Check((center-(board.Center(pane.Tile)+pane.Direction*(float)fraction*board.Pitch)).sqrMagnitude<1e-10f,
+                    "The full pane must travel continuously across the seam between old holes.");
+                if (fraction>.5) Check(board.IndexAt(center)==pane.OtherHole,"The catch fixture must reach the other old hole.");
+                board.Tick(center,true,at);
+                Check(board.CurrentSample.IsSlider && board.CurrentSample.Index==pane.Tile && board.CurrentSample.Stance==center,
+                    "The ring and the catch must identify the same live pane on either side of the seam.");
+                Resolve(board,plan,new Step(pane.Tile,false));
+                var next=board.BeginWave(pane.Tile,3,3,20);
+                Check((board.Center(next.GuaranteedTile)-center).sqrMagnitude<=board.Pitch*board.Pitch*1.2501f,
+                    "A catch anywhere on the lane needs a reachable onward step.");
             }
         }
 
         private static BoardState SlidingFixture(float pitch = 0.5f)
         {
-            var board = new BoardState(4, 4, 143, pitch);
+            var board = new BoardState(4, 4, 0, pitch);
             var first = board.BeginWave(0, 3, 1, 0);
             Resolve(board, first, new Step(first.GuaranteedTile, false));
             board.BeginWave(first.GuaranteedTile, 3, 2, 10);
