@@ -18,6 +18,13 @@ namespace FloorFracture.Editor
                 "Settings should show a real glass sample that cannot intercept selections.");
             var ordinary = game.BoardView.Board.Find("Glass 0, 0");
             var reference = game.BoardView.Board.Find("Sliding pane").GetComponent<GlassTile>();
+            var intactRim = ordinary.Find("Rim").GetComponent<MeshFilter>().sharedMesh;
+            var sliderRim = reference.transform.Find("Rim").GetComponent<MeshFilter>();
+            Require(intactRim == GlassGeometry.SafeRim && sliderRim.sharedMesh == intactRim && intactRim != GlassGeometry.Rim &&
+                intactRim.bounds == GlassGeometry.Rim.bounds && intactRim.vertexCount == GlassGeometry.Rim.vertexCount &&
+                intactRim.triangles.Length == GlassGeometry.Rim.triangles.Length && intactRim.subMeshCount == 1 &&
+                intactRim.colors.Any(c => c == Color.white) && intactRim.colors.Any(c => Mathf.Max(c.r, c.g, c.b) < .06f),
+                "Intact stationary and moving glass must share the two-tone rim within the ordinary warning rim's mesh budget and bounds.");
             var cracks = preview.Find("Fissures").GetComponent<MeshRenderer>();
             var eye = game.Rig.centerEyeAnchor.GetComponent<Camera>();
             var sound = game.GetComponent<GameSound>();
@@ -64,8 +71,9 @@ namespace FloorFracture.Editor
                         var properties = new MaterialPropertyBlock();
                         sample.GetComponent<MeshRenderer>().GetPropertyBlock(properties);
                         var tint = properties.GetColor("_Color");
-                        reference.transform.Find(name).GetComponent<MeshRenderer>().GetPropertyBlock(properties);
-                        Require(sample.GetComponent<MeshFilter>().sharedMesh == ordinary.Find(name).GetComponent<MeshFilter>().sharedMesh &&
+                        var warningPart = reference.transform.Find(name);
+                        warningPart.GetComponent<MeshRenderer>().GetPropertyBlock(properties);
+                        Require(sample.GetComponent<MeshFilter>().sharedMesh == warningPart.GetComponent<MeshFilter>().sharedMesh &&
                             tint == properties.GetColor("_Color"), "Settings did not show the selected gameplay warning on " + name + ".");
                     }
                 }
@@ -91,6 +99,7 @@ namespace FloorFracture.Editor
                 SetHead(oldHead);
                 game.Panel.Recenter();
             }
+            Require(sliderRim.sharedMesh == intactRim, "Clearing a moving pane's warning must restore its shared intact rim.");
             Record("The Settings sample remained visible on and outside the board. It displayed the same pane, rim and fissures at both warning intensities. Each of the five volume selections played a single click at the newly chosen gain, including silent mute.");
         }
 

@@ -192,7 +192,15 @@ namespace FloorFracture.Editor
                     FrameRingAndClock();
                     yield return Frames(2); Capture("classic-player-view", SmokeView.CenterEye);
                 }
-                if (plan.Mode == WaveMode.Memory) sawMemory = true;
+                MeshFilter memoryRim = null;
+                if (plan.Mode == WaveMode.Memory)
+                {
+                    sawMemory = true;
+                    var tile = game.BoardView.Board.Find($"Glass {plan.StartingTile % game.State.Width}, {plan.StartingTile / game.State.Width}");
+                    memoryRim = tile.Find("Rim").GetComponent<MeshFilter>();
+                    yield return Frames(1);
+                    Require(memoryRim.sharedMesh == GlassGeometry.Rim, "A revealed Memory pane must show the full ordinary warning rim.");
+                }
                 if (plan.Mode == WaveMode.LastTile) sawLastTile = true;
                 int score = game.State.WavesSurvived;
                 StandOn(plan.GuaranteedTile);
@@ -205,7 +213,11 @@ namespace FloorFracture.Editor
                     if (Now < plan.Deadline)
                     {
                         Require(game.State.IsIntact(plan.StartingTile) && game.State.WavesSurvived == score, "A break or score occurred before zero.");
-                        if (plan.Mode == WaveMode.Memory && Now > plan.RevealEndsAt && !plan.ShowsWarnings(Now)) recallSeen = true;
+                        if (memoryRim && !recallSeen && Now > plan.RevealEndsAt + .05 && !plan.ShowsWarnings(Now))
+                        {
+                            Require(memoryRim.sharedMesh == GlassGeometry.SafeRim, "Memory recall must restore the intact two-tone rim before shattering.");
+                            recallSeen = true;
+                        }
                     }
                     Require(Now < plan.Deadline + 2, "The scheduled deadline did not resolve.");
                     yield return null;
@@ -448,6 +460,8 @@ namespace FloorFracture.Editor
             moving.Find("Rim").GetComponent<MeshRenderer>().GetPropertyBlock(movingWarning);
             ordinaryBreak.Find("Rim").GetComponent<MeshRenderer>().GetPropertyBlock(stationaryWarning);
             Require(ordinaryBreak.Find("Fissures").GetComponent<MeshRenderer>().enabled &&
+                moving.Find("Rim").GetComponent<MeshFilter>().sharedMesh == GlassGeometry.Rim &&
+                ordinaryBreak.Find("Rim").GetComponent<MeshFilter>().sharedMesh == GlassGeometry.Rim &&
                 movingWarning.GetColor("_Color")==stationaryWarning.GetColor("_Color"),
                 "The moving and stationary panes must show the same crack shape and warning pulse.");
             StandOn(closing.GuaranteedTile);

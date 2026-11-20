@@ -14,6 +14,7 @@ namespace FloorFracture
         static Material surface;
         public static Material Surface => surface ? surface : surface = MakeMaterial("FloorFractureSurface");
         MeshRenderer pane, frame, fracture;
+        MeshFilter frameFilter;
         bool lastWarning, lastLow;
         float lastPulse=-1;
         MaterialPropertyBlock block;
@@ -40,7 +41,8 @@ namespace FloorFracture
             if(pane) return;
             block=new MaterialPropertyBlock();
             pane=Part(transform,"Smoky pane",GlassGeometry.Face,Surface);
-            frame=Part(transform,"Rim",GlassGeometry.Rim,Surface);
+            frame=Part(transform,"Rim",GlassGeometry.SafeRim,Surface);
+            frameFilter=frame.GetComponent<MeshFilter>();
             fracture=Part(transform,"Fissures",GlassGeometry.Cracks,Surface);
             ColorPart(pane,Safe,.7f); ColorPart(frame,Edge); fracture.enabled=false;
         }
@@ -56,6 +58,7 @@ namespace FloorFracture
             float phase=(float)(now%10)*.8f;
             float pulse=warn?Mathf.SmoothStep(0,1,.5f-.5f*Mathf.Cos(phase*2*Mathf.PI)):0;
             if(warn==lastWarning && low==lastLow && Mathf.Abs(pulse-lastPulse)<.025f) return;
+            if (lastWarning != warn) frameFilter.sharedMesh=warn ? GlassGeometry.Rim : GlassGeometry.SafeRim;
             lastWarning=warn; lastLow=low; lastPulse=pulse; fracture.enabled=warn;
             ColorPart(frame,warn?Color.Lerp(Danger,Fire,low?.23f+pulse*.18f:.12f+pulse*.72f):Edge);
             if(warn) ColorPart(fracture,Color.Lerp(Danger,Fire,low?.40f:.36f+pulse*.46f));

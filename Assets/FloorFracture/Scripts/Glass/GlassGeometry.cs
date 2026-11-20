@@ -19,9 +19,10 @@ namespace FloorFracture
             new(-.019f,.012f)
         };
         public static readonly int[][] Pieces = MakePieces();
-        private static Mesh face, rim, cracks, ring;
+        private static Mesh face, rim, safeRim, cracks, ring;
         public static Mesh Face => face ? face : face = Sheet(false);
         public static Mesh Rim => rim ? rim : rim = Sheet(true);
+        public static Mesh SafeRim => safeRim ? safeRim : safeRim = BeveledRim();
         public static Mesh Cracks => cracks ? cracks : cracks = CrackMesh();
         public static Mesh Ring => ring ? ring : ring = Circle(RingRadius,RingWidth,false,KeylineWidth);
         public static Vector3 Ground(Vector2 v,float height=0) => new(v.x,height,v.y);
@@ -76,6 +77,29 @@ namespace FloorFracture
             }
             else b.Quad(Ground(Points[0]),Ground(Points[2]),Ground(Points[4]),Ground(Points[6]),Color.white,Color.white);
             return b.Create(border?"Glass rim":"Glass surface");
+        }
+
+        static Mesh BeveledRim()
+        {
+            // The two bevel tones occupy the width of the ordinary 9 mm edge.
+            var b = new Builder();
+            var slate = new Color(.024f, .041f, .052f, 1f);
+            const float edgeWidth = .009f;
+            float outer = Half + edgeWidth * .5f;
+            float split = outer - edgeWidth * .60f;
+            float inner = Half - edgeWidth * .5f;
+            var corners = new[] { new Vector2(-1,-1), new Vector2(1,-1),
+                new Vector2(1,1), new Vector2(-1,1) };
+            for (int i = 0; i < corners.Length; i++)
+            {
+                var a = corners[i];
+                var z = corners[(i + 1) % corners.Length];
+                b.Quad(Ground(a * outer,.004f), Ground(z * outer,.004f),
+                    Ground(z * split,.004f), Ground(a * split,.004f), Color.white, Color.white);
+                b.Quad(Ground(a * split,.004f), Ground(z * split,.004f),
+                    Ground(z * inner,.004f), Ground(a * inner,.004f), slate, slate);
+            }
+            return b.Create("Intact glass rim");
         }
 
         static Mesh CrackMesh()
