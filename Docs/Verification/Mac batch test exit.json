@@ -1,0 +1,106 @@
+{
+  "status": "Two consecutive ordinary Mac Unity Edit Mode commands and a plain batch quit exited cleanly.",
+  "platform": "macOS arm64, Unity 6000.6.9f1, Meta Interaction SDK 209",
+  "releaseGameSource": "1da914c52164f620edfa50c9b4fb15f3020a3c56",
+  "editorMaintenanceCommit": "886bf865cf03e6cd145fb38639243789d1fc7a13",
+  "invocation": [
+    "Unity",
+    "-batchmode",
+    "-runTests",
+    "-testPlatform",
+    "EditMode",
+    "-buildTarget",
+    "Android",
+    "-assemblyNames",
+    "FloorFracture.Rules.EditorTests;FloorFracture.Rooms.Tests",
+    "-projectPath",
+    "<isolated project>",
+    "-testResults",
+    "<results.xml>",
+    "-logFile",
+    "<unity.log>"
+  ],
+  "before": {
+    "shellExitCode": 134,
+    "expectedUnityRunnerExitCode": 0,
+    "startUtc": "2026-11-20 09:49:29Z",
+    "finishUtc": "2026-11-20 09:50:27Z",
+    "durationS": 58.208,
+    "result": "Passed",
+    "total": 67,
+    "passed": 67,
+    "failed": 0,
+    "skipped": 0,
+    "resultXmlSha256": "10a149dcd4e365fc880c9aa11d3b11e6aea31ac4c1123c8741a4f9a194ebe1d8",
+    "expectedRunnerExitLogLine": 747,
+    "sdkShutdownCallsLogged": 0,
+    "unityLogSha256": "96c3381551dd2ea9fe4f756b1b0244bd1673af0ed990576a67908b16c645ea1e",
+    "macReports": [
+      {
+        "name": "Unity-2026-11-20-045037.ips",
+        "signal": "SIGABRT",
+        "firstSdkCaller": "std::__1::mutex::lock()",
+        "nextBinary": "ISDKEngineTelemetry.dylib"
+      },
+      {
+        "name": "Unity-2026-11-20-041427.ips",
+        "signal": "SIGABRT",
+        "firstSdkCaller": "std::__1::mutex::lock()",
+        "nextBinary": "ISDKEngineTelemetry.dylib"
+      },
+      {
+        "name": "Unity-2026-11-20-030458.ips",
+        "signal": "SIGABRT",
+        "firstSdkCaller": "std::__1::mutex::lock()",
+        "nextBinary": "ISDKEngineTelemetry.dylib"
+      }
+    ]
+  },
+  "repair": "On macOS in batch mode, the Editor registers the existing ISDKEngineTelemetryNative.ShutDown call with EditorApplication.quitting. The existing build finally still closes its session eagerly and unsubscribes the exit callback. The Unity test runner retains control of its own exit code. No player or interactive Editor code path was changed.",
+  "after": [
+    {
+      "trial": 1,
+      "shellExitCode": 0,
+      "processReturnCode": 0,
+      "startUtc": "2026-11-20 09:55:40Z",
+      "finishUtc": "2026-11-20 09:56:29Z",
+      "durationS": 49.374,
+      "result": "Passed",
+      "total": 67,
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "resultXmlSha256": "a88cb0d3b77dc992442262b37196c3d9500903701e90cd94c9962777dd86bf6d",
+      "expectedRunnerExitLogLine": 731,
+      "sdkShutdownLogLine": 749,
+      "sdkShutdownCallsLogged": 1,
+      "logSha256": "0a72fb34eab1754d92f4e214512e66ba7439607ceb47b918e7a41f5e4a149ac3"
+    },
+    {
+      "trial": 2,
+      "shellExitCode": 0,
+      "processReturnCode": 0,
+      "startUtc": "2026-11-20 09:56:49Z",
+      "finishUtc": "2026-11-20 09:57:46Z",
+      "durationS": 56.926,
+      "result": "Passed",
+      "total": 67,
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "resultXmlSha256": "57ec00edfbf8958513feb6534ebda232b1715c7ba26a0b54ccebf1c75313707f",
+      "expectedRunnerExitLogLine": 682,
+      "sdkShutdownLogLine": 700,
+      "sdkShutdownCallsLogged": 1,
+      "logSha256": "9b1d9185c8035c9c993b223ac639bcfa6a397fe7dd307290a7d68d9d083844b5"
+    }
+  ],
+  "plainBatchQuit": {
+    "startedUtc": "2026-11-20T09:57:54.901056+00:00",
+    "endedUtc": "2026-11-20T09:58:13.681575+00:00",
+    "shellExitCode": 0,
+    "sdkShutdownMessageCount": 1,
+    "logSha256": "99756d20c52e21238ea8d714ed32945ea711b7116953ed1a2d33766ee55a3973"
+  },
+  "scope": "Tests ran in an isolated project through Unity’s ordinary CLI; the caller read the actual operating-system exit status as well as the NUnit XML. The Android APKs were built from the separately identified release game revision, before this Editor maintenance change."
+}

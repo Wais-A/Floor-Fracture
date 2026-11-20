@@ -61,7 +61,25 @@ The two 32-pane captures reached 18.82 and 21.00 ms across the countdown-to-brea
 
 On the physical Quest 3, the game ran the same seeded 64-pane board twice in one process at 75% game volume. The scripted stance caught pane 61 after it had traveled 18–19 cm. The pane stayed locked for 3.17–3.19 seconds and survived the countdown both times. The locked frames averaged 71.97 and 71.99 FPS. Their longest intervals were 15.99 and 15.68 ms. Three glass audio clips advanced during playback. Across both routes the compositor reported stereo submissions on all 29 recorded samples. This was an unattended synthetic room. [Fixture, results and capture hashes](<./Verification/Locked slider on Quest/locked-slider-device-review.json>)
 
-The first 32-pane shatter in that run produced a **96.58 ms** interval beginning about 29 ms after the game recorded the break. The same break on repeat reached **14.73 ms** in the matched window. A separate run confirmed a 75.46 ms first-break interval. Four fresh launches compared the ordinary start with silently priming the existing spatial-audio voices. They measured 73.02 ms (ordinary), 17.18 and 15.52 ms (primed), then 15.39 ms (ordinary). That last control also ran quickly. These captures establish an intermittent first-break hitch. They leave its cause open, so the game keeps its normal audio startup. [Matched timing and raw captures](<./Verification/Locked slider on Quest/locked-slider-ab/summary.json>)
+The first 32-pane shatter in that run produced a **96.58 ms** interval beginning about 29 ms after the game recorded the break. The same break on repeat reached **14.73 ms** in the matched window. A separate run confirmed a 75.46 ms first-break interval. Four fresh launches compared the ordinary start with silently priming the existing spatial-audio voices. They measured 73.02 ms (ordinary), 17.18 and 15.52 ms (primed), then 15.39 ms (ordinary). That last control also ran quickly. These captures establish an intermittent first-break hitch. The audio experiment did not isolate its cause. [Matched timing and raw captures](<./Verification/Locked slider on Quest/locked-slider-ab/summary.json>)
+
+### First-use Vulkan pipeline creation
+
+A native Perfetto capture reproduced a 77.69 ms frame at the first 32-pane shatter. Across the opening frames, Unity’s render thread spent 14.48, 20.25 and 59.43 ms creating three Vulkan graphics pipelines, a total of 94.16 ms. The preceding 15 render-graph calls took 2.06–4.73 ms each. The game’s shatter loop took 0.11 ms, and the Unity main thread waited for graphics work. The capture identifies the render-thread calls; it does not label their individual materials. [Trace timing, control frames and device conditions](<./Verification/First shatter native trace.json>)
+
+### Preparing the three graphics pipelines before Welcome
+
+At game revision `1da914c`, the Meta Quest build profile prepares three recorded Unity graphics states at startup. They draw the hole mask, the shaft and falling glass, and the ending chamber. The capture came from the headset's Vulkan stereo rendering with four-sample antialiasing. No audio or visible pregame shatter is needed.
+
+| First 32-pane opening on a fixed 64-pane Quest board | Longest frame near the break | Combined time in the three graphics pipeline creation calls |
+| --- | ---: | ---: |
+| Build profile with startup preparation off | 78.18 ms | 92.70 ms |
+| Startup preparation on, first fresh installation | 19.42 ms | 1.44 ms |
+| Startup preparation on, second fresh installation | 15.75 ms | 1.56 ms |
+
+During a separate startup trace, Unity scheduled the warmup on the main thread in 2.55 ms. The three device compilations ran on a worker and finished 1.13 seconds before Welcome.
+
+The three creation calls span opening frames, so their total can exceed one frame. In a separate same-executable comparison, two unwarmed controls reached 70.99 and 74.70 ms. Explicitly warming the captured states brought the corresponding peak to 17.01 ms. The native profile had prepared all three by Welcome. Both profile-on opening peaks remained above the 13.9 ms target. The worn-room test uses the same scan for a fresh run and a repeat. [Fixed-board trials and conditions](<./Verification/First opening warmup on Quest.json>)
 
 ## Record a session
 

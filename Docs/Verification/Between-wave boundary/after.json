@@ -1,0 +1,103 @@
+{
+    "result": "passed",
+    "startedUtc": "2026-11-20T09:28:37.9697990Z",
+    "finishedUtc": "2026-11-20T09:29:29.1151060Z",
+    "unityVersion": "6000.6.9f1",
+    "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+    "failure": "",
+    "fixture": "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode",
+    "input": "Simulated world poses, grip state, and visible menu selection. Unity physics and unscaled game time.",
+    "imagesDescribe": "Monoscopic Editor renders of the actual scene. Player-view images use the simulated center eye. Whole-room-brick looks down on the scanned floor. Room-preview, classic-glass, and neighboring-hole are elevated observer shots. Fall sequences use the same stationary eye position, looking toward the opening, slightly downward, and straight ahead as labeled.",
+    "columns": 0,
+    "rows": 0,
+    "seed": 0,
+    "sdkFloorCandidates": 0,
+    "pitch": 0.0,
+    "depthProviderEnabledInAuthoredScene": true,
+    "depthSupportedInFixture": false,
+    "checks": [
+        "Meta Camera Rig, Passthrough, MR Utility Kit, Find Spawn Positions, Controller Tracking, and Interactions Rig supply the single tracked rig, room, floor candidates and left/right ray and grab controls.",
+        "The gameplay scene keeps the app’s wall and furniture overlay inactive. MRUK fits the board and the brick samples the live stereo environment depth. The saved scene enables one SDK environment depth provider and contains no example cube, occlusion root, raycast marker, or shared anchor.",
+        "SAFE paused immediately on leaving the glass inside the tracked room. Glass, brick and chamber hid; score 1 survived. The off-board menu revealed the board and rejected Start until supported. Level 1, wave 2 received a fresh 5.0 seconds.",
+        "LEVEL CLEAR paused immediately on leaving the glass inside the tracked room. Glass, brick and chamber hid; score 7 survived. The off-board menu revealed the board and rejected Start until supported. Level 2, wave 1 received a fresh 4.6 seconds.",
+        "Walked each guaranteed stationary step through Last Tile. Level 2 rebuilt and waited for readiness."
+    ],
+    "images": [
+        "classic-glass.png",
+        "classic-player-view.png",
+        "neighboring-hole.png",
+        "neighboring-hole-player-view.png"
+    ],
+    "captureNotes": [],
+    "endingOrder": [],
+    "waves": [
+        {
+            "mode": "Classic",
+            "start": 21,
+            "guaranteed": 15,
+            "score": 1,
+            "survived": true,
+            "plannedDeadline": 10.74529533021542,
+            "observedAfterResolution": 10.745595124716553
+        },
+        {
+            "mode": "Memory",
+            "start": 15,
+            "guaranteed": 16,
+            "score": 2,
+            "survived": true,
+            "plannedDeadline": 17.681785289115645,
+            "observedAfterResolution": 17.681992998866214
+        },
+        {
+            "mode": "Memory",
+            "start": 16,
+            "guaranteed": 17,
+            "score": 3,
+            "survived": true,
+            "plannedDeadline": 23.964468083900226,
+            "observedAfterResolution": 23.964568501984125
+        },
+        {
+            "mode": "Classic",
+            "start": 17,
+            "guaranteed": 11,
+            "score": 4,
+            "survived": true,
+            "plannedDeadline": 30.24482899659864,
+            "observedAfterResolution": 30.24491487386621
+        },
+        {
+            "mode": "Classic",
+            "start": 11,
+            "guaranteed": 10,
+            "score": 5,
+            "survived": true,
+            "plannedDeadline": 36.524931249999995,
+            "observedAfterResolution": 36.525044040532876
+        },
+        {
+            "mode": "Memory",
+            "start": 10,
+            "guaranteed": 9,
+            "score": 6,
+            "survived": true,
+            "plannedDeadline": 42.80523379393424,
+            "observedAfterResolution": 42.80541099773242
+        },
+        {
+            "mode": "LastTile",
+            "start": 9,
+            "guaranteed": 8,
+            "score": 7,
+            "survived": true,
+            "plannedDeadline": 49.08560241638322,
+            "observedAfterResolution": 49.085716496598636
+        }
+    ],
+    "falls": [],
+    "endingExits": [],
+    "previewBeforeNaturalLoss": "Crystal",
+    "openLandings": [],
+    "landingViews": []
+}

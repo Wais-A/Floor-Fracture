@@ -1,0 +1,274 @@
+{
+  "subject": "First opening on Quest 3, asynchronous Vulkan pipeline warmup",
+  "verifiedUtc": "2026-11-20T09:57:14.384+00:00",
+  "productionCommit": "1da914c52164f620edfa50c9b4fb15f3020a3c56",
+  "experiment": "Physical, unattended Quest 3. The separate signed Unity 6000.6.9f1 / Meta SDK 209 player used a synthetic MRUK Rec Room and scripted rig input. The production 8 × 8 board, Level 3 Classic wave, 32 glass openings and ordinary 75% game audio ran on the device. The app was freshly installed before each case. The operating system’s shared graphics cache was left intact.",
+  "timing": "Unity maximum consecutive LateUpdate interval within 150 ms before to 300 ms after the first shatter. Perfetto timings refer to the same window; all listed pipeline calls are CreateGraphicsPipelineImpl. OVR counts represent one-second device samples with nonzero eye buffers and submitted layers.",
+  "deviceCapture": {
+    "sourceSHA256": "48fd429f391bbc960a6ba26800aa7c192bb114e84c886abdb7078ed5d000e9c9",
+    "fileBytes": 91908,
+    "graphics": "Android Mobile Vulkan, two XR views, 4× MSAA",
+    "attachments": [
+      "D24_UNorm_S8_UInt",
+      "R8G8B8A8_SRGB",
+      "R8G8_UNorm"
+    ],
+    "shaders": [
+      "Floor Fracture/Shaft and falling glass",
+      "Floor Fracture/Ending chamber",
+      "Floor Fracture/Hole Mask"
+    ],
+    "stateCount": 3,
+    "keyword": "STEREO_MULTIVIEW_ON",
+    "selection": "Captured the intact board and first opening on Quest. Kept one newly encountered state for each of the three opening shaders."
+  },
+  "sameSignedApkTest": {
+    "description": "The explicit warmup ran first, followed by two control launches of the identical APK with explicit warmup disabled. The latter two recompiled all three pipelines.",
+    "runs": [
+      {
+        "case": "explicit-warm",
+        "apkSha256": "c56dfba60df9d7085f686a1907babb0505d21b632e42ba38cdb150429d84a152",
+        "unityFirstOpeningFrameMaxMs": 17.013,
+        "maxRenderGraphMs": 4.395,
+        "nativePipelineCallsMs": [
+          0.403,
+          0.447,
+          0.788
+        ],
+        "statesCompleteDuringWelcome": 3,
+        "XRActive": true,
+        "score": 1,
+        "opened": 32,
+        "glassAudioSamplesAdvanced": true,
+        "gameCameraCallbacks": 25,
+        "OVREyeSubmissionSamples": 10,
+        "approxLaunchToWelcomeSec": 4.039
+      },
+      {
+        "case": "explicit-cold",
+        "apkSha256": "c56dfba60df9d7085f686a1907babb0505d21b632e42ba38cdb150429d84a152",
+        "unityFirstOpeningFrameMaxMs": 70.988,
+        "maxRenderGraphMs": 105.718,
+        "nativePipelineCallsMs": [
+          14.396,
+          26.412,
+          62.577
+        ],
+        "statesCompleteDuringWelcome": 0,
+        "XRActive": true,
+        "score": 1,
+        "opened": 32,
+        "glassAudioSamplesAdvanced": true,
+        "gameCameraCallbacks": 19,
+        "OVREyeSubmissionSamples": 11,
+        "approxLaunchToWelcomeSec": 3.977
+      },
+      {
+        "case": "explicit-cold-repeat",
+        "apkSha256": "c56dfba60df9d7085f686a1907babb0505d21b632e42ba38cdb150429d84a152",
+        "unityFirstOpeningFrameMaxMs": 74.704,
+        "maxRenderGraphMs": 101.705,
+        "nativePipelineCallsMs": [
+          14.355,
+          23.106,
+          61.838
+        ],
+        "statesCompleteDuringWelcome": 0,
+        "XRActive": true,
+        "score": 1,
+        "opened": 32,
+        "glassAudioSamplesAdvanced": true,
+        "gameCameraCallbacks": 19,
+        "OVREyeSubmissionSamples": 10,
+        "approxLaunchToWelcomeSec": 3.864
+      }
+    ]
+  },
+  "questBuildProfileTest": {
+    "description": "Only the native startup setting and collection assignment differ in the enabled and disabled build profiles. The fixture inspected the available collection at Welcome without calling WarmUp. The off build had no assigned collection.",
+    "runs": [
+      {
+        "case": "native-first",
+        "apkSha256": "f4bd456c8d510fceb5cd802315037a727de26062ae4d2e4c4a41cd05c2c4908d",
+        "unityFirstOpeningFrameMaxMs": 19.424,
+        "maxRenderGraphMs": 4.632,
+        "nativePipelineCallsMs": [
+          0.35,
+          0.46,
+          0.633
+        ],
+        "statesCompleteDuringWelcome": 3,
+        "XRActive": true,
+        "score": 1,
+        "opened": 32,
+        "glassAudioSamplesAdvanced": true,
+        "gameCameraCallbacks": 25,
+        "OVREyeSubmissionSamples": 9,
+        "preGameFramesChecked": 48,
+        "preGameFramesWithOpeningShardsOrSound": [
+          0,
+          0,
+          0
+        ],
+        "approxLaunchToWelcomeSec": 4.056
+      },
+      {
+        "case": "native-control",
+        "apkSha256": "55c81a23e0e229002e5e1c7628e17c84a262c69b6de307377815ef95cf4b4609",
+        "unityFirstOpeningFrameMaxMs": 78.175,
+        "maxRenderGraphMs": 95.415,
+        "nativePipelineCallsMs": [
+          12.428,
+          20.239,
+          60.03
+        ],
+        "statesCompleteDuringWelcome": 0,
+        "XRActive": true,
+        "score": 1,
+        "opened": 32,
+        "glassAudioSamplesAdvanced": true,
+        "gameCameraCallbacks": 19,
+        "OVREyeSubmissionSamples": 10,
+        "preGameFramesChecked": 48,
+        "preGameFramesWithOpeningShardsOrSound": [
+          0,
+          0,
+          0
+        ],
+        "approxLaunchToWelcomeSec": 3.893
+      },
+      {
+        "case": "native-repeat",
+        "apkSha256": "f4bd456c8d510fceb5cd802315037a727de26062ae4d2e4c4a41cd05c2c4908d",
+        "unityFirstOpeningFrameMaxMs": 15.749,
+        "maxRenderGraphMs": 4.406,
+        "nativePipelineCallsMs": [
+          0.405,
+          0.426,
+          0.73
+        ],
+        "statesCompleteDuringWelcome": 3,
+        "XRActive": true,
+        "score": 1,
+        "opened": 32,
+        "glassAudioSamplesAdvanced": true,
+        "gameCameraCallbacks": 25,
+        "OVREyeSubmissionSamples": 10,
+        "preGameFramesChecked": 48,
+        "preGameFramesWithOpeningShardsOrSound": [
+          0,
+          0,
+          0
+        ],
+        "approxLaunchToWelcomeSec": 4.147
+      }
+    ],
+    "warmAPKSignedBytes": 204939751,
+    "offAPKSignedBytes": 204940033
+  },
+  "startup": {
+    "nativeMainSchedulingMs": 2.545,
+    "workerThread": "Job.Worker 1",
+    "nativeWorkerPipelineMs": [
+      27.112,
+      67.061,
+      9.353
+    ],
+    "workerFinishedBeforeWelcomeMs": 1134.262,
+    "cleanupContext": "The startup-only trace and its player receipt were saved before a temporary USB interruption. A subsequent run reverified the restored ordinary application and all device settings.",
+    "scope": "The native worker ran during asset preloading. Welcome was timed against the Quest boot clock. Launch-to-Welcome timings in the development controls include normal startup variation."
+  },
+  "retailPlayer": {
+    "result": {
+      "case": "retail-awake",
+      "apkSha256": "4c278a109198fe29a568b79d839fffcb67551ba5ec3dec76d964420c520dea57",
+      "unityFirstOpeningFrameMaxMs": 15.512,
+      "maxRenderGraphMs": null,
+      "nativePipelineCallsMs": [],
+      "statesCompleteDuringWelcome": 3,
+      "XRActive": true,
+      "score": 1,
+      "opened": 32,
+      "glassAudioSamplesAdvanced": true,
+      "gameCameraCallbacks": 0,
+      "OVREyeSubmissionSamples": 0,
+      "preGameFramesChecked": 72,
+      "preGameFramesWithOpeningShardsOrSound": [
+        0,
+        0,
+        0
+      ]
+    },
+    "readiness": "BuildOptions.None, non-debuggable Android player. Four ordinary Android Wake key events allowed the unworn headset to continue the release player, with its proximity settings intact. It completed all three states before Welcome and the three normal glass sound streams advanced. The previous idle standby attempts did not reach the fixture.",
+    "timingScope": "The release CSV had zero submitted eye-buffer samples and the fixture received zero camera callbacks, so its 15.512 ms maximum measures the game loop. The development cases above separately verified submitted stereo eye buffers and native rendering work."
+  },
+  "androidLifecycle": {
+    "actualHome": true,
+    "sameProcess": true,
+    "nativeCallbacks": true,
+    "scoreBeforeAfterRetry": [
+      1,
+      1,
+      1
+    ],
+    "stages": [
+      "Countdown",
+      "Paused",
+      "Countdown"
+    ],
+    "interruptedCountdownSec": 4.2,
+    "retriedCountdownSec": 4.2,
+    "deadlineMovedMs": 1525.696
+  },
+  "signedPackageVerification": {
+    "method": "Read GraphicsSettings class 30 from globalgamemanagers, follow its PPtr to graphics-state collection class 55640938, compare the three stored shader GUIDs, keyword, variant hashes and vertex-layout/render-pass/render-state triples with the captured asset.",
+    "cases": {
+      "Native": {
+        "action": 2,
+        "async": true,
+        "collectionPathId": 3999,
+        "variantCount": 3
+      },
+      "Control": {
+        "action": 0,
+        "async": true,
+        "collectionPathId": 0,
+        "variantCount": 0
+      },
+      "NativeRetail": {
+        "action": 2,
+        "async": true,
+        "collectionPathId": 3998,
+        "variantCount": 3
+      }
+    },
+    "script": "tools/inspect_pso_apk.py in the local evidence archive"
+  },
+  "limits": [
+    "Unattended scripted input could not evaluate wearer comfort or the quality of real room tracking.",
+    "The profile reduced the measured first-opening frame maxima. Those windows still exceeded the 13.9 ms budget at 72 Hz.",
+    "The real headset traces covered the current Quest 3/Vulkan/Mobile configuration."
+  ],
+  "cleanup": {
+    "scratchRemoved": true,
+    "ordinaryForegroundOnHandoff": true,
+    "ordinaryUnchangedSHA256": "9d9709214d23eb36186abee56fafffa82cf3607af21d84f2f0547194fdcca4ea",
+    "proximityRestored": true,
+    "metricsRecordingRestored": true,
+    "mediaVolumeRestored": true
+  },
+  "localEvidence": {
+    "relativeArchive": "Builds/Verification/First opening warmup on Quest/Raw evidence.zip",
+    "archiveSHA256": "9fe1ed40fd236f9595ac6a879feebfb24df55d261d6a1e922e0e2a18b7b199c3",
+    "bytes": 89487041,
+    "nativeTracesSHA256": {
+      "explicit-warm": "34715be5c9af70375a5d3817b1a1b2f14c133081455db9cc6f1d2aecf4305c3f",
+      "explicit-cold": "5d9bf1ccbfb3a07155f45bbffe8735e0d28ebd905e4b50842169494dd7e0a14b",
+      "explicit-cold-repeat": "e852f8a6c212cfdba7c67db63ad0331b0c0e9dc2aac5726732ea96b557fa6f20",
+      "native-first": "09673e07f855e91ba95d130c8177ac94823871dd26841dbfb381912562492191",
+      "native-control": "e12f5c2342f32e8b2514bb1e9c2d94a9eeec105988d15e735ccee67933435c89",
+      "native-repeat": "dc319b64fb6c2294bac9834b14ec54c3f76e1d071a62cabd739f6f88e69d8936",
+      "native-start": "ae7d806aa547ac90c8b5324b0d545c28d155371549c632269b14c34d2a6b7d8d"
+    }
+  }
+}

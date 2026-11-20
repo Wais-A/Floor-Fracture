@@ -1,22 +1,22 @@
 {
-  "sourceRevision": "72faf40ca67bad88e24e3278fb7ee768fb3fb342",
+  "sourceRevision": "1da914c52164f620edfa50c9b4fb15f3020a3c56",
   "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
   "unity": "6000.6.9f1",
   "packages": {
     "development": {
       "mode": "development",
-      "sourceRevision": "72faf40ca67bad88e24e3278fb7ee768fb3fb342",
-      "apk": "Builds/Quest/Glass-review/FloorFracture.apk",
-      "bytes": 156996477,
-      "sha256": "9d9709214d23eb36186abee56fafffa82cf3607af21d84f2f0547194fdcca4ea",
-      "buildGuid": "3e6180eec5cf43c9b401100062714d93",
+      "sourceRevision": "1da914c52164f620edfa50c9b4fb15f3020a3c56",
+      "apk": "Builds/Quest/Board-exit-review/FloorFracture.apk",
+      "bytes": 156993549,
+      "sha256": "4edd1ac8c3636cb173ebee2c714f43d84dc6eef07cdb68c077e5bbb098823512",
+      "buildGuid": "a9bb5ead80484b569273e17428beae54",
       "unity": "6000.6.9f1",
       "package": "com.wa003.floorfracture",
       "activity": "com.unity3d.player.UnityPlayerGameActivity",
       "buildErrors": 0,
-      "buildWarnings": 8,
-      "comparedAuthoredPaths": 237,
-      "crcVerifiedArchiveEntries": 925,
+      "buildWarnings": 42,
+      "comparedAuthoredPaths": 241,
+      "crcVerifiedArchiveEntries": 922,
       "arm64Libraries": 23,
       "minimumApi": 32,
       "targetApi": 34,
@@ -39,6 +39,7 @@
       "editorSettingsResourcePresent": true,
       "editorPairingCredentialFound": false,
       "scratchProbeFound": false,
+      "fullMetaFloorZoneNoticeEmbedded": true,
       "openXRAndMetaAudioPresent": true,
       "serializedEditorAssistant": {
         "sourceTokenFoundInPlayer": false,
@@ -50,21 +51,60 @@
         "serializedTokenIsEmpty": true,
         "serializedDevAgentIsDisabled": true
       },
-      "debugConnectionScope": "Unity development players can carry a debugging host address in boot.config. The embedded assistant address and credential are empty."
+      "debugConnectionScope": "Unity development players can carry a debugging host address in boot.config. The embedded assistant address and credential are empty.",
+      "bundledNarrationMatchesNetworkDeniedQuestTrial": true,
+      "packagedFirstOpeningWarmup": {
+        "build": "FloorFracture.apk",
+        "graphicsSettingsClass": 30,
+        "assignedFile": 1,
+        "assignedPathId": 3999,
+        "action": 2,
+        "asynchronous": true,
+        "progressiveLimit": -1,
+        "collectionClass": 55640938,
+        "name": "FirstGlassOpening",
+        "revision": 0,
+        "api": "Vulkan",
+        "platform": "Android",
+        "quality": "Mobile",
+        "variants": [
+          {
+            "shader": "Floor Fracture/Shaft and falling glass",
+            "variantHash": "f2acddb6ed2da5b0de1e1aac22c253dc",
+            "stateCount": 1,
+            "stereo": "STEREO_MULTIVIEW_ON"
+          },
+          {
+            "shader": "Floor Fracture/Ending chamber",
+            "variantHash": "08013e7cc76159793c54206bfe0d55c6",
+            "stateCount": 1,
+            "stereo": "STEREO_MULTIVIEW_ON"
+          },
+          {
+            "shader": "Floor Fracture/Hole Mask",
+            "variantHash": "f8dd39813651206c8ec1db819802ca34",
+            "stateCount": 1,
+            "stereo": "STEREO_MULTIVIEW_ON"
+          }
+        ],
+        "nativeObjectSHA256": "b4e87bb1ab8d107914a5116b1fa5581bef55174f19455998a0fb6d80f545a742",
+        "sourceCollectionSHA256": "48fd429f391bbc960a6ba26800aa7c192bb114e84c886abdb7078ed5d000e9c9"
+      },
+      "buildAdvisories": "Both Unity build reports recorded 42 warnings. Compiler logs include dependency shader warnings from the Inference Engine and URP lighting. No shader errors from Floor Fracture appeared."
     },
     "retail": {
       "mode": "retail",
-      "sourceRevision": "72faf40ca67bad88e24e3278fb7ee768fb3fb342",
-      "apk": "Builds/CleanRelease/FloorFracture-72faf40.apk",
-      "bytes": 108928802,
-      "sha256": "0799f9eab5a2fbcb42d01c204758bf68fac4b542077719635dc609e8b8bbce46",
-      "buildGuid": "4a4e220fe0144c5898864548087459aa",
+      "sourceRevision": "1da914c52164f620edfa50c9b4fb15f3020a3c56",
+      "apk": "Builds/CleanRelease/FloorFracture-1da914c.apk",
+      "bytes": 108948194,
+      "sha256": "ed09910e9494ee10f9528aea4530b658cb02acf47eddc54a014aad61e9d2a28b",
+      "buildGuid": "21b08026f3144266b03e3eef75db5a12",
       "unity": "6000.6.9f1",
       "package": "com.wa003.floorfracture",
       "activity": "com.unity3d.player.UnityPlayerGameActivity",
       "buildErrors": 0,
-      "buildWarnings": 9,
-      "comparedAuthoredPaths": 237,
+      "buildWarnings": 42,
+      "comparedAuthoredPaths": 241,
       "crcVerifiedArchiveEntries": 921,
       "arm64Libraries": 22,
       "minimumApi": 32,
@@ -86,14 +126,8 @@
       "editorSettingsResourcePresent": true,
       "editorPairingCredentialFound": false,
       "scratchProbeFound": false,
+      "fullMetaFloorZoneNoticeEmbedded": true,
       "openXRAndMetaAudioPresent": true,
-      "splitToneRimNameInIl2CppMetadata": true,
-      "previousRetailHadSplitToneRimName": false,
-      "signedWithSameCertificateAsPreviousRetail": true,
-      "usesAndroidDebugSigningCertificate": true,
-      "committedAssetsPackagesAndProjectSettingsMatchedBeforeUnityStarted": true,
-      "gitLfsFsckPassedBeforeUnityStarted": true,
-      "devAgentSerializedSettingsPassed": true,
       "serializedEditorAssistant": {
         "sourceTokenFoundInPlayer": false,
         "injectedAddressFoundInPlayer": false,
@@ -103,23 +137,63 @@
         "serializedAddressIsEmpty": true,
         "serializedTokenIsEmpty": true,
         "serializedDevAgentIsDisabled": true
-      }
+      },
+      "bundledNarrationMatchesNetworkDeniedQuestTrial": true,
+      "packagedFirstOpeningWarmup": {
+        "build": "FloorFracture-1da914c.apk",
+        "graphicsSettingsClass": 30,
+        "assignedFile": 1,
+        "assignedPathId": 3998,
+        "action": 2,
+        "asynchronous": true,
+        "progressiveLimit": -1,
+        "collectionClass": 55640938,
+        "name": "FirstGlassOpening",
+        "revision": 0,
+        "api": "Vulkan",
+        "platform": "Android",
+        "quality": "Mobile",
+        "variants": [
+          {
+            "shader": "Floor Fracture/Shaft and falling glass",
+            "variantHash": "f2acddb6ed2da5b0de1e1aac22c253dc",
+            "stateCount": 1,
+            "stereo": "STEREO_MULTIVIEW_ON"
+          },
+          {
+            "shader": "Floor Fracture/Ending chamber",
+            "variantHash": "08013e7cc76159793c54206bfe0d55c6",
+            "stateCount": 1,
+            "stereo": "STEREO_MULTIVIEW_ON"
+          },
+          {
+            "shader": "Floor Fracture/Hole Mask",
+            "variantHash": "f8dd39813651206c8ec1db819802ca34",
+            "stateCount": 1,
+            "stereo": "STEREO_MULTIVIEW_ON"
+          }
+        ],
+        "nativeObjectSHA256": "71cecefe1045a40b763cedbeebb15592ac1fd8ec68a00f0d397d69d23481521b",
+        "sourceCollectionSHA256": "48fd429f391bbc960a6ba26800aa7c192bb114e84c886abdb7078ed5d000e9c9"
+      },
+      "cleanLocalCheckoutAndGitLfsFsckBeforeImport": true,
+      "buildAdvisories": "Both Unity build reports recorded 42 warnings. Compiler logs include dependency shader warnings from the Inference Engine and URP lighting. No shader errors from Floor Fracture appeared."
     }
   },
   "questInstallation": {
-    "verifiedUtc": "2026-11-20T09:02:00.779485+00:00",
+    "verifiedUtc": "2026-11-20T10:00:57.714472+00:00",
     "device": "Quest 3",
-    "installedApkSha256": "9d9709214d23eb36186abee56fafffa82cf3607af21d84f2f0547194fdcca4ea",
+    "installedApkSha256": "4edd1ac8c3636cb173ebee2c714f43d84dc6eef07cdb68c077e5bbb098823512",
     "package": "com.wa003.floorfracture",
-    "lastUpdateAndroidTime": "2026-11-20 04:01:41",
-    "activity": "topResumedActivity=ActivityRecord{1e70c51 u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2593}",
-    "pid": "23246",
+    "lastUpdateAndroidTime": "2026-11-20 05:00:39",
+    "activity": "topResumedActivity=ActivityRecord{453cebf u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2643}",
+    "pid": "15943",
     "installMode": "replace, existing game data preserved",
     "spatialDataGranted": true,
     "microphonePermissionDeclared": false,
     "temporaryBenchmarkPackageRemoved": true,
     "gameTelemetry": {
-      "rows": 8,
+      "rows": 4,
       "graphics": [
         "Vulkan"
       ],
@@ -135,14 +209,20 @@
     "failures": 0,
     "skipped": 0,
     "localXml": {
-      "path": "Builds/Verification/Glass-review/EditMode.xml",
-      "sha256": "0eb921d9fc7db7945f7e8551b056990aad4f475f29ffd39643a23b73b61dbdba"
+      "path": "Builds/Verification/Board-exit-release/EditMode.xml",
+      "sha256": "10a149dcd4e365fc880c9aa11d3b11e6aea31ac4c1123c8741a4f9a194ebe1d8"
+    },
+    "originalRunProcessExitCode": 134,
+    "postTestEditorShutdown": "The game revision produced all 67 green XML results, then the separate Mac Editor process aborted in Meta Interaction SDK telemetry during shutdown. See the Mac-only follow-up for fresh repeat runs with clean process exits.",
+    "macBatchExitFollowup": {
+      "path": "Docs/Verification/Mac batch test exit.json",
+      "sha256": "bb620d51af0c1bf8071d977f8734d1140c27a5780c8ad5a003f035756ce78b48"
     }
   },
   "playMode": {
-    "startedUtc": "2026-11-20T08:56:22.6524020Z",
-    "finishedUtc": "2026-11-20T09:00:52.0505830Z",
-    "passedChecks": 40,
+    "startedUtc": "2026-11-20T09:49:26.9733970Z",
+    "finishedUtc": "2026-11-20T09:54:13.3550450Z",
+    "passedChecks": 42,
     "passedEndingRoutes": 24,
     "captures": 52,
     "checks": [
@@ -170,8 +250,10 @@
       "Welcome and Settings routed through their visible menu choices. The development menu selected seed 379.",
       "Tutorial marked and cracked the starting pane. An untimed step to adjacent clear glass shattered the pane behind the player, then restored it and reached Ready without creating a stone.",
       "The actual tutorial stone kept the stock Meta occlusion material and its individual visible _Color tint at runtime.",
-      "A carried stone held still for 0.4 s dropped at 0.000 m/s. The SDK supplied 0.542 m/s before the stationary-drop check.",
+      "A carried stone held still for 0.4 s dropped at 0.000 m/s. The SDK supplied 0.734 m/s before the stationary-drop check.",
       "In optional stone practice, a cancelled SDK grab returned without a throw, a miss returned to reach, a distant drop broke its actual pane, and a moving release carried native throw velocity into another pane.",
+      "SAFE paused immediately on leaving the glass inside the tracked room. Glass, brick and chamber hid; score 1 survived. The off-board menu revealed the board and rejected Start until supported. Level 1, wave 2 received a fresh 5.0 seconds.",
+      "LEVEL CLEAR paused immediately on leaving the glass inside the tracked room. Glass, brick and chamber hid; score 7 survived. The off-board menu revealed the board and rejected Start until supported. Level 2, wave 1 received a fresh 4.6 seconds.",
       "Walked each guaranteed stationary step through Last Tile. Level 2 rebuilt and waited for readiness.",
       "The landing visible on the first surviving wave remained selected through later waves and matched the subsequent natural loss.",
       "Six natural endings played before a repeat. The next bag changed ending. Full playback, skip, results, and restart used the normal production controller.",
@@ -181,28 +263,49 @@
       "Lava showed the moving walls for 3.37 s after entry at 2.20 m eye height, before impact.",
       "Water reduced motion kept the chamber geometry stationary before contact and reached results.",
       "Suspending a wave withdrew its moving pane and clock. Show board waited for room localization and reopened the existing holes. Starting from the same glass restored the safe moving pane with a full countdown.",
-      "Level 3 seed 379 moved ordinary full-sized glass between holes 21 and 27. A miss recovered, a catch held through zero, and the warned pane broke into 16 fitted shards at (0.310, 0.484) m with measured width 0.601 m.",
+      "Level 3 seed 379 moved ordinary full-sized glass between holes 21 and 27. A miss recovered, a catch held through zero, and the warned pane broke into 16 fitted shards at (0.310, 0.483) m with measured width 0.601 m.",
       "A simulated significant MRUK floor-anchor event withdrew the board. Reloading the real fixture produced a new verified fit and returned directly to Welcome.",
       "Injected MRUK NoScenePermission. The blocked board showed App permissions and Try again. Retry loaded the fixture and restored Welcome.",
       "Injected MRUK NoRoomsFound. The blocked board showed Space Setup and Check again. Retry loaded the fixture and restored Welcome.",
       "Three non-silent local narration clips matched the tutorial and Results captions. Fresh settings, master mute, and skipped Results were silent. Stepping away, disabling narration, entering gameplay, and restarting stopped playback."
     ],
     "localOriginal": {
-      "path": "Builds/Verification/Glass-review/PlayMode.json",
-      "sha256": "2fc14a8e44dc85a5b9219591826fc6da22dee18e0e06c8f925433addbe30094d"
-    }
+      "path": "Builds/Verification/Board-exit-release/PlayMode.json",
+      "sha256": "73cf1ee120cb5ec9e01ddcb9bbc1328e57b7e0699aff13ccf503b0e7e90280fd"
+    },
+    "batchProcessExitCode": 0
   },
   "macSimulator": {
-    "record": {
+    "lastGlassVisualRun": {
       "path": "Docs/Verification/Latest Mac simulator.json",
       "sha256": "ea18e8fcac7c90c03177ced9a30c8186ba12bb060558552074babd82a3c9d424"
     },
-    "image": {
-      "path": "Docs/Media/Latest Mac simulator.jpg",
-      "sha256": "991fa5d0bf7459b1e2b5aeb17d3ccf574872192905a24ea764b8980a0efefdb1"
+    "nativeBetweenWaveTest": {
+      "path": "Docs/Verification/Between-wave boundary/simulator.json",
+      "sha256": "6bc78a66c528e08863c974481388229e6beffe920c5a130e6c2250c0b770c22c"
+    },
+    "windowCaptures": {
+      "path": "Docs/Verification/Between-wave boundary/simulator.jpg",
+      "sha256": "b82d5896a3556c66df36cef40e2ff85f338ac4f47400353405b0ac9655042231"
     }
   },
   "evidence": [
+    {
+      "path": "Docs/Verification/Between-wave boundary/summary.json",
+      "sha256": "782c41d3d73d36932bfdf2b6ab9ee2965d06acfef41fc0a78977a364afc543bc"
+    },
+    {
+      "path": "Docs/Verification/Quest offline narration.json",
+      "sha256": "68a2ff45d89d3afa02553e84ccb980b54d84048c0643284fb31802b217b7a6d4"
+    },
+    {
+      "path": "Docs/Verification/First shatter native trace.json",
+      "sha256": "45e5811154feff57fec3c192e1ca49562102b6a39ee9e127b25acdb6bfca0114"
+    },
+    {
+      "path": "Docs/Verification/First opening warmup on Quest.json",
+      "sha256": "593e07cb593d375062e0affaf2c689f22cf64e07abce0730d687ecfc35e70f9b"
+    },
     {
       "path": "Docs/Verification/safe-rim-comparison.json",
       "sha256": "4cd4bf549beec34714dbe697d63ba3ced91fccc86766278e863969c04daa010b"
@@ -234,8 +337,24 @@
   ],
   "knownLimits": [
     "The rim trial used rendered stereo poses. Final real-room readability, head-motion shimmer, support near seams and fall comfort need a wearer.",
-    "The matched scripted Quest tests used the earlier gameplay checkpoint and a fixed 64-pane footprint. An intermittent 96.58 ms first-shatter frame exceeded the 13.9 ms target. A four-launch audio trial yielded a fast unprimed control; the game keeps its normal audio startup.",
+    "The matched scripted Quest tests used the earlier gameplay checkpoint and a fixed 64-pane footprint. An earlier intermittent 96.58 ms first-shatter frame exceeded the 13.9 ms target. A native capture linked one 77.69 ms frame to first-use Vulkan graphics pipeline creation. On a fixed 64-pane Quest fixture the native warmup reduced an opening-frame peak from 78.18 ms to 15.75–19.42 ms. Those peaks remain above 13.9 ms. Performance and comfort in the fitted room remain open.",
     "Two outside testers, real-room performance, the physical Quest film, course submission and final voice approval are open."
   ],
-  "sharing": "Use the release APK and the history-free source archive. Earlier local commits and APKs contain a historical editor pairing credential."
+  "sharing": "Use the release APK and the history-free source archive. Earlier local commits and APKs contain a historical editor pairing credential.",
+  "questRetailLaunch": {
+    "utc": "2026-11-20T09:59:57.223245+00:00",
+    "device": "Quest 3",
+    "package": "com.wa003.floorfracture",
+    "installedApkSha256": "ed09910e9494ee10f9528aea4530b658cb02acf47eddc54a014aad61e9d2a28b",
+    "buildGuid": "21b08026f3144266b03e3eef75db5a12",
+    "ordinaryNonDebuggablePlayer": true,
+    "resumedActivity": "ResumedActivity: ActivityRecord{ad89c32 u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2641}",
+    "sameProcessRemainedInForegroundForAtLeastSeconds": 12,
+    "spatialDataGranted": true,
+    "fatalOrGameShaderErrorSeenInProcessLog": false,
+    "processLogLinesInWindow": 3758,
+    "scope": "Normal standalone APK launched on the physical headset unattended. No result is claimed about room appearance, menu selection or comfort."
+  },
+  "macEditorMaintenanceRevision": "886bf865cf03e6cd145fb38639243789d1fc7a13",
+  "macEditorMaintenanceScope": "The only source difference after the tested Android build is the Unity macOS Editor callback for closing Meta Interaction SDK telemetry during batch shutdown."
 }

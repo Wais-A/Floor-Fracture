@@ -2,11 +2,11 @@
   "status": "Reviewable working draft dated November 20, 2026",
   "word": {
     "path": "Docs/Floor Fracture Final Design Working Draft.docx",
-    "sha256": "9af130a2ec3b55f5257ce44cc604d62a313d421484e2340eac86afa2674f5699"
+    "sha256": "cd32800c1f91a67467b29bf96067d621177c569dbabe5571986eadd5a2b39f69"
   },
   "pdf": {
     "path": "Docs/Floor Fracture Final Design Working Draft.pdf",
-    "sha256": "9e7453e7fe3b41fbf7da5a0c99cf3ca03b4bb8ab41a46cd63fb7df94a780922f"
+    "sha256": "097a79a69a3fa08cc0cc3416de0c0697660cbb5d9e7832da969c181d443ae6a6"
   },
   "sourceDocuments": {
     "Docs/Final Project - Design Doc.docx": "8fb9ce31db2c80fc82feb4456f6cbfce3f422d01e22f0bd2f2c37e982bd7a2e3",
@@ -19,7 +19,7 @@
       612,
       792
     ],
-    "visualInspection": "All five US Letter pages were rendered with bundled LibreOffice and inspected at 130 dpi. Pages 1 and 2 matched the previous working draft pixel for pixel. Four paragraphs changed in sections 6, 7 and 10. Original headings, tables and page breaks remain intact.",
+    "visualInspection": "Bundled LibreOffice exported five US Letter pages. All five renders were inspected at 130 dpi. Pages 1 and 2 matched the preceding draft pixel for pixel. Six body paragraphs changed across sections 6, 7, 8 and 10. The professor’s original table structure, all 11 section headings and both hyperlink targets were preserved.",
     "content": "All 130 nonempty Word paragraphs appear in the five-page PDF. All 11 numbered headings and both Word hyperlink targets appear in the PDF. There are no embedded sketch objects.",
     "links": [
       "https://github.com/Wais-A/Floor-Fracture",
@@ -35,8 +35,16 @@
       "Docs/Verification/safe-rim-comparison.json",
       "Docs/Verification/Locked slider on Quest/locked-slider-device-review.json",
       "Docs/Verification/64 pane Quest measurements.json",
-      "Docs/Verification/Shared chamber Quest session.json"
-    ]
+      "Docs/Verification/Shared chamber Quest session.json",
+      "Docs/Verification/Between-wave boundary/simulator.json",
+      "Docs/Verification/Quest offline narration.json",
+      "Docs/Verification/First shatter native trace.json",
+      "Docs/Verification/First opening warmup on Quest.json"
+    ],
+    "resultExitUpdate": "The 599e1b6 Mac simulator check drove the native simulated headset 6 cm beyond a 12 × 2 board during SAFE and LEVEL CLEAR. The glass, brick and chamber all disappeared. Score 1 stayed at level 1, wave 2. Score 8 advanced once to level 2, wave 1. Show board worked while outside, Start waited for supported glass, and the new timers were 5.0 and 4.6 seconds. The simulator pose and settings returned to Welcome. The graphics-only 1da914c import retained the verified game assembly.",
+    "offlineVoiceUpdate": "Physical Quest 3 probe build c488578d641446b6b6e1e82099622e6d, based on 72faf40 and denied INTERNET, produced PCM output for each of the three captioned clips at 75% volume. Muting retained the caption. Voice preference and perceived intelligibility still require a wearer.",
+    "firstOpeningUpdate": "A separate physical Quest trace measured three first-use Vulkan pipeline creations totaling 94.164 ms. The same clean-installed instrumented executable reached 70.99 and 74.70 ms across two cold controls, versus 17.01 ms when it warmed only those three states. The native Quest build profile enabled by revision 1da914c warms those states asynchronously. On a scripted fixed 64-pane fixture its two cold first-opening peaks were 19.424 and 15.749 ms. The profile-off control peaked at 78.175 ms. Both warmed frames remained above 13.9 ms. The authored document rounds timings to two decimals.",
+    "evidenceScope": "Section 7 identifies the worn 5 × 3 session and the previous scripted maximum-board test. Section 10 retains the first/repeat 32-pane shatter and two moving-pane catch peaks from the older unmuted d49ac6dc instrumented Quest run. These results are separate from the controlled warmup comparison and from the two latest build-profile trials."
   },
   "pending": [
     "Current-build wearable recheck in the real demo room, including light/dark rims, tracking through physical removal/replacement, room fit, furniture, moving catch, Water and Space, Full/Reduced comfort and physical inputs.",

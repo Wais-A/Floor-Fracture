@@ -8,9 +8,15 @@ Turn on **Narration** in Settings to audition the voice. It starts off on a fres
 | Stone practice | Drop or gently toss the stone onto an intact pane. | 3.56 s | 157,228 |
 | Run complete | Take a breath. Restart when you're ready. | 2.29 s | 100,908 |
 
-Changing screens, stepping 16 cm horizontally, suspending the app, or disabling narration stops the current line. A skipped fall goes straight to the captioned result. A naturally completed fall plays the results line when enabled. Restart clears it immediately. The final voice choice is open for headset playtesting.
+Changing screens, stepping 16 cm horizontally, suspending the app, or disabling narration stops the current line. A skipped fall goes straight to the captioned result. A naturally completed fall plays the results line when enabled. Restart clears it immediately.
 
 Playing these clips needs audio output only. The project manifest removes Android's microphone-recording permission from the merged Quest package. MRUK still requests spatial data to fit the glass to the room. [Android manifest merge rules](https://developer.android.com/build/manage-manifests#node_markers)
+
+## Quest 3 offline playback
+
+On November 20, 2026, a physical Quest 3 played all three lines from a test APK that lacked Android’s internet permission. Android also refused a local loopback socket. The compressed clips matched the retail APK from game revision `72faf40` byte for byte. At 75% master volume, the narration source produced 43 audio buffers over 0.92 seconds of each line while the panel displayed its caption. Muting stopped speech and preserved the caption. Skipping a fall showed silent Results, and Restart stopped the Results line. [On-device playback receipt](<./Verification/Quest offline narration.json>)
+
+The headset was unworn. The test used a synthetic 4 × 4 board, selected the actions behind the displayed menu buttons, and reached Results through the built-in ending preview. The three source WAVs, their Unity import settings, and the narration component match the tested revision in boundary-fix commit `599e1b6`. The `1da914c` retail APK also contains the same three compressed audio payloads. A wearer still needs to choose the final voice, judge its loudness alongside the game sounds, and try the controls by hand or controller.
 
 ## Source and permission
 

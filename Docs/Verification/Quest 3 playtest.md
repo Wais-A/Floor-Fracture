@@ -13,7 +13,9 @@ Wais tested the first playable development APK in his room. Unity build `build_a
 
 ## Current Quest build · November 20
 
-Game source `72faf40`, development player `3e6180eec5cf43c9b401100062714d93`, is installed on the Quest. The pale-floor comparison adds one more check for the next wearer. Look from your occupied pane to a distant intact pane, then shift your head and watch whether the intact edge stays readable and the warning still stands apart. [Latest build and installation](<./Latest Quest release.json>) · [Rendered intact edges](<../Media/safe-rim-comparison.png>)
+The Quest has game source `1da914c`, development player `a9bb5ead80484b569273e17428beae54`. Unattended runs confirmed both boundary exits in the native Mac simulator and measured a shorter first large shatter on the physical Quest. For the wearer review, take an ordinary step near a seam, then let a different pane give way under you. [Current installation](<./Latest Quest release.json>) · [Both boundary exits](<./Between-wave boundary/simulator.jpg>)
+
+The earlier intact-rim revision was `72faf40`, development player `3e6180eec5cf43c9b401100062714d93`. The pale-floor comparison adds one more check for the next wearer. Look from your occupied pane to a distant intact pane, then shift your head and watch whether the intact edge stays readable and the warning still stands apart. [Earlier glass build](<./Glass rim Quest release.json>) · [Rendered intact edges](<../Media/safe-rim-comparison.png>)
 
 The previous game source `084cf29` used development player `1d4b2d2ff6fb4423b09ede647d5b2216`. Android resumed the game on the physical Quest and the installed APK matched the signed file. In a separate test, the same headset loaded two synthetic MRUK rooms and identified the correct room in 24 checks. Start in your saved room, read the board dimensions, step across a seam, and deliberately lose off-center. Then turn your head near a chair and check Water and Space through a neighboring opening and during the fall. [Package, tests and installation](<./Room and pause review.json>) · [Native room test](<./Native room selection on Quest.json>)
 
