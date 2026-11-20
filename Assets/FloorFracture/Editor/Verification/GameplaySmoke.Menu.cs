@@ -28,7 +28,17 @@ namespace FloorFracture.Editor
             game.Panel.EditorUseRecenterDisplay(display);
             try
             {
+                var origin = game.Rig.trackingSpace.position;
+                SetHead(new Pose(origin, Quaternion.identity));
+                game.Panel.Recenter();
+                yield return Frames(2);
+                SetHead(new Pose(origin + Vector3.up * 1.70f, Quaternion.identity));
+                yield return Frames(3);
+                RequireCenteredMenu(canvas, 0f);
+                // A localized room can replace the loading page after the initial height changes.
+                canvas.position = origin + Vector3.forward * .56f;
                 Choose("Settings");
+                RequireCenteredMenu(canvas, 0f);
                 yield return VerifyRecenterOnPage(display, canvas, GameStage.Settings, 135f);
                 Choose("Back");
                 Choose("Start");
@@ -71,7 +81,7 @@ namespace FloorFracture.Editor
                 SetHead(initialHead);
                 game.Panel.Recenter();
             }
-            Record("The SDK display event recalled Settings, Paused, and Results to 56 cm in front of the simulated eye. The menu stayed fixed during head movement, stayed hidden during play, and waited for tracking after suspension. The glass, floor anchor, and camera rig kept their poses.");
+            Record("The native rig's provisional floor-height pose did not strand the menu below the eye. A page that began below the viewport appeared at eye height. The SDK display event recalled Settings, Paused, and Results at 56 cm. The menu stayed fixed during ordinary head movement, stayed hidden during play and waited for tracking after suspension. The glass, floor anchor and camera rig kept their poses.");
         }
 
         private static IEnumerator VerifyRecenterOnPage(FixtureDisplay display, Transform canvas, GameStage page,

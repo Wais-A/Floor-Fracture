@@ -152,7 +152,8 @@ namespace FloorFracture
             }
             SetBody(message);
             Paint();
-            if (position || (Head && Vector3.Dot(Head.forward, panel.position - Head.position) < 0))
+            var center = eye ? eye.WorldToViewportPoint(panel.position) : Vector3.zero;
+            if (position || center.z <= 0 || center.x < 0 || center.x > 1 || center.y < 0 || center.y > 1)
                 Recenter();
         }
 
@@ -179,6 +180,14 @@ namespace FloorFracture
         public void Recenter()
         {
             if (!Head || !panel) return;
+            // The native rig can report tracking before its first floor-relative eye pose arrives.
+            var origin = OVRManager.instance ? OVRManager.instance.trackingOriginType : OVRManager.TrackingOrigin.EyeLevel;
+            bool floorOrigin = origin == OVRManager.TrackingOrigin.FloorLevel || origin == OVRManager.TrackingOrigin.Stage;
+            if (!Tracked || (floorOrigin && Mathf.Abs(Head.localPosition.y) < .001f))
+            {
+                RequestMenuRecenter();
+                return;
+            }
             Vector3 forward = Vector3.ProjectOnPlane(Head.forward, Vector3.up);
             if (forward.sqrMagnitude < 0.01f) forward = Vector3.Cross(Head.right, Vector3.up);
             Vector3 pos = Head.position + forward.normalized * .56f + Vector3.down * .07f;

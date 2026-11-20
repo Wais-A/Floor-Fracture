@@ -292,16 +292,24 @@ internal sealed class FallScenery
 
     internal void Hide()
     {
-        if (veil) { veil.enabled = false; veil.transform.SetParent(world,false); }
+        if (veil)
+        {
+            veil.enabled = false;
+            if (world) veil.transform.SetParent(world,false);
+        }
         if (splash) { splash.SetActive(false); }
         if (replacementFire) replacementFire.SetActive(false);
-        world.gameObject.SetActive(false); head = null;
+        if (world) world.gameObject.SetActive(false);
+        head = null;
     }
 
     internal void Dispose()
     {
         Hide();
-        Object.Destroy(world.gameObject); Object.Destroy(surfaceMaterial); Object.Destroy(backgroundMaterial); Object.Destroy(fadeMaterial);
+        // During scene unload Unity may have destroyed the chamber before the sequence.
+        if (world) Object.Destroy(world.gameObject);
+        else if (veil) Object.Destroy(veil.gameObject);
+        Object.Destroy(surfaceMaterial); Object.Destroy(backgroundMaterial); Object.Destroy(fadeMaterial);
         foreach (Mesh owned in ownedMeshes) Object.Destroy(owned);
     }
 

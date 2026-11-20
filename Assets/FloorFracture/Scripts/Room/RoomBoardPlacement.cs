@@ -93,7 +93,46 @@ namespace FloorFracture
                 floorDepth?.Update(Time.realtimeSinceStartupAsDouble);
         }
 
-        private void Start() => Retry();
+        private void Start()
+        {
+#if UNITY_EDITOR_OSX
+            var runtime = Environment.GetEnvironmentVariable("XR_RUNTIME_JSON");
+            if (!Application.isBatchMode && runtime != null &&
+                runtime.EndsWith("meta_openxr_simulator.json", StringComparison.OrdinalIgnoreCase))
+                StartCoroutine(RecoverSimulatorPassthrough());
+#endif
+            Retry();
+        }
+
+#if UNITY_EDITOR_OSX
+        private System.Collections.IEnumerator RecoverSimulatorPassthrough()
+        {
+            // On repeated Play sessions Meta can initialize passthrough without submitting its layer.
+            double deadline = Time.realtimeSinceStartupAsDouble + 10;
+            while (!OVRManager.IsInsightPassthroughInitialized() && Time.realtimeSinceStartupAsDouble < deadline)
+                yield return null;
+            yield return new WaitForSecondsRealtime(2);
+            var manager = OVRManager.instance;
+            var layer = FindAnyObjectByType<OVRPassthroughLayer>();
+            var overlay = layer ? layer.GetComponentInChildren<OVROverlay>(true) : null;
+            if (!UnityEngine.XR.XRSettings.isDeviceActive || !manager || !manager.isInsightPassthroughEnabled ||
+                !layer || layer.hidden || !overlay || overlay.layerId > 0 || !OVRManager.IsInsightPassthroughInitialized())
+                yield break;
+
+            manager.isInsightPassthroughEnabled = false;
+            try
+            {
+                deadline = Time.realtimeSinceStartupAsDouble + 1;
+                while (OVRManager.IsInsightPassthroughInitialized() && Time.realtimeSinceStartupAsDouble < deadline)
+                    yield return null;
+            }
+            finally
+            {
+                if (manager) manager.isInsightPassthroughEnabled = true;
+            }
+            Debug.Log("[Floor Fracture] Restarted the missing Meta simulator passthrough layer.", this);
+        }
+#endif
 
         private void OnDisable()
         {
