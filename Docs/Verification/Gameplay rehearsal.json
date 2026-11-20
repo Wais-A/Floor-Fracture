@@ -1,0 +1,283 @@
+{
+  "title": "Floor Fracture gameplay rehearsal",
+  "file": "Floor Fracture gameplay rehearsal.mp4",
+  "sha256": "fd186c30c706bcd093c46c342135c5a2d2b958e2b52a13b8cabc5d93cd5e5b65",
+  "bytes": 83485062,
+  "platform": "Unity 6000.6.9f1 Play Mode on macOS Metal, installed MRUK OtherRoom02_RecRoom fixture",
+  "recording": "Genuine monoscopic gameplay rendered in an isolated project. Scripted head poses, a Meta grab, visible menu choices and observer or eye-height camera cuts.",
+  "sound": "Native Unity main audio mix with game effects and enabled offline narration, captured at 48 kHz stereo with 1 dB of delivery headroom. Captions are burned into a separate band below the gameplay.",
+  "render": "1280 × 640 gameplay region in a 1280 × 720 H.264 MP4 at 24 fps. AAC stereo, fast-start container.",
+  "runtime_snapshot": {
+    "sha256": "9a25b9735db35a436a224c912db4e7b3870d9525d9520f9afc0d2a8c779526fc",
+    "files": 159,
+    "utc": "2026-11-20T05:13:41.936645+00:00"
+  },
+  "sequence": "Safe shatter, fitted room, stepping, optional stone, Classic, Memory, Water, Last Tile, matching moving pane, Space, Reduced, Skip and Restart. The final shot shows the restored glass board.",
+  "verification": {
+    "duration_seconds": 188.33,
+    "decoded_frames": 4520,
+    "whole_stream_decode": "passed",
+    "source_video_stream": "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuvj420p(pc, bt470bg/unknown/unknown, progressive), 1280x720 [SAR 1:1 DAR 16:9], 3490 kb/s, 24 fps, 24 tbr, 12288 tbn (default)",
+    "source_audio_stream": "Stream #0:1[0x2](und): Audio: aac (LC) (mp4a / 0x6134706D), 48000 Hz, stereo, fltp, 49 kb/s (default)",
+    "audio_peak": 0.8957,
+    "audio_rms": 0.0214,
+    "longest_black_gameplay_seconds_at_6fps": 0.333,
+    "motion_sample": "Decoded gameplay region sampled at 6 fps, excluding all caption pixels.",
+    "chapters": [
+      {
+        "start_seconds": 0.0,
+        "end_seconds": 8.0,
+        "shot": "Floor Fracture",
+        "distinct_gameplay_frames_at_6fps": 48,
+        "motion_p90_mean_channel_change": 6.71,
+        "median_visible_scene_fraction": 0.879,
+        "stereo_rms": 0.016
+      },
+      {
+        "start_seconds": 8.0,
+        "end_seconds": 17.5,
+        "shot": "Fitting the room",
+        "distinct_gameplay_frames_at_6fps": 57,
+        "motion_p90_mean_channel_change": 1.15,
+        "median_visible_scene_fraction": 0.276,
+        "stereo_rms": 0.0
+      },
+      {
+        "start_seconds": 17.5,
+        "end_seconds": 24.5,
+        "shot": "The playable area",
+        "distinct_gameplay_frames_at_6fps": 42,
+        "motion_p90_mean_channel_change": 2.02,
+        "median_visible_scene_fraction": 0.632,
+        "stereo_rms": 0.0
+      },
+      {
+        "start_seconds": 24.5,
+        "end_seconds": 31.0,
+        "shot": "At player height",
+        "distinct_gameplay_frames_at_6fps": 39,
+        "motion_p90_mean_channel_change": 1.56,
+        "median_visible_scene_fraction": 0.515,
+        "stereo_rms": 0.0
+      },
+      {
+        "start_seconds": 31.0,
+        "end_seconds": 40.21,
+        "shot": "Check the fit",
+        "distinct_gameplay_frames_at_6fps": 55,
+        "motion_p90_mean_channel_change": 0.15,
+        "median_visible_scene_fraction": 0.414,
+        "stereo_rms": 0.0083
+      },
+      {
+        "start_seconds": 40.21,
+        "end_seconds": 43.62,
+        "shot": "Spoken prompts",
+        "distinct_gameplay_frames_at_6fps": 21,
+        "motion_p90_mean_channel_change": 0.12,
+        "median_visible_scene_fraction": 0.435,
+        "stereo_rms": 0.0151
+      },
+      {
+        "start_seconds": 43.62,
+        "end_seconds": 53.96,
+        "shot": "Practice stepping",
+        "distinct_gameplay_frames_at_6fps": 62,
+        "motion_p90_mean_channel_change": 2.02,
+        "median_visible_scene_fraction": 0.929,
+        "stereo_rms": 0.0283
+      },
+      {
+        "start_seconds": 53.96,
+        "end_seconds": 60.88,
+        "shot": "Take one step",
+        "distinct_gameplay_frames_at_6fps": 41,
+        "motion_p90_mean_channel_change": 2.98,
+        "median_visible_scene_fraction": 0.572,
+        "stereo_rms": 0.0254
+      },
+      {
+        "start_seconds": 60.88,
+        "end_seconds": 65.83,
+        "shot": "Optional stone practice",
+        "distinct_gameplay_frames_at_6fps": 30,
+        "motion_p90_mean_channel_change": 0.62,
+        "median_visible_scene_fraction": 0.625,
+        "stereo_rms": 0.0294
+      },
+      {
+        "start_seconds": 65.83,
+        "end_seconds": 70.71,
+        "shot": "Release the stone",
+        "distinct_gameplay_frames_at_6fps": 29,
+        "motion_p90_mean_channel_change": 24.19,
+        "median_visible_scene_fraction": 0.657,
+        "stereo_rms": 0.0018
+      },
+      {
+        "start_seconds": 70.71,
+        "end_seconds": 74.62,
+        "shot": "Start a run",
+        "distinct_gameplay_frames_at_6fps": 24,
+        "motion_p90_mean_channel_change": 0.36,
+        "median_visible_scene_fraction": 0.618,
+        "stereo_rms": 0.0276
+      },
+      {
+        "start_seconds": 74.62,
+        "end_seconds": 80.96,
+        "shot": "Classic",
+        "distinct_gameplay_frames_at_6fps": 38,
+        "motion_p90_mean_channel_change": 6.18,
+        "median_visible_scene_fraction": 0.941,
+        "stereo_rms": 0.0167
+      },
+      {
+        "start_seconds": 80.96,
+        "end_seconds": 87.67,
+        "shot": "Memory",
+        "distinct_gameplay_frames_at_6fps": 40,
+        "motion_p90_mean_channel_change": 7.1,
+        "median_visible_scene_fraction": 0.953,
+        "stereo_rms": 0.0159
+      },
+      {
+        "start_seconds": 87.67,
+        "end_seconds": 94.04,
+        "shot": "Water · off-center entry",
+        "distinct_gameplay_frames_at_6fps": 37,
+        "motion_p90_mean_channel_change": 34.31,
+        "median_visible_scene_fraction": 0.947,
+        "stereo_rms": 0.015
+      },
+      {
+        "start_seconds": 94.04,
+        "end_seconds": 101.75,
+        "shot": "Water · immersion",
+        "distinct_gameplay_frames_at_6fps": 46,
+        "motion_p90_mean_channel_change": 11.95,
+        "median_visible_scene_fraction": 1.0,
+        "stereo_rms": 0.0198
+      },
+      {
+        "start_seconds": 101.75,
+        "end_seconds": 110.08,
+        "shot": "Restart",
+        "distinct_gameplay_frames_at_6fps": 50,
+        "motion_p90_mean_channel_change": 1.94,
+        "median_visible_scene_fraction": 0.578,
+        "stereo_rms": 0.0297
+      },
+      {
+        "start_seconds": 110.08,
+        "end_seconds": 118.75,
+        "shot": "Last Tile",
+        "distinct_gameplay_frames_at_6fps": 52,
+        "motion_p90_mean_channel_change": 3.09,
+        "median_visible_scene_fraction": 0.631,
+        "stereo_rms": 0.0215
+      },
+      {
+        "start_seconds": 118.75,
+        "end_seconds": 124.25,
+        "shot": "Level 3",
+        "distinct_gameplay_frames_at_6fps": 34,
+        "motion_p90_mean_channel_change": 2.81,
+        "median_visible_scene_fraction": 0.626,
+        "stereo_rms": 0.0176
+      },
+      {
+        "start_seconds": 124.25,
+        "end_seconds": 129.75,
+        "shot": "Catch the sliding glass",
+        "distinct_gameplay_frames_at_6fps": 32,
+        "motion_p90_mean_channel_change": 5.72,
+        "median_visible_scene_fraction": 0.903,
+        "stereo_rms": 0.0161
+      },
+      {
+        "start_seconds": 129.75,
+        "end_seconds": 135.71,
+        "shot": "The caught pane can break",
+        "distinct_gameplay_frames_at_6fps": 36,
+        "motion_p90_mean_channel_change": 6.64,
+        "median_visible_scene_fraction": 0.905,
+        "stereo_rms": 0.0182
+      },
+      {
+        "start_seconds": 135.71,
+        "end_seconds": 141.25,
+        "shot": "Space · off-center entry",
+        "distinct_gameplay_frames_at_6fps": 33,
+        "motion_p90_mean_channel_change": 35.37,
+        "median_visible_scene_fraction": 0.893,
+        "stereo_rms": 0.0141
+      },
+      {
+        "start_seconds": 141.25,
+        "end_seconds": 144.12,
+        "shot": "Space · the destination",
+        "distinct_gameplay_frames_at_6fps": 17,
+        "motion_p90_mean_channel_change": 16.78,
+        "median_visible_scene_fraction": 1.0,
+        "stereo_rms": 0.0202
+      },
+      {
+        "start_seconds": 144.12,
+        "end_seconds": 148.96,
+        "shot": "Space · impact",
+        "distinct_gameplay_frames_at_6fps": 28,
+        "motion_p90_mean_channel_change": 12.22,
+        "median_visible_scene_fraction": 0.208,
+        "stereo_rms": 0.007
+      },
+      {
+        "start_seconds": 148.96,
+        "end_seconds": 160.0,
+        "shot": "Reduced motion",
+        "distinct_gameplay_frames_at_6fps": 66,
+        "motion_p90_mean_channel_change": 0.28,
+        "median_visible_scene_fraction": 0.483,
+        "stereo_rms": 0.0286
+      },
+      {
+        "start_seconds": 160.0,
+        "end_seconds": 163.75,
+        "shot": "Warning intensity",
+        "distinct_gameplay_frames_at_6fps": 22,
+        "motion_p90_mean_channel_change": 0.18,
+        "median_visible_scene_fraction": 0.483,
+        "stereo_rms": 0.0486
+      },
+      {
+        "start_seconds": 163.75,
+        "end_seconds": 172.79,
+        "shot": "A shortened landing",
+        "distinct_gameplay_frames_at_6fps": 55,
+        "motion_p90_mean_channel_change": 30.74,
+        "median_visible_scene_fraction": 0.9,
+        "stereo_rms": 0.0169
+      },
+      {
+        "start_seconds": 172.79,
+        "end_seconds": 180.29,
+        "shot": "Skip to Results",
+        "distinct_gameplay_frames_at_6fps": 45,
+        "motion_p90_mean_channel_change": 29.14,
+        "median_visible_scene_fraction": 0.625,
+        "stereo_rms": 0.043
+      },
+      {
+        "start_seconds": 180.29,
+        "end_seconds": 188.33,
+        "shot": "Ready again",
+        "distinct_gameplay_frames_at_6fps": 48,
+        "motion_p90_mean_channel_change": 1.94,
+        "median_visible_scene_fraction": 0.63,
+        "stereo_rms": 0.0154
+      }
+    ]
+  },
+  "scope": "The Editor backdrop has no camera passthrough. The physical Quest shot list covers the real room, wearer input and headset appearance.",
+  "localMovie": "Builds/Verification/Floor-entry/Floor Fracture gameplay rehearsal.mp4"
+}

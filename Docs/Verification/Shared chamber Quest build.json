@@ -56,6 +56,7 @@
     "observedPid": 26902,
     "scenePermissionGranted": true,
     "installedBaseApkSha256": "e908047c4a0a8670774580cec04372d4b760dde96f096755c99c8ef339459d45",
-    "observedRecording": "20261120T041955583Z-f34134d7.csv"
+    "observedRecording": "20261120T041955583Z-f34134d7.csv",
+    "physicalSessionRecord": "Docs/Verification/Shared chamber Quest session.json"
   }
 }

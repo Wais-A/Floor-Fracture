@@ -1,0 +1,2197 @@
+{
+  "sourceRevision": "54b54ee9efb70601345121dc37e95a0373c9d5c2",
+  "date": "2026-11-20",
+  "device": "Physical Quest 3, Vulkan, saved Mobile quality, 72 Hz. The headset was on its stand.",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "conditions": "The separately named local development fixture used Meta’s Rec Room fixture, a fixed 8 × 8 glass board at 60 cm and scripted body positions. The camera looked 37 degrees down from 1.58 m. The gameplay engine, glass shaders, six landings and native OVR compositor actually ran on the headset. The fixture muted game audio during the timed workload. Physical room fitting, head motion and comfort need a wearer.",
+  "package": "com.wa003.floorfracture.renderbench",
+  "fixtureBuild": "9249202cfbcf4591bf4763fbeb9491f1",
+  "fixtureSha256": "2e960d4e8ca7bb6a73fe6c45452d6394110b8e68e1c08327fa110d3815f34a42",
+  "timing": "Unity frame rate is total gameplay frames divided by measured Unity window time. Draw calls and triangles are the maxima from those windows. Native OVR samples are summarized per matching package launch. Their one-second clock starts at its own session origin, so they are not attributed to individual Unity frames. A graphics result requires positive Unity draw calls and triangles and native Meta samples with a submitted, nonzero-size eye buffer. Off-head simulation that kept ticking at 72 Hz while drawing nothing is excluded.",
+  "offHeadLimits": "Ordinary launches submitted stereo frames for a short interval. A case lists its observed duration and only records an ending-to-Results time when the fixture actually reached Results. The first keep-awake attempt reached the Quest boundary dialog and provided no gameplay frames. The timed proximity override and Meta CSV setting were restored. The measured launches used ordinary proximity behavior.",
+  "sources": [
+    "https://developers.meta.com/vr/documentation/unity/ts-ovrmetricstool/",
+    "https://developers.meta.com/vr/documentation/unity/ts-ovr-best-practices/"
+  ],
+  "runs": {
+    "Advanced-initial": {
+      "fixtureBuildGuid": "1bbc86a9d68e4d70ac3fa78f9a250aca",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "wave-1-break-22-fog-True-slider-False",
+        "wave-2-break-12-fog-False-slider-True"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 14,
+      "unityWindowsWithDrawnGeometry": 14,
+      "totalOvrRows": 11,
+      "ovrSubmittedEyeBufferRows": 11,
+      "observedEndingToResultsSeconds": null,
+      "unity": {
+        "allGameplay": {
+          "frames": 767,
+          "seconds": 10.758,
+          "averageFps": 71.296,
+          "meanMs": 14.026,
+          "maxMs": 65.363,
+          "framesAtOrOver13_9ms": 374,
+          "maxDrawCalls": 102,
+          "maxTriangles": 4454
+        },
+        "fog": {
+          "frames": 302,
+          "seconds": 4.206,
+          "averageFps": 71.802,
+          "meanMs": 13.927,
+          "maxMs": 27.48,
+          "framesAtOrOver13_9ms": 146,
+          "maxDrawCalls": 102,
+          "maxTriangles": 1602
+        },
+        "movingGlass": {
+          "frames": 378,
+          "seconds": 5.263,
+          "averageFps": 71.822,
+          "meanMs": 13.923,
+          "maxMs": 22.598,
+          "framesAtOrOver13_9ms": 183,
+          "maxDrawCalls": 93,
+          "maxTriangles": 4454
+        },
+        "shatters": [
+          {
+            "panes": 22,
+            "wave": 1,
+            "waveSeed": 1759180026,
+            "timeSeconds": 7.201
+          },
+          {
+            "panes": 12,
+            "wave": 2,
+            "waveSeed": 1924118760,
+            "timeSeconds": 12.699
+          }
+        ],
+        "afterFirstShatter": {
+          "frames": 138,
+          "seconds": 2.01,
+          "averageFps": 68.657,
+          "meanMs": 14.565,
+          "maxMs": 65.363,
+          "framesAtOrOver13_9ms": 73,
+          "maxDrawCalls": 98,
+          "maxTriangles": 4454
+        },
+        "fall": null
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 11,
+        "averageFpsMin": 67.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.587,
+        "appGpuTimeMsMax": 4.989,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 13
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Advanced-initial/Unity.csv",
+          "sha256": "dc703d0135540c7d6208dfac9299568bffac65dac9058b12376a6974aafffe7d"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Advanced-initial/OVR-0.csv",
+          "sha256": "4be8afc2712a9852b569d6157806df515d2ed9781c111523cc12a0ec2961f26b"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Advanced-initial/events.txt",
+          "sha256": "1e5d13b1cbdf943cff2b88a1b26a0d1731bb15a1f37d694fe6175cc38637f97f"
+        }
+      }
+    },
+    "Water": {
+      "fixtureBuildGuid": "9249202cfbcf4591bf4763fbeb9491f1",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-0",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.455,
+      "unity": {
+        "allGameplay": {
+          "frames": 671,
+          "seconds": 9.456,
+          "averageFps": 70.96,
+          "meanMs": 14.092,
+          "maxMs": 84.125,
+          "framesAtOrOver13_9ms": 329,
+          "maxDrawCalls": 92,
+          "maxTriangles": 6388
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 671,
+          "seconds": 9.456,
+          "averageFps": 70.96,
+          "meanMs": 14.092,
+          "maxMs": 84.125,
+          "framesAtOrOver13_9ms": 329,
+          "maxDrawCalls": 92,
+          "maxTriangles": 6388
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 65.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.538,
+        "appGpuTimeMsMax": 6.062,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 15
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water/Unity.csv",
+          "sha256": "c3d226ddd2d22f346e06d00669c7f31947eb20067ccd35d39a4d44eaf62c8121"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water/OVR-0.csv",
+          "sha256": "5c3ef79bce0238f79ed7d56352447ef76d3db8faef6bf9a9a483e399ea3a836f"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water/events.txt",
+          "sha256": "c6834440f6059efd79532ef30e91038f7d940085b9e0399dd5878fdc7206c154"
+        }
+      }
+    },
+    "Lava": {
+      "fixtureBuildGuid": "9249202cfbcf4591bf4763fbeb9491f1",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-1"
+      ],
+      "graphicsVerified": false,
+      "unityGameplayWindows": 7,
+      "unityWindowsWithDrawnGeometry": 0,
+      "totalOvrRows": 6,
+      "ovrSubmittedEyeBufferRows": 0,
+      "observedEndingToResultsSeconds": null,
+      "unity": {
+        "allGameplay": null,
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": null
+      },
+      "ovrAcrossThisAppSession": null,
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Lava/Unity.csv",
+          "sha256": "fe1fcc47c2cfaece67a6c1e288c77b4d24a0c9966d52aed5acd9ae4c3053a4d4"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Lava/OVR-0.csv",
+          "sha256": "6b32f394eea065319570e4a91475b441a9517defa9a221f78ec16372261a47c2"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Lava/events.txt",
+          "sha256": "d351a6eac515f9a64c08daf17b05120fe56a82f434c57d88da79a1fa3c3f7c9b"
+        }
+      }
+    },
+    "Crystal": {
+      "fixtureBuildGuid": "9249202cfbcf4591bf4763fbeb9491f1",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-2"
+      ],
+      "graphicsVerified": false,
+      "unityGameplayWindows": 9,
+      "unityWindowsWithDrawnGeometry": 0,
+      "totalOvrRows": 7,
+      "ovrSubmittedEyeBufferRows": 0,
+      "observedEndingToResultsSeconds": null,
+      "unity": {
+        "allGameplay": null,
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": null
+      },
+      "ovrAcrossThisAppSession": null,
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Crystal/Unity.csv",
+          "sha256": "8c98ad5922e9ccd63c6490e52884ddba370f68393cede50cb62cec08f353d88a"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Crystal/OVR-0.csv",
+          "sha256": "5c35e4bd41f1e0221cb65523a776b4fb001414ffe4440e307dc3b8df61c1be61"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Crystal/events.txt",
+          "sha256": "79f9354f0531270c731b58e949b9500f03f4034cbbb4a1cb4d128654b26d548b"
+        }
+      }
+    },
+    "Space": {
+      "fixtureBuildGuid": "9249202cfbcf4591bf4763fbeb9491f1",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-3"
+      ],
+      "graphicsVerified": false,
+      "unityGameplayWindows": 9,
+      "unityWindowsWithDrawnGeometry": 0,
+      "totalOvrRows": 6,
+      "ovrSubmittedEyeBufferRows": 0,
+      "observedEndingToResultsSeconds": null,
+      "unity": {
+        "allGameplay": null,
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": null
+      },
+      "ovrAcrossThisAppSession": null,
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Space/Unity.csv",
+          "sha256": "f2998719f321d85881011575a3309c0461dac44081ce2e10be9e1be7032b9559"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Space/OVR-0.csv",
+          "sha256": "28e96593dc413137c2fcd93d56d5863ac53accff6833ca01a7c7f05c0215635b"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Space/events.txt",
+          "sha256": "bdb0a7a1d66b97fe62b66607042fda6b07f756b8800e7df79d6a54563df176b7"
+        }
+      }
+    },
+    "Sand": {
+      "fixtureBuildGuid": "9249202cfbcf4591bf4763fbeb9491f1",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-4"
+      ],
+      "graphicsVerified": false,
+      "unityGameplayWindows": 9,
+      "unityWindowsWithDrawnGeometry": 0,
+      "totalOvrRows": 8,
+      "ovrSubmittedEyeBufferRows": 0,
+      "observedEndingToResultsSeconds": null,
+      "unity": {
+        "allGameplay": null,
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": null
+      },
+      "ovrAcrossThisAppSession": null,
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Sand/Unity.csv",
+          "sha256": "e9d0c8af18dda7280fc39400f02ce44e52b601038d0155f4f8e086714d6f27d7"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Sand/OVR-0.csv",
+          "sha256": "76efd6e7b2ca28620ce0a84118a0a9cc364652701cfff116bcb8968e39f933b0"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Sand/events.txt",
+          "sha256": "8c5ce10e501d9c9a452fe36f07607180698c975df78fae47a112324e65e02f91"
+        }
+      }
+    },
+    "Snow": {
+      "fixtureBuildGuid": "9249202cfbcf4591bf4763fbeb9491f1",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-5"
+      ],
+      "graphicsVerified": false,
+      "unityGameplayWindows": 9,
+      "unityWindowsWithDrawnGeometry": 0,
+      "totalOvrRows": 7,
+      "ovrSubmittedEyeBufferRows": 0,
+      "observedEndingToResultsSeconds": null,
+      "unity": {
+        "allGameplay": null,
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": null
+      },
+      "ovrAcrossThisAppSession": null,
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Snow/Unity.csv",
+          "sha256": "a7cefdc780a3d9145a8ba871209a4f2c26ac9473d0e6ec3ddef359475f841d73"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Snow/OVR-0.csv",
+          "sha256": "8665d5a523707842e567d1a78847bea2edef0909597aa1fa663b8a974a9d1623"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Snow/events.txt",
+          "sha256": "de63956acf3532d04f854be192e25a6bd8ed6b4fd367087c36cc0e3a80b02e9f"
+        }
+      }
+    },
+    "Advanced-A": {
+      "fixtureBuildGuid": "9249202cfbcf4591bf4763fbeb9491f1",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "wave-1-break-22-fog-True-slider-False",
+        "wave-2-break-12-fog-False-slider-True"
+      ],
+      "graphicsVerified": false,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 0,
+      "totalOvrRows": 8,
+      "ovrSubmittedEyeBufferRows": 0,
+      "observedEndingToResultsSeconds": null,
+      "unity": {
+        "allGameplay": null,
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [
+          {
+            "panes": 22,
+            "wave": 1,
+            "waveSeed": 1759180026,
+            "timeSeconds": 7.091
+          }
+        ],
+        "afterFirstShatter": null,
+        "fall": null
+      },
+      "ovrAcrossThisAppSession": null,
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Advanced-A/Unity.csv",
+          "sha256": "87c186b8bbc9bef1d7b9c812eae9ce105ea092925d16f46c8c34edd7b9767d83"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Advanced-A/OVR-0.csv",
+          "sha256": "2f7e9e90d7b3b3f165aae935c3b9d1a09c1b9cc80b8dbff5b01621c4b0e0aa37"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Advanced-A/events.txt",
+          "sha256": "121bc2c9903ffeae692c2f0907c87e3c9d6b3cbe718690f3fa04afba8fd81900"
+        }
+      }
+    },
+    "Advanced-B": {
+      "fixtureBuildGuid": "9249202cfbcf4591bf4763fbeb9491f1",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "wave-1-break-22-fog-True-slider-False",
+        "wave-2-break-12-fog-False-slider-True"
+      ],
+      "graphicsVerified": false,
+      "unityGameplayWindows": 9,
+      "unityWindowsWithDrawnGeometry": 0,
+      "totalOvrRows": 10,
+      "ovrSubmittedEyeBufferRows": 0,
+      "observedEndingToResultsSeconds": null,
+      "unity": {
+        "allGameplay": null,
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [
+          {
+            "panes": 22,
+            "wave": 1,
+            "waveSeed": 1759180026,
+            "timeSeconds": 7.367
+          }
+        ],
+        "afterFirstShatter": null,
+        "fall": null
+      },
+      "ovrAcrossThisAppSession": null,
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Advanced-B/Unity.csv",
+          "sha256": "02b5778435bce735de5b7088630067aa1dd3ca51c8a7bd95a77c702b1d3bf60f"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Advanced-B/OVR-0.csv",
+          "sha256": "9a179d741a3dab01782c1cfbcd0f6a90f4dcd264e3aa0f3e28281ad2d9a214bc"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Advanced-B/events.txt",
+          "sha256": "3dae0dd7026f82fdb148e505696075c5bd5c43c1a838b653d76b016fcdb82417"
+        }
+      }
+    },
+    "Maximum-A": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "wave-1-break-32-fog-True-slider-False",
+        "wave-2-break-8-fog-False-slider-True"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 13,
+      "unityWindowsWithDrawnGeometry": 13,
+      "totalOvrRows": 13,
+      "ovrSubmittedEyeBufferRows": 13,
+      "observedEndingToResultsSeconds": null,
+      "unity": {
+        "allGameplay": {
+          "frames": 740,
+          "seconds": 10.272,
+          "averageFps": 72.04,
+          "meanMs": 13.881,
+          "maxMs": 18.815,
+          "framesAtOrOver13_9ms": 365,
+          "maxDrawCalls": 116,
+          "maxTriangles": 3982
+        },
+        "fog": {
+          "frames": 303,
+          "seconds": 4.207,
+          "averageFps": 72.023,
+          "meanMs": 13.884,
+          "maxMs": 18.815,
+          "framesAtOrOver13_9ms": 156,
+          "maxDrawCalls": 116,
+          "maxTriangles": 2206
+        },
+        "movingGlass": {
+          "frames": 344,
+          "seconds": 4.776,
+          "averageFps": 72.027,
+          "meanMs": 13.884,
+          "maxMs": 16.338,
+          "framesAtOrOver13_9ms": 160,
+          "maxDrawCalls": 50,
+          "maxTriangles": 3982
+        },
+        "shatters": [
+          {
+            "panes": 32,
+            "wave": 1,
+            "waveSeed": -910919443,
+            "timeSeconds": 7.435
+          },
+          {
+            "panes": 8,
+            "wave": 2,
+            "waveSeed": 1486096070,
+            "timeSeconds": 12.934
+          }
+        ],
+        "afterFirstShatter": {
+          "frames": 145,
+          "seconds": 2.008,
+          "averageFps": 72.211,
+          "meanMs": 13.848,
+          "maxMs": 17.315,
+          "framesAtOrOver13_9ms": 70,
+          "maxDrawCalls": 115,
+          "maxTriangles": 3982
+        },
+        "fall": null
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 13,
+        "averageFpsMin": 71.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.812,
+        "appGpuTimeMsMax": 5.041,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 1
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Maximum-A/Unity.csv",
+          "sha256": "fe8fcc4661d3e970a9fdb2d43c9b4de156dde2cdc93f8cebb4bf5de30ace2d4b"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Maximum-A/OVR-0.csv",
+          "sha256": "03bc8c4c701dd629083ffe3bd2dceeff70eb10329fa3b0812f919c0428d86094"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Maximum-A/events.txt",
+          "sha256": "deaf22689f97dd15655d183041de5bd1ae13f5e48a3c2b9ee633b8ffcd4cfc0e"
+        }
+      }
+    },
+    "Water-stock-1": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-0",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.454,
+      "unity": {
+        "allGameplay": {
+          "frames": 681,
+          "seconds": 9.455,
+          "averageFps": 72.025,
+          "meanMs": 13.884,
+          "maxMs": 16.899,
+          "framesAtOrOver13_9ms": 329,
+          "maxDrawCalls": 92,
+          "maxTriangles": 6388
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 681,
+          "seconds": 9.455,
+          "averageFps": 72.025,
+          "meanMs": 13.884,
+          "maxMs": 16.899,
+          "framesAtOrOver13_9ms": 329,
+          "maxDrawCalls": 92,
+          "maxTriangles": 6388
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.506,
+        "appGpuTimeMsMax": 5.988,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 1
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-stock-1/Unity.csv",
+          "sha256": "912dde45895e7509b02938ed79d13fcdee4d74fbe848ff9f864659d8e585b45b"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-stock-1/OVR-0.csv",
+          "sha256": "e2238702e740d5196313ebf123083c66526c58a378204a1577c8a7e770c71dae"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-stock-1/events.txt",
+          "sha256": "defdea02ae1ba39ca8e582cbdb058aa21f911493f9144043af110ae2cb2490d9"
+        }
+      }
+    },
+    "Lava-verified": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-1",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.456,
+      "unity": {
+        "allGameplay": {
+          "frames": 681,
+          "seconds": 9.456,
+          "averageFps": 72.018,
+          "meanMs": 13.885,
+          "maxMs": 15.87,
+          "framesAtOrOver13_9ms": 329,
+          "maxDrawCalls": 92,
+          "maxTriangles": 3104
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 681,
+          "seconds": 9.456,
+          "averageFps": 72.018,
+          "meanMs": 13.885,
+          "maxMs": 15.87,
+          "framesAtOrOver13_9ms": 329,
+          "maxDrawCalls": 92,
+          "maxTriangles": 3104
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 3.956,
+        "appGpuTimeMsMax": 4.437,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 0
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Lava-verified/Unity.csv",
+          "sha256": "bc91287a295ec3c8721715a42d310e2c99df4484ef53ad558cfea806344614d0"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Lava-verified/OVR-0.csv",
+          "sha256": "a466ded50a810d770d6af0cb033f55d0359ff40bf5351c590aa49a7c6be24d17"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Lava-verified/events.txt",
+          "sha256": "230bd6c5c4699ac4b24615ec042d2298080d577902ad72ffcdcf2d70e56e38e6"
+        }
+      }
+    },
+    "Water-prime-1": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-0",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.456,
+      "unity": {
+        "allGameplay": {
+          "frames": 681,
+          "seconds": 9.456,
+          "averageFps": 72.018,
+          "meanMs": 13.885,
+          "maxMs": 16.652,
+          "framesAtOrOver13_9ms": 333,
+          "maxDrawCalls": 90,
+          "maxTriangles": 6388
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 681,
+          "seconds": 9.456,
+          "averageFps": 72.018,
+          "meanMs": 13.885,
+          "maxMs": 16.652,
+          "framesAtOrOver13_9ms": 333,
+          "maxDrawCalls": 90,
+          "maxTriangles": 6388
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.504,
+        "appGpuTimeMsMax": 6.048,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 5
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-prime-1/Unity.csv",
+          "sha256": "a9b0a450e41b7ff03182c81215ba3237a52c5a82decc96c9c7b3cfaa147a7324"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-prime-1/OVR-0.csv",
+          "sha256": "cae39c7cf243cc2b2cf7bf312f8bfbbfb409cdea57c89b2bb226c53789ba1a7b"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-prime-1/events.txt",
+          "sha256": "01fade0245dcc622e48693c4a16dd94a5c6fb6f5f1f304f8441beb07f7e8e808"
+        }
+      }
+    },
+    "Crystal-verified": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-2",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.455,
+      "unity": {
+        "allGameplay": {
+          "frames": 681,
+          "seconds": 9.456,
+          "averageFps": 72.018,
+          "meanMs": 13.885,
+          "maxMs": 16.582,
+          "framesAtOrOver13_9ms": 334,
+          "maxDrawCalls": 92,
+          "maxTriangles": 3104
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 681,
+          "seconds": 9.456,
+          "averageFps": 72.018,
+          "meanMs": 13.885,
+          "maxMs": 16.582,
+          "framesAtOrOver13_9ms": 334,
+          "maxDrawCalls": 92,
+          "maxTriangles": 3104
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.075,
+        "appGpuTimeMsMax": 4.528,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 1
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Crystal-verified/Unity.csv",
+          "sha256": "928f4f9957a684e3ba28d047dea912581ea068e1243cca05b965f2c20adae50c"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Crystal-verified/OVR-0.csv",
+          "sha256": "979a9d683649cc842919aa164a9fdfd49d1ac3484480a93c4fd4cccec2bdf300"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Crystal-verified/events.txt",
+          "sha256": "19325cf9bb4c69f3fc580a419d247b9b7778aa3190ac4a6b07f640e229d40f61"
+        }
+      }
+    },
+    "Water-normal-2": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-0",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.459,
+      "unity": {
+        "allGameplay": {
+          "frames": 681,
+          "seconds": 9.459,
+          "averageFps": 71.995,
+          "meanMs": 13.89,
+          "maxMs": 19.222,
+          "framesAtOrOver13_9ms": 353,
+          "maxDrawCalls": 92,
+          "maxTriangles": 6388
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 681,
+          "seconds": 9.459,
+          "averageFps": 71.995,
+          "meanMs": 13.89,
+          "maxMs": 19.222,
+          "framesAtOrOver13_9ms": 353,
+          "maxDrawCalls": 92,
+          "maxTriangles": 6388
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.45,
+        "appGpuTimeMsMax": 6.028,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 3
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-normal-2/Unity.csv",
+          "sha256": "a6632008b840e1f0efdd5b6e588f62604de8ca12a8e574aa8a88d994a7de424a"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-normal-2/OVR-0.csv",
+          "sha256": "6f924611100873753ec20c8d13e2616985b9939d0c388051ac31044c53eaa70d"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-normal-2/events.txt",
+          "sha256": "8c4ea1464d8bd568117d941f4e19b137beb9e93fc6a5d2b08044b9ca65c21e46"
+        }
+      }
+    },
+    "Space-verified": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-3",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.458,
+      "unity": {
+        "allGameplay": {
+          "frames": 681,
+          "seconds": 9.457,
+          "averageFps": 72.01,
+          "meanMs": 13.887,
+          "maxMs": 16.582,
+          "framesAtOrOver13_9ms": 337,
+          "maxDrawCalls": 92,
+          "maxTriangles": 4460
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 681,
+          "seconds": 9.457,
+          "averageFps": 72.01,
+          "meanMs": 13.887,
+          "maxMs": 16.582,
+          "framesAtOrOver13_9ms": 337,
+          "maxDrawCalls": 92,
+          "maxTriangles": 4460
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 2.964,
+        "appGpuTimeMsMax": 4.436,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 2
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Space-verified/Unity.csv",
+          "sha256": "c158a14c3bd8131b0320ec6b18b382e48e577e07f3a8b795c8aac0664cc77d49"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Space-verified/OVR-0.csv",
+          "sha256": "46cc0e3611f90570586369f13f5787145ea265793513f21bad2c2416dbfda876"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Space-verified/events.txt",
+          "sha256": "db4fad0b403fd3755fbe371e19aa38144ae8a60233b8ee8b9cd62cb82df98920"
+        }
+      }
+    },
+    "Water-prime-2": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-0",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.456,
+      "unity": {
+        "allGameplay": {
+          "frames": 681,
+          "seconds": 9.457,
+          "averageFps": 72.01,
+          "meanMs": 13.887,
+          "maxMs": 16.294,
+          "framesAtOrOver13_9ms": 331,
+          "maxDrawCalls": 90,
+          "maxTriangles": 6388
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 681,
+          "seconds": 9.457,
+          "averageFps": 72.01,
+          "meanMs": 13.887,
+          "maxMs": 16.294,
+          "framesAtOrOver13_9ms": 331,
+          "maxDrawCalls": 90,
+          "maxTriangles": 6388
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.659,
+        "appGpuTimeMsMax": 6.029,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 5
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-prime-2/Unity.csv",
+          "sha256": "579e6836a47e360f5cc69088a11d5f97d37aeadec8f0f4d1e11677aeba56585e"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-prime-2/OVR-0.csv",
+          "sha256": "ad1671fe73bd39b1be2ca06937b86e56e6961935b35089fad99277feabc30fa5"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-prime-2/events.txt",
+          "sha256": "664c724654fd42eeb9aee1a0bb82931cfbf2fc8f58c2de8bd4ce28fbfd6d64b1"
+        }
+      }
+    },
+    "Sand-verified": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-4",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 7,
+      "unityWindowsWithDrawnGeometry": 7,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.456,
+      "unity": {
+        "allGameplay": {
+          "frames": 508,
+          "seconds": 7.052,
+          "averageFps": 72.036,
+          "meanMs": 13.882,
+          "maxMs": 17.794,
+          "framesAtOrOver13_9ms": 260,
+          "maxDrawCalls": 92,
+          "maxTriangles": 3104
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 508,
+          "seconds": 7.052,
+          "averageFps": 72.036,
+          "meanMs": 13.882,
+          "maxMs": 17.794,
+          "framesAtOrOver13_9ms": 260,
+          "maxDrawCalls": 92,
+          "maxTriangles": 3104
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 3.652,
+        "appGpuTimeMsMax": 4.127,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 1
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Sand-verified/Unity.csv",
+          "sha256": "d2a3ffc58b6e663f8a7c27c5656401ae5f9a9701745099e08b245d237d354c6c"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Sand-verified/OVR-0.csv",
+          "sha256": "7e158da217e97fe41bbc008eb10896389a9ce9bad49e93b91bfc07a31228dfd2"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Sand-verified/events.txt",
+          "sha256": "098fa9686d3e66cbf82ef370a8ff0c230ab217dffe7b967c718464d5c3366796"
+        }
+      }
+    },
+    "Water-normal-3": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-0",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.455,
+      "unity": {
+        "allGameplay": {
+          "frames": 681,
+          "seconds": 9.455,
+          "averageFps": 72.025,
+          "meanMs": 13.884,
+          "maxMs": 17.08,
+          "framesAtOrOver13_9ms": 326,
+          "maxDrawCalls": 90,
+          "maxTriangles": 6388
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 681,
+          "seconds": 9.455,
+          "averageFps": 72.025,
+          "meanMs": 13.884,
+          "maxMs": 17.08,
+          "framesAtOrOver13_9ms": 326,
+          "maxDrawCalls": 90,
+          "maxTriangles": 6388
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.395,
+        "appGpuTimeMsMax": 5.947,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 1
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-normal-3/Unity.csv",
+          "sha256": "9b449f8421baee21a9a23e63cf826a103b4a21c9d32b6951ff75f40c6e288af3"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-normal-3/OVR-0.csv",
+          "sha256": "2d6ad8ad741e0835b329b12be946d8c674680dd05a1320e7cfc9d6ccdd87616f"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-normal-3/events.txt",
+          "sha256": "244bdf2b665d31e03380532781ea4c426599083d5171de269962fd7a248e49df"
+        }
+      }
+    },
+    "Snow-verified": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-5",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.453,
+      "unity": {
+        "allGameplay": {
+          "frames": 681,
+          "seconds": 9.454,
+          "averageFps": 72.033,
+          "meanMs": 13.883,
+          "maxMs": 16.828,
+          "framesAtOrOver13_9ms": 325,
+          "maxDrawCalls": 90,
+          "maxTriangles": 3128
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 681,
+          "seconds": 9.454,
+          "averageFps": 72.033,
+          "meanMs": 13.883,
+          "maxMs": 16.828,
+          "framesAtOrOver13_9ms": 325,
+          "maxDrawCalls": 90,
+          "maxTriangles": 3128
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.144,
+        "appGpuTimeMsMax": 4.465,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 1
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Snow-verified/Unity.csv",
+          "sha256": "7e0b0ebbfd3d294dc0c068c9fffbbec58a27eeedd61dd4ed675f80de0b27e9c3"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Snow-verified/OVR-0.csv",
+          "sha256": "7d5f71cb72baa0f8cb1d67b45bdd2489011588bdc97285ec3f0f33c8d11d9f7a"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Snow-verified/events.txt",
+          "sha256": "4f8c2512513333ea0de0240036040d8ea8f8bdf5fafbf7b5b3360e9723189789"
+        }
+      }
+    },
+    "Water-prime-3": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-0",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.456,
+      "unity": {
+        "allGameplay": {
+          "frames": 681,
+          "seconds": 9.457,
+          "averageFps": 72.01,
+          "meanMs": 13.887,
+          "maxMs": 16.952,
+          "framesAtOrOver13_9ms": 327,
+          "maxDrawCalls": 90,
+          "maxTriangles": 6388
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 681,
+          "seconds": 9.457,
+          "averageFps": 72.01,
+          "meanMs": 13.887,
+          "maxMs": 16.952,
+          "framesAtOrOver13_9ms": 327,
+          "maxDrawCalls": 90,
+          "maxTriangles": 6388
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.73,
+        "appGpuTimeMsMax": 5.985,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 6
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-prime-3/Unity.csv",
+          "sha256": "78d013d2f37ace21d19c620a75856aa6a3adabdc9d6521730e35263582f094ed"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-prime-3/OVR-0.csv",
+          "sha256": "f39c66a9fac9de044533b8635fae1d97107b6054712556c64d5a148bc2bd0f51"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Water-prime-3/events.txt",
+          "sha256": "e1221ad6db09a661f0946173041610ae9ef0ae7e2f09d3627ecfca67d6b92821"
+        }
+      }
+    },
+    "Maximum-check": {
+      "fixtureBuildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "wave-1-break-32-fog-True-slider-False",
+        "wave-2-break-8-fog-False-slider-True"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 14,
+      "unityWindowsWithDrawnGeometry": 14,
+      "totalOvrRows": 14,
+      "ovrSubmittedEyeBufferRows": 14,
+      "observedEndingToResultsSeconds": null,
+      "unity": {
+        "allGameplay": {
+          "frames": 774,
+          "seconds": 10.745,
+          "averageFps": 72.034,
+          "meanMs": 13.882,
+          "maxMs": 20.996,
+          "framesAtOrOver13_9ms": 386,
+          "maxDrawCalls": 115,
+          "maxTriangles": 3982
+        },
+        "fog": {
+          "frames": 303,
+          "seconds": 4.212,
+          "averageFps": 71.937,
+          "meanMs": 13.901,
+          "maxMs": 20.996,
+          "framesAtOrOver13_9ms": 152,
+          "maxDrawCalls": 115,
+          "maxTriangles": 2178
+        },
+        "movingGlass": {
+          "frames": 378,
+          "seconds": 5.247,
+          "averageFps": 72.041,
+          "meanMs": 13.881,
+          "maxMs": 16.28,
+          "framesAtOrOver13_9ms": 188,
+          "maxDrawCalls": 50,
+          "maxTriangles": 3982
+        },
+        "shatters": [
+          {
+            "panes": 32,
+            "wave": 1,
+            "waveSeed": -910919443,
+            "timeSeconds": 7.215
+          },
+          {
+            "panes": 8,
+            "wave": 2,
+            "waveSeed": 1486096070,
+            "timeSeconds": 12.713
+          }
+        ],
+        "afterFirstShatter": {
+          "frames": 145,
+          "seconds": 2.006,
+          "averageFps": 72.283,
+          "meanMs": 13.834,
+          "maxMs": 16.433,
+          "framesAtOrOver13_9ms": 68,
+          "maxDrawCalls": 115,
+          "maxTriangles": 3982
+        },
+        "fall": null
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 14,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 4.394,
+        "appGpuTimeMsMax": 4.733,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 1
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Maximum-check/Unity.csv",
+          "sha256": "242ce678348b711727436ab5fefe47a7beb808d5fbc3d5d03762c88f70d09f92"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Maximum-check/OVR-0.csv",
+          "sha256": "69aab10dd285e4f983e9242819bf6829f3c1f06eeddf6feb52b6ea2eb5417b38"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Maximum-check/events.txt",
+          "sha256": "7ddfd6a7177dde7714db63c1e827d7ff5c71eaf85d10d45304c413684ca88548"
+        }
+      }
+    },
+    "Sand-complete": {
+      "fixtureBuildGuid": "ba3df68d039f4e6baae04499a2f90ec6",
+      "inputMarkers": [
+        "boot",
+        "board64",
+        "fall-4",
+        "complete"
+      ],
+      "graphicsVerified": true,
+      "unityGameplayWindows": 10,
+      "unityWindowsWithDrawnGeometry": 10,
+      "totalOvrRows": 9,
+      "ovrSubmittedEyeBufferRows": 9,
+      "observedEndingToResultsSeconds": 9.454,
+      "unity": {
+        "allGameplay": {
+          "frames": 681,
+          "seconds": 9.454,
+          "averageFps": 72.033,
+          "meanMs": 13.883,
+          "maxMs": 17.614,
+          "framesAtOrOver13_9ms": 327,
+          "maxDrawCalls": 90,
+          "maxTriangles": 3072
+        },
+        "fog": null,
+        "movingGlass": null,
+        "shatters": [],
+        "afterFirstShatter": null,
+        "fall": {
+          "frames": 681,
+          "seconds": 9.454,
+          "averageFps": 72.033,
+          "meanMs": 13.883,
+          "maxMs": 17.614,
+          "framesAtOrOver13_9ms": 327,
+          "maxDrawCalls": 90,
+          "maxTriangles": 3072
+        }
+      },
+      "ovrAcrossThisAppSession": {
+        "samples": 9,
+        "averageFpsMin": 72.0,
+        "averageFpsMax": 73.0,
+        "appGpuTimeMsMedian": 3.658,
+        "appGpuTimeMsMax": 4.192,
+        "eyeBufferWidths": [
+          1344
+        ],
+        "eyeBufferHeights": [
+          1408
+        ],
+        "staleFrameCountSummed": 1
+      },
+      "files": {
+        "Unity.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Sand-complete/Unity.csv",
+          "sha256": "2bd16ce69eb8ec3bea0e8229c2dd83761005f9ffbfa0675d1d1d27057ae28f63"
+        },
+        "OVR-0.csv": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Sand-complete/OVR-0.csv",
+          "sha256": "a8283a3e6513303581a403319a0f8a498249d1c400dc35219786a84566da14f3"
+        },
+        "events.txt": {
+          "path": "Builds/Verification/Overnight/Quest-64-pane/Sand-complete/events.txt",
+          "sha256": "9ff0eea15cfe8e1c3d2aacc3f74d85e53c071468a7301978f9c2b20190daf31b"
+        }
+      }
+    }
+  },
+  "excludedAttempts": [
+    {
+      "case": "Water-stock-A",
+      "reason": "The headset did not supply a Unity and native compositor pair."
+    },
+    {
+      "case": "Water-prepared-A",
+      "reason": "The headset did not supply a Unity and native compositor pair."
+    },
+    {
+      "case": "Water-prepared-B",
+      "reason": "The headset did not supply a Unity and native compositor pair."
+    },
+    {
+      "case": "Water-stock-B",
+      "reason": "The headset did not supply a Unity and native compositor pair."
+    },
+    {
+      "case": "Water-prepared-1",
+      "reason": "The headset did not supply a Unity and native compositor pair."
+    },
+    {
+      "case": "Lava-projected",
+      "reason": "The headset did not supply a Unity and native compositor pair."
+    }
+  ],
+  "comparisonFixture": {
+    "fixtureBuild": "8554b37e728b419a9244f7fcbd7d7499",
+    "fixtureSha256": "1a20958ab4009cf35c2f0de5381b9cc6917035721dd123b4a71b751f341fc607",
+    "restoredRecording": true,
+    "finalProximity": {
+      "enabled": true,
+      "prox_override": "DISABLED",
+      "power_state": "STANDBY",
+      "autosleep_disabled": false,
+      "message": "Proximity sensor: enabled (normal behavior)"
+    }
+  },
+  "renderedFixture": {
+    "fixtureBuild": "8554b37e728b419a9244f7fcbd7d7499",
+    "fixtureSha256": "1a20958ab4009cf35c2f0de5381b9cc6917035721dd123b4a71b751f341fc607",
+    "restoredRecording": true,
+    "finalProximity": {
+      "enabled": true,
+      "prox_override": "DISABLED",
+      "power_state": "STANDBY",
+      "autosleep_disabled": false,
+      "message": "Proximity sensor: enabled (normal behavior)"
+    }
+  },
+  "standby-casesFixture": {
+    "fixtureBuild": "8554b37e728b419a9244f7fcbd7d7499",
+    "fixtureSha256": "1a20958ab4009cf35c2f0de5381b9cc6917035721dd123b4a71b751f341fc607",
+    "restoredRecording": true,
+    "finalProximity": {
+      "enabled": true,
+      "prox_override": "DISABLED",
+      "power_state": "STANDBY",
+      "autosleep_disabled": false,
+      "message": "Proximity sensor: enabled (normal behavior)"
+    }
+  },
+  "sand-repeatFixture": {
+    "fixtureBuild": "ba3df68d039f4e6baae04499a2f90ec6",
+    "fixtureSha256": "4d3dd12f44cb5d2a21b3d570713c03476977a559bc618833b1ae9bd5f9fe71ba",
+    "restoredRecording": true,
+    "finalProximity": {
+      "enabled": true,
+      "prox_override": "DISABLED",
+      "power_state": "STANDBY",
+      "autosleep_disabled": false,
+      "message": "Proximity sensor: enabled (normal behavior)"
+    }
+  },
+  "waterSplashPlacementTrial": {
+    "change": "The separate fixture optionally instantiated the approved Meta Floor Zone splash and deactivated it before the fall. Baseline instantiated the same asset at impact. No shipped source or APK was modified by this experiment.",
+    "measurement": "An impact window is the approximately one-second Unity aggregation containing the expected Water contact, 0.40 s plus sqrt(160 / 9.8) after the loss marker. The following window is reported separately. Whole-fall and contact-window maxima measure frame intervals, not GPU work for a particular effect. Normal-2 also had a standard Perfetto capture.",
+    "ordinary": [
+      {
+        "run": "Water-stock-1",
+        "buildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+        "secondsFromLossToResults": 9.454,
+        "observedFallFrames": 681,
+        "wholeFallMaxFrameMs": 16.899,
+        "contactWindowMaxMs": 14.919,
+        "nextWindowMaxMs": 15.073,
+        "combinedContactAndNextMaxMs": 15.073,
+        "contactWindowSeconds": [
+          6.285,
+          7.297
+        ],
+        "nativeCompositorSamples": 9,
+        "perfettoAlsoRecorded": false
+      },
+      {
+        "run": "Water-normal-2",
+        "buildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+        "secondsFromLossToResults": 9.459,
+        "observedFallFrames": 681,
+        "wholeFallMaxFrameMs": 19.222,
+        "contactWindowMaxMs": 15.926,
+        "nextWindowMaxMs": 15.197,
+        "combinedContactAndNextMaxMs": 15.926,
+        "contactWindowSeconds": [
+          6.368,
+          7.38
+        ],
+        "nativeCompositorSamples": 9,
+        "perfettoAlsoRecorded": true
+      },
+      {
+        "run": "Water-normal-3",
+        "buildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+        "secondsFromLossToResults": 9.455,
+        "observedFallFrames": 681,
+        "wholeFallMaxFrameMs": 17.08,
+        "contactWindowMaxMs": 15.194,
+        "nextWindowMaxMs": 15.596,
+        "combinedContactAndNextMaxMs": 15.596,
+        "contactWindowSeconds": [
+          6.366,
+          7.379
+        ],
+        "nativeCompositorSamples": 9,
+        "perfettoAlsoRecorded": false
+      }
+    ],
+    "prepared": [
+      {
+        "run": "Water-prime-1",
+        "buildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+        "secondsFromLossToResults": 9.456,
+        "observedFallFrames": 681,
+        "wholeFallMaxFrameMs": 16.652,
+        "contactWindowMaxMs": 15.415,
+        "nextWindowMaxMs": 14.907,
+        "combinedContactAndNextMaxMs": 15.415,
+        "contactWindowSeconds": [
+          6.256,
+          7.268
+        ],
+        "nativeCompositorSamples": 9,
+        "perfettoAlsoRecorded": false
+      },
+      {
+        "run": "Water-prime-2",
+        "buildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+        "secondsFromLossToResults": 9.456,
+        "observedFallFrames": 681,
+        "wholeFallMaxFrameMs": 16.294,
+        "contactWindowMaxMs": 15.051,
+        "nextWindowMaxMs": 15.603,
+        "combinedContactAndNextMaxMs": 15.603,
+        "contactWindowSeconds": [
+          6.297,
+          7.309
+        ],
+        "nativeCompositorSamples": 9,
+        "perfettoAlsoRecorded": false
+      },
+      {
+        "run": "Water-prime-3",
+        "buildGuid": "8554b37e728b419a9244f7fcbd7d7499",
+        "secondsFromLossToResults": 9.456,
+        "observedFallFrames": 681,
+        "wholeFallMaxFrameMs": 16.952,
+        "contactWindowMaxMs": 14.968,
+        "nextWindowMaxMs": 15.293,
+        "combinedContactAndNextMaxMs": 15.293,
+        "contactWindowSeconds": [
+          6.296,
+          7.309
+        ],
+        "nativeCompositorSamples": 9,
+        "perfettoAlsoRecorded": false
+      }
+    ],
+    "medianWholeFallMaxMs": {
+      "ordinary": 17.08,
+      "prepared": 16.652
+    },
+    "medianContactAndNextMaxMs": {
+      "ordinary": 15.596,
+      "prepared": 15.415
+    }
+  },
+  "perfetto": {
+    "tool": "Meta Horizon Developer Tools, standard Perfetto capture and local trace_processor_shell, process com.wa003.floorfracture.renderbench.",
+    "timing": "Quest game event markers and Unity windows share Android elapsed time since boot. Values are relative to the event marker or expected contact. The selected comparison window covers 150 ms before and 300 ms after.",
+    "captures": {
+      "maximum-shatter": {
+        "case": "Maximum-A",
+        "event": "First actual 32-pane shatter marked by the game CSV on the Android boot clock.",
+        "eventBootMs": 111102863.0,
+        "selectedMarkerCoverageRelativeMs": [
+          -6850.49,
+          5552.494
+        ],
+        "sampleWindowRelativeMs": [
+          -150,
+          300
+        ],
+        "path": "Builds/Verification/Overnight/Quest-64-pane/Traces/maximum-shatter.pftrace",
+        "bytes": 64403739,
+        "sha256": "fab68b69d41022c0cc5659a936c2ba3b3d26dc56bf5b4fe8d1a2c1cbbe9d03f0",
+        "markers": [
+          {
+            "name": "Camera.Render",
+            "thread": "Thread-7",
+            "traceSamples": 342,
+            "firstStartRelativeMs": -6525.731,
+            "lastEndRelativeMs": -1033.463,
+            "nearEventSamples": 0,
+            "maximumMarkerDurationNearEventMs": null
+          },
+          {
+            "name": "Camera.Render",
+            "thread": "Unity Main Thre",
+            "traceSamples": 342,
+            "firstStartRelativeMs": -6525.757,
+            "lastEndRelativeMs": -1033.492,
+            "nearEventSamples": 0,
+            "maximumMarkerDurationNearEventMs": null
+          },
+          {
+            "name": "PlayerLoop",
+            "thread": "Unity Main Thre",
+            "traceSamples": 342,
+            "firstStartRelativeMs": -6850.49,
+            "lastEndRelativeMs": -1030.58,
+            "nearEventSamples": 0,
+            "maximumMarkerDurationNearEventMs": null
+          },
+          {
+            "name": "Update.ScriptRunBehaviourUpdate",
+            "thread": "Unity Main Thre",
+            "traceSamples": 342,
+            "firstStartRelativeMs": -6634.073,
+            "lastEndRelativeMs": -1041.11,
+            "nearEventSamples": 0,
+            "maximumMarkerDurationNearEventMs": null
+          },
+          {
+            "name": "xrSyncActions",
+            "thread": "Unity Main Thre",
+            "traceSamples": 814,
+            "firstStartRelativeMs": -5839.612,
+            "lastEndRelativeMs": 5552.494,
+            "nearEventSamples": 32,
+            "maximumMarkerDurationNearEventMs": 0.16
+          }
+        ]
+      },
+      "water-contact": {
+        "case": "Water-normal-2",
+        "event": "Expected Water contact from the fall marker, 0.40 s hold and 80 m at 9.8 m/s². The Unity marker has millisecond precision.",
+        "eventBootMs": 111781316.61,
+        "selectedMarkerCoverageRelativeMs": [
+          -3682.602,
+          2706.345
+        ],
+        "sampleWindowRelativeMs": [
+          -150,
+          300
+        ],
+        "path": "Builds/Verification/Overnight/Quest-64-pane/Traces/water-contact.pftrace",
+        "bytes": 37529928,
+        "sha256": "c60a4dedf8c01b29a0cb7a8273ec82c764f36e350e62084b348cfa24e08f6d53",
+        "markers": [
+          {
+            "name": "Camera.Render",
+            "thread": "Thread-7",
+            "traceSamples": 454,
+            "firstStartRelativeMs": -3588.444,
+            "lastEndRelativeMs": 2702.767,
+            "nearEventSamples": 33,
+            "maximumMarkerDurationNearEventMs": 0.007
+          },
+          {
+            "name": "Camera.Render",
+            "thread": "Unity Main Thre",
+            "traceSamples": 454,
+            "firstStartRelativeMs": -3588.49,
+            "lastEndRelativeMs": 2702.732,
+            "nearEventSamples": 33,
+            "maximumMarkerDurationNearEventMs": 0.013
+          },
+          {
+            "name": "PlayerLoop",
+            "thread": "Unity Main Thre",
+            "traceSamples": 454,
+            "firstStartRelativeMs": -3601.102,
+            "lastEndRelativeMs": 2705.968,
+            "nearEventSamples": 33,
+            "maximumMarkerDurationNearEventMs": 15.315
+          },
+          {
+            "name": "Update.ScriptRunBehaviourUpdate",
+            "thread": "Unity Main Thre",
+            "traceSamples": 454,
+            "firstStartRelativeMs": -3600.547,
+            "lastEndRelativeMs": 2694.467,
+            "nearEventSamples": 32,
+            "maximumMarkerDurationNearEventMs": 2.639
+          },
+          {
+            "name": "xrSyncActions",
+            "thread": "Unity Main Thre",
+            "traceSamples": 461,
+            "firstStartRelativeMs": -3682.602,
+            "lastEndRelativeMs": 2706.345,
+            "nearEventSamples": 32,
+            "maximumMarkerDurationNearEventMs": 0.186
+          }
+        ]
+      },
+      "maximum-contact": {
+        "case": "Maximum-check",
+        "event": "First actual 32-pane shatter marked by the game CSV on the Android boot clock.",
+        "eventBootMs": 112836977.0,
+        "selectedMarkerCoverageRelativeMs": [
+          -3362.665,
+          3026.663
+        ],
+        "sampleWindowRelativeMs": [
+          -150,
+          300
+        ],
+        "path": "Builds/Verification/Overnight/Quest-64-pane/Traces/maximum-contact.pftrace",
+        "bytes": 46614833,
+        "sha256": "2395c82ef4f21325196e7e9ea2fd004a0886a0056a84239064a8bd8c333a7177",
+        "markers": [
+          {
+            "name": "Camera.Render",
+            "thread": "Thread-7",
+            "traceSamples": 454,
+            "firstStartRelativeMs": -3268.595,
+            "lastEndRelativeMs": 3021.855,
+            "nearEventSamples": 33,
+            "maximumMarkerDurationNearEventMs": 0.021
+          },
+          {
+            "name": "Camera.Render",
+            "thread": "Unity Main Thre",
+            "traceSamples": 454,
+            "firstStartRelativeMs": -3268.625,
+            "lastEndRelativeMs": 3021.814,
+            "nearEventSamples": 33,
+            "maximumMarkerDurationNearEventMs": 0.005
+          },
+          {
+            "name": "PlayerLoop",
+            "thread": "Unity Main Thre",
+            "traceSamples": 454,
+            "firstStartRelativeMs": -3279.137,
+            "lastEndRelativeMs": 3024.407,
+            "nearEventSamples": 33,
+            "maximumMarkerDurationNearEventMs": 14.981
+          },
+          {
+            "name": "Update.ScriptRunBehaviourUpdate",
+            "thread": "Unity Main Thre",
+            "traceSamples": 455,
+            "firstStartRelativeMs": -3278.117,
+            "lastEndRelativeMs": 3026.663,
+            "nearEventSamples": 32,
+            "maximumMarkerDurationNearEventMs": 5.791
+          },
+          {
+            "name": "xrSyncActions",
+            "thread": "Unity Main Thre",
+            "traceSamples": 461,
+            "firstStartRelativeMs": -3362.665,
+            "lastEndRelativeMs": 3024.737,
+            "nearEventSamples": 32,
+            "maximumMarkerDurationNearEventMs": 0.149
+          }
+        ]
+      }
+    }
+  },
+  "reproductionInputs": {
+    "path": "Builds/Verification/Overnight/Quest-64-pane/Fixture input.zip",
+    "sha256": "ca8487841fd123087454e2ffe5e47ad945ab45ee718d41f72b0dee9a2f1efb73",
+    "storedInputs": "Base and comfort fixture patches against the game revision, reference to the installed MRUK Rec Room, and measurement replay instructions. No user room data."
+  },
+  "comfortAndAndroidQuit": {
+    "method": "On physical Quest the isolated fixture requests natural Reduced, a fresh start and a Full Skip per theme, then calls the game's actual Android Quit. It tries the Results buttons and records if the off-head tracking guard requires invoking their game handlers directly. Both controller rays and both fingertip pokes were independently exercised in the native simulator. A wearer still needs to test the actual input and comfort.",
+    "timing": "The fixture supplied Reduced directly to the game without persisting a preference; the raw reduced_motion CSV field still reflects the default saved preference. The recorded fall and reduced-results markers bracket the measured windows. The 3.9-second natural timeline is distinct from the 9.45-second Full timing, and the second fall starts after the reset. Only intervals with rendered geometry and samples with nonzero compositor eye buffers are counted.",
+    "session": {
+      "fixtureBuild": "ba3df68d039f4e6baae04499a2f90ec6",
+      "fixtureSha256": "4d3dd12f44cb5d2a21b3d570713c03476977a559bc618833b1ae9bd5f9fe71ba",
+      "package": "com.wa003.floorfracture.renderbench",
+      "originalCsvRecording": false,
+      "originalProximity": {
+        "enabled": true,
+        "prox_override": "DISABLED",
+        "power_state": "HEADSET_UNMOUNTED",
+        "autosleep_disabled": false,
+        "message": "Proximity sensor: enabled (normal behavior)"
+      },
+      "cases": [
+        {
+          "theme": "Space",
+          "endedNaturallyInReduced": true,
+          "resetReadyLevel1Score0": true,
+          "fullSkipReachedResults": true,
+          "quitReturnedAndroid": true,
+          "activityYielded": true,
+          "processGone": true,
+          "restartCalledDirectly": true,
+          "quitCalledDirectly": true,
+          "renderingVerified": true,
+          "reducedFrames": 284,
+          "reducedAverageFps": 71.935,
+          "reducedMaxFrameMs": 16.168,
+          "submittedEyeBufferSamples": 4,
+          "nextForeground": [
+            "com.wa003.floorfracture",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.systemux"
+          ],
+          "files": {
+            "events.txt": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Space/events.txt",
+              "sha256": "e4241f605af6a96969f9a189be8bd2412ece35c55942f7c3d3f7cbd6e8feb2a9"
+            },
+            "Unity.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Space/Unity.csv",
+              "sha256": "a90ac2319717c38fbc53a802faaa6e915f128b974a5166faad90956a836ddb13"
+            },
+            "OVR-0.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Space/OVR-0.csv",
+              "sha256": "50574acae1bd932009f68c28e1b5650d8524e246c39a7c1ac21387a38cade2a7"
+            }
+          },
+          "measuredTimelineSeconds": 3.949,
+          "fullSkipToResultsSeconds": 0.616,
+          "rawPreferenceColumnValuesInReduced": [
+            "0"
+          ]
+        },
+        {
+          "theme": "Lava",
+          "endedNaturallyInReduced": true,
+          "resetReadyLevel1Score0": true,
+          "fullSkipReachedResults": true,
+          "quitReturnedAndroid": true,
+          "activityYielded": true,
+          "processGone": false,
+          "restartCalledDirectly": true,
+          "quitCalledDirectly": true,
+          "renderingVerified": true,
+          "reducedFrames": 285,
+          "reducedAverageFps": 72.207,
+          "reducedMaxFrameMs": 16.751,
+          "submittedEyeBufferSamples": 4,
+          "nextForeground": [
+            "com.wa003.floorfracture",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.systemux"
+          ],
+          "files": {
+            "events.txt": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Lava/events.txt",
+              "sha256": "c30699aa511291b71c31548407ceb891d5bf46acbd66ab3db52b363d538f169b"
+            },
+            "Unity.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Lava/Unity.csv",
+              "sha256": "b87eadc1fde51254802e082d3a62f5c3a14d4840585779c17e6f958b6c936126"
+            },
+            "OVR-0.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Lava/OVR-0.csv",
+              "sha256": "e6200f7d15e7a28049c33e5cc7312b31368fbdafe9d750a2d88aa5224c953231"
+            }
+          },
+          "measuredTimelineSeconds": 3.947,
+          "fullSkipToResultsSeconds": 0.621,
+          "rawPreferenceColumnValuesInReduced": [
+            "0"
+          ]
+        },
+        {
+          "theme": "Crystal",
+          "endedNaturallyInReduced": true,
+          "resetReadyLevel1Score0": true,
+          "fullSkipReachedResults": true,
+          "quitReturnedAndroid": true,
+          "activityYielded": true,
+          "processGone": false,
+          "restartCalledDirectly": true,
+          "quitCalledDirectly": true,
+          "renderingVerified": true,
+          "reducedFrames": 285,
+          "reducedAverageFps": 72.207,
+          "reducedMaxFrameMs": 17.598,
+          "submittedEyeBufferSamples": 4,
+          "nextForeground": [
+            "com.wa003.floorfracture",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.systemux"
+          ],
+          "files": {
+            "events.txt": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Crystal/events.txt",
+              "sha256": "29e1145dd7ed1bf2eed06627f5dfd27866ff48506a0e6b620554d4f0626955b3"
+            },
+            "Unity.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Crystal/Unity.csv",
+              "sha256": "cc67d741300448cca200473fd47fe5c64ad6ceb74fea5e641896a94ff0019c44"
+            },
+            "OVR-0.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Crystal/OVR-0.csv",
+              "sha256": "d31449f506ab2d7903521b1ba17abd9b2cc1b6aaafda98ad6b9207ad27219e0c"
+            }
+          },
+          "measuredTimelineSeconds": 3.946,
+          "fullSkipToResultsSeconds": 0.621,
+          "rawPreferenceColumnValuesInReduced": [
+            "0"
+          ]
+        },
+        {
+          "theme": "Sand",
+          "endedNaturallyInReduced": true,
+          "resetReadyLevel1Score0": true,
+          "fullSkipReachedResults": true,
+          "quitReturnedAndroid": true,
+          "activityYielded": true,
+          "processGone": true,
+          "restartCalledDirectly": true,
+          "quitCalledDirectly": true,
+          "renderingVerified": true,
+          "reducedFrames": 284,
+          "reducedAverageFps": 71.972,
+          "reducedMaxFrameMs": 16.662,
+          "submittedEyeBufferSamples": 4,
+          "nextForeground": [
+            "com.wa003.floorfracture",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.systemux"
+          ],
+          "files": {
+            "events.txt": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Sand/events.txt",
+              "sha256": "4a49012e2cd416274dc138bf9d5503058d6a338e71143dbef3fdf4a4fa5a30fa"
+            },
+            "Unity.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Sand/Unity.csv",
+              "sha256": "ebe2d5becddc3a81c0410bf167e136fab5e82c0d845e16c0d09a50ff57d58338"
+            },
+            "OVR-0.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Sand/OVR-0.csv",
+              "sha256": "9f879058afbac8363c59cb0eaddfc2e2c378b581b41448b1b8ce02ae761c9874"
+            }
+          },
+          "measuredTimelineSeconds": 3.945,
+          "fullSkipToResultsSeconds": 0.62,
+          "rawPreferenceColumnValuesInReduced": [
+            "0"
+          ]
+        },
+        {
+          "theme": "Snow",
+          "endedNaturallyInReduced": true,
+          "resetReadyLevel1Score0": true,
+          "fullSkipReachedResults": true,
+          "quitReturnedAndroid": true,
+          "activityYielded": true,
+          "processGone": true,
+          "restartCalledDirectly": true,
+          "quitCalledDirectly": true,
+          "renderingVerified": true,
+          "reducedFrames": 285,
+          "reducedAverageFps": 72.152,
+          "reducedMaxFrameMs": 19.65,
+          "submittedEyeBufferSamples": 4,
+          "nextForeground": [
+            "com.wa003.floorfracture",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.systemux"
+          ],
+          "files": {
+            "events.txt": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Snow/events.txt",
+              "sha256": "96240be7e43b6208fe27e03c3b9826f28919afce4d3c05f9c2184b637760b2f6"
+            },
+            "Unity.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Snow/Unity.csv",
+              "sha256": "7cb6c5c8f0e4b601ac1d66383fe0aa3c6f9ce827a5b9fbcb74b07e50e99096f6"
+            },
+            "OVR-0.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Snow/OVR-0.csv",
+              "sha256": "e934df9ff4e5581bf5f373cc731f3209b6dca02df3e0e13e15e6e1d8cc13a9c6"
+            }
+          },
+          "measuredTimelineSeconds": 3.95,
+          "fullSkipToResultsSeconds": 0.619,
+          "rawPreferenceColumnValuesInReduced": [
+            "0"
+          ]
+        },
+        {
+          "theme": "Water",
+          "endedNaturallyInReduced": true,
+          "resetReadyLevel1Score0": true,
+          "fullSkipReachedResults": true,
+          "quitReturnedAndroid": true,
+          "activityYielded": true,
+          "processGone": true,
+          "restartCalledDirectly": true,
+          "quitCalledDirectly": true,
+          "renderingVerified": true,
+          "reducedFrames": 284,
+          "reducedAverageFps": 72.045,
+          "reducedMaxFrameMs": 17.096,
+          "submittedEyeBufferSamples": 4,
+          "nextForeground": [
+            "com.wa003.floorfracture",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.vrshell",
+            "com.oculus.systemux"
+          ],
+          "files": {
+            "events.txt": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Water/events.txt",
+              "sha256": "709bd9175f3c48e5b0d43b3ec0a94711b6a2ae58d9b60f9d7e52b7c893ad822c"
+            },
+            "Unity.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Water/Unity.csv",
+              "sha256": "a6a80ada034c369a1d85f265aeaf6ba94df5fc2a1f9e4e24fa78a1a2c99dcdd9"
+            },
+            "OVR-0.csv": {
+              "path": "Builds/Verification/Overnight/Quest-64-pane/Comfort/Water/OVR-0.csv",
+              "sha256": "360dce94176e538dafd3af1853ad1453a4e93406f78b2f364d67e2720e678578"
+            }
+          },
+          "measuredTimelineSeconds": 3.942,
+          "fullSkipToResultsSeconds": 0.623,
+          "rawPreferenceColumnValuesInReduced": [
+            "0"
+          ]
+        }
+      ],
+      "earlierIncompleteAttempts": [
+        {
+          "theme": "Water",
+          "endedNaturallyInReduced": false,
+          "resetReadyLevel1Score0": false,
+          "fullSkipReachedResults": false,
+          "quitReturnedAndroid": false,
+          "activityYielded": false,
+          "processGone": false,
+          "restartCalledDirectly": false,
+          "quitCalledDirectly": false,
+          "renderingVerified": false,
+          "reducedFrames": 0,
+          "reducedAverageFps": null,
+          "reducedMaxFrameMs": null,
+          "submittedEyeBufferSamples": 0,
+          "nextForeground": []
+        }
+      ],
+      "restoredRecording": true,
+      "finalProximity": {
+        "enabled": true,
+        "prox_override": "DISABLED",
+        "power_state": "STANDBY",
+        "autosleep_disabled": false,
+        "message": "Proximity sensor: enabled (normal behavior)"
+      },
+      "gameFileUnchanged": true
+    }
+  },
+  "postTestCleanup": {
+    "fixtureAbsent": true,
+    "fixturePackage": "com.wa003.floorfracture.renderbench",
+    "installedGamePackage": "com.wa003.floorfracture",
+    "installedGameSha256": "cb4bdf6acdc14f9feff16f357493cfeeb2f977ecc41701a6f487afa7df9f604d",
+    "gameActivityResumed": true,
+    "activity": "com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity",
+    "ovrCsvRecording": false,
+    "proximity": {
+      "enabled": true,
+      "prox_override": "DISABLED",
+      "power_state": "HEADSET_UNMOUNTED",
+      "autosleep_disabled": false,
+      "message": "Proximity sensor: enabled (normal behavior)"
+    }
+  }
+}

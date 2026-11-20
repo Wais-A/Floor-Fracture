@@ -1,0 +1,129 @@
+{
+  "platform": "Unity 6000.6.9f1 Editor on macOS using Metal. Fresh process per trial. Synchronous C# stopwatch measurements.",
+  "workload": "An 8 \u00d7 8 board with 60 cm panes, seed 379 and a real planned Classic deadline. Stay on the guaranteed stationary pane. 21 panes release 336 glass fragments. Expose Water, advance the shard mesh twice, then preview the other five destinations.",
+  "singleChange": "Construct and load the shared chamber once when the fitted board is registered. The baseline constructs it on first shatter. Rendering and fragment counts match.",
+  "deviceComparison": "The earlier physical Quest first five-pane event reached an 80.621 ms Unity frame. This experiment measures Editor work, including asset loading. The corresponding Quest performance change needs a paired device capture.",
+  "testProcess": "Two baseline Editor launches returned SIGABRT during ISDK telemetry shutdown after the measurements had been written. The comparison includes all three completed measurements per condition. The production Mac batch build has an explicit SDK shutdown path.",
+  "timing": {
+    "baseline": {
+      "trialsMs": [
+        {
+          "registerBoard": 0.0859,
+          "resolveAndQueueShards": 0.6507,
+          "firstDestination": 19.5245,
+          "firstShardFrame": 0.5935,
+          "secondShardFrame": 0.1237,
+          "destination1": 0.6294,
+          "destination2": 0.0285,
+          "destination3": 1.5754,
+          "destination4": 2.6113,
+          "destination5": 0.1123,
+          "destination0": 0.0055
+        },
+        {
+          "registerBoard": 0.0939,
+          "resolveAndQueueShards": 0.8723,
+          "firstDestination": 20.5766,
+          "firstShardFrame": 0.626,
+          "secondShardFrame": 0.1312,
+          "destination1": 0.1482,
+          "destination2": 0.0114,
+          "destination3": 1.7445,
+          "destination4": 0.5328,
+          "destination5": 2.5049,
+          "destination0": 0.0099
+        },
+        {
+          "registerBoard": 0.0921,
+          "resolveAndQueueShards": 0.7507,
+          "firstDestination": 19.183,
+          "firstShardFrame": 0.5939,
+          "secondShardFrame": 0.117,
+          "destination1": 0.1174,
+          "destination2": 0.0077,
+          "destination3": 0.2593,
+          "destination4": 0.4384,
+          "destination5": 0.8647,
+          "destination0": 0.0072
+        }
+      ],
+      "medianMs": {
+        "registerBoard": 0.0921,
+        "resolveAndQueueShards": 0.7507,
+        "firstDestination": 19.5245,
+        "firstShardFrame": 0.5939,
+        "secondShardFrame": 0.1237,
+        "destination1": 0.1482,
+        "destination2": 0.0114,
+        "destination3": 1.5754,
+        "destination4": 0.5328,
+        "destination5": 0.8647,
+        "destination0": 0.0072
+      }
+    },
+    "prepared": {
+      "trialsMs": [
+        {
+          "registerBoard": 14.9988,
+          "resolveAndQueueShards": 0.7988,
+          "firstDestination": 3.1083,
+          "firstShardFrame": 0.5711,
+          "secondShardFrame": 0.1233,
+          "destination1": 0.1186,
+          "destination2": 0.0092,
+          "destination3": 0.2564,
+          "destination4": 0.0719,
+          "destination5": 0.1039,
+          "destination0": 0.0054
+        },
+        {
+          "registerBoard": 13.7253,
+          "resolveAndQueueShards": 0.7752,
+          "firstDestination": 2.9155,
+          "firstShardFrame": 0.7083,
+          "secondShardFrame": 0.1371,
+          "destination1": 0.1608,
+          "destination2": 0.0108,
+          "destination3": 0.302,
+          "destination4": 0.106,
+          "destination5": 0.1311,
+          "destination0": 0.008
+        },
+        {
+          "registerBoard": 19.2242,
+          "resolveAndQueueShards": 0.8401,
+          "firstDestination": 3.6046,
+          "firstShardFrame": 0.7325,
+          "secondShardFrame": 0.1373,
+          "destination1": 0.1373,
+          "destination2": 0.0092,
+          "destination3": 0.2899,
+          "destination4": 0.0855,
+          "destination5": 0.1148,
+          "destination0": 0.0049
+        }
+      ],
+      "medianMs": {
+        "registerBoard": 14.9988,
+        "resolveAndQueueShards": 0.7988,
+        "firstDestination": 3.1083,
+        "firstShardFrame": 0.7083,
+        "secondShardFrame": 0.1371,
+        "destination1": 0.1373,
+        "destination2": 0.0092,
+        "destination3": 0.2899,
+        "destination4": 0.0855,
+        "destination5": 0.1148,
+        "destination0": 0.0054
+      }
+    }
+  },
+  "sourceSha256": {
+    "baseline-1.csv": "b4f6b7fbb066cd1cc3626ccba3c95b731877312543daf516d70e503f26651a9f",
+    "baseline-2.csv": "473c92bcd7762c204269ce05bfa639947f15e20d74172f2e26f0a371bd35063d",
+    "baseline-3.csv": "31381b62965e8c9d37e1b602a42777260180c50a6848977c13d3e1627c2cffa9",
+    "prepared-1.csv": "4f155c1b127089fc535efe0caf3783bcc1d2ff7424309928f716c503691f0fd4",
+    "prepared-2.csv": "2a31d38fdfc508196fcbc0ea14ea2e5608c4211da26eb3fd551cebbe7adbe3bf",
+    "prepared-3.csv": "9c3057ab6206b3a6ddf6e58a9dc8912cc0d8368f91dc89efc2f6a675bf74aab6"
+  }
+}

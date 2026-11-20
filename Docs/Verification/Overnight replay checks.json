@@ -1,0 +1,36 @@
+{
+  "sourceRevision": "31fc527b3ffe0ad44ce801fee67e0d23ba053dc7",
+  "startedUtc": "2026-11-20T06:23:25.0762480Z",
+  "finishedUtc": "2026-11-20T06:26:49.6125260Z",
+  "result": "passed",
+  "unityVersion": "6000.6.9f1",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "fixture": "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode",
+  "consecutiveRestarts": 96,
+  "timedWaveLosses": 12,
+  "includeSuccessfulWaveBeforeLoss": 4,
+  "skippedEndings": 87,
+  "fullyPlayedEndings": 9,
+  "endingCounts": {
+    "Water": 16,
+    "Lava": 16,
+    "Crystal": 16,
+    "Space": 16,
+    "Sand": 16,
+    "Snow": 16
+  },
+  "unchangedLiveObjectCounts": {
+    "sceneObjects": 2130,
+    "boards": 1,
+    "chambers": 1,
+    "sceneRenderers": 404,
+    "sceneAudioSources": 18,
+    "sceneMeshIds": 22,
+    "gameMaterials": 11
+  },
+  "testedOnEachRestart": "96 consecutive losses, Results and Restarts retained exactly one glass board and one shared chamber, cleared each score and active wave and preserved room registration. Twelve natural timed losses included four after successful waves.",
+  "counterFile": "Builds/Verification/Overnight/restart-counts.csv",
+  "counterFileSha256": "a892c0559d17fc59d51700f582f2f09779e52aceb27762836e6d79748f9aee63",
+  "scope": "Real Unity game state at Welcome after each run, using a simulated stationary headset and injected menu selection. Managed heap samples include garbage collection. Physical comfort, tracking accuracy and headset memory are separate tests.",
+  "developmentMenuPreviewLosses": 84
+}

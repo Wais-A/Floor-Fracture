@@ -1,4 +1,4 @@
-# Quest 3 playtest · November 19, 2026
+# Quest 3 playtests · November 19–20, 2026
 
 Wais tested the first playable development APK in his room. Unity build `build_a0e5ac33fd19` used the FloorFracture scene, package `com.wa003.floorfracture`, and APK SHA-256 `5004950a8c2094e3d56c272176bd385e49972984e35736b0373c547ce0464437`. A local copy preserves the exact build. [First headset APK](<../../Builds/Quest/First-headset/FloorFracture.apk>)
 
@@ -10,6 +10,21 @@ Wais tested the first playable development APK in his room. Unity build `build_a
 | Input | “I was using my hands which worked, I didn't try the controllers yet.” | Hand input worked for the actions Wais used. Both physical controllers, hand-only Skip, and Restart still need individual checks. |
 | Clearance | “The position looked fine, but I had to judge clearance myself.” | Keep the good position. Show the fit calculated from the saved scan and make another spot or Space Setup optional. |
 | Scale | The glass felt confined. Wais wants more floor coverage and wider panes as space grows. He chose a middle width for the next trial and wants to judge it in the headset. | Trial range 50–67 cm per pane. Compare the measured grid size, perceived room to move and single-step reach in the same room. |
+
+## Current Quest build · November 20
+
+Game source `54b54ee`, development player `647a23a789194ab3b06517a0b3f5628b`. Android resumed the app, its installed SHA-256 matched the signed APK and the headset recorded 13 Vulkan setup samples while unattended. The most recent wearer observations below came from an earlier build. The first test is an ordinary step near a seam followed by one off-center loss. [Package and device](<./Overnight Quest build.json>) · [Watch the Editor rehearsal](<../../Builds/Verification/Floor-entry/Floor Fracture gameplay rehearsal.mp4>)
+
+The same Quest separately rendered an 8 × 8 synthetic board with 60 cm panes. In fog, 32 panes shattered and the next wave introduced moving glass. All six Full landings reached Results. Individual frames exceeded the class target. The separate Mac simulator also registered controls from the left and right Touch Plus rays and both fingertip Poke interactors. Actual room clearance, physical controller input and the feeling of the fall remain on the wearer sheet below. [Quest timings](<../Quest performance.md>) · [Simulator input results](<./Overnight simulator.json>)
+
+| Review in this order | What to observe |
+|---|---|
+| Safe glass | In **Tutorial**, move onto the center of a clear neighbor. In **Start wave**, try the same move while looking down, then near a seam. Note the ring’s tile and whether you survive at zero. |
+| Same opening | In Full motion, let a pane break while standing off-center. Look back at the original rim and at an adjacent blue brick. Record any jump and whether the walls pass for at least three seconds. |
+| Water and Space | From safe glass, identify the landing before taking a loss in that run. Watch Water during the approach and Space just before and after impact. For selected landings use **Development → Next ending**. |
+| Furniture | Turn gently beside a real chair and look between its legs. Check the bottom of the couch and both the old and new location of a bin moved outside the arena. |
+| Level 3 | Select **Development → Seed 379 · level 3**. On a board with two adjacent openings, catch a moving pane and compare its appearance, warning and shards with the neighboring glass. Note which pane the ring follows. |
+| Input and comfort | Try each controller independently, a hand poke, Reduced, a fresh pinch or A/X to Skip, and Restart. Optional **Settings → Narration** plays the tutorial and Results lines from the APK. |
 
 ## Surrounding-floor review
 
@@ -50,8 +65,12 @@ In the Editor, all six endings completed in Full and Reduced, presented their bl
 
 - [x] Installed the revised development APK on Quest 3 on November 19 at 11:19 p.m. The installed file matched the tested SHA-256. Spatial data was granted and the game activity resumed. The package contains the floor placement and occlusion blocks with the room outline mesh disabled. [Installation and package inspection](<./Shared chamber Quest build.json>)
 - [x] In the Unity fixture, twelve eye-position checks found the correct distant surface at 80 m through a neighboring opening. A naturally selected Snow preview persisted through several waves and the loss landed in Snow. [Unity playthrough](<./Shared chamber playthrough.json>)
-- [ ] During a wave, look at a familiar chair and wall. Check that the app draws no blue scan grid and that furniture still appears in front of the brick.
-- [ ] From intact glass, look into a neighboring opening and identify the distant destination. Stay on a cracking pane in the same run. Record whether you landed in the same place you saw and whether the passing walls still make the descent convincing.
+- [x] Wais confirmed that the blue room outlines were gone.
+- [ ] Recheck furniture edges while turning or moving the head. Wais saw them flicker or shift with head movement.
+- [x] Wais could generally identify the landing. On the 5 × 3 board at 53.9 cm, the headset recorded nine natural gameplay losses in Full, each reaching Results. The destinations were Snow, Water, Space, Lava, Sand, Crystal, Snow, Water and Space. [Physical session and run order](<./Shared chamber Quest session.json>)
+- [ ] Follow Water from the rim to contact. Wais reported that it lost its water appearance during the descent.
+- [ ] Watch Space at impact. Wais briefly saw the real room.
+- [ ] Confirm preview-to-landing continuity for each revised ending, and judge passing walls and Full-motion comfort. Physical Reduced and Skip still need a separate test. The game CSV identifies the landing and motion setting. Wais’s observations provide the visual findings.
 
 ## Earlier adaptive build
 

@@ -1,0 +1,130 @@
+{
+  "sourceRevision": "31fc527b3ffe0ad44ce801fee67e0d23ba053dc7",
+  "testedSurface": "Separate Meta XR Simulator window on macOS, Metal, using the playable Unity scene and installed Meta synthetic room servers. No wearer was present.",
+  "nativeRuntimeVersion": "207.1.0.49.123",
+  "metaSdk": "209.0.0",
+  "geometryMethod": "Shapely 2.2.0 GEOS polygon check independent of the Unity fitter. Used each live fitted quadrilateral, native floor outline and obstruction geometry in world metres. Wall segments count as obstructions. Boundary contact within 1 mm is allowed.",
+  "rooms": [
+    {
+      "room": "GameRoom",
+      "rows": 2,
+      "columns": 12,
+      "paneWidthCm": 56.209,
+      "anchors": 27,
+      "obstructionFootprints": 24,
+      "floorSquareM": 37.95316,
+      "boardSquareM": 7.582681,
+      "boardOutsideFloorSquareM": 0.0,
+      "boardOverObstacleSquareM": 0.0,
+      "floorContainsBoardWithin1mm": true,
+      "clearOfAllObstructionsInside1mmInset": true
+    },
+    {
+      "room": "High-ceiling Room",
+      "rows": 9,
+      "columns": 6,
+      "paneWidthCm": 58.704,
+      "anchors": 25,
+      "obstructionFootprints": 22,
+      "floorSquareM": 50.867851,
+      "boardSquareM": 18.609486,
+      "boardOutsideFloorSquareM": 0.0,
+      "boardOverObstacleSquareM": 0.0,
+      "floorContainsBoardWithin1mm": true,
+      "clearOfAllObstructionsInside1mmInset": true
+    },
+    {
+      "room": "Furniture-filled Room",
+      "rows": 4,
+      "columns": 4,
+      "paneWidthCm": 53.072,
+      "anchors": 24,
+      "obstructionFootprints": 21,
+      "floorSquareM": 10.298999,
+      "boardSquareM": 4.506534,
+      "boardOutsideFloorSquareM": 0.0,
+      "boardOverObstacleSquareM": 0.0,
+      "floorContainsBoardWithin1mm": true,
+      "clearOfAllObstructionsInside1mmInset": true
+    },
+    {
+      "room": "Corridor",
+      "rows": 3,
+      "columns": 10,
+      "paneWidthCm": 64.958,
+      "anchors": 30,
+      "obstructionFootprints": 26,
+      "floorSquareM": 21.447917,
+      "boardSquareM": 12.658562,
+      "boardOutsideFloorSquareM": 0.0,
+      "boardOverObstacleSquareM": 1e-09,
+      "floorContainsBoardWithin1mm": true,
+      "clearOfAllObstructionsInside1mmInset": true
+    },
+    {
+      "room": "L-shape Room",
+      "rows": 9,
+      "columns": 3,
+      "paneWidthCm": 61.586,
+      "anchors": 16,
+      "obstructionFootprints": 13,
+      "floorSquareM": 19.57733,
+      "boardSquareM": 10.240528,
+      "boardOutsideFloorSquareM": 0.0,
+      "boardOverObstacleSquareM": 0.0,
+      "floorContainsBoardWithin1mm": true,
+      "clearOfAllObstructionsInside1mmInset": true
+    }
+  ],
+  "macOpenXRStereoComparison": {
+    "singlePassInstanced": {
+      "screen": "(0.500, 0.447, 0.560)",
+      "ready": true,
+      "stereo": "SinglePassInstanced",
+      "position": "(0.000, 1.630, 0.560)",
+      "head": "(0.000, 1.700, 0.000)",
+      "frame": 5293,
+      "renderers": 13
+    },
+    "multiPass": {
+      "screen": "(0.500, 0.447, 0.560)",
+      "ready": true,
+      "stereo": "MultiPass",
+      "position": "(0.000, 1.630, 0.560)",
+      "head": "(0.000, 1.700, 0.000)",
+      "frame": 12214,
+      "renderers": 13
+    },
+    "result": "At the same tracked pose the single-pass window showed the room and controllers. With desktop MultiPass it also showed the readable Welcome panel. Android remains SinglePassInstanced.",
+    "capturedWindow": "Docs/Media/Meta simulator Welcome.jpg"
+  },
+  "recovery": [
+    "The game waits for a valid eye height before placing the menu. The ordinary menu stays world-anchored and still responds to a Meta recenter.",
+    "Repeated Editor Play sessions previously produced a zero passthrough layer ID. In subsequent sessions the bounded Meta passthrough restart restored the projection and passthrough compositor layers.",
+    "The High-ceiling Room recovered from missing scan data using the visible Check again button after its supplied room server started.",
+    "Repeated Play exits completed without the former missing Unity object exception from the chamber cleanup."
+  ],
+  "nativeMenuInput": {
+    "gameSource": "54b54ee9efb70601345121dc37e95a0373c9d5c2",
+    "surface": "November 20, Mac Meta XR Simulator, GameRoom, Unity OpenXR and the actual gameplay scene. Both hands reported /interaction_profiles/meta/touch_controller_plus for the ray test.",
+    "method": "Meta MCP supplied controller poses and trigger values through OpenXR and articulated fingertips through hand tracking. Unity readbacks observed the existing SDK interactor and menu state. The desktop controller emulator was inactive.",
+    "rightController": "The right ControllerRayInteractor hovered Settings. Its 0.35-second trigger press and release opened the Settings menu.",
+    "leftController": "While the right ray still hovered the panel, the left ControllerRayInteractor hovered Back. Its 0.35-second trigger press and release returned to Welcome.",
+    "rightPoke": "The right tracked index fingertip entered the Settings row. The HandPokeInteractor entered Select. Withdrawing the fingertip opened Settings.",
+    "leftPoke": "The first coordinate placed the rendered fingertip on the adjacent Narration row. The option toggled from Off to On once and back to Off on a second recorded poke. After aiming 3.6 cm lower the fingertip entered the Back row; withdrawal returned to Welcome.",
+    "cleanup": "A fresh simulator Play session restored both native controller ray interactors, with neither hand overridden. Welcome displayed in GameRoom with the original Full, standard warning, 100 percent volume and narration Off settings. On that fresh session the panel was initially at 1.53 m when the settled eye height was 1.70 m. Recenter placed it at 1.63 m, 0.56 m ahead.",
+    "limits": "The Mac test establishes that Meta's inputs reach the correct game menus. The physical Quest tests still need independent Touch controller selections, real fingertip reach and hand or controller Skip."
+  },
+  "finalMacCheck": {
+    "sourceRevision": "54b54ee9efb70601345121dc37e95a0373c9d5c2",
+    "status": "Welcome, room confirmed, 12 × 2 in GameRoom",
+    "trackedEyeHeightMetres": 1.7,
+    "menuHeightMetres": 1.63,
+    "activeLayers": [
+      "Passthrough (FB)",
+      "Projection"
+    ],
+    "screenshot": "Docs/Media/Meta simulator Welcome.jpg",
+    "screenshotSha256": "0c6d884d9eef02ee1cfc5064c1bcdbfa5c14f80b3626878594a6a4a0ba74f9f6"
+  }
+}

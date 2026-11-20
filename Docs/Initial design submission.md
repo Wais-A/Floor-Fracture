@@ -1,6 +1,6 @@
 # Floor Fracture initial design submission
 
-The eight-page [design PDF](<./Floor Fracture Design Document.pdf>) is prepared for the November 20, 2026 deadline. Moodle submission is unconfirmed. The [editable draft](<./Floor Fracture Design Document.docx>) contains all 11 sections of the [course template](<./Final Project - Design Doc.docx>).
+The eight-page [design PDF](<./Floor Fracture Design Document.pdf>) is prepared for the November 20, 2026 deadline. Moodle submission is unconfirmed. Wais’s later five-page revision and the [editable final working draft](<./Floor Fracture Final Design Working Draft.docx>) contain all 11 sections of the [course template](<./Final Project - Design Doc.docx>). The page references below refer to the original eight-page PDF.
 
 ## Course requirements in the design
 

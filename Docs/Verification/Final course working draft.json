@@ -1,0 +1,37 @@
+{
+  "status": "Reviewable working draft dated November 20, 2026",
+  "word": {
+    "path": "Docs/Floor Fracture Final Design Working Draft.docx",
+    "sha256": "e0b4cbab901b2c79365706138288d3cf98be0d53bc4df7b93a8a063ebd4c7199"
+  },
+  "pdf": {
+    "path": "Docs/Floor Fracture Final Design Working Draft.pdf",
+    "sha256": "584ed4fcdcb705b3fd806333d788c1244aff40c9a7dbaa5872eae5935ead9a83"
+  },
+  "sourceDocuments": {
+    "Docs/Final Project - Design Doc.docx": "8fb9ce31db2c80fc82feb4456f6cbfce3f422d01e22f0bd2f2c37e982bd7a2e3",
+    "Docs/Floor Fracture Design Document - Revised.pdf": "1e9522ce008b62a5e19edf754fa8a93011b1971d5f686eca49ecdd9f5474130a"
+  },
+  "verification": {
+    "pages": 5,
+    "sections": 11,
+    "pageSizePoints": [
+      612,
+      792
+    ],
+    "visualInspection": "All five pages rendered with the bundled LibreOffice and inspected at 130 dpi.",
+    "content": "Every nonempty DOCX paragraph appears in the PDF. All numbered section labels match the professor’s template.",
+    "links": [
+      "https://github.com/Wais-A/Floor-Fracture",
+      "https://github.com/oculus-samples/Unity-MRUtilityKitSample"
+    ],
+    "hardwareUpdate": "The 64-pane physical Quest benchmark is in section 7. All five pages were rerendered at 130 dpi. Pages 1, 2, 3 and 5 matched the earlier inspection pixel-for-pixel. The updated page 4 and the full document were visually inspected, and both PDF links were verified."
+  },
+  "pending": [
+    "Current build wearer retest, including stance, moving glass, furniture, Water and Space, Full/Reduced comfort, and physical inputs.",
+    "At least two outside playtesters with direct observations.",
+    "Repeat the scripted 64-pane hardware measurements with a wearer in the demo room and investigate frame-time spikes.",
+    "Record the 3–5 minute Quest demo and add its link to the README and design document.",
+    "Course submission and instructor approval."
+  ]
+}

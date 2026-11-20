@@ -1,0 +1,172 @@
+{
+  "buildGuid": "4be44192652c4aa284ed355d31c245a0",
+  "package": "com.wa003.floorfracture",
+  "version": "0.1.0",
+  "unity": "6000.6.9f1",
+  "device": "Oculus Quest 3",
+  "graphics": "Vulkan",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "qualityIndex": 0,
+  "reportedRefreshHz": 72,
+  "source": {
+    "kind": "Physical Quest 3, Unity Android development player",
+    "buildRecord": "Docs/Verification/Shared chamber Quest build.json",
+    "csv": "Builds/Quest/Shared-chamber/20261120T041955583Z-f34134d7.csv",
+    "sha256": "bc90a8c96e395c85200a2c036741e75ecd09f4b37cfb941648556f3c524a0a2d",
+    "bytes": 164943,
+    "dataRows": 450,
+    "frameWindows": 420,
+    "eventMarkers": 30,
+    "firstWindowEndUtc": "2026-11-20T04:19:56.723Z",
+    "lastWindowEndUtc": "2026-11-20T04:26:16.913Z",
+    "unityStartS": 0.685,
+    "unityEndS": 381.882,
+    "unsampledRoomIntervalS": [13.594, 28.361],
+    "unsampledSeconds": 14.767
+  },
+  "board": {
+    "columns": 5,
+    "rows": 3,
+    "panes": 15,
+    "reportedPitchM": 0.539,
+    "nominalFootprintM": [2.695, 1.617],
+    "coverage": "All 421 rows with board dimensions agree. Eleven first-wave countdowns across nine runs and levels 1–3 began on this fitted board. The supported maximum of 64 panes was not exercised."
+  },
+  "method": {
+    "frames": "Sum frames and the window end minus start times. Unity FPS equals total frames divided by sampled seconds. Mean frame interval equals 1000 times sampled seconds divided by total frames. CSV endpoints are rounded to 0.001 s. Maxima and counts at or above 13.9 ms come from the original frame intervals. Event rows have zero duration.",
+    "counters": "Counter means weight each window mean by its own sample count. Renderer maxima are single-frame counter peaks. Main-thread elapsed time can include waits. Rendering counters can lag the corresponding frame.",
+    "scope": "Stages partition the recording. Gameplay combines Countdown, BetweenWaves and Fall. Scenario, ending and shatter subsets reuse stage windows. Overlapping groups must not be added."
+  },
+  "frameTiming": {
+    "allSampledStages": {"windows": 420, "frames": 26333, "seconds": 366.43, "unityFps": 71.864, "meanFrameMs": 13.915, "maxFrameMs": 235.606, "framesAtOrAbove13p9ms": 13117},
+    "gameplay": {"windows": 312, "frames": 19399, "seconds": 269.5, "unityFps": 71.981, "meanFrameMs": 13.892, "maxFrameMs": 80.621, "framesAtOrAbove13p9ms": 9653},
+    "byStage": {
+      "Room": {"windows": 29, "frames": 2040, "seconds": 28.922, "unityFps": 70.535, "meanFrameMs": 14.177, "maxFrameMs": 235.606, "framesAtOrAbove13p9ms": 1016},
+      "Welcome": {"windows": 9, "frames": 652, "seconds": 9.047, "unityFps": 72.068, "meanFrameMs": 13.876, "maxFrameMs": 16.598, "framesAtOrAbove13p9ms": 319},
+      "Ready": {"windows": 32, "frames": 1746, "seconds": 24.242, "unityFps": 72.024, "meanFrameMs": 13.884, "maxFrameMs": 22.25, "framesAtOrAbove13p9ms": 870},
+      "Countdown": {"windows": 172, "frames": 10877, "seconds": 151.123, "unityFps": 71.974, "meanFrameMs": 13.894, "maxFrameMs": 36.408, "framesAtOrAbove13p9ms": 5403},
+      "BetweenWaves": {"windows": 50, "frames": 2393, "seconds": 33.254, "unityFps": 71.961, "meanFrameMs": 13.896, "maxFrameMs": 80.621, "framesAtOrAbove13p9ms": 1171},
+      "Fall": {"windows": 90, "frames": 6129, "seconds": 85.123, "unityFps": 72.002, "meanFrameMs": 13.889, "maxFrameMs": 18.025, "framesAtOrAbove13p9ms": 3079},
+      "Results": {"windows": 38, "frames": 2496, "seconds": 34.719, "unityFps": 71.891, "meanFrameMs": 13.91, "maxFrameMs": 26.675, "framesAtOrAbove13p9ms": 1259}
+    },
+    "byScenario": {
+      "firstWaveFullBoard": {"windows": 55, "frames": 3878, "seconds": 53.887, "unityFps": 71.965, "meanFrameMs": 13.896, "maxFrameMs": 36.408, "framesAtOrAbove13p9ms": 1901},
+      "fogCountdown": {"windows": 22, "frames": 1360, "seconds": 18.903, "unityFps": 71.946, "meanFrameMs": 13.899, "maxFrameMs": 29.1, "framesAtOrAbove13p9ms": 687},
+      "activeSliderCountdown": {"windows": 17, "frames": 1000, "seconds": 13.891, "unityFps": 71.989, "meanFrameMs": 13.891, "maxFrameMs": 17.023, "framesAtOrAbove13p9ms": 511},
+      "fogAndActiveSlider": {"windows": 7, "frames": 394, "seconds": 5.473, "unityFps": 71.99, "meanFrameMs": 13.891, "maxFrameMs": 16.787, "framesAtOrAbove13p9ms": 201},
+      "classicCountdown": {"windows": 86, "frames": 5715, "seconds": 79.393, "unityFps": 71.984, "meanFrameMs": 13.892, "maxFrameMs": 36.408, "framesAtOrAbove13p9ms": 2821},
+      "memoryCountdown": {"windows": 72, "frames": 4335, "seconds": 60.24, "unityFps": 71.962, "meanFrameMs": 13.896, "maxFrameMs": 29.1, "framesAtOrAbove13p9ms": 2175},
+      "lastTileCountdown": {"windows": 14, "frames": 827, "seconds": 11.49, "unityFps": 71.976, "meanFrameMs": 13.894, "maxFrameMs": 16.491, "framesAtOrAbove13p9ms": 407}
+    },
+    "byFullMotionEnding": {
+      "Water": {"windows": 20, "frames": 1362, "seconds": 18.913, "unityFps": 72.014, "meanFrameMs": 13.886, "maxFrameMs": 18.025, "framesAtOrAbove13p9ms": 669},
+      "Lava": {"windows": 10, "frames": 681, "seconds": 9.46, "unityFps": 71.987, "meanFrameMs": 13.891, "maxFrameMs": 16.855, "framesAtOrAbove13p9ms": 354},
+      "Crystal": {"windows": 10, "frames": 681, "seconds": 9.456, "unityFps": 72.018, "meanFrameMs": 13.885, "maxFrameMs": 17.45, "framesAtOrAbove13p9ms": 339},
+      "Space": {"windows": 20, "frames": 1362, "seconds": 18.916, "unityFps": 72.003, "meanFrameMs": 13.888, "maxFrameMs": 16.74, "framesAtOrAbove13p9ms": 701},
+      "Sand": {"windows": 10, "frames": 681, "seconds": 9.462, "unityFps": 71.972, "meanFrameMs": 13.894, "maxFrameMs": 16.738, "framesAtOrAbove13p9ms": 332},
+      "Snow": {"windows": 20, "frames": 1362, "seconds": 18.916, "unityFps": 72.003, "meanFrameMs": 13.888, "maxFrameMs": 16.73, "framesAtOrAbove13p9ms": 684}
+    }
+  },
+  "scenarioOverlap": {
+    "fogWaves": 5,
+    "activeSliderWaves": 4,
+    "fogAndActiveSliderWaves": 2,
+    "lockedSliderCountdownWindows": 0,
+    "firstWaveDefinition": "Countdown with wave=1 includes the first wave after each level rebuild. Board dimensions continue to describe the original grid after panes break.",
+    "effects": "The 394 frames in 5.473 s with both fog and an active slider appear in both effect totals. Effect flags describe game state. Looking at the effect, catching a slider, and locking one need separate evidence."
+  },
+  "shatters": {
+    "eventCount": 30,
+    "paneCountHistogram": {"1": 2, "2": 7, "3": 5, "4": 3, "5": 13},
+    "totalPaneBreaksAcrossEvents": 108,
+    "largestObservedCount": 5,
+    "largestEventOccurrences": 13,
+    "method": "A marker belongs to the timed Countdown window containing its timestamp. The following windows carry shatter_count and shatter_wave_seed for about two seconds. Match run seed and wave seed together because wave seeds recur. The tag can extend into another stage or the next wave. Window peaks cannot be assigned an exact offset inside the window.",
+    "markerWindows": {
+      "all": {"windows": 30, "frames": 1223, "seconds": 17.053, "unityFps": 71.718, "meanFrameMs": 13.944, "maxFrameMs": 36.408, "framesAtOrAbove13p9ms": 617},
+      "fivePane": {"windows": 13, "frames": 743, "seconds": 10.36, "unityFps": 71.718, "meanFrameMs": 13.943, "maxFrameMs": 36.408, "framesAtOrAbove13p9ms": 372},
+      "underOneSecond": {"windows": 29, "frames": 1151, "seconds": 16.03, "unityFps": 71.803, "meanFrameMs": 13.927, "maxFrameMs": 17.035, "framesAtOrAbove13p9ms": 586},
+      "underOneSecondRangeS": [0.182, 0.989]
+    },
+    "taggedTails": {
+      "all": {"windows": 85, "frames": 4332, "seconds": 60.169, "unityFps": 71.997, "meanFrameMs": 13.889, "maxFrameMs": 80.621, "framesAtOrAbove13p9ms": 2140},
+      "fivePane": {"windows": 35, "frames": 1876, "seconds": 26.075, "unityFps": 71.946, "meanFrameMs": 13.899, "maxFrameMs": 80.621, "framesAtOrAbove13p9ms": 932},
+      "fivePaneByStage": {
+        "BetweenWaves": {"windows": 18, "frames": 831, "seconds": 11.58, "unityFps": 71.762, "meanFrameMs": 13.935, "maxFrameMs": 80.621, "framesAtOrAbove13p9ms": 405},
+        "Countdown": {"windows": 9, "frames": 465, "seconds": 6.454, "unityFps": 72.048, "meanFrameMs": 13.88, "maxFrameMs": 16.527, "framesAtOrAbove13p9ms": 237},
+        "Fall": {"windows": 8, "frames": 580, "seconds": 8.041, "unityFps": 72.13, "meanFrameMs": 13.864, "maxFrameMs": 16.52, "framesAtOrAbove13p9ms": 290}
+      },
+      "firstFivePane": {"windows": 3, "frames": 139, "seconds": 1.987, "unityFps": 69.955, "meanFrameMs": 14.295, "maxFrameMs": 80.621, "framesAtOrAbove13p9ms": 67},
+      "otherTwelveFivePane": {"windows": 32, "frames": 1737, "seconds": 24.088, "unityFps": 72.111, "meanFrameMs": 13.868, "maxFrameMs": 17.773, "framesAtOrAbove13p9ms": 865},
+      "underOneSecondAllCounts": {"windows": 51, "frames": 1861, "seconds": 25.85, "unityFps": 71.992, "meanFrameMs": 13.89, "maxFrameMs": 17.773, "framesAtOrAbove13p9ms": 933},
+      "underOneSecondRangeS": [0.196, 0.999]
+    },
+    "firstFivePaneEvent": {
+      "runSeed": 22618695,
+      "waveSeed": 2002325561,
+      "level": 1,
+      "wave": 1,
+      "markerS": 60.17,
+      "windows": [
+        {"stage": "Countdown", "startS": 59.171, "endS": 60.194, "frames": 72, "recordedFps": 70.445, "maxFrameMs": 36.408},
+        {"stage": "BetweenWaves", "startS": 60.194, "endS": 61.196, "frames": 68, "recordedFps": 67.86, "maxFrameMs": 80.621},
+        {"stage": "BetweenWaves", "startS": 61.196, "endS": 61.46, "frames": 19, "recordedFps": 71.927, "maxFrameMs": 15.197},
+        {"stage": "Countdown", "startS": 61.46, "endS": 62.181, "frames": 52, "recordedFps": 72.105, "maxFrameMs": 15.313}
+      ],
+      "interpretation": "The 36.408 ms Countdown peak shares the marker window. The 80.621 ms peak lies in the first tagged BetweenWaves window. The 12 later five-pane tails had a 17.773 ms maximum under varying wave, view and stage conditions. The aggregate cannot isolate a cause."
+    }
+  },
+  "fallEpisodes": {
+    "evidence": "All nine losses transition directly from Countdown through Fall to Results with reduced_motion=0, each on its own run seed. There are no Development or Settings windows. The tested build defaults to Shuffle and the first six destinations are distinct. The CSV records each landing, but has no preview, impact, fade or Skip-input marker.",
+    "entries": [
+      {"ending": "Snow", "runSeed": 22618695, "level": 1, "wave": 5, "startS": 82.239, "endS": 91.699, "seconds": 9.46, "frames": 681},
+      {"ending": "Water", "runSeed": 22712770, "level": 1, "wave": 3, "startS": 110.575, "endS": 120.031, "seconds": 9.456, "frames": 681},
+      {"ending": "Space", "runSeed": 22741895, "level": 1, "wave": 5, "startS": 154.213, "endS": 163.672, "seconds": 9.459, "frames": 681},
+      {"ending": "Lava", "runSeed": 22784367, "level": 3, "wave": 5, "startS": 247.225, "endS": 256.685, "seconds": 9.46, "frames": 681},
+      {"ending": "Sand", "runSeed": 22877228, "level": 1, "wave": 4, "startS": 285.306, "endS": 294.768, "seconds": 9.462, "frames": 681},
+      {"ending": "Crystal", "runSeed": 22916702, "level": 1, "wave": 1, "startS": 304.923, "endS": 314.379, "seconds": 9.456, "frames": 681},
+      {"ending": "Snow", "runSeed": 22934923, "level": 1, "wave": 1, "startS": 323.576, "endS": 333.032, "seconds": 9.456, "frames": 681},
+      {"ending": "Water", "runSeed": 22953396, "level": 1, "wave": 1, "startS": 341.534, "endS": 350.991, "seconds": 9.457, "frames": 681},
+      {"ending": "Space", "runSeed": 22971758, "level": 1, "wave": 1, "startS": 360.395, "endS": 369.852, "seconds": 9.457, "frames": 681}
+    ],
+    "nextRun": "Eight Results stages transition directly to Ready with a new run seed. The recording ends in the ninth Results stage."
+  },
+  "rendering": {
+    "gameplay": {"samples": 19399, "meanDrawCalls": 33.077, "maxDrawCalls": 57, "meanTriangles": 10554.187, "maxTriangles": 18346},
+    "firstWaveFullBoard": {"samples": 3878, "meanDrawCalls": 50.055, "maxDrawCalls": 57, "meanTriangles": 11081.46, "maxTriangles": 14714},
+    "fivePaneShatterTails": {"samples": 1876, "meanDrawCalls": 36.394, "maxDrawCalls": 56, "meanTriangles": 11749.441, "maxTriangles": 17044},
+    "fogCountdown": {"samples": 1360, "meanDrawCalls": 42.213, "maxDrawCalls": 57, "meanTriangles": 5161.844, "maxTriangles": 14714},
+    "activeSliderCountdown": {"samples": 1000, "meanDrawCalls": 40.324, "maxDrawCalls": 54, "meanTriangles": 3494.737, "maxTriangles": 10004},
+    "byFullMotionEnding": {
+      "Water": {"samples": 1362, "meanDrawCalls": 17.35, "maxDrawCalls": 56, "meanTriangles": 8566.041, "maxTriangles": 16700},
+      "Lava": {"samples": 681, "meanDrawCalls": 16.471, "maxDrawCalls": 30, "meanTriangles": 8255.422, "maxTriangles": 16966},
+      "Crystal": {"samples": 681, "meanDrawCalls": 16.025, "maxDrawCalls": 56, "meanTriangles": 5550.2, "maxTriangles": 16700},
+      "Space": {"samples": 1362, "meanDrawCalls": 15.96, "maxDrawCalls": 46, "meanTriangles": 10538.777, "maxTriangles": 18346},
+      "Sand": {"samples": 681, "meanDrawCalls": 15.74, "maxDrawCalls": 30, "meanTriangles": 8562.529, "maxTriangles": 16666},
+      "Snow": {"samples": 1362, "meanDrawCalls": 16.275, "maxDrawCalls": 51, "meanTriangles": 8267.485, "maxTriangles": 17014}
+    }
+  },
+  "timingCounters": {
+    "wholeCapture": {
+      "mainThreadMs": {"samples": 26332, "mean": 13.896},
+      "timedCpuMs": {"samples": 26330, "mean": 13.938},
+      "timedGpuMs": {"samples": 0, "mean": null},
+      "xrAppGpuMs": {"samples": 0, "mean": null}
+    },
+    "gameplay": {
+      "mainThreadMs": {"samples": 19399, "mean": 13.878},
+      "timedCpuMs": {"samples": 19399, "mean": 13.893},
+      "timedGpuMs": {"samples": 0, "mean": null},
+      "xrAppGpuMs": {"samples": 0, "mean": null}
+    },
+    "ovrMetrics": "No paired OVR Metrics CSV was available for this session. Compositor stale frames, device utilization and GPU time remain unmeasured.",
+    "threshold": "9,653 of 19,399 gameplay intervals reached 13.9 ms. The Unity average was 71.981 FPS. These frame intervals measure app pacing, and a 13.9 ms interval does not establish a compositor drop."
+  },
+  "wearerReview": {
+    "reviewer": "Wais",
+    "status": "Open",
+    "confirmed": "The blue room outlines were gone. Wais could generally identify the destination.",
+    "reportedProblems": ["Furniture edges flickered or shifted when he moved his head.", "Water lost its recognizable appearance between the rim and contact.", "The real room briefly appeared at Space impact."],
+    "pending": "Stable furniture edges, Water continuity, Space impact coverage and full-motion comfort need a wearer recheck. The record does not contain individual visual verdicts for the other four destinations, exact visible wall-travel times, or physical Reduced/Skip input checks."
+  }
+}

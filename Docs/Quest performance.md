@@ -2,11 +2,60 @@
 
 Measure Floor Fracture on the physical Quest 3 with OVR Metrics Tool. The course targets are at least 72 FPS and under 13.9 ms per frame. A development build also writes a local CSV with the scene, actual board size, gameplay events, viewing angle, and available Unity rendering counters. Record the APK filename, Git revision or APK SHA-256, and both CSV filenames with the [playtest record](<./Quest playtest.md>).
 
-## Record a session
+## November 20 development build
 
-Two CSVs from Wais's first physical Quest 3 trial establish the original 3 × 4 baseline. With Vulkan at 72 Hz, the second session averaged 71.98 FPS during countdowns and 71.07 FPS during falls. The slowest fall frame took 113.52 ms. The device supplied no GPU timing samples for that run. The adaptive board needs its own gameplay and OVR Metrics captures. [Measured frame counts and timings](<./Verification/First Quest run metrics.json>)
+The installed player logged 13 room-setup windows using Vulkan and Mobile quality. The headset was asleep during this launch. For the next gameplay measurement, use the largest clear room available and record the fitted board dimensions. The Editor replay also counted live scene objects at Welcome after every one of 96 restarts. Meshes, materials, audio sources, board and chamber counts remained constant. [Current Quest startup](<./Verification/Overnight Quest build.json>) · [Editor replay](<./Verification/Overnight replay checks.json>)
+
+## Shared chamber on Quest 3
+
+Wais played nine runs on 5 × 3 panes at 53.9 cm in development build `4be44192652c4aa284ed355d31c245a0`. The headset reported 72 Hz with Vulkan. Across Countdown, BetweenWaves and Fall, Unity recorded 19,399 frames in 269.500 s, or **71.981 FPS**. The mean frame interval was 13.892 ms. **9,653 frames reached or exceeded 13.9 ms.** GPU timing and compositor stale frames remain unmeasured. [Physical session, weighted timings and rendering counters](<./Verification/Shared chamber Quest session.json>)
+
+| Measured scenario | Frames | Seconds | Unity FPS | Longest frame |
+| --- | ---: | ---: | ---: | ---: |
+| First wave on the fitted board | 3,878 | 53.887 | 71.965 | 36.408 ms |
+| Tagged windows after five-pane shatters | 1,876 | 26.075 | 71.946 | 80.621 ms |
+| Fog during countdown | 1,360 | 18.903 | 71.946 | 29.100 ms |
+| Active slider during countdown | 1,000 | 13.891 | 71.989 | 17.023 ms |
+| All nine Full falls | 6,129 | 85.123 | 72.002 | 18.025 ms |
+
+Five panes broke together 13 times. The first such event occurred at 60.170 s. Its Countdown window peaked at 36.408 ms. The next window, 60.194–61.196 s, contained the 80.621 ms frame. The other 12 five-pane tails peaked at 17.773 ms. The tags extend into subsequent countdowns or falls. Fog and the slider shared 394 frames over 5.473 s. These rows overlap. The fitted board had 15 panes, and the capture contains no locked-slider windows. [Event windows and coverage](<./Verification/Shared chamber Quest session.json>)
+
+Water had the longest fall frame at 18.025 ms. Space had the highest fall triangle count at 18,346. The November 20 bench below adds paired OVR and Unity recordings on 64 panes. [Ending measurements](<./Verification/Shared chamber Quest session.json>)
+
+## Earlier builds
+
+Two CSVs from Wais's first physical Quest 3 trial establish the original 3 × 4 baseline. With Vulkan at 72 Hz, the second session averaged 71.98 FPS during countdowns and 71.07 FPS during falls. The slowest fall frame took 113.52 ms. The device supplied no GPU timing samples for that run. [Measured frame counts and timings](<./Verification/First Quest run metrics.json>)
 
 The expanded-room build first recorded 13 startup samples on Quest 3 with Vulkan. The resumed recording contains Welcome, timed waves, loss and Results on 5 × 3 panes at 53.9 cm. The build GUID is `7fdcaf92922947548c00e55b14ae6090`. Pair a subsequent run with OVR Metrics for the performance review. [Expanded-room Quest record](<./Verification/Expanded room Quest build.json>)
+
+## First opening on the largest board in Unity
+
+The first five-pane shatter in the 5 × 3 headset session reached 80.621 ms. A matched Editor experiment used an 8 × 8 board at 60 cm and the same seeded 21-pane break in six fresh processes. Moving construction of the chamber meshes and loading of the Meta water assets to board setup cut median synchronous first-opening work from 19.52 ms to 3.11 ms. Each run still emitted 336 shards. The subsequent Quest benchmark includes the first break on 64 panes and its paired compositor capture. [Matched 64-pane measurements](<./Verification/64 pane first opening.json>)
+
+## 64 panes on physical Quest hardware
+
+The separately installed rendering fixture ran the gameplay scene on Quest 3 with an 8 × 8 board at 60 cm per pane and a scripted step. Seed 4 broke 32 panes in fog, then produced moving glass. Over 740 gameplay frames, Unity averaged 72.04 FPS and recorded a longest frame of 18.82 ms, up to 116 draw calls and 3,982 triangles. Across that app launch, Meta recorded 5.04 ms peak application GPU time and one stale frame. Another 22-pane run reached 65.36 ms. These are measurements of the fixed synthetic board. A comparison in the wearer's scanned room remains open. [Device captures and measurement conditions](<./Verification/64 pane Quest measurements.json>)
+
+On an unattended Quest, Unity can keep updating while the compositor receives no visible eye buffer. For these captures a rendering result requires positive draw calls and triangles in Unity and a nonzero submitted eye buffer in Meta’s recording. [Room and rendering evidence](<./Verification/64 pane Quest measurements.json>)
+
+The repeat 32-pane shatter averaged 72.03 FPS across 774 gameplay frames. Its slowest frame was 21.00 ms. Meta Perfetto recorded 33 Unity player-loop samples around the break. The longest loop was 14.98 ms and the longest script-update marker was 5.79 ms. Neither capture reproduced the 65.36 ms frame from the earlier 22-pane run. Its cause remains open. [Traces, timestamp alignment and fixture inputs](<./Verification/64 pane Quest measurements.json>)
+
+Across six matched Water runs, loading the splash prefab before descent moved the median slowest frame around impact from 15.60 ms to 15.42 ms. The individual measurements overlapped. The game retains the approved Meta splash at contact. An earlier build of the fixture recorded an 84.13 ms Water frame. It has a different build identifier and is excluded from the six-run comparison. [Per-run measurements](<./Verification/64 pane Quest measurements.json>)
+
+| Full-motion landing | Rendered Unity frames measured | Average FPS | Slowest frame | Peak app GPU in this launch |
+| --- | ---: | ---: | ---: | ---: |
+| Water | 681 | 72.03 | 16.90 ms | 5.99 ms |
+| Lava | 681 | 72.02 | 15.87 ms | 4.44 ms |
+| Crystal | 681 | 72.02 | 16.58 ms | 4.53 ms |
+| Space | 681 | 72.01 | 16.58 ms | 4.44 ms |
+| Sand | 681 | 72.03 | 17.61 ms | 4.19 ms |
+| Snow | 681 | 72.03 | 16.83 ms | 4.47 ms |
+
+The game logged Results 9.45–9.46 seconds after each Full loss began. Each table row covers a complete fall. Sand was repeated after its first CSV ended during the approach to Results. Water uses the first matched stock run from the splash comparison. GPU peaks come from Meta’s compositor samples across each app launch. [Corresponding files and hashes](<./Verification/64 pane Quest measurements.json>)
+
+On another six launches, each landing completed in Reduced and reached Results in 3.94–3.95 seconds. Each Restart restored level one, zero score and a visible board. A second Full fall was skipped 0.60 seconds after it started. Results appeared at 0.616–0.623 seconds, and the game’s Quit action returned control to Android on all six launches. The off-head tracking guard rejected button presses, so the fixture called the buttons’ game handlers. The raw CSV records the saved motion preference. These tests set motion in memory, so the Reduced frame windows were identified from the game markers and the shorter timeline. [Six renderings, input conditions and Android exits](<./Verification/64 pane Quest measurements.json>)
+
+## Record a session
 
 1. Install the identified development APK and walk through the scene once to warm it up. In OVR Metrics Tool, turn on **Record all captured metrics to csv files** and choose **Basic**. Basic includes average FPS, stale frame count, CPU/GPU utilization and app GPU time. Keep the display refresh rate and capture settings consistent across comparisons. [Meta recording instructions](https://developers.meta.com/vr/documentation/unity/ts-ovrmetricstool/) · [Meta profiling guidance](https://developers.meta.com/vr/documentation/unity/ts-ovr-best-practices/)
 2. Launch Floor Fracture and record the fitted rows, columns and centimetres per pane shown on Welcome. Run the scenarios below. Leave a few seconds in the menu between scenarios to make the boundaries visible in both recordings. The development menu can reproduce seed 379, level 1 or level 3, and can select a particular ending.
@@ -19,6 +68,8 @@ The expanded-room build first recorded 13 startup samples on Quest 3 with Vulkan
 | Fog | Play a wave with fog crossing the visible board. | Filter `stage=Countdown` and `fog=1`. |
 | Sliding glass | Watch or catch the moving pane, then watch it lock. | Filter `stage=Countdown` and `slider=active` or `locked`. |
 | Six endings | Play Water, Lava, Crystal, Space, Sand and Snow to results. Use full motion for the first comparison. Repeat the busiest ending with reduced motion. | Filter `stage=Fall` and `ending`. The `reduced_motion` field identifies the selected setting. |
+
+From this Mac the native Meta recorder also accepts Android broadcasts. Read the current setting with `LOG_STATE`, enable capture for the test with `ENABLE_CSV`, and restore its previous value afterward. Both actions target `com.oculus.ovrmonitormetricsservice/.SettingsBroadcastReceiver` with the action prefix `com.oculus.ovrmonitormetricsservice.`. This was verified with the paired Quest captures above. [Meta recording controls](https://developers.meta.com/vr/documentation/native/android/ts-ovrmetricstool/)
 
 Run the pulls from the directory where you want to keep the evidence. Select the intended device with `adb -s SERIAL` if multiple devices are connected. The package below is the project’s Android identifier.
 
