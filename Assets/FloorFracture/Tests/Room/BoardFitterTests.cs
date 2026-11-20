@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using Meta.XR.MRUtilityKit;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -6,6 +8,236 @@ namespace FloorFracture.Tests
 {
     public class BoardFitterTests
     {
+        [Test]
+        public void FitsTheWholeSurfaceAcrossTwoCoplanarFloorAnchors()
+        {
+            var patches = new[] { Floor(Rectangle(-2,-1,0,1)), Floor(Rectangle(0,-1,2,1)) };
+            Assert.That(BoardFitter.TryFind(patches, Vector2.zero, out var fit), Is.True);
+            Assert.That(fit.Columns * fit.Rows * fit.Pitch * fit.Pitch, Is.EqualTo(8f).Within(.001f));
+            Assert.That(fit.Pitch, Is.EqualTo(2f/3f).Within(.0001f));
+        }
+
+        [TestCase(0f)]
+        [TestCase(-.25f)]
+        public void UsesAPartialSeamOrOverlapWithoutFillingTheCorners(float rightStarts)
+        {
+            var right = Rectangle(rightStarts,-.75f,2,.75f);
+            System.Array.Reverse(right);
+            var floor = Floor(new[] { P(-2,-1), P(0,-1), P(0,-.75f), P(2,-.75f),
+                P(2,.75f), P(0,.75f), P(0,1), P(-2,1) });
+            var patches = new[] { Floor(Rectangle(-2,-1,0,1)), Floor(right) };
+            Assert.That(BoardFitter.TryFind(patches, Vector2.zero, out var fit), Is.True);
+            Assert.That(fit.Columns * fit.Rows * fit.Pitch * fit.Pitch, Is.GreaterThanOrEqualTo(5.999f));
+            Assert.That(BoardFitter.Fits(floor, fit), Is.True);
+        }
+
+        [TestCase(.001f,0f)]
+        [TestCase(.0002f,0f)]
+        [TestCase(0f,.005f)]
+        [TestCase(0f,.18f)]
+        public void KeepsSeparatePatchesAcrossAGapOrStep(float gap, float step)
+        {
+            var left = Floor(Rectangle(-2,-1,0,1));
+            var right = new RoomFloor(Rectangle(gap,-1,2+gap,1), new List<Vector2[]>(), step);
+            Assert.That(BoardFitter.TryFind(new[] { left, right }, Vector2.zero, out var fit), Is.True);
+            Assert.That(fit.Columns * fit.Rows * fit.Pitch * fit.Pitch, Is.EqualTo(4f).Within(.001f));
+            Assert.That(BoardFitter.Fits(left,fit) || BoardFitter.Fits(right,fit), Is.True);
+        }
+
+        [Test]
+        public void JoinsARotatedConcaveAnchorWithoutLosingMetricSize()
+        {
+            var pose = new BoardPlacement(P(2.3f,-3.2f), 0, 24.36f, 6, 3);
+            var lShape = new[] { P(-2,-1), P(2,-1), P(2,0), P(0,0), P(0,1), P(-2,1) };
+            RoomFloor Rotated(Vector2[] points) => Floor(points.Select(p => pose.ToWorldXZ(p.x,p.y)).ToArray());
+            var patches = new[] { Rotated(lShape), Rotated(Rectangle(0,0,2,1)) };
+            Assert.That(BoardFitter.TryFind(patches, pose.Center, out var fit), Is.True);
+            Assert.That(fit.Columns * fit.Rows * fit.Pitch * fit.Pitch, Is.EqualTo(8f).Within(.002f));
+            Assert.That(Vector2.Distance(fit.Center, pose.Center), Is.LessThan(.001f));
+        }
+
+        [Test]
+        public void ACornerContactCannotFillTheSpaceBetweenDiagonalAnchors()
+        {
+            var lower = Floor(Rectangle(-2,-2,0,0));
+            var upper = Floor(Rectangle(0,0,2,2));
+            var regions = FloorPatchUnion.Join(new[] { lower, upper });
+            Assert.That(regions.Exists(f => BoardFitter.Fits(f, MinimumBoard())), Is.False);
+            Assert.That(BoardFitter.TryFind(new[] { lower, upper }, Vector2.zero, out var fit), Is.True);
+            Assert.That(BoardFitter.Fits(lower,fit) || BoardFitter.Fits(upper,fit), Is.True);
+        }
+
+        [Test]
+        public void PreservesHolesAndIslandsAndRechecksObstaclesFromEitherSide()
+        {
+            var hole = Rectangle(-1.5f,-1.5f,1.5f,1.5f);
+            var obstacle = Rectangle(1.8f,-.3f,2.1f,.3f);
+            var patches = new[] {
+                Floor(Rectangle(-3,-3,3,-1.5f)), Floor(Rectangle(-3,-1.5f,-1.5f,1.5f)),
+                Floor(Rectangle(1.5f,-1.5f,3,1.5f), obstacle), Floor(Rectangle(-3,1.5f,3,3)),
+                Floor(Rectangle(-.5f,-.5f,.5f,.5f)) };
+            var regions = FloorPatchUnion.Join(patches);
+            Assert.That(regions.Count, Is.EqualTo(2));
+            bool Supports(float x, float z) => regions.Exists(f => BoardFitter.Fits(f,
+                new BoardPlacement(P(x,z), 0, 0, 2, 2)));
+            Assert.That(Supports(0,0), Is.True, "Island");
+            Assert.That(Supports(0,.6f), Is.False, "An opening around the island");
+            Assert.That(Supports(-2,1.5f), Is.True, "The seam in the surrounding walkway");
+            Assert.That(Supports(2,0), Is.False, "Furniture on the opposite anchor");
+            Assert.That(BoardFitter.TryFind(patches, Vector2.zero, out var fit), Is.True);
+            Assert.That(BoardFitter.Fits(Floor(Rectangle(-3,-3,3,3),hole,obstacle), fit), Is.True);
+        }
+
+        [Test]
+        public void LocalizesEitherFloorAnchorAndRejectsOutsideWrongStoreyAndAmbiguousRooms()
+        {
+            var root = new GameObject("MRUK localization fixture");
+            root.SetActive(false);
+            try
+            {
+                MRUKRoom RoomAt(float x)
+                {
+                    var host = new GameObject("Room");
+                    host.transform.SetParent(root.transform, false);
+                    host.transform.position = Vector3.right * x;
+                    var room = host.AddComponent<MRUKRoom>();
+                    foreach (float start in new[] { -2f, 0f })
+                    {
+                        var floor = new GameObject("FLOOR").AddComponent<MRUKAnchor>();
+                        floor.transform.SetParent(host.transform,false);
+                        floor.transform.localRotation = Quaternion.Euler(-90,0,0);
+                        floor.PlaneBoundary2D.AddRange(Rectangle(start,-1,start+2,1));
+                        room.FloorAnchors.Add(floor);
+                    }
+                    return room;
+                }
+                var active = RoomAt(0);
+                var other = RoomAt(10);
+                var rooms = new[] { other, active };
+                MRUKRoom At(float x, MRUKRoom hint = null, float floorY = 0) =>
+                    MrukFloorReader.FindContainingRoom(rooms,hint,new Vector3(x,1.6f,0),floorY,true);
+                foreach (float x in new[] { -1f, -.001f, 0f, .001f, 1f })
+                {
+                    Assert.That(At(x), Is.SameAs(active));
+                    Assert.That(At(x,other), Is.SameAs(active));
+                    Assert.That(At(x,active), Is.SameAs(active));
+                }
+                Assert.That(At(10,active), Is.SameAs(other));
+                Assert.That(At(4,active), Is.Null);
+                Assert.That(At(0,active,2), Is.Null);
+                Assert.That(MrukFloorReader.FindContainingRoom(rooms,active,new Vector3(0,1.6f,0),0,false), Is.Null,
+                    "An Editor room without a local device anchor cannot supply runtime tracking.");
+                other.transform.position = Vector3.zero;
+                Assert.That(At(0), Is.Null, "Two competing floor regions with no current room hint.");
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void ReadsAndRechecksTwoNativeRoomAnchorsWithoutReplacingTheirMeshes()
+        {
+            var host = new GameObject("Split MRUK room");
+            host.SetActive(false);
+            var meshes = new List<Mesh>();
+            // EffectMesh triangulates through Meta's shared library. Edit Mode has no
+            // running MRUK singleton to initialize it, so hold it for this test only.
+            var native = typeof(MRUK).Assembly.GetType("Meta.XR.MRUtilityKit.MRUKNative", true);
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+            bool loadNative = (System.IntPtr)native.GetField("_nativeLibraryPtr", flags).GetValue(null) == System.IntPtr.Zero;
+            try
+            {
+                if (loadNative) native.GetMethod("LoadMRUKSharedLibrary", flags).Invoke(null, null);
+                var room = host.AddComponent<MRUKRoom>();
+                MRUKAnchor AddFloor(Vector2[] points)
+                {
+                    var go = new GameObject("FLOOR");
+                    go.transform.SetParent(host.transform, false);
+                    go.transform.localRotation = Quaternion.Euler(-90, 0, 0);
+                    var anchor = go.AddComponent<MRUKAnchor>();
+                    typeof(MRUKAnchor).GetProperty(nameof(MRUKAnchor.Label)).SetValue(anchor, MRUKAnchor.SceneLabels.FLOOR);
+                    FloorGeometry.Bounds(points, out var min, out var max);
+                    typeof(MRUKAnchor).GetProperty(nameof(MRUKAnchor.PlaneRect)).SetValue(anchor,
+                        Rect.MinMaxRect(min.x,min.y,max.x,max.y));
+                    anchor.PlaneBoundary2D.AddRange(points);
+                    room.FloorAnchors.Add(anchor);
+                    room.Anchors.Add(anchor);
+                    return anchor;
+                }
+                var left = AddFloor(Rectangle(-2,-1,0,1));
+                var right = AddFloor(Rectangle(0,-1,2,1));
+                var effect = host.AddComponent<EffectMesh>();
+                foreach (var anchor in room.FloorAnchors)
+                    meshes.Add(effect.CreateEffectMesh(anchor).mesh);
+                Assert.That(MrukFloorReader.TryRead(room,0,1.6f,out var regions), Is.True);
+                Assert.That(BoardFitter.TryFindOnSurfaces(regions,Vector2.zero,out var fit), Is.True);
+                Assert.That(fit.Columns * fit.Rows * fit.Pitch * fit.Pitch, Is.EqualTo(8f).Within(.001f));
+                Assert.That(MrukFloorReader.TryRead(room,0,1.6f,out var current), Is.True);
+                Assert.That(current.Exists(floor => BoardFitter.Fits(floor, fit)), Is.True);
+                Assert.That(room.FloorAnchors, Is.EqualTo(new[] { left, right }));
+                Assert.That(right.PlaneBoundary2D.SequenceEqual(Rectangle(0,-1,2,1)), Is.True);
+                Assert.That(effect.EffectMeshObjects.Count, Is.EqualTo(2));
+                for (int i = 0; i < meshes.Count; ++i)
+                {
+                    var patch = effect.EffectMeshObjects[room.FloorAnchors[i]];
+                    Assert.That(patch.mesh, Is.SameAs(meshes[i]));
+                    Assert.That(patch.mesh.triangles.Length, Is.EqualTo(6));
+                    Assert.That(patch.effectMeshGO.transform.parent, Is.EqualTo(room.FloorAnchors[i].transform));
+                }
+
+                var first = effect.EffectMeshObjects[left].effectMeshGO.GetComponent<MeshFilter>();
+                var second = effect.EffectMeshObjects[right].effectMeshGO.GetComponent<MeshFilter>();
+                right.transform.localPosition = Vector3.left * .5f;
+                Mesh clipped;
+                using (var coverage = new FloorPatchCoverage())
+                {
+                    coverage.Add(left, first);
+                    coverage.Add(right, second);
+                    clipped = second.sharedMesh;
+                    Assert.That(first.sharedMesh, Is.SameAs(meshes[0]));
+                    Assert.That(clipped, Is.Not.SameAs(meshes[1]));
+                    double area = 0;
+                    var v = clipped.vertices;
+                    var t = clipped.triangles;
+                    for (int i = 0; i < t.Length; i += 3)
+                        area += Vector3.Cross(v[t[i+1]]-v[t[i]],v[t[i+2]]-v[t[i]]).magnitude * .5;
+                    Assert.That(area, Is.EqualTo(3).Within(.0001));
+                    Assert.That(effect.EffectMeshObjects[right].mesh, Is.SameAs(meshes[1]));
+                }
+                Assert.That(second.sharedMesh, Is.SameAs(meshes[1]));
+                Assert.That(!clipped, Is.True, "The generated drawing mesh was released.");
+                right.transform.localPosition += Vector3.up * .04f;
+                using (var coverage = new FloorPatchCoverage())
+                {
+                    coverage.Add(left, first);
+                    coverage.Add(right, second);
+                    Assert.That(second.sharedMesh, Is.SameAs(meshes[1]), "The other elevation keeps its coverage.");
+                }
+                Assert.That(MrukFloorReader.TryRead(room,0,1.6f,out current), Is.True);
+                Assert.That(current.Exists(floor => BoardFitter.Fits(floor, fit)), Is.False);
+
+                // A malformed later scan still has its old native draw mesh. Its bad
+                // boundary must never remove coverage from another valid draw.
+                right.transform.localPosition = Vector3.left * .5f;
+                foreach (var invalid in new[] { new[] { P(-2,-1), P(0,1), P(-2,1), P(0,-1) },
+                    new[] { P(-2,-1), P(0,-1), P(float.NaN,1), P(-2,1) } })
+                {
+                    left.PlaneBoundary2D.Clear();
+                    left.PlaneBoundary2D.AddRange(invalid);
+                    using var coverage = new FloorPatchCoverage();
+                    coverage.Add(left,first);
+                    coverage.Add(right,second);
+                    Assert.That(first.sharedMesh, Is.SameAs(meshes[0]));
+                    Assert.That(second.sharedMesh, Is.SameAs(meshes[1]));
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                foreach (var mesh in meshes) if (mesh) Object.DestroyImmediate(mesh);
+                if (loadNative) native.GetMethod("FreeMRUKSharedLibrary", flags).Invoke(null, null);
+            }
+        }
+
         [Test]
         public void FillsTheClearSquareThatPreviouslyProducedTwoByTwoAt57Centimeters()
         {

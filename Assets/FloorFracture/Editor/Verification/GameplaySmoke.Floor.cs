@@ -296,6 +296,7 @@ namespace FloorFracture.Editor
                         $"{counts[1]} couch, {counts[2]} chair-leg and {counts[3]} bin pixels in passthrough; " +
                         $"{legGap} visible brick pixels between the legs, {oldBin} at the vacated bin center.");
                 }
+                if (!moved) VerifySharedFloorEdge(fixture, renderers, read);
             }
 
             // A tapered furniture foot meets the floor at a fixed world X. Intersect each moving
@@ -372,6 +373,73 @@ namespace FloorFracture.Editor
             }
             fixture.History.Update(now + .15);
             Require(fixture.Surface.GetFloat("_FloorPreviousWeight") == 0, "Old depth history survived a sensor pause.");
+        }
+
+        private static void VerifySharedFloorEdge(FloorDepthReadback fixture, MeshRenderer[] renderers,
+            System.Func<Color32[]> read)
+        {
+            var original = renderers[0];
+            var source = original.GetComponent<MeshFilter>();
+            var anchor = original.GetComponentInParent<MRUKAnchor>();
+            var secondAnchor = new GameObject("Overlapping native floor").AddComponent<MRUKAnchor>();
+            secondAnchor.transform.SetParent(anchor.transform, false);
+            secondAnchor.PlaneBoundary2D.AddRange(anchor.PlaneBoundary2D);
+            var duplicate = Object.Instantiate(original.gameObject, secondAnchor.transform);
+            var copy = duplicate.GetComponent<MeshFilter>();
+            var renderer = duplicate.GetComponent<MeshRenderer>();
+            var raw = source.sharedMesh;
+            try
+            {
+                foreach (var existing in renderers) existing.enabled = false;
+                foreach (float shift in new[] { 0f, .3f })
+                {
+                    secondAnchor.transform.position = anchor.transform.position + Vector3.right * shift;
+                    using var coverage = new FloorPatchCoverage();
+                    coverage.Add(anchor, source);
+                    coverage.Add(secondAnchor, copy);
+                    var visible = copy.sharedMesh;
+                    for (int eye = 0; eye < 2; ++eye)
+                    {
+                        original.enabled = true;
+                        renderer.enabled = false;
+                        var firstOnly = fixture.ReadEye(eye, false, read);
+                        original.enabled = false;
+                        renderer.enabled = true;
+                        copy.sharedMesh = raw;
+                        var secondOnly = fixture.ReadEye(eye, false, read);
+                        original.enabled = true;
+                        var doubled = fixture.ReadEye(eye, false, read);
+                        copy.sharedMesh = visible;
+                        var repaired = fixture.ReadEye(eye, false, read);
+
+                        // On a single physical plane either covering patch must give the same
+                        // color. Pixels drawn by only one of the two must retain its coverage.
+                        int changed = 0, unique = 0, rawMax = 0, afterMax = 0;
+                        var clear = new Color32(255,0,255,255);
+                        for (int i = 0; i < firstOnly.Length; ++i)
+                        {
+                            int a = Difference(clear, firstOnly[i]), b = Difference(clear, secondOnly[i]);
+                            var expected = a >= b ? firstOnly[i] : secondOnly[i];
+                            if (a <= 3 && b > 3) ++unique;
+                            int difference = Difference(expected, doubled[i]);
+                            if (difference > 3) ++changed;
+                            rawMax = Mathf.Max(rawMax, difference);
+                            afterMax = Mathf.Max(afterMax, Difference(expected, repaired[i]));
+                        }
+                        Record($"Overlapping floor soft edge, eye {eye}, offset {shift:F1} m: {changed} double-blended pixels, {unique} pixels unique to the second patch; maximum error {rawMax}/255 to {afterMax}/255.");
+                        Require(changed > 30 && (shift == 0 || unique > 30) && afterMax <= 3,
+                            "Overlapping floor meshes changed native soft occlusion or removed their unique surface.");
+                    }
+                }
+            }
+            finally
+            {
+                foreach (var existing in renderers) existing.enabled = true;
+                Object.DestroyImmediate(secondAnchor.gameObject);
+            }
+
+            static int Difference(Color32 a, Color32 b) =>
+                Mathf.Max(Mathf.Abs(a.r-b.r), Mathf.Max(Mathf.Abs(a.g-b.g), Mathf.Abs(a.b-b.b)));
         }
 
         // Runs the same GPU passes and packed stereo textures as the SDK. The old mask is the A/B control.

@@ -2,12 +2,60 @@ using System.Collections.Generic;
 using Meta.XR.MRUtilityKit;
 using UnityEngine;
 
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("FloorFracture.Rooms.Tests")]
+
 namespace FloorFracture
 {
     internal static class MrukFloorReader
     {
         private const MRUKAnchor.SceneLabels NonObstacles = MRUKAnchor.SceneLabels.FLOOR |
             MRUKAnchor.SceneLabels.CEILING | MRUKAnchor.SceneLabels.GLOBAL_MESH;
+
+        internal static MRUKRoom FindContainingRoom(IReadOnlyList<MRUKRoom> rooms, MRUKRoom hint,
+            Vector3 eye, float trackingFloorY, bool editorFixture)
+        {
+            if (hint && (hint.IsLocal || editorFixture))
+            {
+                bool inside = hint.FloorAnchors.Count <= 1
+                    ? hint.IsPositionInRoom(eye, false)
+                    : ContainsFloorPoint(hint, eye, trackingFloorY);
+                if (inside) return hint;
+            }
+            // SDK 209 can test only one floor anchor when finding the current room.
+            // Recover a missing or stale hint only when exactly one local multi-floor room contains the eye.
+            MRUKRoom found = null;
+            foreach (var candidate in rooms)
+            {
+                if (!candidate || candidate == hint || (!candidate.IsLocal && !editorFixture) ||
+                    candidate.FloorAnchors.Count < 2 || !ContainsFloorPoint(candidate, eye, trackingFloorY)) continue;
+                if (found) return null;
+                found = candidate;
+            }
+            return found;
+        }
+
+        private static bool ContainsFloorPoint(MRUKRoom room, Vector3 eye, float trackingFloorY)
+        {
+            foreach (var anchor in room.FloorAnchors)
+            {
+                if (!anchor || anchor.PlaneBoundary2D == null || anchor.PlaneBoundary2D.Count < 3) continue;
+                var plane = anchor.transform;
+                var normal = plane.forward;
+                if (Mathf.Abs(normal.y) < .999f) continue;
+                var offset = eye - plane.position;
+                float y = plane.position.y - (normal.x * offset.x + normal.z * offset.z) / normal.y;
+                if (Mathf.Abs(y - trackingFloorY) > .25f) continue;
+                Vector2 point = plane.InverseTransformPoint(new Vector3(eye.x, y, eye.z));
+                if (anchor.IsPositionInBoundary(point)) return true;
+                // Include exact perimeter contact when both native point-in-polygon tests
+                // happen to classify their shared boundary as outside.
+                var edge = anchor.PlaneBoundary2D;
+                for (int i = 0, j = edge.Count - 1; i < edge.Count; j = i++)
+                    if ((point - FloorGeometry.Closest(edge[j],edge[i],point)).sqrMagnitude <=
+                        FloorGeometry.Epsilon * FloorGeometry.Epsilon) return true;
+            }
+            return false;
+        }
 
         public static bool TryRead(MRUKRoom room, float trackingFloorY, float eyeHeight, out List<RoomFloor> floors)
         {
@@ -43,9 +91,10 @@ namespace FloorFracture
                     if (!TryProjectObstacle(obj, floorY, Mathf.Max(eyeHeight + 0.3f, 2.2f), out var footprint)) return false;
                     if (footprint != null) obstacles.Add(footprint);
                 }
-                var floor = new RoomFloor(floorVertices.ToArray(), obstacles, floorY);
+                var floor = new RoomFloor(floorVertices.ToArray(), obstacles, low, high);
                 if (BoardFitter.IsUsable(floor)) floors.Add(floor);
             }
+            if (floors.Count > 1) floors = FloorPatchUnion.Join(floors);
             return floors.Count > 0;
         }
 

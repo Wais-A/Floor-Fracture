@@ -1,6 +1,6 @@
 {
     "name": "FloorFracture.Rooms.Tests",
-    "references": ["FloorFracture.Rooms"],
+    "references": ["FloorFracture.Rooms", "meta.xr.mrutilitykit"],
     "includePlatforms": ["Editor"],
     "optionalUnityReferences": ["TestAssemblies"],
     "autoReferenced": false

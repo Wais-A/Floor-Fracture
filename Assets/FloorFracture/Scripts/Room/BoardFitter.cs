@@ -104,6 +104,15 @@ namespace FloorFracture
         public static bool TryFind(IReadOnlyList<RoomFloor> floors, Vector2 preferredCenter, out BoardPlacement placement,
             CancellationToken cancellation = default, IReadOnlyList<Vector2> suggestedCenters = null)
         {
+            return TryFindOnSurfaces(floors != null && floors.Count > 1 ? FloorPatchUnion.Join(floors) : floors,
+                preferredCenter, out placement, cancellation, suggestedCenters);
+        }
+
+        // The room reader joins native contours on the main thread before dispatching this
+        // managed rectangle search. Revalidation reads fresh contours through the same reader.
+        internal static bool TryFindOnSurfaces(IReadOnlyList<RoomFloor> floors, Vector2 preferredCenter, out BoardPlacement placement,
+            CancellationToken cancellation = default, IReadOnlyList<Vector2> suggestedCenters = null)
+        {
             placement = default;
             if (floors == null || !FloorGeometry.Finite(preferredCenter)) return false;
             var suggestions = new List<Vector2>();

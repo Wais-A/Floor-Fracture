@@ -11,12 +11,18 @@ namespace FloorFracture
         public readonly Vector2[] Boundary;
         public readonly List<Vector2[]> Obstacles;
         public readonly float Height;
+        internal readonly float LowestY, HighestY;
 
         public RoomFloor(Vector2[] boundary, List<Vector2[]> obstacles, float height = 0f)
+            : this(boundary, obstacles, height, height) { }
+
+        internal RoomFloor(Vector2[] boundary, List<Vector2[]> obstacles, float lowestY, float highestY)
         {
             Boundary = boundary;
             Obstacles = obstacles;
-            Height = height;
+            LowestY = lowestY;
+            HighestY = highestY;
+            Height = (lowestY + highestY) * .5f;
         }
     }
 

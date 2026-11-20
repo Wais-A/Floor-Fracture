@@ -46,22 +46,25 @@ namespace FloorFracture
         private RoomOutlineView outlines;
         private Material floorMaterial;
         private FloorDepthHistory floorDepth;
+        private readonly FloorPatchCoverage floorCoverage = new();
         private MRUKRoom decoratedRoom;
         private int decoratedRevision = -1;
         private bool busy;
         private int revision;
 
-        public bool IsRoomLocalized
+        public bool IsRoomLocalized => room && CurrentTrackedRoom() == room;
+
+        private MRUKRoom CurrentTrackedRoom()
         {
-            get
-            {
-                if (!mruk || !room) return false;
+            if (!mruk || !rig || !rig.centerEyeAnchor || !rig.trackingSpace) return null;
+            bool fixture = false;
 #if UNITY_EDITOR
-                if (usingFixture) return true;
+            fixture = usingFixture;
+            if (fixture && mruk.Rooms.Count == 1 && mruk.Rooms[0].FloorAnchors.Count <= 1) return mruk.Rooms[0];
 #endif
-                var eye = rig ? rig.centerEyeAnchor : null;
-                return eye && room.IsLocal && mruk.IsWorldLockActive && mruk.GetCurrentRoom() == room && room.IsPositionInRoom(eye.position, false);
-            }
+            if (!fixture && !mruk.IsWorldLockActive) return null;
+            return MrukFloorReader.FindContainingRoom(mruk.Rooms, mruk.GetCurrentRoom(),
+                rig.centerEyeAnchor.position, rig.trackingSpace.position.y, fixture);
         }
 
         private void Awake()
@@ -145,6 +148,7 @@ namespace FloorFracture
 
         private void OnDestroy()
         {
+            floorCoverage.Dispose();
             outlines?.Dispose();
             floorDepth?.Dispose();
             if (floorMaterial) Destroy(floorMaterial);
@@ -175,9 +179,14 @@ namespace FloorFracture
             {
                 // Apply the same reviewed scan as the glass, including every native floor patch.
                 floorDepth?.Clear();
+                floorCoverage.Dispose();
                 floorEffect.DestroyMesh();
                 foreach (var floor in room.FloorAnchors)
-                    if (floor) floorEffect.CreateEffectMesh(floor);
+                {
+                    if (!floor) continue;
+                    var patch = floorEffect.CreateEffectMesh(floor);
+                    if (patch?.effectMeshGO) floorCoverage.Add(floor, patch.effectMeshGO.GetComponent<MeshFilter>());
+                }
 #if UNITY_EDITOR
                 if (simulatorOcclusion) Destroy(simulatorOcclusion.gameObject);
                 simulatorOcclusion = !usingFixture && !EnvironmentDepthManager.IsSupported
@@ -306,13 +315,11 @@ namespace FloorFracture
                 {
                     if (!reuseRoom)
                     {
-                        var current = mruk.GetCurrentRoom();
-#if UNITY_EDITOR
-                        if (!current && usingFixture && mruk.Rooms.Count == 1) current = mruk.Rooms[0];
-#endif
+                        var current = CurrentTrackedRoom();
                         SetRoom(current);
+                        if (current) break;
                     }
-                    if (IsRoomLocalized) break;
+                    else if (IsRoomLocalized) break;
                     if (HasPlacementFocus) focusedSeconds += Mathf.Min(Time.unscaledDeltaTime, 0.1f);
                     await Awaitable.NextFrameAsync(lifetime);
                 }
@@ -333,7 +340,7 @@ namespace FloorFracture
                 int scanRevision = revision;
                 var suggestions = ReadSpawnCenters(preferred);
                 BoardPlacement fit = default;
-                bool found = await Task.Run(() => BoardFitter.TryFind(searchFloors, preferred, out fit, lifetime, suggestions), lifetime);
+                bool found = await Task.Run(() => BoardFitter.TryFindOnSurfaces(searchFloors, preferred, out fit, lifetime, suggestions), lifetime);
                 lifetime.ThrowIfCancellationRequested();
                 if (!CheckCurrentPermission()) return;
                 if (revision != scanRevision || !IsRoomLocalized)
