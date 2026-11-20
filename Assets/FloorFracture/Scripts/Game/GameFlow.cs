@@ -79,6 +79,7 @@ namespace FloorFracture
             if(BoardView) { BoardView.gameObject.SetActive(false); Destroy(BoardView.gameObject); }
             var fit=Room.Placement; State=new BoardState(fit.Columns,fit.Rows,SelectedSeed,fit.Pitch);
             var board=new GameObject("Confirmed glass board"); BoardView=board.AddComponent<GlassBoardView>(); BoardView.Build(State,fit.Pose);
+            Ending.SetBoard(BoardView);
             Level=WaveNumber=1; levelFinished=false;
         }
         void Home()
@@ -301,7 +302,11 @@ namespace FloorFracture
 
         void LateUpdate()
         {
-            if(Stage!=GameStage.Fall) return;
+            if(Stage!=GameStage.Fall)
+            {
+                if(Ending && Panel) Ending.ShowOpenPanes(Panel.Head);
+                return;
+            }
             bool pinch = HasSkipPinch();
             if ((pinch && !skipPinchHeld) || OVRInput.GetDown(OVRInput.Button.One, OVRInput.Controller.LTouch)
                 || OVRInput.GetDown(OVRInput.Button.One, OVRInput.Controller.RTouch)) Ending.Skip();

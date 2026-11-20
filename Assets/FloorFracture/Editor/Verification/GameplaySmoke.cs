@@ -220,6 +220,11 @@ namespace FloorFracture.Editor
                     yield return Frames(1); Capture("neighboring-hole", SmokeView.BoardObserver);
                     LookAtTile(plan.StartingTile, false);
                     yield return Wait(() => Now >= plan.Deadline + 0.55, "shards falling below the floor", 3);
+                    var destination = GameObject.Find("Fall chamber").transform.Find("Hazard surface").GetComponent<MeshRenderer>();
+                    var selected = new MaterialPropertyBlock();
+                    destination.GetPropertyBlock(selected);
+                    Require(destination.enabled && !game.Ending.IsPlaying, "The first safe step did not reveal a landing.");
+                    report.previewBeforeNaturalLoss = EndingNames[Mathf.RoundToInt(selected.GetFloat("_Theme"))];
                     Capture("neighboring-hole-player-view", SmokeView.CenterEye);
                 }
                 yield return Wait(() => game.Stage != GameStage.BetweenWaves, "next wave or level", 8);
@@ -243,6 +248,9 @@ namespace FloorFracture.Editor
             Require(game.Stage == GameStage.Fall && Now >= losing.Deadline && game.State.BreaksApplied &&
                 game.State.WavesSurvived == 0 && !game.State.IsIntact(losing.StartingTile), "Standing still produced an incorrect Classic deadline loss.");
             RecordWave(losing, false);
+            Require(game.Ending.LastEndingName == report.previewBeforeNaturalLoss,
+                "The natural loss changed the destination already visible in a surviving wave.");
+            Record("The landing visible on the first surviving wave remained selected through later waves and matched the subsequent natural loss.");
             var order = new List<string>();
             for (int i = 0; i < 7; i++)
             {
@@ -273,6 +281,7 @@ namespace FloorFracture.Editor
             report.endingOrder = order;
             Record("Six natural endings played before a repeat. The next bag changed ending. Full playback, skip, results, and restart used the normal production controller.");
 
+            yield return VerifyEveryEndingExit();
             yield return ObserveSelectedFall("Water", false, 1);
             yield return ObserveSelectedFall("Lava", false, 1);
             yield return ObserveSelectedFall("Water", true, 5);
@@ -547,6 +556,9 @@ namespace FloorFracture.Editor
             public List<string> checks = new List<string>(), images = new List<string>(), captureNotes = new List<string>(), endingOrder = new List<string>();
             public List<SmokeWave> waves = new List<SmokeWave>();
             public List<FallEvidence> falls = new List<FallEvidence>();
+            public List<EndingExitEvidence> endingExits = new List<EndingExitEvidence>();
+            public string previewBeforeNaturalLoss;
+            public List<LandingReadback> openLandings = new List<LandingReadback>();
         }
 
         [Serializable]

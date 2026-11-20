@@ -10,8 +10,11 @@ Shader "Floor Fracture/Ending chamber"
         _Level("World surface height", Float) = -20
         _Motion("Motion", Float) = 1
         _Opacity("Opacity", Float) = 1
+        [Enum(UnityEngine.Rendering.CompareFunction)] _PortalComparison("Floor aperture test", Float) = 8
+        _WideningPerMetre("Shaft widening per metre", Float) = .72
+        [Normal] _WaterNormal("Meta Floor Zone water ripples", 2D) = "bump" {}
         _Mouth("World opening center and half width", Vector) = (0,0,0,1)
-        _MouthRight("Opening right, width ratio and clipping", Vector) = (1,0,1,0)
+        _MouthRight("Opening right and clipping flag", Vector) = (1,0,0,0)
     }
     SubShader
     {
@@ -22,6 +25,7 @@ Shader "Floor Fracture/Ending chamber"
             Tags { "LightMode"="SRPDefaultUnlit" }
             Cull Off
             ZWrite On
+            Stencil { Ref 4 ReadMask 4 WriteMask 0 Comp [_PortalComparison] Pass Keep }
             Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
             HLSLPROGRAM
             #pragma vertex Vert
@@ -29,9 +33,11 @@ Shader "Floor Fracture/Ending chamber"
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Assets/FloorFracture/Scripts/Room/ShaftBrickwork.hlsl"
+            TEXTURE2D(_WaterNormal);
+            SAMPLER(sampler_WaterNormal);
             CBUFFER_START(UnityPerMaterial)
                 half4 _Tint;
-                float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity;
+                float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity, _WideningPerMetre;
                 float4 _Mouth, _MouthRight;
             CBUFFER_END
             struct Attributes
@@ -59,7 +65,10 @@ Shader "Floor Fracture/Ending chamber"
                 float3 p = v.positionOS.xyz;
                 float seed = v.seed.x;
                 if (_Role == 1 || _Role == 9)
-                    p.xz *= lerp(_MouthRight.z,1,smoothstep(0,1.35,-p.y));
+                {
+                    float topRadius = length(TransformObjectToWorldDir(float3(1,0,0), false));
+                    p.xz *= 1 + max(0,-p.y) * _WideningPerMetre / max(.01,topRadius);
+                }
                 if (_Role == 6 && _Theme != 3)
                 {
                     float direction = (_Theme == 4 || _Theme == 5) ? -1 : 1;
@@ -133,13 +142,24 @@ Shader "Floor Fracture/Ending chamber"
                 }
                 else if (_Role == 2)
                 {
-                    float bands = sin(xz.x*7.6+xz.y*3.2+_Age*1.7) + sin(xz.y*10.1-xz.x*2.1-_Age*1.4);
-                    color += half3(.04,.22,.24)*smoothstep(1.23,1.9,bands);
+                    // The same approved ripple map supplies moving reflections through
+                    // the floor portal and on the approach to the native water surface.
+                    float2 uv = xz * .085;
+                    half2 a = UnpackNormal(SAMPLE_TEXTURE2D(_WaterNormal,sampler_WaterNormal,uv+_Time.y*float2(.014,.009))).xy;
+                    half2 b = UnpackNormal(SAMPLE_TEXTURE2D(_WaterNormal,sampler_WaterNormal,uv.yx*1.67+_Time.y*float2(-.009,.012))).xy;
+                    half3 normal = normalize(half3(a.x+.46*b.y,.90,a.y+.46*b.x));
+                    half3 view = GetWorldSpaceNormalizeViewDir(i.world);
+                    half glint = smoothstep(.62,.94,dot(reflect(-view,normal),normalize(half3(.27,.81,.51))));
+                    half reflection = saturate(.2+.42*(1-dot(view,normal))+.32*normal.z);
+                    color = lerp(half3(.015,.11,.17),half3(.09,.42,.49),reflection) + half3(.22,.34,.36)*glint*glint;
                 }
                 else if (_Role == 3)
                 {
-                    float channels = abs(sin(xz.x*4+sin(xz.y*5+_Age*.32))+sin(xz.y*3.8-sin(xz.x*3.1-_Age*.23)));
-                    color = lerp(half3(.26,.026,.004),half3(1,.47,.022),smoothstep(.07,.55,channels));
+                    float2 drift = xz*.40 + .64*sin(xz.yx*.31 + _Time.y*float2(.08,-.06));
+                    float channels = abs(sin(drift.x*2.7+sin(drift.y*1.8))+sin(drift.y*2.4-cos(drift.x*2.1)));
+                    half fissure = 1-smoothstep(.08,.88,channels);
+                    half core = 1-smoothstep(.025,.24,channels);
+                    color = lerp(half3(.18,.025,.009),half3(.93,.22,.01),fissure) + half3(.14,.39,.06)*core;
                 }
                 else if (_Role == 4)
                 {
@@ -167,6 +187,27 @@ Shader "Floor Fracture/Ending chamber"
                 }
                 else if (_Role == 9)
                     color *= .88 + .12 * sin(i.seed*1.9);
+                else if (_Role == 10)
+                {
+                    float2 facet = abs(frac(float2(xz.x*.32+xz.y*.17,xz.y*.24-xz.x*.12))-.5);
+                    float edge = abs(facet.x-facet.y);
+                    color = lerp(half3(.19,.055,.34), half3(.53,.25,.72), facet.x+facet.y);
+                    color += half3(.25,.58,.7)*(1-smoothstep(.012,.06,edge));
+                }
+                else if (_Role == 11)
+                {
+                    float2 cell = xz*.45;
+                    float2 id = floor(cell);
+                    float2 offset = frac(sin(float2(dot(id,float2(31.1,17.7)),dot(id,float2(12.7,38.1))))*4375.3);
+                    float star = 1-smoothstep(.025,.10,length(frac(cell)-lerp(.15,.85,offset)));
+                    float nebula = .5+.5*sin(xz.x*.19+sin(xz.y*.14));
+                    color = half3(.018,.022,.075)+half3(.045,.055,.14)*nebula+half3(.7,.84,1)*star;
+                }
+                else if (_Role == 12)
+                {
+                    float drift = .5+.5*sin(xz.x*1.2+sin(xz.y*.41+_Time.y*.12));
+                    color = lerp(half3(.36,.59,.78),half3(.84,.93,.99),smoothstep(.1,.93,drift));
+                }
                 return half4(color, _Opacity);
             }
             ENDHLSL

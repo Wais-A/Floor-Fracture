@@ -20,7 +20,6 @@ namespace FloorFracture.Editor
         private const string CoreBlocks = "Packages/com.meta.xr.sdk.core/Editor/BuildingBlocks/BlockData/";
         private const string RoomBlock = "Packages/com.meta.xr.mrutilitykit/Editor/BuildingBlocks/MRUtilityKit/MRUtilityKit.asset";
         private const string GuardianBlock = "Packages/com.meta.xr.mrutilitykit/Editor/BuildingBlocks/RoomGuardian/RoomGuardian.asset";
-        private const string GuardianPrefab = "Packages/com.meta.xr.mrutilitykit/Core/Tools/RoomGuardian.prefab";
         private const string FloorSpawnsBlock = "Packages/com.meta.xr.mrutilitykit/Editor/BuildingBlocks/FindSpawnPositions/FindSpawnPositions.asset";
         private const string InteractionsBlock = "Packages/com.meta.xr.sdk.interaction.ovr/Editor/Blocks/Interactions/Interactions.asset";
         private const string RoomPrefab = "Packages/com.meta.xr.mrutilitykit/Core/Tools/MRUK.prefab";
@@ -173,18 +172,12 @@ namespace FloorFracture.Editor
             var block = MetaRoomBlocks.Ensure(scene, GuardianBlock, MetaRoomBlocks.GuardianId, 1)[0];
             var guardian = block.GetComponent<RoomGuardian>();
             var mesh = block.GetComponent<EffectMesh>();
-            var template = AssetDatabase.LoadAssetAtPath<GameObject>(GuardianPrefab);
-            if (!guardian || !mesh || !template || Single<RoomGuardian>(scene) != guardian)
+            if (!guardian || !mesh || Single<RoomGuardian>(scene) != guardian)
                 throw new InvalidOperationException("The Room Guardian block must supply one guardian and its room mesh.");
-            var stockGuardian = template.GetComponent<RoomGuardian>();
-            var stockMesh = template.GetComponent<EffectMesh>();
-            guardian.GuardianDistance = 1f;
-            guardian.GuardianMaterial = stockGuardian.GuardianMaterial;
-            mesh.MeshMaterial = guardian.GuardianMaterial;
-            mesh.SpawnOnStart = stockMesh.SpawnOnStart;
-            mesh.Labels = stockMesh.Labels;
-            Record(guardian);
-            Record(mesh);
+            // The SDK proximity grid is an optional visualization. MRUK and the depth
+            // provider work independently of this block, including in close quarters.
+            block.gameObject.SetActive(false);
+            Record(block.gameObject);
 
             // The Occlusion Dependencies prefab owns depth acquisition. A separate
             // environment raycast example would introduce a second depth manager.

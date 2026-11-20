@@ -15,7 +15,6 @@ namespace FloorFracture.Editor
     public static partial class GameplaySmoke
     {
         private const string StockDepthMaterial = "Packages/com.meta.xr.sdk.core/Editor/BuildingBlocks/BlockData/Occlusion/Materials/DepthMaterial.mat";
-        private const string StockGuardianMaterial = "Packages/com.meta.xr.mrutilitykit/Core/Materials/FakeGuardian.mat";
         private static readonly HashSet<string> DemoPrefabPaths = new HashSet<string>(StringComparer.Ordinal)
         {
             "Packages/com.meta.xr.sdk.core/Editor/BuildingBlocks/BlockData/Cube/Prefabs/[BB] Cube.prefab",
@@ -44,11 +43,10 @@ namespace FloorFracture.Editor
         {
             var guardian = roots.SelectMany(root => root.GetComponentsInChildren<RoomGuardian>(true)).Single();
             var guardianBlock = markers.Single(marker => marker.BlockId == MetaRoomBlocks.GuardianId);
-            var stockGuardian = AssetDatabase.LoadAssetAtPath<Material>(StockGuardianMaterial);
             var effect = guardian.GetComponent<EffectMesh>();
-            Require(guardian.transform == guardianBlock.transform && guardian.isActiveAndEnabled && Mathf.Abs(guardian.GuardianDistance - 1f) < 0.001f && stockGuardian &&
-                guardian.GuardianMaterial == stockGuardian && effect && effect.isActiveAndEnabled && effect.MeshMaterial == stockGuardian,
-                "The one-metre MRUK Room Guardian and its EffectMesh did not share the installed Guardian material.");
+            Require(guardian.transform == guardianBlock.transform && !guardianBlock.gameObject.activeInHierarchy &&
+                effect && !effect.isActiveAndEnabled && effect.EffectMeshObjects.Count == 0,
+                "The gameplay scene revealed the SDK wall and furniture overlay.");
 
             var depth = roots.SelectMany(root => root.GetComponentsInChildren<EnvironmentDepthManager>(true)).Single();
             var block = markers.Single(marker => marker.BlockId == MetaRoomBlocks.DepthProviderId);
@@ -70,7 +68,7 @@ namespace FloorFracture.Editor
             }
             Require(!markers.Any(marker => marker.BlockId == "7358e191-33b7-43ca-b066-b2f00531ac66" ||
                 marker.BlockId == "975428dc-db04-4e43-be4a-232f192cd3eb"), "An SDK example cube or shared spatial anchor block was installed in the main scene.");
-            Record("The installed MRUK Room Guardian and EffectMesh share the stock one-metre guardian material. The saved scene enables one SDK environment depth provider and contains no example cube, occlusion root, raycast marker, or shared anchor.");
+            Record("The gameplay scene keeps the app’s wall and furniture overlay inactive. MRUK still fits the board and the floor has its own depth mask. The saved scene enables one SDK environment depth provider and contains no example cube, occlusion root, raycast marker, or shared anchor.");
         }
 
         private static void VerifyStoneOcclusion(PracticeStone tutorial)

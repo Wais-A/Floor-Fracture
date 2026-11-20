@@ -4,6 +4,8 @@ namespace FloorFracture
 {
     public sealed class GlassBoardView : MonoBehaviour
     {
+        static readonly Vector3[] EdgeNormals = { Vector3.back, Vector3.right, Vector3.forward, Vector3.left };
+        static readonly float[] LedgeDepths = { .10f, 1.15f };
         BoardState model;
         GlassTile[] tiles;
         GlassTile moving;
@@ -15,10 +17,12 @@ namespace FloorFracture
         Transform labelPlate;
         bool clockPositionSet;
         ulong holeBits;
-        int practiceHole=-1, lossOpening=-1;
+        int practiceHole=-1;
         string lastText;
-        const float Depth=4.6f;
         public Transform Board => transform;
+        internal bool HasOpenPanes => isActiveAndEnabled && holeBits != 0;
+        internal float ChamberRadius => Mathf.Max(1.48f, Mathf.Max(model.Width,model.Height)*model.Pitch*.5f/.76f+.4f);
+        internal float PaneWidth => model.Pitch;
 
         public void Build(BoardState board,Pose pose)
         {
@@ -46,7 +50,7 @@ namespace FloorFracture
             shardMaterial=GlassTile.MakeMaterial("FloorFractureDepth"); fogMaterial=GlassTile.MakeMaterial("FloorFractureFog");
             cutouts=new Mesh{name="Open floor apertures"}; shaft=new Mesh{name="Connected shafts"};
             holes=GlassTile.Part(transform,"Opening stencil",cutouts,maskMaterial);
-            underground=GlassTile.Part(transform,"Exposed walls and basin",shaft,wallsMaterial);
+            underground=GlassTile.Part(transform,"Glass opening edges",shaft,wallsMaterial);
             shards=gameObject.AddComponent<ShardPool>(); shards.Initialize(shardMaterial,paneScale);
             float x=board.Width*board.Pitch*.5f, z=board.Height*board.Pitch*.5f;
             var b=new GlassGeometry.Builder();
@@ -143,12 +147,11 @@ namespace FloorFracture
             shards.Drop(GlassGeometry.Ground(model.Center(index),-.005f),index,Time.unscaledTime);
         }
         public void PracticeBreak(int index) { practiceHole=index; Shatter(index); }
-        public void ClearTransient() { practiceHole=lossOpening=-1; if(shards) shards.Clear(); }
+        public void ClearTransient() { practiceHole=-1; if(shards) shards.Clear(); }
         public void RestorePracticePane() { practiceHole=-1; }
         public void RevealLossAperture(int cell)
         {
             if (cell < 0 || cell >= tiles.Length) return;
-            lossOpening=cell;
             tiles[cell].gameObject.SetActive(false);
             occupancy.enabled=false;
             RebuildHoles(holeBits | (1UL << cell));
@@ -162,20 +165,36 @@ namespace FloorFracture
                 var p=GlassGeometry.Ground(model.Center(i)); float h=model.Pitch*.5f;
                 Vector3[] c={p+new Vector3(-h,0,-h),p+new Vector3(h,0,-h),p+new Vector3(h,0,h),p+new Vector3(-h,0,h)};
                 m.Quad(c[0],c[1],c[2],c[3],Color.white,Color.white);
-                // The falling player's shaft supplies this tile's walls and destination.
-                // Keep the stencil aperture and the neighboring holes' regular geometry.
-                if(i==lossOpening) continue;
-                var down=Vector3.down*Depth; var bottom=new Color(.08f,.08f,.08f);
-                w.Quad(c[0]+down,c[1]+down,c[2]+down,c[3]+down,bottom,bottom,model.Pitch,model.Pitch);
+                // A short, flared brick throat gives a safe viewer near/far parallax.
+                // It has no bottom. The landing is in the shared chamber 80 metres below.
                 int col=i%model.Width, row=i/model.Width;
                 int[] neighbors={row>0?i-model.Width:-1,col+1<model.Width?i+1:-1,row+1<model.Height?i+model.Width:-1,col>0?i-1:-1};
+                bool Exposed(int edge) => neighbors[edge]<0 || (bits&(1UL<<neighbors[edge]))==0;
                 for(int j=0;j<4;j++)
                 {
-                    if(neighbors[j]>=0&&(bits&(1UL<<neighbors[j]))!=0) continue;
-                    var a=c[j]; var b=c[(j+1)%4];
-                    float light=.82f+j*.05f;
-                    var top=new Color(light,light,light);
-                    w.Quad(a,b,b+down,a+down,top,bottom,Depth,model.Pitch);
+                    if(!Exposed(j)) continue;
+                    int previous=(j+3)%4, next=(j+1)%4;
+                    Vector3 normal=EdgeNormals[j];
+                    Vector3 expandA=normal+(Exposed(previous)?EdgeNormals[previous]:Vector3.zero);
+                    Vector3 expandB=normal+(Exposed(next)?EdgeNormals[next]:Vector3.zero);
+                    Vector3 a=c[j], b=c[next];
+                    var top=Color.white*(.82f+j*.05f);
+                    var lower=Color.white*.59f;
+                    const float throatDepth=2.4f, flare=.30f;
+                    Vector3 aLower=a+Vector3.down*throatDepth+expandA*(throatDepth*flare);
+                    Vector3 bLower=b+Vector3.down*throatDepth+expandB*(throatDepth*flare);
+                    w.Quad(a,b,bLower,aLower,top,lower,throatDepth,model.Pitch);
+                    // A stone cap at the mouth and one ledge below make the depth legible
+                    // while the far water or lava stays visible through the center.
+                    foreach(float depth in LedgeDepths)
+                    {
+                        Vector3 aBack=a+Vector3.down*depth+expandA*(depth*flare);
+                        Vector3 bBack=b+Vector3.down*depth+expandB*(depth*flare);
+                        Vector3 aFront=aBack-expandA*.045f, bFront=bBack-expandB*.045f;
+                        w.Quad(aBack,bBack,bFront,aFront,Color.white,Color.white,.045f,model.Pitch);
+                        w.Quad(aFront,bFront,bFront+Vector3.down*.055f,aFront+Vector3.down*.055f,
+                            lower,lower,.055f,model.Pitch);
+                    }
                 }
             }
             m.Write(cutouts); w.Write(shaft); holes.enabled=underground.enabled=bits!=0;

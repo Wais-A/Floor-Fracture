@@ -2,11 +2,208 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace FloorFracture.Editor
 {
     public static partial class GameplaySmoke
     {
+        private static readonly string[] EndingNames = { "Water", "Lava", "Crystal", "Space", "Sand", "Snow" };
+
+        private static IEnumerator VerifyEveryEndingExit()
+        {
+            foreach (bool reduced in new[] { false, true })
+            {
+                Choose("Main menu");
+                Choose("Settings");
+                if ((PlayerPrefs.GetInt("ff.reduced", 0) != 0) != reduced) Choose("Fall motion");
+                Choose("Back");
+                foreach (string ending in EndingNames)
+                {
+                    Choose("Development");
+                    Choose("Next ending");
+                    yield return VerifyEndingExit(ending, reduced, false);
+                    Choose("Main menu");
+                    Choose("Development");
+                    yield return VerifyEndingExit(ending, reduced, true);
+                    Choose("Main menu");
+                }
+                Choose("Development");
+                Choose("Seed 379 · level 1");
+                yield return Stage(GameStage.Ready);
+            }
+            Record("All six endings reached a black frame and Results in Full and Reduced. An early Skip also worked in both modes. Every Restart restored the board, score, room floor and audio.");
+        }
+
+        private static IEnumerator VerifyEndingExit(string ending, bool reduced, bool skip)
+        {
+            MeshRenderer previewSurface = null;
+            if (!skip && !reduced)
+            {
+                StandOn(0);
+                game.BoardView.PracticeBreak(1);
+                yield return Delay(1.80);
+                LookAtTile(1,false);
+                var previewChamber = GameObject.Find("Fall chamber");
+                Require(previewChamber && !game.Ending.IsPlaying, "A safe pane did not reveal the shared chamber before loss.");
+                previewSurface = previewChamber.transform.Find("Hazard surface").GetComponent<MeshRenderer>();
+                VerifyOpenLanding(ending, previewSurface);
+                Capture("open-shaft-"+ending.ToLowerInvariant(), SmokeView.CenterEye);
+            }
+            Choose("Preview loss");
+            yield return Stage(GameStage.Fall);
+            string trial = ending + " / " + (reduced ? "Reduced" : "Full") + (skip ? " / Skip" : " / complete");
+            Require(game.Ending.IsPlaying && game.Ending.LastEndingName == ending, trial + " selected a different ending.");
+            var chamber = GameObject.Find("Fall chamber");
+            if (previewSurface)
+            {
+                var properties = new MaterialPropertyBlock();
+                previewSurface.GetPropertyBlock(properties);
+                Require(previewSurface.transform == chamber.transform.Find("Hazard surface") &&
+                    (int)properties.GetFloat("_Theme") == Array.IndexOf(EndingNames,ending) &&
+                    Mathf.Abs(game.BoardView.transform.position.y - previewSurface.transform.position.y - 80f) < .015f,
+                    ending + " switched the landing between the broken pane and the start of the fall.");
+            }
+            var veil = game.Rig.centerEyeAnchor.Find("View fade").GetComponent<MeshRenderer>();
+            var material = new MaterialPropertyBlock();
+            double started = Now;
+            double expectedSeconds = reduced ? 3.93 : 9.44;
+            if (skip)
+            {
+                yield return Delay(.18);
+                game.Ending.Skip();
+            }
+            bool sawBlack = false;
+            while (game.Stage == GameStage.Fall)
+            {
+                double age = Now - started;
+                Require(age < (skip ? 1.5 : expectedSeconds + 1.0), trial + " timed out.");
+                if (skip || age >= expectedSeconds - .25)
+                {
+                    veil.GetPropertyBlock(material);
+                    Color tint = material.GetColor("_Tint");
+                    sawBlack |= veil.enabled && tint.a >= .999f && tint.maxColorComponent < .002f;
+                }
+                yield return null;
+            }
+            double duration = Now - started;
+            Require((skip || duration >= expectedSeconds - .12) && sawBlack && game.Stage == GameStage.Results && game.Panel.Visible,
+                trial + " did not present its final black frame and Results at the expected time.");
+            Require(chamber && !chamber.activeSelf && !veil.enabled && !game.Ending.IsPlaying, trial + " left the ending visible after Results.");
+            foreach (string name in new[] { "Shaft air", "Ending ambience", "Ending impact" })
+            {
+                var source = game.transform.Find(name).GetComponent<AudioSource>();
+                Require(!source.isPlaying && !source.clip, trial + " left audio on " + name);
+            }
+            VerifyFloorVisibility(false);
+            Choose("Restart");
+            yield return Stage(GameStage.Ready);
+            Require(game.Level == 1 && game.WaveNumber == 1 && game.State.WavesSurvived == 0 &&
+                game.State.ActiveWave == null && game.BoardView.gameObject.activeSelf, trial + " left an incomplete board reset.");
+            for (int cell = 0; cell < game.State.Count; cell++)
+                Require(game.State.IsIntact(cell), trial + " left a broken pane at " + cell);
+            VerifyFloorVisibility(true);
+            report.endingExits.Add(new EndingExitEvidence { ending = ending, reduced = reduced, skipped = skip, seconds = duration });
+            Save();
+        }
+
+        private static void VerifyOpenLanding(string ending, MeshRenderer surface)
+        {
+            var block = new MaterialPropertyBlock();
+            surface.GetPropertyBlock(block);
+            Require(surface.enabled && (int)block.GetFloat("_Theme") == Array.IndexOf(EndingNames,ending) &&
+                surface.sharedMaterial.GetInt("_PortalComparison") == (int)CompareFunction.Equal &&
+                Mathf.Abs(game.BoardView.transform.position.y-surface.transform.position.y-80f) < .015f,
+                ending + " was not already present 80 metres below the open pane.");
+            var board = game.BoardView.transform;
+            if (ending == "Water")
+            {
+                var native = Resources.Load<Material>("Endings/MetaFloorZone/materials/Water");
+                Require(native && native.GetTexture("_WaterNormal") &&
+                    surface.sharedMaterial.GetTexture("_WaterNormal") == native.GetTexture("_WaterNormal"),
+                    "The pre-loss water did not use the approved Meta Floor Zone ripple map.");
+            }
+            Transform room = surface.transform.parent;
+            var objects = new[] { board.Find("Opening stencil"), board.Find("Glass opening edges"),
+                room.Find("Shaft walls"), room.Find("Shaft landmarks"), surface.transform };
+            var oldLayers = Array.ConvertAll(objects, t => t.gameObject.layer);
+            const int layer = 30, size = 96;
+            var probe = new GameObject("Open shaft stereo probe");
+            var camera = probe.AddComponent<Camera>();
+            var target = RenderTexture.GetTemporary(size,size,24,RenderTextureFormat.ARGB32);
+            var oldTarget = RenderTexture.active;
+            var image = new Texture2D(size,size,TextureFormat.RGB24,false);
+            try
+            {
+                foreach (var t in objects) t.gameObject.layer=layer;
+                camera.enabled=false;
+                camera.stereoTargetEye=StereoTargetEyeMask.None;
+                camera.GetUniversalAdditionalCameraData().allowXRRendering=false;
+                camera.cullingMask=1<<layer;
+                camera.clearFlags=CameraClearFlags.SolidColor;
+                camera.backgroundColor=Color.magenta;
+                camera.nearClipPlane=.05f; camera.farClipPlane=180; camera.fieldOfView=50; camera.aspect=1;
+                camera.targetTexture=target;
+                var center = board.TransformPoint(GlassGeometry.Ground(game.State.Center(1)));
+                var standing = board.TransformPoint(GlassGeometry.Ground(game.State.Center(0)))+Vector3.up*1.55f;
+                Quaternion rotation = Quaternion.LookRotation(center-standing, Vector3.up);
+                foreach (float offset in new[] { -.032f, .032f })
+                {
+                    probe.transform.SetPositionAndRotation(standing+rotation*Vector3.right*offset,rotation);
+                    surface.enabled=false; var without=Read();
+                    surface.enabled=true; var with=Read();
+                    int destinationPixels=0, escaped=0;
+                    for (int y=0;y<size;y++)
+                    for (int x=0;x<size;x++)
+                    {
+                        int i=y*size+x;
+                        int change=Math.Abs(with[i].r-without[i].r)+Math.Abs(with[i].g-without[i].g)+Math.Abs(with[i].b-without[i].b);
+                        if (change<12) continue;
+                        Ray ray=camera.ViewportPointToRay(new Vector3((x+.5f)/size,(y+.5f)/size));
+                        Vector3 hit=board.InverseTransformVector(ray.GetPoint((center.y-ray.origin.y)/ray.direction.y)-center);
+                        float edge=Mathf.Max(Mathf.Abs(hit.x),Mathf.Abs(hit.z))-game.State.Pitch*.5f;
+                        if (edge<-.015f) destinationPixels++;
+                        if (edge>.025f) escaped++;
+                    }
+                    Require(destinationPixels>35 && escaped==0, ending + " adjacent-eye landing pixels " + destinationPixels + ", outside its pane " + escaped);
+                    report.openLandings.Add(new LandingReadback { ending=ending, eye=offset<0 ? "left" : "right",
+                        destinationPixels=destinationPixels, outsideAperturePixels=escaped,
+                        depthMetres=board.position.y-surface.transform.position.y });
+                }
+                Color32[] Read()
+                {
+                    camera.Render(); RenderTexture.active=target;
+                    image.ReadPixels(new Rect(0,0,size,size),0,0); image.Apply();
+                    return image.GetPixels32();
+                }
+            }
+            finally
+            {
+                surface.enabled=true;
+                for (int i=0;i<objects.Length;i++) objects[i].gameObject.layer=oldLayers[i];
+                camera.targetTexture=null; RenderTexture.active=oldTarget;
+                RenderTexture.ReleaseTemporary(target);
+                UnityEngine.Object.DestroyImmediate(image); UnityEngine.Object.DestroyImmediate(probe);
+            }
+        }
+
+        [Serializable]
+        private sealed class LandingReadback
+        {
+            public string ending, eye;
+            public int destinationPixels, outsideAperturePixels;
+            public float depthMetres;
+        }
+
+        [Serializable]
+        private sealed class EndingExitEvidence
+        {
+            public string ending;
+            public bool reduced, skipped;
+            public double seconds;
+        }
+
         private static IEnumerator ObserveSelectedFall(string ending, bool reduced, int nextEndingPresses)
         {
             Choose("Main menu"); Choose("Settings");

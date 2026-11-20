@@ -18,7 +18,7 @@ namespace FloorFracture
             var holder = new GameObject("Placement outlines");
             root = holder.transform;
             root.SetParent(parent, false);
-            mesh = new Mesh { name = "Room and board perimeter" };
+            mesh = new Mesh { name = "Playable glass perimeter" };
             holder.AddComponent<MeshFilter>().sharedMesh = mesh;
             var renderer = holder.AddComponent<MeshRenderer>();
             renderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -28,29 +28,15 @@ namespace FloorFracture
             holder.SetActive(false);
         }
 
-        internal void Show(bool preview, BoardPlacement fit, List<RoomFloor> fixture)
+        internal void Show(bool visible, BoardPlacement fit)
         {
-            bool visible = preview || fixture != null;
             root.gameObject.SetActive(visible);
             if (!visible) return;
             vertices.Clear();
             colors.Clear();
             indices.Clear();
-            if (fixture != null)
-            {
-                foreach (var floor in fixture)
-                {
-                    Loop(floor.Boundary, floor.Height + 0.01f, 0.018f, new Color32(95, 167, 245, 184));
-                    foreach (var item in floor.Obstacles)
-                        Loop(item, floor.Height + 0.013f, 0.014f, new Color32(240, 155, 103, 178));
-                }
-            }
-            if (preview)
-            {
-                float y = fit.FloorHeight + 0.02f;
-                // The live glass already marks every cell while the welcome panel is open.
-                Loop(fit.FootprintOutline(), y, 0.012f, new Color32(255, 213, 123, 219));
-            }
+            float y = fit.FloorHeight + 0.02f;
+            Loop(fit.FootprintOutline(), y, 0.012f, new Color32(255, 213, 123, 219));
             mesh.Clear();
             mesh.SetVertices(vertices);
             mesh.SetColors(colors);

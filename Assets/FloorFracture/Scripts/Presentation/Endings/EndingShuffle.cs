@@ -19,7 +19,7 @@ internal sealed class EndingShuffle
 
     internal EndingShuffle(int seed) { random = new Random(seed); }
 
-    internal int Next(FloorEndingSet enabled)
+    internal int Peek(FloorEndingSet enabled)
     {
         int selected = (int)(enabled & FloorEndingSet.All);
         if (selected == 0) return -1;
@@ -34,7 +34,15 @@ internal sealed class EndingShuffle
             if (count > 1 && bag[0] == previous)
                 Swap(0, random.Next(1, count));
         }
-        previous = bag[next++];
+        return bag[next];
+    }
+
+    internal int Next(FloorEndingSet enabled)
+    {
+        int choice = Peek(enabled);
+        if (choice < 0) return choice;
+        next++;
+        previous = choice;
         return previous;
     }
 

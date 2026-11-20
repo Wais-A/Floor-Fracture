@@ -17,11 +17,13 @@ public sealed class FallSequence : MonoBehaviour
     [SerializeField] PreviewEnding developmentEnding = PreviewEnding.Shuffle;
 #endif
     EndingShuffle shuffle = new EndingShuffle(Environment.TickCount);
+    FloorFracture.GlassBoardView board;
     FallScenery scenery;
     GameSound sound;
     Transform head;
     Action finished;
     FloorEnding kind;
+    int visiblePreview = -1;
     bool reduced, hasOpening, impactPlayed, chimePlayed, entryReported;
     Vector3 opening;
     float width, yaw;
@@ -39,6 +41,40 @@ public sealed class FallSequence : MonoBehaviour
     }
 
     public void SetShuffleSeed(int seed) => shuffle = new EndingShuffle(seed);
+
+    internal void SetBoard(FloorFracture.GlassBoardView nextBoard)
+    {
+        if (visiblePreview >= 0) scenery.Hide();
+        visiblePreview = -1;
+        board = nextBoard;
+    }
+
+    int SelectEnding(bool consume)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (developmentEnding != PreviewEnding.Shuffle) return (int)developmentEnding;
+#endif
+        return consume ? shuffle.Next(enabledEndings) : shuffle.Peek(enabledEndings);
+    }
+
+    internal void ShowOpenPanes(Transform viewer)
+    {
+        if (IsPlaying) return;
+        int selected = board && board.HasOpenPanes && viewer ? SelectEnding(false) : -1;
+        if (selected == visiblePreview) return;
+        visiblePreview = selected;
+        if (selected < 0) { scenery?.Hide(); return; }
+        OpenChamber(viewer, (FloorEnding)selected, board.transform.position, board.PaneWidth, board.transform.eulerAngles.y);
+        scenery.Draw(0,0,false,0,out _);
+    }
+
+    void OpenChamber(Transform viewer, FloorEnding destination, Vector3 entry, float tileWidth, float yawDegrees)
+    {
+        if (scenery == null) scenery = new FallScenery(waterSurfaceOverride,splashPrefabOverride,lavaFlamesOverride);
+        Vector3 center = board ? board.transform.position : entry;
+        float radius = board ? board.ChamberRadius : Mathf.Max(1.48f, tileWidth*.5f+.65f);
+        scenery.Begin(viewer,destination,center,entry,tileWidth,yawDegrees,radius,board && board.HasOpenPanes);
+    }
 
     /// <summary>Water through snow are indices zero through five. A negative index restores the bag.</summary>
     public void SetDevelopmentEnding(int index)
@@ -64,13 +100,7 @@ public sealed class FallSequence : MonoBehaviour
         if (!sound) sound = GetComponent<GameSound>();
         if (!sound) sound = FindAnyObjectByType<GameSound>();
         if (!sound) sound = gameObject.AddComponent<GameSound>();
-        if (scenery == null) scenery = new FallScenery(waterSurfaceOverride,splashPrefabOverride,lavaFlamesOverride);
-        int selected;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (developmentEnding != PreviewEnding.Shuffle) selected = (int)developmentEnding;
-        else
-#endif
-            selected = shuffle.Next(enabledEndings);
+        int selected = SelectEnding(true);
         bool emptyBag = selected < 0;
         kind = emptyBag ? FloorEnding.Water : (FloorEnding)selected;
         LastEndingName = emptyBag ? string.Empty : kind.ToString();
@@ -83,7 +113,7 @@ public sealed class FallSequence : MonoBehaviour
             nextOpening = this.head.position - Vector3.up*1.55f;
             nextWidth = .5f; nextYaw = 0;
         }
-        scenery.Begin(this.head,kind,nextOpening,nextWidth,nextYaw);
+        OpenChamber(this.head,kind,nextOpening,nextWidth,nextYaw);
         if (emptyBag) { Blackout(); return; }
         sound.BeginFall(kind);
         Draw(0f);
@@ -207,7 +237,7 @@ public sealed class FallSequence : MonoBehaviour
 
     public void ResetSequence()
     {
-        generation++; IsPlaying = false; finished = null; head = null;
+        generation++; IsPlaying = false; visiblePreview = -1; finished = null; head = null;
         blackFrame = -1; hasOpening = impactPlayed = chimePlayed = entryReported = false;
         if (sound) sound.StopFall();
         scenery?.Hide();

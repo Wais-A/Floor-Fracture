@@ -21,6 +21,20 @@ namespace FloorFracture.Editor
 {
     public static class GameProjectSetup
     {
+#if UNITY_EDITOR_OSX
+        private static void StopInteractionSdkBatchSession()
+        {
+            // ISDK 209 starts a native session on Editor import. Its managed shutdown
+            // hook runs in Play Mode, which a standalone batch build never enters.
+            var telemetry = typeof(Oculus.Interaction.Grabbable).Assembly.GetType("Oculus.Interaction.Telemetry.ISDKEngineTelemetryNative");
+            var shutdown = telemetry?.GetMethod("ShutDown", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (shutdown != null)
+            {
+                shutdown.Invoke(null, null);
+                Debug.Log("[Floor Fracture] Closed the Interaction SDK batch telemetry session.");
+            }
+        }
+#endif
         public const string MainScene="Assets/FloorFracture/Scenes/FloorFracture.unity";
         public const string TilePrefab="Assets/FloorFracture/Resources/GlassTile.prefab";
 
@@ -134,11 +148,20 @@ namespace FloorFracture.Editor
             string dest=Environment.GetEnvironmentVariable("FLOOR_FRACTURE_APK");
             if(string.IsNullOrWhiteSpace(dest)) dest=Path.GetFullPath("Builds/Quest/FloorFracture.apk");
             Directory.CreateDirectory(Path.GetDirectoryName(dest));
-            var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{
-                scenes=new[]{MainScene},locationPathName=dest,target=BuildTarget.Android,
-                options=Environment.GetEnvironmentVariable("FLOOR_FRACTURE_DEV")=="1"?BuildOptions.Development:BuildOptions.None});
-            Debug.Log($"[Floor Fracture] build={report.summary.result} errors={report.summary.totalErrors} warnings={report.summary.totalWarnings} path={report.summary.outputPath}");
-            if(report.summary.result!=UnityEditor.Build.Reporting.BuildResult.Succeeded) throw new InvalidOperationException("Floor Fracture Android build failed.");
+            try
+            {
+                var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{
+                    scenes=new[]{MainScene},locationPathName=dest,target=BuildTarget.Android,
+                    options=Environment.GetEnvironmentVariable("FLOOR_FRACTURE_DEV")=="1"?BuildOptions.Development:BuildOptions.None});
+                Debug.Log($"[Floor Fracture] build={report.summary.result} errors={report.summary.totalErrors} warnings={report.summary.totalWarnings} path={report.summary.outputPath}");
+                if(report.summary.result!=UnityEditor.Build.Reporting.BuildResult.Succeeded) throw new InvalidOperationException("Floor Fracture Android build failed.");
+            }
+            finally
+            {
+#if UNITY_EDITOR_OSX
+                if (Application.isBatchMode) StopInteractionSdkBatchSession();
+#endif
+            }
         }
     }
 }

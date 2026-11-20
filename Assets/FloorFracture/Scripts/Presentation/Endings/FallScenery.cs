@@ -12,6 +12,8 @@ internal sealed class FallScenery
         Mouth = Shader.PropertyToID("_Mouth"), MouthRight = Shader.PropertyToID("_MouthRight");
     // Four seconds under gravity leaves more than three seconds of walls after a standing eye enters.
     internal const float ShaftDepth = 80f;
+    // A player looking into the opening from an adjacent pane can see the distant landing.
+    const float WideningPerMetre = .72f;
     static readonly Color[] wallTints = {
         new Color(.19f,.28f,.30f), new Color(.25f,.15f,.12f), new Color(.18f,.17f,.25f),
         new Color(.18f,.19f,.26f), new Color(.44f,.31f,.19f), new Color(.26f,.40f,.53f)
@@ -34,12 +36,14 @@ internal sealed class FallScenery
     FloorEnding kind;
     Transform head;
     float eyeHeight, startRadius, radius;
-    Vector3 mouthRight;
+    Vector3 mouthRight, entryWorld, entryLocal;
+    bool hasFloorApertures, stencilEnabled;
 
     internal FallScenery(Material waterOverride, GameObject splashOverride, GameObject fireOverride)
     {
         world = new GameObject("Fall chamber").transform;
         surfaceMaterial = new Material(Resources.Load<Shader>("Endings/Chamber"));
+        surfaceMaterial.SetFloat("_WideningPerMetre",WideningPerMetre);
         fadeMaterial = new Material(Resources.Load<Shader>("Endings/ViewFade"));
         boxMesh = Own(FallMeshes.Box());
         Mesh disk = Own(FallMeshes.Disk());
@@ -49,6 +53,8 @@ internal sealed class FallScenery
         background = Part("Chamber darkness", boxMesh, surfaceMaterial);
         floor = Part("Hazard surface", disk, surfaceMaterial);
         var native = waterOverride ? waterOverride : Resources.Load<Material>("Endings/MetaFloorZone/materials/Water");
+        if (native && native.HasProperty("_WaterNormal"))
+            surfaceMaterial.SetTexture("_WaterNormal",native.GetTexture("_WaterNormal"));
         if (native && native.shader && native.shader.isSupported) nativeWater = Part("Floor Zone water ripples", disk, native);
         pillars = Part("Flames or crystals", crystalMesh, surfaceMaterial);
         motes = Part("Particles", null, surfaceMaterial);
@@ -80,22 +86,34 @@ internal sealed class FallScenery
         return renderer;
     }
 
-    internal void Begin(Transform viewer, FloorEnding chosen, Vector3 center, float width, float yaw)
+    internal void Begin(Transform viewer, FloorEnding chosen, Vector3 center, Vector3 entry, float width,
+        float yaw, float chamberRadius, bool throughOpenPanes)
     {
         head = viewer; kind = chosen;
         world.SetPositionAndRotation(center, Quaternion.Euler(0,yaw,0));
+        entryWorld = entry;
+        entryLocal = world.InverseTransformPoint(entry);
+        hasFloorApertures = throughOpenPanes;
         eyeHeight = Mathf.Max(.25f, viewer.position.y-center.y);
         startRadius = Mathf.Max(.08f, width*.5f);
-        Vector3 offset = viewer.position-center; offset.y=0;
-        radius = Mathf.Max(startRadius+.65f,1.48f,offset.magnitude+1.00f);
+        radius = chamberRadius;
         mouthRight = world.right;
         walls.transform.localScale = landmarks.transform.localScale = new Vector3(radius,1,radius);
-        float surfaceRadius = radius*1.40f;
+        float spread = ShaftDepth * WideningPerMetre;
+        // Shader-expanded walls must remain inside Unity's renderer culling bounds.
+        foreach (MeshRenderer part in new[] { walls, landmarks })
+        {
+            var bounds = part.GetComponent<MeshFilter>().sharedMesh.bounds;
+            bounds.Expand(new Vector3(2*spread/radius,0,2*spread/radius));
+            part.localBounds = bounds;
+        }
+        float surfaceRadius = (radius+spread)*1.45f;
         floor.transform.localScale = new Vector3(surfaceRadius,1,surfaceRadius);
         if (nativeWater) nativeWater.transform.localScale = floor.transform.localScale;
         float ringScale = Mathf.Clamp(radius*.55f,.78f,1.02f);
         pillars.transform.localScale = new Vector3(ringScale,1,ringScale);
         motes.transform.localScale = kind == FloorEnding.Sand ? pillars.transform.localScale : Vector3.one;
+        motes.transform.localPosition = entryLocal;
         pillars.GetComponent<MeshFilter>().sharedMesh = kind == FloorEnding.Lava ? flameMesh : crystalMesh;
         if (kind != FloorEnding.Crystal)
         {
@@ -118,6 +136,14 @@ internal sealed class FallScenery
         // The chamber and its destination are one moving world until the feet reach the surface.
         // Only the upper metre of the throat widens as the lip draws near.
         float top = reduced ? 5f : travel;
+        // Above the board, all broken panes are windows into this world. Once the rim
+        // moves, clip it to the falling player's moving entry until the eyes are inside.
+        bool useStencil = hasFloorApertures && !reduced && top <= .001f;
+        if (stencilEnabled != useStencil)
+        {
+            stencilEnabled = useStencil;
+            surfaceMaterial.SetInt("_PortalComparison",(int)(useStencil ? CompareFunction.Equal : CompareFunction.Always));
+        }
         float mouthRadius = Mathf.Lerp(startRadius,Mathf.Max(startRadius,Mathf.Min(radius,.77f)),Ease(0,1.35f,top));
         float surfaceY = reduced ? 0f : travel-ShaftDepth;
         Color wallColor = wallTints[(int)kind], sky = skyTints[(int)kind];
@@ -142,9 +168,11 @@ internal sealed class FallScenery
                 pillarsAlpha = Ease(0,.12f,progress);
                 break;
             case FloorEnding.Crystal:
+                floorRole = 10;
                 pillarsAlpha = Ease(0,.10f,progress);
                 break;
             case FloorEnding.Space:
+                floorRole = 11;
                 wallAlpha = floorAlpha = 1-Ease(0,.15f,progress);
                 particleAlpha = Ease(0,.13f,progress)*(1-Ease(.78f,.97f,progress));
                 break;
@@ -159,6 +187,7 @@ internal sealed class FallScenery
                 light = Ease(.04f,.30f,progress)*(1-Ease(.84f,.99f,progress));
                 break;
             case FloorEnding.Snow:
+                floorRole = 12;
                 sky = Color.Lerp(sky,new Color(.53f,.66f,.77f),Ease(.06f,.64f,progress));
                 break;
         }
@@ -167,11 +196,10 @@ internal sealed class FallScenery
         properties.Clear();
         properties.SetFloat(Theme,(int)kind); properties.SetFloat(Age,age);
         properties.SetFloat(Reveal,progress); properties.SetFloat(Level,level); properties.SetFloat(Motion,motion);
-        Vector3 center = world.position;
-        float rimY = center.y+top;
+        float rimY = world.position.y+top;
         entered = reduced ? visible : rimY >= head.position.y;
-        properties.SetVector(Mouth,new Vector4(center.x,rimY,center.z,mouthRadius));
-        properties.SetVector(MouthRight,new Vector4(mouthRight.x,mouthRight.z,mouthRadius/radius,reduced ? 0 : 1));
+        properties.SetVector(Mouth,new Vector4(entryWorld.x,rimY,entryWorld.z,mouthRadius));
+        properties.SetVector(MouthRight,new Vector4(mouthRight.x,mouthRight.z,0,reduced || useStencil ? 0 : 1));
         // The shaft stays lit. Only the view past its walls gradually loses the room light.
         float overhead = reduced ? 1 : Ease(.15f,26f,rimY-head.position.y);
         Paint(background,kind == FloorEnding.Space ? 8 : 0,sky,visible ? overhead : 0);
@@ -185,19 +213,19 @@ internal sealed class FallScenery
         {
             // The source graph uses transparency and cannot apply our per-eye opening mask.
             // Its overlay joins the already visible procedural water once both eyes are inside.
-            nativeWater.enabled = visible && kind == FloorEnding.Water && (reduced || rimY > head.position.y+.12f);
+            nativeWater.enabled = visible && !useStencil && kind == FloorEnding.Water && (reduced || rimY > head.position.y+.12f);
             nativeWater.transform.localPosition = floor.transform.localPosition + Vector3.up*.009f;
         }
-        pillars.transform.localPosition = Vector3.up*(kind == FloorEnding.Lava ? surfaceY-.11f : 0);
+        pillars.transform.localPosition = entryLocal + Vector3.up*(kind == FloorEnding.Lava ? surfaceY-.11f : 0);
         Paint(pillars,kind == FloorEnding.Lava ? 7 : 5,Color.white, visible ? pillarsAlpha : 0);
         if (replacementFire)
         {
             bool lit = visible && kind == FloorEnding.Lava && pillarsAlpha > .20f;
             if (lit != replacementFire.activeSelf) replacementFire.SetActive(lit);
-            replacementFire.transform.localPosition = new Vector3(1.25f,surfaceY,0);
+            replacementFire.transform.localPosition = entryLocal + new Vector3(1.25f,surfaceY,0);
         }
         Paint(motes,6,Color.white,visible && kind != FloorEnding.Crystal ? particleAlpha : 0);
-        opening.transform.localPosition = new Vector3(0,eyeHeight+3.35f,0);
+        opening.transform.localPosition = entryLocal + new Vector3(0,eyeHeight+3.35f,0);
         opening.transform.localScale = Vector3.one * Mathf.Lerp(1.05f,.28f,Ease(.4f,.88f,progress));
         Paint(opening,0,new Color(1,.83f,.54f),visible ? light : 0);
         return immersion;

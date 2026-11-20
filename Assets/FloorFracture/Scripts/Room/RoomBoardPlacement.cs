@@ -198,11 +198,7 @@ namespace FloorFracture
         public void ShowClearance(bool visible)
         {
             bool show = visible && Status == RoomPlacementStatus.Confirmed;
-            List<RoomFloor> fixture = null;
-#if UNITY_EDITOR
-            if (show && usingFixture) fixture = floors;
-#endif
-            outlines.Show(show, Placement, fixture);
+            outlines.Show(show, Placement);
         }
 
         public void OpenPermissionSettings()
@@ -495,11 +491,7 @@ namespace FloorFracture
             Status = next;
             Message = message;
             ShowFloorSurface(next == RoomPlacementStatus.Confirmed);
-            bool showFixture = false;
-#if UNITY_EDITOR
-            showFixture = usingFixture && next == RoomPlacementStatus.NoFit;
-#endif
-            outlines.Show(false, Placement, showFixture ? floors : null);
+            outlines.Show(false, Placement);
             Changed?.Invoke();
         }
     }
