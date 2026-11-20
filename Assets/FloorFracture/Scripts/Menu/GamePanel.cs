@@ -4,6 +4,7 @@ using Oculus.Interaction;
 using Oculus.Interaction.Input;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.XR;
 
 namespace FloorFracture
 {
@@ -49,6 +50,9 @@ namespace FloorFracture
         private UnityEngine.UI.Text title, body;
         private Font font;
         private Camera eye;
+        private OVRDisplay recenterDisplay;
+        private XRInputSubsystem originSubsystem;
+        private int recenterRequestedFrame = -1;
         private bool wasTracked, paused;
         private int lastSelectionFrame = -1;
         private int mouseHover = -1, mousePress = -1;
@@ -176,10 +180,47 @@ namespace FloorFracture
         {
             if (!Head || !panel) return;
             Vector3 forward = Vector3.ProjectOnPlane(Head.forward, Vector3.up);
-            if (forward.sqrMagnitude < 0.01f) forward = Vector3.ProjectOnPlane(rig.transform.forward, Vector3.up);
-            if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
+            if (forward.sqrMagnitude < 0.01f) forward = Vector3.Cross(Head.right, Vector3.up);
             Vector3 pos = Head.position + forward.normalized * .56f + Vector3.down * .07f;
             panel.SetPositionAndRotation(pos, Quaternion.LookRotation(pos - Head.position, Vector3.up));
+        }
+
+        private void SetRecenterSources(OVRDisplay display, XRInputSubsystem input)
+        {
+            if (display != recenterDisplay)
+            {
+                if (recenterDisplay != null) recenterDisplay.RecenteredPose -= RequestMenuRecenter;
+                recenterDisplay = display;
+                if (display != null) display.RecenteredPose += RequestMenuRecenter;
+            }
+            if (input != originSubsystem)
+            {
+                if (originSubsystem != null) originSubsystem.trackingOriginUpdated -= OnOriginUpdated;
+                originSubsystem = input;
+                if (input != null) input.trackingOriginUpdated += OnOriginUpdated;
+            }
+        }
+
+        private void RequestMenuRecenter() => recenterRequestedFrame = Time.frameCount;
+        private void OnOriginUpdated(XRInputSubsystem input) => RequestMenuRecenter();
+
+        private void OnInputFocusAcquired()
+        {
+            SetRecenterSources(OVRManager.display, OVRManager.GetCurrentInputSubsystem());
+            RequestMenuRecenter();
+        }
+
+        private void LateUpdate()
+        {
+            // Meta can report the same reset through the display and the XR input origin.
+            // Read the center eye after a full frame of camera tracking and MRUK world locking.
+            if (recenterRequestedFrame < 0 || Time.frameCount <= recenterRequestedFrame) return;
+            if (Visible && !Tracked) return;
+            recenterRequestedFrame = -1;
+            if (!Visible) return;
+            Recenter();
+            if (Debug.isDebugBuild)
+                Debug.Log($"[Floor Fracture] Centered menu '{title.text}' at {panel.position:F2}, head {Head.position:F2}.");
         }
 
         private UnityEngine.UI.Text Label(Transform parent, string name, int size, FontStyle style, Color color)
@@ -242,6 +283,9 @@ namespace FloorFracture
         private void Update()
         {
             if (!panel) return;
+            // The loader can create the display after OnEnable on a cold launch.
+            if (recenterDisplay == null && OVRManager.display != null)
+                SetRecenterSources(OVRManager.display, OVRManager.GetCurrentInputSubsystem());
             foreach (var pointer in pointers) pointer.EndPulse();
 #if UNITY_EDITOR
             desktop.UpdateMode();
@@ -250,7 +294,7 @@ namespace FloorFracture
             bool tracked = Tracked;
             if (!Visible) { wasTracked = tracked; return; }
             if (!tracked) { ClearPointers(); wasTracked = false; Paint(); return; }
-            if (!wasTracked) Recenter();
+            if (!wasTracked) RequestMenuRecenter();
             wasTracked = true;
 #if UNITY_EDITOR
             if (desktop.Active)
@@ -271,6 +315,8 @@ namespace FloorFracture
 
         private void OnEnable()
         {
+            SetRecenterSources(OVRManager.display, OVRManager.GetCurrentInputSubsystem());
+            OVRManager.InputFocusAcquired += OnInputFocusAcquired;
             PointableCanvasModule.WhenSelectableHovered += MetaHover;
             PointableCanvasModule.WhenSelectableUnhovered += MetaUnhover;
             PointableCanvasModule.WhenSelected += MetaPress;
@@ -350,11 +396,22 @@ namespace FloorFracture
 
         private void OnApplicationPause(bool value)
         {
+            if (paused && !value) OnInputFocusAcquired();
             paused = value;
             if (paused) foreach (var pointer in pointers) pointer?.EndPulse(true);
         }
+
+        private void OnApplicationFocus(bool focused)
+        {
+            if (!focused) wasTracked = false;
+        }
+
         private void OnDisable()
         {
+            SetRecenterSources(null, null);
+            OVRManager.InputFocusAcquired -= OnInputFocusAcquired;
+            recenterRequestedFrame = -1;
+            wasTracked = false;
             PointableCanvasModule.WhenSelectableHovered -= MetaHover;
             PointableCanvasModule.WhenSelectableUnhovered -= MetaUnhover;
             PointableCanvasModule.WhenSelected -= MetaPress;
@@ -396,6 +453,9 @@ namespace FloorFracture
             desktop.SetPose(head, leftGrip, rightGrip, leftHeld, rightHeld);
 
         public void EditorSetTriggers(bool left, bool right) => desktop.SetTriggers(left, right);
+
+        public void EditorUseRecenterDisplay(OVRDisplay display) =>
+            SetRecenterSources(display, OVRManager.GetCurrentInputSubsystem());
 
         private void OnDestroy() { desktop?.Dispose(); }
 #endif

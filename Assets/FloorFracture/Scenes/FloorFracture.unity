@@ -213,7 +213,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: FloorFracture.Rooms::FloorFracture.RoomBoardPlacement
   rig: {fileID: 955109992}
   floorSpawns: {fileID: 54861137}
-  floorWaterMesh: {fileID: 1692174211}
+  floorEffect: {fileID: 1692174211}
   outlineShader: {fileID: 4800000, guid: cbc12925e9c4448cbdc98314207e6f54, type: 3}
   useEditorFixture: 1
 --- !u!114 &27512914

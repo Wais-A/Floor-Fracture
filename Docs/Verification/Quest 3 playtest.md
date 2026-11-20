@@ -15,11 +15,23 @@ Wais tested the first playable development APK in his room. Unity build `build_a
 
 The signed water-floor development build launched on the Quest 3. The installed APK hash matched the tested file and the app recorded its Unity build GUID using Vulkan. On this build, the Quest recorded Welcome and the tutorial with 7 × 2 panes at 67 cm each, a glass footprint of 4.69 × 1.34 m. The runtime reported depth-image acquisition errors at startup and during later XR session activity. Use the chair check below to assess physical occlusion. [Water build record](<./Surrounding floor Quest build.json>) · [OpenXR depth image acquisition](https://registry.khronos.org/OpenXR/specs/1.1/man/html/xrAcquireEnvironmentDepthImageMETA.html)
 
-On the water-floor build, stand on the glass and look across the room toward a wall and behind a chair. Water should fill the scanned floor right up to its edges. After a neighboring pane falls, look into the shaft from a safe pane. Record any water across the shaft, water in front of real furniture, flicker, or uncovered patches. Wearer feedback is pending.
+Wais saw flickering blue color that did not read as water. He identified unused open space along the long side of the glass, requested a faster fall at 9.8 m/s², and reported that holding the Meta button left the menu in its earlier location. He then chose shaft-style brick around the glass and asked for the real couch, chair and trash can to appear to stand on it. Chair contact and open shafts were not judged in that test.
 
-## Repeat on the revised build
+## Brick build on Quest 3
 
-The Editor completed the whole revised game loop with a 6 × 3 board at 65.24 cm per pane. At full motion the hazard started five metres below the rim and reached the opening at about 3.15 seconds. Wais’s physical review determines whether this reads as a fall. The first headset build has a separate measured baseline. [Revised Editor playthrough](<./Adaptive Editor playthrough.json>) · [First Quest metrics](<./First Quest run metrics.json>)
+The signed brick build is `5674695daa384caba05d08902ec9fdc7`. The synthetic High-ceiling Room fitted 5 × 8 panes at 56 cm. The offline Rec Room fitted 5 × 6 panes at 51.74 cm. Both are comparison rooms for the physical trial. [Build receipt](<./Brick floor Quest build.json>) · [Simulator check](<./Brick floor simulator.json>) · [Editor playthrough](<./Brick floor Editor playthrough.json>)
+
+- [x] Welcome recorded 2 × 2 at 57.3 cm per pane on the brick build.
+- [ ] Compare the fitted board with the space available in the current scan. Look along the previously unused long side and try one comfortable step.
+- [x] Wais reviewed furniture in his physical room and reported, “Brick on the floor, furniture clearly in front.” The installed APK matched the local SHA-256, the spatial-data grant was active, and the app recorded Vulkan and the expected build GUID.
+- [ ] Move the bin with the headset off and recheck its old and new positions. Record any halo or brick on the object.
+- [ ] Look into an adjacent broken pane. The mouth should remain clear of brick.
+- [ ] Open Settings, face another direction and hold the Meta button. Record whether the same menu moves into reach and the glass stays anchored. Repeat on Results.
+- [ ] With full motion enabled, stay on a marked square. Note whether the shaft now passes quickly before the Water or Lava impact. Compare Reduced and try Skip.
+
+## Earlier adaptive build
+
+The preceding Editor version fitted 6 × 3 panes at 65.24 cm in Meta’s Rec Room fixture and took about 3.15 seconds to descend. [Earlier Editor playthrough](<./Adaptive Editor playthrough.json>) · [First Quest metrics](<./First Quest run metrics.json>)
 
 - [x] Record the first adaptive APK and launch it on Quest. The signed development build was 127,327,002 bytes. [Build and install record](<./Adaptive Quest build.json>)
 - [ ] In the same scan, write down the dimensions and pane width shown on Welcome. Check whether the board uses the available space without prompting for a clearance verdict.

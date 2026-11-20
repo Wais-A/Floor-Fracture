@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 
 namespace FloorFracture.Editor
 {
-    internal enum SmokeView { BoardObserver, RoomOverview, CenterEye, Ending, FallRim, FallDown, FallForward }
+    internal enum SmokeView { BoardObserver, RoomOverview, FloorEdge, CenterEye, Ending, FallRim, FallDown, FallForward }
 
     internal static class SmokeCapture
     {
@@ -60,6 +60,16 @@ namespace FloorFracture.Editor
                     camera.orthographicSize = Mathf.Max(bounds.extents.z, bounds.extents.x / camera.aspect) * 1.08f;
                     camera.transform.SetPositionAndRotation(bounds.center + Vector3.up * (bounds.extents.y + 5f),
                         Quaternion.LookRotation(Vector3.down, Vector3.forward));
+                }
+                else if (view == SmokeView.FloorEdge)
+                {
+                    var fit = game.Room.Placement;
+                    var pose = fit.Pose;
+                    float halfWidth = fit.Columns * fit.Pitch * .5f;
+                    float halfDepth = fit.Rows * fit.Pitch * .5f;
+                    var eye = pose.position + pose.rotation * new Vector3(-halfWidth * .5f, 1.5f, halfDepth - .6f);
+                    var floorEdge = pose.position + pose.rotation * new Vector3(0f, 0f, halfDepth + .3f);
+                    camera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(floorEdge - eye, Vector3.up));
                 }
                 else
                 {

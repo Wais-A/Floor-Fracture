@@ -1,6 +1,6 @@
 # Floor Fracture
 
-A solo mixed-reality survival game for Meta Quest 3. Step off cracking glass before the countdown reaches zero. Calm water covers the scanned floor around the glass. Real walls and furniture stay in view as neighboring panes open into shafts.
+A solo mixed-reality survival game for Meta Quest 3. Step off cracking glass before the countdown reaches zero. Staggered shaft-style brick covers the scanned floor around the glass. Live Quest depth keeps real furniture in front of the masonry. Real walls and furniture stay in view as neighboring panes open into shafts.
 
 [Main project document](./FLOOR_FRACTURE.md) · [Implementation checklist](<./Floor Fracture — Master Project Checklist.md>) · [Course design PDF](<./Docs/Floor Fracture Design Document.pdf>)
 
@@ -33,14 +33,21 @@ The default output is `Builds/Quest/FloorFracture.apk`. A standalone batch build
 
 ## Reproduce and verify
 
-- **Editor fixture.** Enter Play Mode. It uses MRUK's Rec Room fixture with visible floor and furniture outlines. With desktop input active, walk with WASD, look with the arrow keys, use Q/E for left/right grip, and click or use the numbered menu choices.
+- **Meta XR Simulator.** Enable the standalone simulator, open `Assets/FloorFracture/Scenes/FloorFracture.unity` in Unity, and enter Play Mode. The game appears in the separate Meta XR Simulator **Left eye** viewport. Unity keeps rendering when that window has focus. The Mac simulator uses its own scanned room and Meta’s invisible furniture occluder. [Simulator verification](<./Docs/Verification/Brick floor simulator.json>)
+- **Offline Editor fixture.** With the simulator disconnected, enter Play Mode. It uses MRUK's Rec Room fixture with visible floor and furniture outlines. With desktop input active, walk with WASD, look with the arrow keys, use Q/E for left/right grip, and click or use the numbered menu choices.
 - **Seeded rounds.** In an Editor or development build choose **Development → Seed 379 · level 1**. On a 4×4 footprint, start in cell 0 (local negative X, negative Z). Follow cells 1, 2, 3, 7, 6 to see Classic, Memory and Last Tile. With the level 3 control, wave 2 may be reproduced on the same footprint from cell 1 with a slider over the old cell 0 and stationary safety in cell 2. Stay over the opening while the moving pane is away to test a miss.
 - **Endings.** Choose **Development → Next ending** until the desired name appears, then **Preview loss**. For the player path, stay on the starting pane through zero. A retail build selects endings from its independent shuffle.
 - **Checks.** Use **Tools → Floor Fracture → Run board rule checks** for the deterministic planner and **Verify gameplay in Play Mode** for the fixture, real physics, deadlines and replay flow. Reports appear under `Builds/Verification/`. On Quest use the [playtest sheet](<./Docs/Quest playtest.md>) and [performance guide](<./Docs/Quest performance.md>).
 
 ## Verification and roadmap
 
-The first headset trial verified aligned passthrough glass, hand input, safe movement, shattering and a deliberate loss. Wais found the board cramped and the descent unconvincing. The next trial uses the scanned area to grow both the board and its panes, and separates descent from impact. After the gameplay review, Wais will choose a voice for tutorial and results lines that will play offline. A results explanation is a later AI experiment. [Physical test record](<./Docs/Verification/Quest 3 playtest.md>) · [Building Blocks review](<./Docs/Meta Building Blocks.md>)
+The first headset trial verified aligned passthrough glass, hand input, safe movement, shattering and a deliberate loss. Wais found the board cramped and the descent unconvincing. The subsequent 7 × 2 water prototype left spare space beside the board and the blue floor flickered on Quest. Wais confirmed brick on the floor with real furniture visible in front on the signed Quest build. This revision also favors more sideways movement, recalls an open menu after a system recenter and accelerates the five-metre fall at 9.8 m/s². After the gameplay review, Wais will choose a voice for tutorial and results lines that will play offline. A results explanation is a later AI experiment. [Physical test record](<./Docs/Verification/Quest 3 playtest.md>) · [Building Blocks review](<./Docs/Meta Building Blocks.md>)
+
+## Brick floor preview
+
+![Brick paving meeting the glass at player height in the MRUK Rec Room](./Docs/Media/brick-player-height.png)
+
+The blue lines in this offline fixture mark the simulated room geometry. In the headset, passthrough supplies the view of the furniture. [Brick and furniture checks](<./Docs/Verification/Brick floor Editor playthrough.json>) · [Brick Quest APK](<./Builds/Quest/Brick-floor/FloorFracture.apk>)
 
 ## Views from the revised Unity playthrough
 

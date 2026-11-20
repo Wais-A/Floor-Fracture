@@ -6,7 +6,7 @@ Wais Almakaleh · CSCI 379, Design and Development for XR · Meta Quest 3
 
 ## What the player sees
 
-The player sees their real walls and furniture. Calm water fills the scanned floor around a rectangle of smoky glass laid flush with the ground. A small ring marks the pane under the player's head. A number floats near the far edge. Cracked edges pulse while the timer counts down. At zero every marked pane breaks together. From a neighboring safe square, the player sees fitted shards fall into the opening. If their own support gives way, the shaft grows around them, a surprise ending plays, the view fades to black, and a results panel offers Restart and Quit.
+The player sees their real walls and furniture. Matte brown-gray bricks fill the visible scanned floor around a rectangle of smoky glass. The furniture sits on the masonry, with floor visible between individual chair legs. A small ring marks the pane under the player's head. A number floats near the far edge. Cracked edges pulse while the timer counts down. At zero every marked pane breaks together. From a neighboring safe square, the player sees fitted shards fall into the opening. If their own support gives way, the shaft grows around them, a surprise ending plays, the view fades to black, and a results panel offers Restart and Quit.
 
 ## Why this Unity stack
 
@@ -20,8 +20,8 @@ Wais approved Unity `6000.6.9f1`. The project uses URP `17.6.0`, Meta XR `209.0.
 ## First minute
 
 1. Load the captured room and ask for spatial data when needed. The player can start Space Setup if the headset has no usable room.
-2. Meta's Find Spawn Positions block proposes patches in the saved scan. The board fitter checks the whole rectangle against the floor perimeter and scanned obstructions, with 40 cm on all sides. Small rooms can use 50 cm square panes. The next Quest trial grows both pane width (up to 67 cm) and the number of panes (up to eight along each axis). Welcome shows the measured dimensions over the fitted glass. Start is available directly. Play area offers another spot and Space Setup.
-3. Touch a menu button with one fingertip, point and pinch with a hand, or point and pull the controller trigger. The optional tutorial presents a grabbable stone and a marked pane. Letting go over the pane demonstrates the shatter. A miss returns the stone. The player then steps between two practice positions to learn the ring.
+2. Meta's Find Spawn Positions block proposes patches in the saved scan. The board fitter checks the whole rectangle against the floor perimeter and scanned obstructions, with 40 cm on all sides. Small rooms can use 50 cm square panes. The next Quest trial grows both pane width (up to 67 cm) and the number of panes (up to eight along each axis). Choose the fit that gives the most room to move between outer pane centers while preserving the 40 cm clearance. Welcome shows the measured dimensions over the fitted glass. Start is available directly. Play area offers another spot and Space Setup.
+3. Touch a menu button with one fingertip, point and pinch with a hand, or point and pull the controller trigger. An open menu returns just in front of the player after a Quest system recenter. The optional tutorial presents a grabbable stone and a marked pane. Letting go over the pane demonstrates the shatter. A miss returns the stone. The player then steps between two practice positions to learn the ring.
 4. Stand on an intact pane and start the first Classic wave. Its five-second countdown gives the player time to find a stationary one-step route. Moving early keeps the original timer running.
 
 ## Wave rules
@@ -33,7 +33,7 @@ Wais approved Unity `6000.6.9f1`. The project uses URP `17.6.0`, Meta XR `209.0.
 
 ## Loss and replay
 
-On a full-motion loss, the player should see the tile break, successive ledges pass at eye level and the landing surface approach from below. After contact, water slowly passes eye height with bubbles and muffled sound, or flames and embers surround the player. The first headset build made the liquid rise while the player felt stationary. Wais will review the revised descent. Reduced motion fades into a stationary reveal and Skip goes to results. A separate shuffle selects water, lava, crystal, space, sand or snow, with no immediate repeat between shuffles. Crystal lights travel around the shaft, space opens into stars, sand fills a buried chamber, and snow builds to a whiteout. Each ends in black before results. Restart clears the run and restores passthrough.
+On a full-motion loss, the player should see the tile break, successive ledges pass at eye level and the landing surface approach from below. After contact, water slowly passes eye height with bubbles and muffled sound, or flames and embers surround the player. The headset trials made the landing seem immediate or the descent too slow. Full motion now starts from rest and accelerates visually at 9.8 m/s², covering five metres in about 1.01 s. The tracked eyes stay at the player’s physical pose. Reduced motion fades into a stationary reveal and Skip goes to results. A separate shuffle selects water, lava, crystal, space, sand or snow, with no immediate repeat between shuffles. Crystal lights travel around the shaft, space opens into stars, sand fills a buried chamber, and snow builds to a whiteout. Each ends in black before results. Restart clears the run and restores passthrough.
 
 ## AI after the core headset milestone
 
@@ -43,13 +43,13 @@ Before an AI trial, Wais chooses the feature and provider. Meta's SDK supports d
 
 The installed 209 `UnityInferenceEngineProvider` implements text-only chat and requires a compatible model and tokenizer. That makes the results coach a concrete offline experiment. The installed Text To Speech block has OpenAI and ElevenLabs providers for generating the clips during authoring. The shipped clips can play from the APK with networking off. Test the coach on a known breaking start, a Memory recall error and an expired gap grace. The answer must match the recorded cause in every case, and the ordinary Results controls must work while it runs.
 
-## Water around the playable glass
+## Brick around the playable glass
 
-Once a room scan supplies a valid board, calm teal water covers the rest of the scanned floor up to the room's actual edges. The glass grid sits like a platform in that water. The visual stops at the outside edge of the grid. The glass, cracked panes and open shafts keep their own appearance. The 40 cm clearance margin still belongs to the space reserved around play. Water in that margin is scenery and never counts as a safe tile.
+Dry, warm brown-gray brick starts at the glass perimeter and runs to each edge of the scanned floor. The half-brick offset and recessed mortar match the fall shaft. Each course is 27 cm deep and each brick is 54 cm long. Room-scale coordinates keep joints continuous across floor patches. The decorative brick in the clearance margin provides no playable support.
 
-Use the Meta MRUK **Effect Mesh** block with the **Floor** label and the approved Floor Zone water texture. A board-sized opening follows the fitted rectangle when it moves or rotates. Real walls, ceilings and furniture stay visible in passthrough. Hide the water whenever the scan becomes invalid or the game needs a clear room view. Wais chose water alone for the first version and will decide about wall styling later. [Meta Effect Mesh](https://developers.meta.com/vr/documentation/unity/unity-mr-utility-kit-manage-scene-data/) · [Meta Floor Zone](https://developers.meta.com/vr/documentation/unity/unity-sample-mruk-floor-zone/)
+Meta’s MRUK **Effect Mesh** builds the surface from floor anchors. Meta’s **Occlusion** block supplies live per-eye depth so a couch, chair legs and a trash can appear in front of the brick. Open space between chair legs and the spot a bin just vacated reveal the floor finish. Quest shows the real floor while the depth provider is unavailable. The glass footprint, including holes, stays open through the surround. Wall treatment awaits Wais’s review. [Meta floor meshes](https://developers.meta.com/vr/documentation/unity/unity-mr-utility-kit-manage-scene-data/) · [Meta depth mask sample](https://developers.meta.com/vr/documentation/unity/unity-sample-depth-api/)
 
-The overhead Unity render shows the 6 × 3 board in Meta’s Rec Room fixture. The thin lines around the perimeter and furniture are the Editor’s room-scan preview. [View the whole floor](<./Docs/Media/whole-room-water.png>) · [Editor verification](<./Docs/Verification/Surrounding floor Editor playthrough.json>)
+The Editor checks cover a couch profile, the gap between two chair legs and two locations for a bin. In the standalone simulator, the High-ceiling Room supplied 25 anchors and fitted a 5 × 8 board. The physical Quest trial checks object edges, flicker and the fit in Wais’s room. [Brick at player height](<./Docs/Media/brick-player-height.png>) · [Simulator measurements](<./Docs/Verification/Brick floor simulator.json>) · [Quest build](<./Docs/Verification/Brick floor Quest build.json>)
 
 ## Where the game lives
 

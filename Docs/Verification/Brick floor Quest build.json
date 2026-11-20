@@ -1,0 +1,60 @@
+{
+  "buildGuid": "5674695daa384caba05d08902ec9fdc7",
+  "completedUtc": "2026-11-20T02:13:38.3645200Z",
+  "result": "Succeeded",
+  "unity": "6000.6.9f1",
+  "package": "com.wa003.floorfracture",
+  "profile": "Meta Quest",
+  "gameplayScene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "errors": 0,
+  "warnings": 54,
+  "apkBytes": 156414082,
+  "apk": "Builds/Quest/Brick-floor/FloorFracture.apk",
+  "sha256": "f6e0fc914da3b3d09e48f6cd298f3c6ad6d86042a8918f8e6c0bc5eff89d1bad",
+  "minimumApi": 32,
+  "targetApi": 34,
+  "abis": [
+    "arm64-v8a"
+  ],
+  "signatureV2": true,
+  "nativeLibrariesAligned16KiB": true,
+  "zipCRC": true,
+  "scenePermission": true,
+  "handTrackingPermission": true,
+  "floorBlock": "Meta MRUK Effect Mesh, FLOOR only",
+  "occlusion": "Meta EnvironmentDepthManager, soft occlusion with floor depth mask",
+  "vulkanBrickVariants": 6,
+  "headsetInstallation": {
+    "device": "Meta Quest 3",
+    "localInstallTime": "2026-11-19 21:28:07 America/New_York",
+    "installedApkSha256": "f6e0fc914da3b3d09e48f6cd298f3c6ad6d86042a8918f8e6c0bc5eff89d1bad",
+    "activity": "com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity",
+    "spatialDataPermissionGranted": true,
+    "runtimeBuildGuid": "5674695daa384caba05d08902ec9fdc7",
+    "graphics": "Vulkan",
+    "welcomeGrid": {
+      "columns": 2,
+      "rows": 2,
+      "pitchMetres": 0.573
+    },
+    "metricsFile": "Builds/Quest/Brick-floor/20261120T022833368Z-95bab8b2.csv",
+    "depthStartup": "The provider started. An initial frame reported XR_ERROR_CALL_ORDER_INVALID. The player subsequently saw the floor bricks and foreground furniture."
+  },
+  "wearerReview": {
+    "floorAndFurniture": "Brick on the floor, furniture clearly in front",
+    "movingBin": "A separate physical before-and-after move has not been identified."
+  },
+  "packedAssets": {
+    "Assets/FloorFracture/Scripts/Room/SurroundingBrick.mat": {
+      "bytes": 244,
+      "stream": "sharedassets0.assets",
+      "sha256": "d6e67e1942d143d91dbb2725708cbae0071dfeeda437916e552085f50b825202"
+    },
+    "Assets/FloorFracture/Scripts/Room/SurroundingBrick.shader": {
+      "bytes": 10776,
+      "stream": "sharedassets0.assets",
+      "sha256": "cd513df10375273a851574800cef77df36341a03c0733c5c97817fb67b202061"
+    }
+  },
+  "packagedFloorBlockVerified": true
+}

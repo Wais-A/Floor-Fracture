@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Meta.XR.EnvironmentDepth;
 using Meta.XR.MRUtilityKit;
 using UnityEngine;
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -17,11 +18,15 @@ namespace FloorFracture
     {
         [SerializeField] private OVRCameraRig rig;
         [SerializeField] private FindSpawnPositions floorSpawns;
-        [SerializeField] private EffectMesh floorWaterMesh;
+        [UnityEngine.Serialization.FormerlySerializedAs("floorWaterMesh")]
+        [SerializeField] private EffectMesh floorEffect;
         [SerializeField] private Shader outlineShader = null;
 #if UNITY_EDITOR
-        [Tooltip("Load the installed MRUK Rec Room sample and draw its scanned outlines in Play Mode.")]
+        [Tooltip("Use the MRUK Rec Room fixture during desktop Play Mode when no OpenXR display is active.")]
         [SerializeField] private bool useEditorFixture = true;
+        private bool usingFixture;
+        private bool restoreBackgroundSetting;
+        private SimulatorRoomOcclusion simulatorOcclusion;
         internal const string FixturePath = "Packages/com.meta.xr.mrutilitykit/Core/Rooms/Prefabs/Other/OtherRoom02_RecRoom.prefab";
 #endif
         public RoomPlacementStatus Status { get; private set; } = RoomPlacementStatus.Loading;
@@ -37,7 +42,12 @@ namespace FloorFracture
         private MRUKRoom room;
         private List<RoomFloor> floors;
         private RoomOutlineView outlines;
-        private Material floorWater;
+        private Material floorMaterial;
+        private EnvironmentDepthManager environmentDepth;
+        private readonly List<MeshFilter> floorMasks = new List<MeshFilter>();
+        // Meta's mask bias is a fraction of eye distance. At 3 m this protects a 6 cm floor band.
+        private const float FloorDepthTolerance = .02f;
+        private float previousMaskBias;
         private MRUKRoom decoratedRoom;
         private int decoratedRevision = -1;
         private bool busy;
@@ -49,7 +59,7 @@ namespace FloorFracture
             {
                 if (!mruk || !room) return false;
 #if UNITY_EDITOR
-                if (useEditorFixture) return true;
+                if (usingFixture) return true;
 #endif
                 var eye = rig ? rig.centerEyeAnchor : null;
                 return eye && room.IsLocal && mruk.IsWorldLockActive && mruk.GetCurrentRoom() == room && room.IsPositionInRoom(eye.position, false);
@@ -61,10 +71,13 @@ namespace FloorFracture
             mruk = GetComponent<MRUK>();
             if (!rig) rig = FindAnyObjectByType<OVRCameraRig>();
             outlines = new RoomOutlineView(transform, outlineShader);
-            if (floorWaterMesh && floorWaterMesh.MeshMaterial)
+            if (floorEffect && floorEffect.MeshMaterial)
             {
-                floorWater = new Material(floorWaterMesh.MeshMaterial);
-                floorWaterMesh.MeshMaterial = floorWater;
+                floorMaterial = new Material(floorEffect.MeshMaterial);
+                floorEffect.MeshMaterial = floorMaterial;
+                // A Quest without live depth shows passthrough until furniture can occlude the brick.
+                floorMaterial.SetFloat("_RequireEnvironmentDepth", Application.platform == RuntimePlatform.Android ? 1f : 0f);
+                environmentDepth = FindAnyObjectByType<EnvironmentDepthManager>(FindObjectsInactive.Include);
             }
         }
 
@@ -82,39 +95,82 @@ namespace FloorFracture
             mruk.RoomUpdatedEvent.RemoveListener(RoomChanged);
             mruk.RoomRemovedEvent.RemoveListener(RoomChanged);
             RemoveAnchorListeners();
-            ShowFloorWater(false);
+            ShowFloorSurface(false);
         }
 
         private void OnDestroy()
         {
             outlines?.Dispose();
-            if (floorWater) Destroy(floorWater);
+            if (floorMaterial) Destroy(floorMaterial);
+#if UNITY_EDITOR
+            if (restoreBackgroundSetting) Application.runInBackground = false;
+            if (simulatorOcclusion) Destroy(simulatorOcclusion.gameObject);
+#endif
         }
 
-        public void ShowFloorWater(bool visible)
+        public void ShowFloorSurface(bool visible)
         {
-            if (!floorWaterMesh || !floorWater) return;
-            if (!visible || Status != RoomPlacementStatus.Confirmed || !room)
+            if (!visible || Status != RoomPlacementStatus.Confirmed || !room || !floorEffect || !floorMaterial)
             {
-                floorWaterMesh.HideMesh = true;
+                RemoveFloorMasks();
+                if (floorEffect) floorEffect.HideMesh = true;
+#if UNITY_EDITOR
+                if (simulatorOcclusion) simulatorOcclusion.gameObject.SetActive(false);
+#endif
                 return;
             }
 
             // The shader clips the whole grid, including panes that have already fallen.
             var fit = Placement;
             float angle = fit.AngleDegrees * Mathf.Deg2Rad;
-            floorWater.SetVector("_BoardFrame", new Vector4(fit.Center.x, fit.Center.y, Mathf.Cos(angle), Mathf.Sin(angle)));
-            floorWater.SetVector("_BoardHalfSize", new Vector4(fit.Columns * fit.Pitch * .5f, fit.Rows * fit.Pitch * .5f, fit.FloorHeight, 0));
+            floorMaterial.SetVector("_BoardFrame", new Vector4(fit.Center.x, fit.Center.y, Mathf.Cos(angle), Mathf.Sin(angle)));
+            floorMaterial.SetVector("_BoardHalfSize", new Vector4(fit.Columns * fit.Pitch * .5f, fit.Rows * fit.Pitch * .5f, fit.FloorHeight, 0));
             if (decoratedRoom != room || decoratedRevision != revision)
             {
                 // Apply the same reviewed scan as the glass, including every native floor patch.
-                floorWaterMesh.DestroyMesh();
+                RemoveFloorMasks();
+                floorEffect.DestroyMesh();
                 foreach (var floor in room.FloorAnchors)
-                    if (floor) floorWaterMesh.CreateEffectMesh(floor);
+                    if (floor) floorEffect.CreateEffectMesh(floor);
+#if UNITY_EDITOR
+                if (simulatorOcclusion) Destroy(simulatorOcclusion.gameObject);
+                simulatorOcclusion = !usingFixture && !EnvironmentDepthManager.IsSupported
+                    ? SimulatorRoomOcclusion.Create(room, fit.FloorHeight, floorMaterial.renderQueue) : null;
+                floorMaterial.SetFloat("_RequireEnvironmentDepth", usingFixture || simulatorOcclusion ? 0f : 1f);
+#endif
                 decoratedRoom = room;
                 decoratedRevision = revision;
             }
-            floorWaterMesh.HideMesh = false;
+#if UNITY_EDITOR
+            if (simulatorOcclusion) simulatorOcclusion.gameObject.SetActive(true);
+#endif
+            floorEffect.HideMesh = false;
+            if (!environmentDepth || floorMasks.Count > 0) return;
+            // Meta's DepthMask sample removes matching scene surfaces from live depth.
+            // Only register floor meshes here so foreground hands and furniture can still occlude brick.
+            foreach (var patch in floorEffect.EffectMeshObjects.Values)
+            {
+                if (!patch.effectMeshGO || !patch.effectMeshGO.TryGetComponent<MeshFilter>(out var filter)) continue;
+                if (environmentDepth.MaskMeshFilters.Contains(filter)) continue;
+                environmentDepth.MaskMeshFilters.Add(filter);
+                floorMasks.Add(filter);
+            }
+            if (floorMasks.Count > 0)
+            {
+                previousMaskBias = environmentDepth.MaskBias;
+                environmentDepth.MaskBias = FloorDepthTolerance;
+            }
+        }
+
+        private void RemoveFloorMasks()
+        {
+            if (environmentDepth && floorMasks.Count > 0)
+            {
+                foreach (var filter in floorMasks) environmentDepth.MaskMeshFilters.Remove(filter);
+                if (Mathf.Approximately(environmentDepth.MaskBias, FloorDepthTolerance))
+                    environmentDepth.MaskBias = previousMaskBias;
+            }
+            floorMasks.Clear();
         }
 
         public void Retry()
@@ -145,7 +201,7 @@ namespace FloorFracture
             bool show = visible && Status == RoomPlacementStatus.Confirmed;
             List<RoomFloor> fixture = null;
 #if UNITY_EDITOR
-            if (show && useEditorFixture) fixture = floors;
+            if (show && usingFixture) fixture = floors;
 #endif
             outlines.Show(show, Placement, fixture);
         }
@@ -183,7 +239,17 @@ namespace FloorFracture
                     floors = null;
                     MRUK.LoadDeviceResult result;
 #if UNITY_EDITOR
-                    if (useEditorFixture)
+                    // A simulator window can keep its OpenXR runtime while the Editor loses display focus.
+                    bool runtimeHead = !Application.isBatchMode && (UnityEngine.XR.XRSettings.isDeviceActive ||
+                        (OVRPlugin.initialized && OVRPlugin.GetSystemHeadsetType() != OVRPlugin.SystemHeadset.None));
+                    usingFixture = useEditorFixture && !runtimeHead;
+                    if (runtimeHead && !Application.runInBackground)
+                    {
+                        // The external simulator owns focus while the player looks around. Keep Unity submitting frames.
+                        Application.runInBackground = true;
+                        restoreBackgroundSetting = true;
+                    }
+                    if (usingFixture)
                     {
                         var fixture = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(FixturePath);
                         if (!fixture) throw new InvalidOperationException("The installed MRUK Rec Room prefab is missing.");
@@ -227,7 +293,7 @@ namespace FloorFracture
                     {
                         var current = mruk.GetCurrentRoom();
 #if UNITY_EDITOR
-                        if (!current && useEditorFixture && mruk.Rooms.Count == 1) current = mruk.Rooms[0];
+                        if (!current && usingFixture && mruk.Rooms.Count == 1) current = mruk.Rooms[0];
 #endif
                         SetRoom(current);
                     }
@@ -430,10 +496,10 @@ namespace FloorFracture
         {
             Status = next;
             Message = message;
-            ShowFloorWater(next == RoomPlacementStatus.Confirmed);
+            ShowFloorSurface(next == RoomPlacementStatus.Confirmed);
             bool showFixture = false;
 #if UNITY_EDITOR
-            showFixture = useEditorFixture && next == RoomPlacementStatus.NoFit;
+            showFixture = usingFixture && next == RoomPlacementStatus.NoFit;
 #endif
             outlines.Show(false, Placement, showFixture ? floors : null);
             Changed?.Invoke();

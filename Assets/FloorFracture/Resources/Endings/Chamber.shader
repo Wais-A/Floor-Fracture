@@ -28,6 +28,7 @@ Shader "Floor Fracture/Ending chamber"
             #pragma fragment Frag
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Assets/FloorFracture/Scripts/Room/ShaftBrickwork.hlsl"
             CBUFFER_START(UnityPerMaterial)
                 half4 _Tint;
                 float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity;
@@ -107,9 +108,8 @@ Shader "Floor Fracture/Ending chamber"
                 if (_Role == 1)
                 {
                     float row = -i.shaftHeight/.27;
-                    float seams = min(frac(row),1-frac(row));
-                    float brick = frac(i.uv.x*4 + floor(row)*.5 + i.seed*.19);
-                    float mortar = smoothstep(.008,.041,min(seams,min(brick,1-brick)));
+                    float2 cell = ShaftBrickCell(float2(i.uv.x * 4, row), i.seed * .19);
+                    float mortar = ShaftBrickFace(cell, 0);
                     color *= (.64+.36*mortar) * (.82+.18*sin(floor(row)*2.41+i.seed));
                     if (_Theme == 1)
                     {

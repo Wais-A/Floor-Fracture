@@ -47,29 +47,61 @@ namespace FloorFracture
     public static class BoardFitter
     {
         private const float PitchPrecision = 0.0005f;
-        private const float ScoreTolerance = 0.00001f;
+
+        private readonly struct Coverage : IComparable<Coverage>
+        {
+            // Measure the rectangle between the outermost pane centers: a two-row
+            // strip offers one sideways step, a three-row board offers two. Round
+            // areas to cm² and lengths to mm so equivalent rotated fits tie.
+            private readonly int travelAreaCm2, shortTravelMm, glassAreaCm2;
+
+            public Coverage(int columns, int rows, float pitch)
+            {
+                float paneAreaCm2 = pitch * pitch * 10000f;
+                travelAreaCm2 = Mathf.RoundToInt((columns - 1) * (rows - 1) * paneAreaCm2);
+                shortTravelMm = Mathf.RoundToInt((Math.Min(columns, rows) - 1) * pitch * 1000f);
+                glassAreaCm2 = Mathf.RoundToInt(columns * rows * paneAreaCm2);
+            }
+
+            public int CompareTo(Coverage other)
+            {
+                int travel = travelAreaCm2.CompareTo(other.travelAreaCm2);
+                if (travel != 0) return travel;
+                int width = shortTravelMm.CompareTo(other.shortTravelMm);
+                return width != 0 ? width : glassAreaCm2.CompareTo(other.glassAreaCm2);
+            }
+
+            public float MinimumCompetitivePitch(int columns, int rows)
+            {
+                // Start just below this rounded travel area so the width and glass
+                // area tie breakers remain available at the same coverage.
+                return Mathf.Sqrt(Math.Max(0, travelAreaCm2 - 1) / (10000f * (columns - 1) * (rows - 1)));
+            }
+        }
 
         private readonly struct Candidate
         {
             public readonly Frame Frame;
-            public readonly int Columns, Rows;
-            public readonly float MaximumPitch, MaximumScore;
-            public Candidate(Frame frame, int columns, int rows, float maximumPitch)
+            public readonly int Columns, Rows, Order;
+            public readonly float MaximumPitch;
+            public readonly Coverage MaximumCoverage;
+            public Candidate(Frame frame, int columns, int rows, float maximumPitch, int order)
             {
                 Frame = frame;
                 Columns = columns;
                 Rows = rows;
+                Order = order;
                 MaximumPitch = maximumPitch;
-                MaximumScore = Score(columns * rows, maximumPitch);
+                MaximumCoverage = new Coverage(columns, rows, maximumPitch);
             }
         }
 
-        // Weight covered glass area by the playable area of one pane. At equal physical
-        // coverage this favors a wider step, while a long narrow room can still add columns.
-        private static float Score(int cells, float pitch)
+        private static int CompareCenters(Vector2 a, Vector2 b, Vector2 target)
         {
-            float paneArea = pitch * pitch;
-            return cells * paneArea * paneArea;
+            int distance = (a - target).sqrMagnitude.CompareTo((b - target).sqrMagnitude);
+            if (distance != 0) return distance;
+            int x = a.x.CompareTo(b.x);
+            return x != 0 ? x : a.y.CompareTo(b.y);
         }
 
         public static bool TryFind(IReadOnlyList<RoomFloor> floors, Vector2 preferredCenter, out BoardPlacement placement,
@@ -81,9 +113,8 @@ namespace FloorFracture
             if (suggestedCenters != null)
                 foreach (var suggestion in suggestedCenters)
                     if (FloorGeometry.Finite(suggestion)) suggestions.Add(suggestion);
-            suggestions.Sort((a, b) => (a - preferredCenter).sqrMagnitude.CompareTo((b - preferredCenter).sqrMagnitude));
+            suggestions.Sort((a, b) => CompareCenters(a, b, preferredCenter));
             var candidates = new List<Candidate>();
-            int frameOrder = 0;
             foreach (var floor in floors)
             {
                 cancellation.ThrowIfCancellationRequested();
@@ -95,7 +126,7 @@ namespace FloorFracture
                 foreach (float angle in angles)
                 {
                     var frame = new Frame(floor, angle);
-                    frame.PrepareSearch(preferredCenter, suggestions, frameOrder++);
+                    frame.PrepareSearch(preferredCenter, suggestions);
                     // Every legal footprint contains this one. In a cluttered scan a
                     // single failed search removes this orientation for all 49 shapes.
                     if (frame.PitchLimit(BoardState.MinAxis, BoardState.MinAxis) < BoardState.MinPitch - FloorGeometry.Epsilon ||
@@ -106,22 +137,26 @@ namespace FloorFracture
                     {
                         float upper = frame.PitchLimit(columns, rows);
                         if (upper >= BoardState.MinPitch - FloorGeometry.Epsilon)
-                            candidates.Add(new Candidate(frame, columns, rows, Mathf.Max(BoardState.MinPitch, upper)));
+                            candidates.Add(new Candidate(frame, columns, rows, Mathf.Max(BoardState.MinPitch, upper),
+                                candidates.Count));
                     }
                 }
             }
             candidates.Sort((a, b) =>
             {
-                int score = b.MaximumScore.CompareTo(a.MaximumScore);
-                return score != 0 ? score : a.Frame.Order.CompareTo(b.Frame.Order);
+                int coverage = b.MaximumCoverage.CompareTo(a.MaximumCoverage);
+                return coverage != 0 ? coverage : a.Order.CompareTo(b.Order);
             });
             float minimumArea = LegacyCoverage(candidates, cancellation);
-            float bestScore = 0f, bestDistance = float.PositiveInfinity;
+            Coverage bestCoverage = default;
+            float bestDistance = float.PositiveInfinity;
+            int bestOrder = int.MaxValue;
             foreach (var candidate in candidates)
             {
                 cancellation.ThrowIfCancellationRequested();
-                if (candidate.MaximumScore < bestScore - ScoreTolerance) break;
-                if (candidate.MaximumScore <= bestScore && bestDistance == 0f) break;
+                int upperComparison = candidate.MaximumCoverage.CompareTo(bestCoverage);
+                if (upperComparison < 0 ||
+                    (upperComparison == 0 && bestDistance == 0f && candidate.Order >= bestOrder)) break;
                 int columns = candidate.Columns, rows = candidate.Rows;
                 Frame frame = candidate.Frame;
                 float pitch = candidate.MaximumPitch;
@@ -131,7 +166,7 @@ namespace FloorFracture
                 {
                     // Smaller rectangles nest inside larger ones. Only search pitches that
                     // can improve the current winner and retain an explicitly certified fit.
-                    float cutoff = Mathf.Sqrt(Mathf.Sqrt(Mathf.Max(0f, bestScore - ScoreTolerance) / (columns * rows)));
+                    float cutoff = bestCoverage.MinimumCompetitivePitch(columns, rows);
                     float low = Mathf.Max(coveragePitch, Mathf.Max(BoardState.MinPitch, cutoff)), high = pitch;
                     if (low >= high || !frame.TryFindCenter(HalfSize(columns, rows, low), cancellation, out center))
                         continue;
@@ -149,14 +184,17 @@ namespace FloorFracture
                 }
                 if (columns * rows * pitch * pitch < minimumArea) continue;
                 Vector2 world = frame.ToWorld(center);
-                float score = Score(columns * rows, pitch), distance = (world - preferredCenter).sqrMagnitude;
-                if (score < bestScore - ScoreTolerance ||
-                    (Mathf.Abs(score - bestScore) <= ScoreTolerance && distance >= bestDistance)) continue;
-                bestScore = score;
+                var coverage = new Coverage(columns, rows, pitch);
+                int comparison = coverage.CompareTo(bestCoverage);
+                float distance = (world - preferredCenter).sqrMagnitude;
+                if (comparison < 0 || (comparison == 0 &&
+                    (distance > bestDistance || (distance == bestDistance && candidate.Order >= bestOrder)))) continue;
+                bestCoverage = coverage;
                 bestDistance = distance;
+                bestOrder = candidate.Order;
                 placement = new BoardPlacement(world, frame.Height, frame.Angle, columns, rows, pitch);
             }
-            return bestScore > 0f;
+            return bestOrder != int.MaxValue;
         }
 
         private static float LegacyCoverage(List<Candidate> candidates, CancellationToken cancellation)
@@ -257,7 +295,6 @@ namespace FloorFracture
         private sealed class Frame
         {
             public readonly float Height, Angle;
-            public int Order { get; private set; }
             private readonly Vector2 right, forward;
             private readonly Shape floor;
             private readonly List<Shape> obstacles = new List<Shape>();
@@ -279,10 +316,9 @@ namespace FloorFracture
             public Vector2 ToLocal(Vector2 point) => new Vector2(Vector2.Dot(point, right), Vector2.Dot(point, forward));
             public Vector2 ToWorld(Vector2 point) => right * point.x + forward * point.y;
 
-            public void PrepareSearch(Vector2 preferredCenter, List<Vector2> suggestedCenters, int order)
+            public void PrepareSearch(Vector2 preferredCenter, List<Vector2> suggestedCenters)
             {
                 preferred = ToLocal(preferredCenter);
-                Order = order;
                 foreach (var suggestion in suggestedCenters) suggestions.Add(ToLocal(suggestion));
                 // The board's projection onto every floor-edge normal must fit between
                 // the floor's extreme points. In particular, a diagonal frame cannot
@@ -384,7 +420,7 @@ namespace FloorFracture
                     candidates.Add(contact.A);
                     candidates.Add(contact.B);
                 }
-                candidates.Sort((a, b) => (a - target).sqrMagnitude.CompareTo((b - target).sqrMagnitude));
+                candidates.Sort((a, b) => CompareCenters(a, b, target));
                 foreach (var candidate in candidates)
                 {
                     if (!Admits(candidate, half)) continue;

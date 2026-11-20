@@ -110,7 +110,7 @@ internal sealed class FallScenery
     }
 
     // Returns the submersion factor at the viewer's actual height.
-    internal float Draw(float age, float progress, bool reduced, float travel)
+    internal float Draw(float age, float progress, bool reduced, float travel, out bool entered)
     {
         bool visible = !reduced || age >= .32f;
         // The chamber and its destination are one moving world until the feet reach the surface.
@@ -167,6 +167,7 @@ internal sealed class FallScenery
         properties.SetFloat(Reveal,progress); properties.SetFloat(Level,level); properties.SetFloat(Motion,motion);
         Vector3 center = world.position;
         float rimY = center.y+top;
+        entered = reduced ? visible : rimY >= head.position.y;
         properties.SetVector(Mouth,new Vector4(center.x,rimY,center.z,mouthRadius));
         properties.SetVector(MouthRight,new Vector4(mouthRight.x,mouthRight.z,mouthRadius/radius,reduced ? 0 : 1));
         float overhead = reduced ? 1 : Ease(.06f,1.35f,rimY-head.position.y);

@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SurroundingWater
+  m_Name: SurroundingBrick
   m_Shader: {fileID: 4800000, guid: 920f68085412d4e298d2452d27c0fd6f, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -22,17 +22,14 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs:
-    - _WaterNormal:
-        m_Texture: {fileID: 2800000, guid: f69beebd2a2da6841b43f611c94b457d, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+    m_TexEnvs: []
     m_Ints: []
-    m_Floats: []
+    m_Floats:
+    - _RequireEnvironmentDepth: 1
     m_Colors:
     - _BoardFrame: {r: 0, g: 0, b: 1, a: 0}
     - _BoardHalfSize: {r: 0, g: 0, b: 0, a: 0}
-    - _DeepColor: {r: 0.035, g: 0.27999997, b: 0.32999998, a: 1}
-    - _ShallowColor: {r: 0.23999995, g: 0.65999997, b: 0.67, a: 1}
+    - _BrickColor: {r: 0.49, g: 0.39, b: 0.33, a: 1}
+    - _MortarColor: {r: 0.24, g: 0.225, b: 0.21, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

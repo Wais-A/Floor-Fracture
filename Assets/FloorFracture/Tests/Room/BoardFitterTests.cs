@@ -12,13 +12,13 @@ namespace FloorFracture.Tests
         [TestCase(2.06f, 2.06f, 2, 2, 0.63f, 1.26f, 1.26f)]
         [TestCase(2.30f, 2.80f, 3, 4, 0.50f, 1.50f, 2.00f)]
         [TestCase(2.80f, 2.30f, 4, 3, 0.50f, 2.00f, 1.50f)]
-        [TestCase(3.20f, 3.60f, 3, 4, 0.67f, 2.01f, 2.68f)]
-        [TestCase(4.00f, 4.20f, 5, 5, 0.64f, 3.20f, 3.20f)]
-        [TestCase(5.60f, 5.60f, 7, 7, 0.67f, 4.69f, 4.69f)]
+        [TestCase(3.20f, 3.60f, 4, 5, 0.56f, 2.24f, 2.80f)]
+        [TestCase(4.00f, 4.20f, 6, 6, 3.20f / 6f, 3.20f, 3.20f)]
+        [TestCase(5.60f, 5.60f, 8, 8, 0.60f, 4.80f, 4.80f)]
         [TestCase(7.00f, 7.00f, 8, 8, 0.67f, 5.36f, 5.36f)]
         [TestCase(6.40f, 2.00f, 8, 2, 0.60f, 4.80f, 1.20f)]
         [TestCase(1.80f, 6.80f, 2, 8, 0.50f, 1.00f, 4.00f)]
-        public void BalancesPaneWidthAndPhysicalCoverage(float roomX, float roomZ, int columns, int rows,
+        public void FitsPlayableTravelInBothDirections(float roomX, float roomZ, int columns, int rows,
             float pitch, float glassX, float glassZ)
         {
             var floor = Floor(Rectangle(-roomX / 2, -roomZ / 2, roomX / 2, roomZ / 2));
@@ -35,6 +35,58 @@ namespace FloorFracture.Tests
         }
 
         [Test]
+        public void AddsARowWhenClearFloorExtendsAlongTheLongSide()
+        {
+            // The previous fitter centered seven 67 cm panes by two here. A further
+            // 40 cm of floor alongside the strip makes room for three 58 cm rows.
+            var floor = Floor(Rectangle(-2.75f, -1.07f, 2.75f, 1.47f));
+            var strip = new BoardPlacement(Vector2.zero, 0f, 0f, 7, 2, 0.67f);
+            var wider = new BoardPlacement(P(0f, 0.2f), 0f, 0f, 8, 3, 0.58f);
+            Assert.That(BoardFitter.Fits(floor, strip), Is.True);
+            Assert.That(BoardFitter.Fits(floor, wider), Is.True);
+
+            Assert.That(BoardFitter.TryFind(new[] { floor }, strip.Center, out var fit), Is.True);
+            Assert.That(fit.Columns, Is.EqualTo(8));
+            Assert.That(fit.Rows, Is.EqualTo(3));
+            Assert.That(fit.Pitch, Is.EqualTo(0.58f).Within(0.0001f));
+            Assert.That(fit.Center.y, Is.EqualTo(0.2f).Within(0.0001f));
+            Assert.That(BoardFitter.Fits(floor, fit), Is.True);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void KeepsTwoRowsWhenTheLongSideMeetsAWallOrFurniture(bool furniture)
+        {
+            var floor = furniture
+                ? Floor(Rectangle(-2.75f, -1.07f, 2.75f, 1.47f),
+                    Rectangle(-2.75f, 1.07f, 2.75f, 1.47f))
+                : Floor(Rectangle(-2.75f, -1.07f, 2.75f, 1.07f));
+            var wider = new BoardPlacement(P(0f, 0.2f), 0f, 0f, 8, 3, 0.58f);
+            Assert.That(BoardFitter.Fits(floor, wider), Is.False);
+            Assert.That(BoardFitter.TryFind(new[] { floor }, Vector2.zero, out var fit), Is.True);
+            Assert.That(fit.Columns, Is.EqualTo(7));
+            Assert.That(fit.Rows, Is.EqualTo(2));
+            Assert.That(fit.Pitch, Is.EqualTo(0.67f).Within(0.0001f));
+            Assert.That(BoardFitter.Fits(floor, fit), Is.True);
+            Assert.That(1.07f - fit.ToWorldXZ(0f, fit.Rows * fit.Pitch / 2f).y,
+                Is.EqualTo(BoardPlacement.Clearance).Within(0.0001f));
+        }
+
+        [Test]
+        public void EqualTravelAreaFavorsMoreSidewaysMovement()
+        {
+            var corridor = Floor(Rectangle(-2.5f, -1f, 2.5f, 1f));
+            var wider = Floor(Rectangle(4f, -1.3f, 7.2f, 1.3f));
+            // Both options cover 2.16 m² between pane centers at 60 cm per pane.
+            // The 4 × 3 allows 1.2 m of sideways travel and the 7 × 2 allows 0.6 m.
+            Assert.That(BoardFitter.TryFind(new[] { corridor, wider }, Vector2.zero, out var fit), Is.True);
+            Assert.That(fit.Columns, Is.EqualTo(4));
+            Assert.That(fit.Rows, Is.EqualTo(3));
+            Assert.That(fit.Pitch, Is.EqualTo(0.6f).Within(0.0001f));
+            Assert.That(BoardFitter.Fits(wider, fit), Is.True);
+        }
+
+        [Test]
         public void RectanglesCertifyHeadFirstThenClosestSuggestedCenterAndKeepFallback()
         {
             var floor = Floor(Rectangle(-12f, -3.08f, 12f, 3.08f), new[] { Vector2.zero });
@@ -44,6 +96,12 @@ namespace FloorFracture.Tests
             Assert.That(chosen.Columns * chosen.Rows, Is.EqualTo(64));
             Assert.That(chosen.Center, Is.EqualTo(P(4f, 0)));
             Assert.That(BoardFitter.Fits(floor, chosen), Is.True);
+            foreach (var pair in new[] { new[] { P(4f, 0), P(-4f, 0) }, new[] { P(-4f, 0), P(4f, 0) } })
+            {
+                Assert.That(BoardFitter.TryFind(new[] { floor }, Vector2.zero, out var tied,
+                    suggestedCenters: pair), Is.True);
+                Assert.That(tied.Center, Is.EqualTo(P(-4f, 0)));
+            }
             Assert.That(BoardFitter.TryFind(new[] { floor }, P(-5f, 0), out var nearby,
                 suggestedCenters: suggestions), Is.True);
             Assert.That(nearby.Center, Is.EqualTo(P(-5f, 0)));

@@ -43,7 +43,7 @@ namespace FloorFracture
             volume=PlayerPrefs.GetInt("ff.volume",3);
             sound=gameObject.AddComponent<GameSound>(); sound.SetVolume(volume/4f);
             Ending=gameObject.AddComponent<FallSequence>(); tutorial=gameObject.AddComponent<PracticeStone>();
-            Ending.ChamberEntered+=()=>{ if(BoardView) BoardView.gameObject.SetActive(false); Room.ShowFloorWater(false); };
+            Ending.ChamberEntered+=()=>{ if(BoardView) BoardView.gameObject.SetActive(false); Room.ShowFloorSurface(false); };
             Panel=gameObject.AddComponent<GamePanel>(); Panel.Initialize(Rig,sound);
 #if DEVELOPMENT_BUILD
             metrics=gameObject.AddComponent<QuestRunMetrics>();
@@ -82,7 +82,7 @@ namespace FloorFracture
         }
         void Home()
         {
-            Room.ShowFloorWater(true);
+            Room.ShowFloorSurface(true);
             Stage=GameStage.Welcome; tutorial.End(); BoardView.ClearTransient(); BoardView.gameObject.SetActive(true);
             Room.ShowClearance(true);
             var choices=new System.Collections.Generic.List<MenuChoice>{
@@ -132,7 +132,7 @@ namespace FloorFracture
         }
         void Ready(string text)
         {
-            Room.ShowFloorWater(true);
+            Room.ShowFloorSurface(true);
             Room.ShowClearance(false);
             Stage=GameStage.Ready; BoardView.gameObject.SetActive(true);
             Panel.Show("Level "+Level,text,Choice("Start wave",TryStart),Choice("Main menu",()=>{StartBoard(); Home();}));
@@ -228,7 +228,7 @@ namespace FloorFracture
         {
             State?.Pause();
             if(levelFinished) { State.RebuildLevel(); ++Level; WaveNumber=1; levelFinished=false; }
-            Stage=GameStage.Paused; BoardView.gameObject.SetActive(false); Room.ShowFloorWater(false);
+            Stage=GameStage.Paused; BoardView.gameObject.SetActive(false); Room.ShowFloorSurface(false);
             Panel.Show("Paused","Find the cleared board area. Show the glass when tracking is stable.",Choice("Show board",()=>Ready("Stand on a supported pane. Resume with a fresh countdown.")));
         }
         void BeginFall()
@@ -269,7 +269,7 @@ namespace FloorFracture
         void ShowResults()
         {
             if(Stage!=GameStage.Fall) return;
-            Room.ShowFloorWater(false);
+            Room.ShowFloorSurface(false);
             Stage=GameStage.Results; BoardView.gameObject.SetActive(false); Panel.Recenter();
             Panel.Show("Run complete",$"Level {Level}   ·   {State.WavesSurvived} waves survived\n{Ending.LastEndingName}",Choice("Restart",Restart),Choice("Quit",Quit));
         }

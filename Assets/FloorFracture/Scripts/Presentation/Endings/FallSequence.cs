@@ -5,6 +5,8 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class FallSequence : MonoBehaviour
 {
+    const float Gravity = 9.8f;
+    static readonly float FreeFallTime = Mathf.Sqrt(2f * FallScenery.ShaftDepth / Gravity);
     [SerializeField] FloorEndingSet enabledEndings = FloorEndingSet.All;
     [SerializeField] Material waterSurfaceOverride = null;
     [SerializeField] GameObject splashPrefabOverride = null;
@@ -21,7 +23,8 @@ public sealed class FallSequence : MonoBehaviour
     FloorEnding kind;
     bool reduced, hasOpening, impactPlayed, chimePlayed, entryReported;
     Vector3 opening;
-    float width, yaw, age;
+    float width, yaw;
+    double startedAt;
     int blackFrame = -1, generation;
 
     public bool IsPlaying { get; private set; }
@@ -73,6 +76,7 @@ public sealed class FallSequence : MonoBehaviour
         this.finished = finished;
         reduced = reducedMotion;
         IsPlaying = true;
+        startedAt = Time.unscaledTimeAsDouble;
         if (!supplied)
         {
             nextOpening = this.head.position - Vector3.up*1.55f;
@@ -81,7 +85,7 @@ public sealed class FallSequence : MonoBehaviour
         scenery.Begin(this.head,kind,nextOpening,nextWidth,nextYaw);
         if (emptyBag) { Blackout(); return; }
         sound.BeginFall(kind);
-        Draw();
+        Draw(0f);
     }
 
     void Update()
@@ -94,18 +98,17 @@ public sealed class FallSequence : MonoBehaviour
             if (Time.frameCount > blackFrame) Finish();
             return;
         }
-        age += Mathf.Max(0,Time.unscaledDeltaTime);
-        Draw();
+        Draw((float)(Time.unscaledTimeAsDouble - startedAt));
     }
 
-    void Draw()
+    void Draw(float age)
     {
-        float contact = reduced ? .82f : 3.15f;
-        float end = reduced ? 3.93f : 6.72f;
-        float p = Mathf.InverseLerp(contact,end,age);
-        float descent = reduced ? 1f : FallScenery.Ease(.15f,contact,age);
-        float immersion = scenery.Draw(age,p,reduced,FallScenery.ShaftDepth*descent);
-        if (!entryReported && age >= (reduced ? .32f : .83f))
+        float contact = reduced ? .82f : FreeFallTime;
+        float p = Mathf.Clamp01((age - contact) / (reduced ? 3.11f : 3.57f));
+        // The scenery rises past the tracked player by the distance fallen from rest.
+        float travel = reduced || age >= contact ? FallScenery.ShaftDepth : .5f * Gravity * age * age;
+        float immersion = scenery.Draw(age, p, reduced, travel, out bool entered);
+        if (!entryReported && entered)
         {
             entryReported = true;
             int currentGeneration = generation;
@@ -113,7 +116,8 @@ public sealed class FallSequence : MonoBehaviour
             if (generation != currentGeneration || !IsPlaying) return;
         }
         float fade = FallScenery.Ease(.80f,1,p);
-        float air = reduced ? .25f : Mathf.Lerp(.12f,1,FallScenery.Ease(.15f,2.65f,age));
+        // At constant acceleration, speed as a fraction of impact speed is t / tImpact.
+        float air = reduced ? .25f : Mathf.Clamp01(age / contact);
         float ambiance = 0;
         float tint = 0;
         Color tintColor = Color.black;
@@ -202,7 +206,7 @@ public sealed class FallSequence : MonoBehaviour
     public void ResetSequence()
     {
         generation++; IsPlaying = false; finished = null; head = null;
-        age = 0; blackFrame = -1; hasOpening = impactPlayed = chimePlayed = entryReported = false;
+        blackFrame = -1; hasOpening = impactPlayed = chimePlayed = entryReported = false;
         if (sound) sound.StopFall();
         scenery?.Hide();
     }
