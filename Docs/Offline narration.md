@@ -10,6 +10,8 @@ Turn on **Narration** in Settings to audition the voice. It starts off on a fres
 
 Changing screens, stepping 16 cm horizontally, suspending the app, or disabling narration stops the current line. A skipped fall goes straight to the captioned result. A naturally completed fall plays the results line when enabled. Restart clears it immediately. The final voice choice is open for headset playtesting.
 
+Playing these clips needs audio output only. The project manifest removes Android's microphone-recording permission from the merged Quest package. MRUK still requests spatial data to fit the glass to the room. [Android manifest merge rules](https://developer.android.com/build/manage-manifests#node_markers)
+
 ## Source and permission
 
 Bryce Beattie released the US-English `LJSpeech (medium)` voice model into the public domain. His model card describes training it from scratch. Its source is Keith Ito’s LJ Speech dataset, which contains Linda Johnson’s LibriVox recordings. The dataset publisher places the recordings, text and annotations in the US public domain. [Trainer’s voice release](https://brycebeattie.com/files/tts/) · [Pinned model card](https://huggingface.co/rhasspy/piper-voices/blob/217ddc79818708b078d0d14a8fae9608b9d77141/en/en_US/ljspeech/medium/MODEL_CARD) · [LJ Speech dataset and terms](https://keithito.com/LJ-Speech-Dataset/)
