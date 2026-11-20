@@ -88,10 +88,13 @@ namespace FloorFracture
 
         private void OnEnable()
         {
+            mruk.RoomCreatedEvent.AddListener(RoomDiscovered);
             mruk.RoomUpdatedEvent.AddListener(RoomChanged);
             mruk.RoomRemovedEvent.AddListener(RoomChanged);
             AddAnchorListeners();
-            OVRManager.InputFocusAcquired += OnHeadsetFocus;
+            OVRManager.InputFocusAcquired += OnTrackingAvailable;
+            OVRManager.HMDMounted += OnTrackingAvailable;
+            OVRManager.TrackingAcquired += OnTrackingAvailable;
             RenderPipelineManager.beginCameraRendering += UpdateFloorDepth;
         }
 
@@ -154,10 +157,13 @@ namespace FloorFracture
 
         private void OnDisable()
         {
+            mruk.RoomCreatedEvent.RemoveListener(RoomDiscovered);
             mruk.RoomUpdatedEvent.RemoveListener(RoomChanged);
             mruk.RoomRemovedEvent.RemoveListener(RoomChanged);
             RemoveAnchorListeners();
-            OVRManager.InputFocusAcquired -= OnHeadsetFocus;
+            OVRManager.InputFocusAcquired -= OnTrackingAvailable;
+            OVRManager.HMDMounted -= OnTrackingAvailable;
+            OVRManager.TrackingAcquired -= OnTrackingAvailable;
             RenderPipelineManager.beginCameraRendering -= UpdateFloorDepth;
             ShowFloorSurface(false);
         }
@@ -537,6 +543,15 @@ namespace FloorFracture
         // MRUK emits individual floor/furniture changes independently of its room-level event.
         private void AnchorChanged(MRUKAnchor anchor) => RoomChanged(anchor.Room);
 
+        private void RoomDiscovered(MRUKRoom discovered)
+        {
+            // RoomCreated can precede the SDK publishing the room and its anchors. Let
+            // the normal tracked-floor check use the complete room collection next frame.
+            if (!discovered || Status != RoomPlacementStatus.NoRoom) return;
+            awaitingSavedFloor = true;
+            nextFloorCheck = 0;
+        }
+
         private void RoomChanged(MRUKRoom changedRoom)
         {
             if (!room || changedRoom != room) return;
@@ -548,10 +563,10 @@ namespace FloorFracture
 
         private void OnApplicationFocus(bool focused)
         {
-            if (focused) OnHeadsetFocus();
+            if (focused) OnTrackingAvailable();
         }
 
-        private void OnHeadsetFocus()
+        private void OnTrackingAvailable()
         {
             if (Status == RoomPlacementStatus.Confirmed) CheckCurrentPermission();
             else if (Status == RoomPlacementStatus.NoRoom && !busy) Retry();

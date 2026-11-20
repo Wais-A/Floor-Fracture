@@ -320,6 +320,7 @@ namespace FloorFracture.Editor
                 RoomPlacementStatus.PermissionDenied, "App permissions", "Try again");
             yield return VerifyRoomRecovery(MRUK.LoadDeviceResult.NoRoomsFound,
                 RoomPlacementStatus.NoRoom, "Space Setup", "Check again");
+            yield return VerifyEmptyRoomOnWake();
             yield return VerifyLateFloorBoundary();
             // Audition uses the optional stone. Check it after the first-time stepping
             // lesson has established that a fresh run does not instantiate the stone.
@@ -354,14 +355,45 @@ namespace FloorFracture.Editor
             Record("Withheld the real MRUK fixture's floor outline beyond the localization timeout. The game kept the board hidden, then fitted the restored scan and opened Welcome without a rescan or button press.");
         }
 
-        private static IEnumerator VerifyRoomRecovery(MRUK.LoadDeviceResult result, RoomPlacementStatus status,
-            string recoveryLabel, string retryLabel)
+        private static void InjectUnavailableRoom(MRUK.LoadDeviceResult result)
         {
             // The Editor fixture supplies room data. Inject the same result the SDK returns on device.
             var receiveResult = typeof(RoomBoardPlacement).GetMethod("AcceptLoad",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             Require(receiveResult != null && !(bool)receiveResult.Invoke(game.Room, new object[] { result }),
                 "The room loader accepted an unavailable scan.");
+        }
+
+        private static IEnumerator VerifyEmptyRoomOnWake()
+        {
+            foreach (var signal in new[] { nameof(MRUK.RoomCreatedEvent), nameof(OVRManager.HMDMounted), nameof(OVRManager.TrackingAcquired) })
+            {
+                InjectUnavailableRoom(MRUK.LoadDeviceResult.NoRoomsFound);
+                Require(game.Room.Status == RoomPlacementStatus.NoRoom && !game.BoardView.gameObject.activeSelf,
+                    "An empty scan exposed playable glass before " + signal);
+                if (signal == nameof(MRUK.RoomCreatedEvent))
+                    MRUK.Instance.RoomCreatedEvent.Invoke(MRUK.Instance.Rooms.Single());
+                else
+                {
+                    // Exercise only this component's subscription on the native event.
+                    var field = typeof(OVRManager).GetField(signal,
+                        System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+                    var listeners = (field?.GetValue(null) as Action)?.GetInvocationList();
+                    var onWake = listeners?.OfType<Action>().SingleOrDefault(callback => ReferenceEquals(callback.Target, game.Room));
+                    Require(onWake != null, "Room recovery is missing its subscription to " + signal);
+                    onWake();
+                }
+                yield return Wait(() => game.Room.Status == RoomPlacementStatus.Confirmed && game.Stage == GameStage.Welcome,
+                    "automatic fit after " + signal, 55);
+                VerifyFloorVisibility(true);
+            }
+            Record("After an empty room query, a late MRUK RoomCreated event, putting on the headset, and positional tracking acquisition each restored Welcome independently. No menu press or rescan was used.");
+        }
+
+        private static IEnumerator VerifyRoomRecovery(MRUK.LoadDeviceResult result, RoomPlacementStatus status,
+            string recoveryLabel, string retryLabel)
+        {
+            InjectUnavailableRoom(result);
             var labels = game.Panel.GetComponentsInChildren<UnityEngine.UI.Text>()
                 .Where(label => label.isActiveAndEnabled).Select(label => label.text).ToArray();
             Require(game.Room.Status == status && game.Stage == GameStage.Room && !game.BoardView.gameObject.activeSelf &&
