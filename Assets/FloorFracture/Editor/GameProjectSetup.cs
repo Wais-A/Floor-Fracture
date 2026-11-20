@@ -22,10 +22,18 @@ namespace FloorFracture.Editor
     public static class GameProjectSetup
     {
 #if UNITY_EDITOR_OSX
+        [InitializeOnLoadMethod]
+        private static void RegisterBatchShutdown()
+        {
+            if (Application.isBatchMode)
+                EditorApplication.quitting += StopInteractionSdkBatchSession;
+        }
+
         private static void StopInteractionSdkBatchSession()
         {
-            // ISDK 209 starts a native session on Editor import. Its managed shutdown
-            // hook runs in Play Mode, which a standalone batch build never enters.
+            // ISDK 209 starts telemetry on Editor import. Its runtime shutdown hook
+            // does not run for Edit Mode tests or a standalone batch build.
+            EditorApplication.quitting -= StopInteractionSdkBatchSession;
             var telemetry = typeof(Oculus.Interaction.Grabbable).Assembly.GetType("Oculus.Interaction.Telemetry.ISDKEngineTelemetryNative");
             var shutdown = telemetry?.GetMethod("ShutDown", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
             if (shutdown != null)
