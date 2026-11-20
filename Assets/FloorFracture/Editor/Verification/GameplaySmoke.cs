@@ -390,10 +390,41 @@ namespace FloorFracture.Editor
             Record("After an empty room query, a late MRUK RoomCreated event, putting on the headset, and positional tracking acquisition each restored Welcome independently. No menu press or rescan was used.");
         }
 
+        private static void VerifyStableRecoveryTargets()
+        {
+            var canvas = game.Panel.transform.Find(GamePanel.CanvasName);
+            var setStatus = typeof(RoomBoardPlacement).GetMethod("SetState",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Vector3[] firstPositions = null;
+            var statuses = new[] { RoomPlacementStatus.NoRoom, RoomPlacementStatus.UnsafeRoom, RoomPlacementStatus.NoFit };
+            foreach (var status in statuses)
+            {
+                var message = status == RoomPlacementStatus.UnsafeRoom
+                    ? "The floor in your scan is at a different height from the headset's floor level. Check the floor height in Space Setup, then return here."
+                    : "Looking for your saved floor.";
+                setStatus.Invoke(game.Room, new object[] { status, message });
+                Canvas.ForceUpdateCanvases();
+                var buttons = canvas.GetComponentsInChildren<UnityEngine.UI.Button>();
+                Require(buttons.Select(b => b.GetComponentInChildren<UnityEngine.UI.Text>().text)
+                    .SequenceEqual(new[] { "Check again", "Space Setup" }), "Tracking status changed which recovery action was under the hand.");
+                var positions = buttons.Select(b => (RectTransform)b.transform).Select(r => r.TransformPoint(r.rect.center)).ToArray();
+                if (firstPositions == null) firstPositions = positions;
+                for (int i = 0; i < positions.Length; i++)
+                    Require(Vector3.Distance(firstPositions[i], positions[i]) < .0005f,
+                        "A change in tracking message length moved the recovery buttons.");
+            }
+            Record("Check again and Space Setup kept the same order and world positions across missing room, unsafe floor and no fit, including a multiline change in the tracking message.");
+        }
+
         private static IEnumerator VerifyRoomRecovery(MRUK.LoadDeviceResult result, RoomPlacementStatus status,
             string recoveryLabel, string retryLabel)
         {
             InjectUnavailableRoom(result);
+            if (status == RoomPlacementStatus.NoRoom)
+            {
+                VerifyStableRecoveryTargets();
+                InjectUnavailableRoom(result);
+            }
             var labels = game.Panel.GetComponentsInChildren<UnityEngine.UI.Text>()
                 .Where(label => label.isActiveAndEnabled).Select(label => label.text).ToArray();
             Require(game.Room.Status == status && game.Stage == GameStage.Room && !game.BoardView.gameObject.activeSelf &&

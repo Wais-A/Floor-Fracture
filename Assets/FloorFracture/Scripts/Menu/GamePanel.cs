@@ -51,6 +51,7 @@ namespace FloorFracture
         private UnityEngine.UI.Text title, body;
         private GlassTile warningPreview;
         private bool previewGentle;
+        private bool roomRecovery;
         private Font font;
         private Camera eye;
         private OVRDisplay recenterDisplay;
@@ -141,9 +142,28 @@ namespace FloorFracture
 
         public void Show(string heading, string message, params MenuChoice[] options)
         {
+            ShowPage(heading, message, options, false);
+        }
+
+        public void ShowRoomRecovery(string message, Action checkAgain, Action openSpaceSetup)
+        {
+            var options = new[] { new MenuChoice("Check again", checkAgain), new MenuChoice("Space Setup", openSpaceSetup) };
+            ShowPage("Find a clear floor", message, options, true);
+        }
+
+        private void ShowPage(string heading, string message, MenuChoice[] options, bool isRoomRecovery)
+        {
             bool position = !Visible;
-            if (warningPreview) warningPreview.gameObject.SetActive(false);
+            bool updatingRecovery = isRoomRecovery && roomRecovery && Visible;
+            roomRecovery = isRoomRecovery;
             choices = options ?? Array.Empty<MenuChoice>();
+            if (updatingRecovery)
+            {
+                // Tracking can change the explanation while a hand is hovering or pressing the same action.
+                SetBody(message);
+                return;
+            }
+            if (warningPreview) warningPreview.gameObject.SetActive(false);
             panel.gameObject.SetActive(true);
             ClearPointers();
             title.text = heading ?? "";
@@ -199,6 +219,9 @@ namespace FloorFracture
             for (int i = 0; i < choices.Length; ++i)
                 Place(rows[i].Rect, Margin, top + i * (RowHeight + RowGap), Width - 2 * Margin, RowHeight);
             float height = top + choices.Length * (RowHeight + RowGap) - (choices.Length > 0 ? RowGap : 0) + Margin;
+            // On the recovery page the first button's top edge stays at the panel origin.
+            // Additional lines of tracking status expand the panel above a resting hand.
+            panel.pivot = new Vector2(.5f, roomRecovery ? (height - top) / height : .5f);
             panel.sizeDelta = new Vector2(Width, height);
         }
 
@@ -385,7 +408,9 @@ namespace FloorFracture
             {
                 if (!UniqueIdentifier.TryGetInstanceFromIdentifier<Component>(Context.Global.GetInstance(), id, out var source)
                     || (!(source is RayInteractor) && !(source is PokeInteractor))) return;
-                var controller = source.GetComponentInParent<IController>();
+                // Meta's comprehensive rig exposes controller and hand data on the same branch.
+                // Its interactor decoration identifies which pointers can deliver haptics.
+                InteractorControllerDecorator.TryGetControllerForInteractorId(id, out var controller);
                 var hand = controller == null ? source.GetComponentInParent<IHand>() : null;
                 if (controller == null && hand == null) return;
                 side = (controller?.Handedness ?? hand.Handedness) == Handedness.Left ? 0 : 1;

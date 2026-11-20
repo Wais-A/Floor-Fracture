@@ -142,12 +142,12 @@ namespace FloorFracture.Editor
             var rays = game.Rig.GetComponentsInChildren<RayInteractor>(true).Where(r => r.name == "HandRayInteractor").ToArray();
             Require(rays.Length == 2, "The game needs the two hand rays from the Meta Interactions Rig.");
             int retry = 0, rescan = 0;
-            void ShowChoices() => game.Panel.Show("Find a clear floor", "Looking for your saved floor.",
-                new MenuChoice("Check again", () => retry++), new MenuChoice("Space Setup", () => rescan++));
-            ShowChoices();
+            void ShowChoices(string message) => game.Panel.ShowRoomRecovery(message, () => retry++, () => rescan++);
+            ShowChoices("Looking for your saved floor.");
             game.Panel.Recenter();
             foreach (var authored in rays)
             {
+                ShowChoices("Looking for your saved floor.");
                 var pose = authored.GetComponentInChildren<HandPointerPose>(true);
                 var selector = authored.GetComponentInChildren<IndexPinchSelector>(true);
                 Require(pose && selector && new SerializedObject(authored).FindProperty("_rayOrigin").objectReferenceValue == pose.transform &&
@@ -185,6 +185,14 @@ namespace FloorFracture.Editor
                     yield return Frames(4);
                     Require(ray.CollisionInfo.HasValue && Vector3.Distance(ray.CollisionInfo.Value.Point, target) < .003f &&
                         Vector3.Angle(ray.Forward, direction) < .2f, "The SDK hand ray followed the palm axis or missed the recovery row.");
+                    var fill = row.GetComponent<UnityEngine.UI.Image>();
+                    var idleRow = canvas.Find(isLeft ? "Choice 2" : "Choice 1").GetComponent<UnityEngine.UI.Image>();
+                    Require(fill.color != idleRow.color, "A hand hovering the recovery row did not highlight it.");
+                    var highlight = fill.color;
+                    ShowChoices("The floor in your scan is at a different height from the headset's floor level. Check the floor height in Space Setup, then return here.");
+                    yield return Frames(2);
+                    Require(fill.color == highlight && Vector3.Distance(target, row.TransformPoint(row.rect.center)) < .0005f,
+                        "A tracking update cleared the hand highlight or moved the action under it.");
                     int priorRetry = retry, priorRescan = rescan;
                     void Pinch(bool down)
                     {
@@ -197,7 +205,8 @@ namespace FloorFracture.Editor
                     Require(retry == priorRetry + (isLeft ? 1 : 0) && rescan == priorRescan + (isLeft ? 0 : 1),
                         "The SDK index pinch did not activate its own hovered row exactly once.");
                     Pinch(true); yield return Frames(3);
-                    ShowChoices();
+                    game.Panel.Show("Play area", "Choose where to play.",
+                        new MenuChoice("Back", () => retry++), new MenuChoice("Try another spot", () => rescan++));
                     Pinch(false); yield return Frames(3);
                     Require(retry + rescan == priorRetry + priorRescan + 1, "A held pinch activated an action on its replacement page.");
                 }
