@@ -38,7 +38,7 @@ namespace FloorFracture
         public event Action Changed;
 
         private const string DeniedMessage = "Allow spatial data for Floor Fracture in app permissions, then retry.";
-        private const string MissingRoomMessage = "No saved room here. Open Space Setup, scan the floor and furniture, then return.";
+        private const string MissingRoomMessage = "The headset hasn't found a saved room here yet. Look around and check again, or scan the floor and furniture in Space Setup.";
         private readonly List<Vector2[]> declined = new List<Vector2[]>();
         private MRUK mruk;
         private MRUKRoom room;
@@ -50,6 +50,9 @@ namespace FloorFracture
         private MRUKRoom decoratedRoom;
         private int decoratedRevision = -1;
         private bool busy;
+        private bool awaitingSavedFloor;
+        private double nextFloorCheck;
+        private string floorReadIssue;
         private int revision;
 
         public bool IsRoomLocalized => room && CurrentTrackedRoom() == room;
@@ -63,8 +66,9 @@ namespace FloorFracture
             if (fixture && mruk.Rooms.Count == 1 && mruk.Rooms[0].FloorAnchors.Count <= 1) return mruk.Rooms[0];
 #endif
             if (!fixture && !mruk.IsWorldLockActive) return null;
+            var eye = rig.centerEyeAnchor.position;
             return MrukFloorReader.FindContainingRoom(mruk.Rooms, mruk.GetCurrentRoom(),
-                rig.centerEyeAnchor.position, rig.trackingSpace.position.y, fixture);
+                eye, TrackingFloorAtEye(eye), fixture);
         }
 
         private void Awake()
@@ -87,6 +91,7 @@ namespace FloorFracture
             mruk.RoomUpdatedEvent.AddListener(RoomChanged);
             mruk.RoomRemovedEvent.AddListener(RoomChanged);
             AddAnchorListeners();
+            OVRManager.InputFocusAcquired += OnHeadsetFocus;
             RenderPipelineManager.beginCameraRendering += UpdateFloorDepth;
         }
 
@@ -105,6 +110,16 @@ namespace FloorFracture
                 StartCoroutine(RecoverSimulatorPassthrough());
 #endif
             Retry();
+        }
+
+        private void Update()
+        {
+            if (!awaitingSavedFloor || busy || !HasPlacementFocus || Time.unscaledTimeAsDouble < nextFloorCheck)
+                return;
+            nextFloorCheck = Time.unscaledTimeAsDouble + 1;
+            if (!CheckCurrentPermission()) { awaitingSavedFloor = false; return; }
+            SetRoom(CurrentTrackedRoom());
+            if (room && TryReadFloors()) LoadRoom(false, true);
         }
 
 #if UNITY_EDITOR_OSX
@@ -142,6 +157,7 @@ namespace FloorFracture
             mruk.RoomUpdatedEvent.RemoveListener(RoomChanged);
             mruk.RoomRemovedEvent.RemoveListener(RoomChanged);
             RemoveAnchorListeners();
+            OVRManager.InputFocusAcquired -= OnHeadsetFocus;
             RenderPipelineManager.beginCameraRendering -= UpdateFloorDepth;
             ShowFloorSurface(false);
         }
@@ -178,9 +194,7 @@ namespace FloorFracture
             if (decoratedRoom != room || decoratedRevision != revision)
             {
                 // Apply the same reviewed scan as the glass, including every native floor patch.
-                floorDepth?.Clear();
-                floorCoverage.Dispose();
-                floorEffect.DestroyMesh();
+                ClearFloorMeshes();
                 foreach (var floor in room.FloorAnchors)
                 {
                     if (!floor) continue;
@@ -200,6 +214,15 @@ namespace FloorFracture
             if (simulatorOcclusion) simulatorOcclusion.gameObject.SetActive(true);
 #endif
             floorEffect.HideMesh = false;
+        }
+
+        private void ClearFloorMeshes()
+        {
+            floorDepth?.Clear();
+            floorCoverage.Dispose();
+            if (floorEffect) floorEffect.DestroyMesh();
+            decoratedRoom = null;
+            decoratedRevision = -1;
         }
 
         public void Retry()
@@ -252,6 +275,7 @@ namespace FloorFracture
         private async void LoadRoom(bool capture, bool reuseRoom)
         {
             busy = true;
+            awaitingSavedFloor = false;
             ScannedSpawnCount = 0;
             CancellationToken lifetime = destroyCancellationToken;
             SetState(RoomPlacementStatus.Loading, capture ? "Opening Space Setup…" : "Loading your room…");
@@ -259,6 +283,9 @@ namespace FloorFracture
             {
                 if (!reuseRoom || !room)
                 {
+                    // SDK 209 can remove a mesh from its registry only while its
+                    // anchor's child still exists. Release it before replacing the scan.
+                    if (decoratedRoom) ClearFloorMeshes();
                     SetRoom(null);
                     floors = null;
                     MRUK.LoadDeviceResult result;
@@ -297,7 +324,17 @@ namespace FloorFracture
                             return;
                         }
                         lifetime.ThrowIfCancellationRequested();
-                        result = await mruk.LoadSceneFromDevice(requestSceneCaptureIfNoDataFound: false);
+                        // Space Setup can finish while the system still owns input. Wait for
+                        // the app before querying and give a freshly published scan time to arrive.
+                        int attempts = capture ? 3 : 2;
+                        do
+                        {
+                            while (!HasPlacementFocus) await Awaitable.NextFrameAsync(lifetime);
+                            result = await mruk.LoadSceneFromDevice(requestSceneCaptureIfNoDataFound: false);
+                            lifetime.ThrowIfCancellationRequested();
+                            if ((result != MRUK.LoadDeviceResult.NoRoomsFound && result != MRUK.LoadDeviceResult.DiscoveryOngoing) || --attempts == 0) break;
+                            await Task.Delay(1000, lifetime);
+                        } while (true);
                     }
                     lifetime.ThrowIfCancellationRequested();
                     if (!AcceptLoad(result)) return;
@@ -311,23 +348,34 @@ namespace FloorFracture
                 // localizes. Only accept the current room after world lock and eye containment agree.
                 SetState(RoomPlacementStatus.Loading, "Look around your scanned room while the headset finds its floor.");
                 float focusedSeconds = 0f;
+                bool ready = false;
+                nextFloorCheck = 0;
                 while (focusedSeconds < 8f)
                 {
-                    if (!reuseRoom)
+                    if (HasPlacementFocus && Time.unscaledTimeAsDouble >= nextFloorCheck)
                     {
                         var current = CurrentTrackedRoom();
-                        SetRoom(current);
-                        if (current) break;
+                        if (!reuseRoom) SetRoom(current);
+                        if (current && current == room && TryReadFloors())
+                        {
+                            ready = true;
+                            break;
+                        }
+                        nextFloorCheck = Time.unscaledTimeAsDouble + 0.35;
                     }
-                    else if (IsRoomLocalized) break;
                     if (HasPlacementFocus) focusedSeconds += Mathf.Min(Time.unscaledDeltaTime, 0.1f);
                     await Awaitable.NextFrameAsync(lifetime);
                 }
-                if (!IsRoomLocalized || !TryReadFloors())
+                if (!ready)
                 {
-                    SetState(RoomPlacementStatus.UnsafeRoom, "A level floor could not be verified here. Look around from inside the scanned room or rescan it.");
+                    awaitingSavedFloor = true;
+                    string message = !room || !IsRoomLocalized
+                        ? LocalizationMessage()
+                        : floorReadIssue + " Checking again automatically.";
+                    SetState(RoomPlacementStatus.UnsafeRoom, message);
                     return;
                 }
+                SetState(RoomPlacementStatus.Loading, "Floor found. Fitting the glass between the walls and furniture…");
                 var head = rig.centerEyeAnchor.position;
                 var preferred = new Vector2(head.x, head.z);
                 var searchFloors = new List<RoomFloor>();
@@ -391,8 +439,41 @@ namespace FloorFracture
         private bool TryReadFloors()
         {
             if (!rig || !rig.centerEyeAnchor || !rig.trackingSpace) return false;
-            float y = rig.trackingSpace.position.y;
-            return MrukFloorReader.TryRead(room, y, rig.centerEyeAnchor.position.y - y, out floors);
+            var eye = rig.centerEyeAnchor.position;
+            float y = TrackingFloorAtEye(eye);
+            return MrukFloorReader.TryRead(room, y, eye.y - y, out floors, out floorReadIssue);
+        }
+
+        private float TrackingFloorAtEye(Vector3 eye)
+        {
+            var space = rig.trackingSpace;
+#if UNITY_EDITOR
+            if (usingFixture) return MrukFloorReader.TrackingFloorHeight(space.position, space.up, eye);
+#endif
+            var input = OVRManager.GetCurrentInputSubsystem();
+            if (input != null && (input.GetTrackingOriginMode() & UnityEngine.XR.TrackingOriginModeFlags.Floor) != 0)
+                return MrukFloorReader.TrackingFloorHeight(space.position, space.up, eye);
+            // Meta's Tracking Origin sample exposes the calibrated floor relative to
+            // the current origin, including when the runtime temporarily uses eye level.
+            var floor = OVRPlugin.GetTrackingTransformRelativePose(OVRPlugin.TrackingOrigin.FloorLevel).ToOVRPose();
+            if (floor.position == Vector3.zero && floor.orientation == Quaternion.identity) return float.NaN;
+            return MrukFloorReader.TrackingFloorHeight(space.TransformPoint(floor.position),
+                space.rotation * floor.orientation * Vector3.up, eye);
+        }
+
+        private string LocalizationMessage()
+        {
+            if (rig && rig.centerEyeAnchor && rig.trackingSpace && mruk.IsWorldLockActive)
+            {
+                var eye = rig.centerEyeAnchor.position;
+                float height = TrackingFloorAtEye(eye);
+                if (!FloorGeometry.Finite(height)) return "Waiting for the headset's floor-level tracking. Look around. The game will check again automatically.";
+                var hint = mruk.GetCurrentRoom();
+                if (hint && hint.IsLocal && MrukFloorReader.ContainsFloorPoint(hint, eye, null) &&
+                    !MrukFloorReader.ContainsFloorPoint(hint, eye, height))
+                    return "The floor in your scan is at a different height from the headset's floor level. Check the floor height in Space Setup, then return here.";
+            }
+            return "Looking for your saved floor. Stand inside the scanned room and look around. The board will open when tracking returns.";
         }
 
         // Floor Zone uses this same Meta block to locate open floor. The SDK markers are
@@ -459,6 +540,7 @@ namespace FloorFracture
         private void RoomChanged(MRUKRoom changedRoom)
         {
             if (!room || changedRoom != room) return;
+            if (decoratedRoom == changedRoom) ClearFloorMeshes();
             revision++;
             if (Status == RoomPlacementStatus.Confirmed)
                 SetState(RoomPlacementStatus.UnsafeRoom, "The room scan changed. Check again to fit the board to the updated room.");
@@ -466,7 +548,13 @@ namespace FloorFracture
 
         private void OnApplicationFocus(bool focused)
         {
-            if (focused && Status == RoomPlacementStatus.Confirmed) CheckCurrentPermission();
+            if (focused) OnHeadsetFocus();
+        }
+
+        private void OnHeadsetFocus()
+        {
+            if (Status == RoomPlacementStatus.Confirmed) CheckCurrentPermission();
+            else if (Status == RoomPlacementStatus.NoRoom && !busy) Retry();
         }
 
         private bool CheckCurrentPermission()
@@ -517,6 +605,8 @@ namespace FloorFracture
         {
             Status = next;
             Message = message;
+            if (next == RoomPlacementStatus.UnsafeRoom || next == RoomPlacementStatus.NoRoom || next == RoomPlacementStatus.Confirmed)
+                Debug.Log($"[Floor Fracture room] {next}: {message} Saved rooms={mruk.Rooms.Count}, world lock={mruk.IsWorldLockActive}.", this);
             ShowFloorSurface(next == RoomPlacementStatus.Confirmed);
             outlines.Show(false, Placement);
             Changed?.Invoke();

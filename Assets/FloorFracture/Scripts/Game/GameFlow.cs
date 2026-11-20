@@ -79,9 +79,10 @@ namespace FloorFracture
                 case RoomPlacementStatus.PermissionDenied:
                     Panel.Show("Allow spatial data",Room.Message,Choice("App permissions",Room.OpenPermissionSettings),Choice("Try again",Room.Retry)); break;
                 case RoomPlacementStatus.NoRoom:
+                    Panel.Show("Find a clear floor",Room.Message,Choice("Space Setup",Room.RequestSpaceSetup),Choice("Check again",Room.Retry)); break;
                 case RoomPlacementStatus.UnsafeRoom:
                 case RoomPlacementStatus.NoFit:
-                    Panel.Show("Find a clear floor",Room.Message,Choice("Space Setup",Room.RequestSpaceSetup),Choice("Check again",Room.Retry)); break;
+                    Panel.Show("Find a clear floor",Room.Message,Choice("Check again",Room.Retry),Choice("Space Setup",Room.RequestSpaceSetup)); break;
                 default: Panel.Show("Reading your room",Room.Message); break;
             }
         }

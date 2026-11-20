@@ -154,6 +154,7 @@ namespace FloorFracture.Editor
             Require(outlines && outlines.gameObject.activeInHierarchy && outlines.GetComponent<MeshFilter>().sharedMesh.vertexCount > 0,
                 "The Welcome screen did not show the fitted board's perimeter.");
             VerifyMenuAndSpatialAudio();
+            yield return VerifyHandRecoveryMenu();
             VerifyOccupancyRingMesh();
             VerifySpawnMarkersCleared();
             Record($"MRUK Rec Room supplied floor and furniture. The {placement.Columns} × {placement.Rows} board at {placement.Pitch:F3} m pitch appeared at Welcome without a clearance approval prompt.");
@@ -319,9 +320,38 @@ namespace FloorFracture.Editor
                 RoomPlacementStatus.PermissionDenied, "App permissions", "Try again");
             yield return VerifyRoomRecovery(MRUK.LoadDeviceResult.NoRoomsFound,
                 RoomPlacementStatus.NoRoom, "Space Setup", "Check again");
+            yield return VerifyLateFloorBoundary();
             // Audition uses the optional stone. Check it after the first-time stepping
             // lesson has established that a fresh run does not instantiate the stone.
             yield return VerifyOfflineNarration();
+        }
+
+        private static IEnumerator VerifyLateFloorBoundary()
+        {
+            MRUKAnchor anchor = null;
+            Vector2[] boundary = null;
+            void WithholdFloor()
+            {
+                anchor = MRUK.Instance.Rooms.Single().FloorAnchors.Single();
+                boundary = anchor.PlaneBoundary2D.ToArray();
+                anchor.PlaneBoundary2D.Clear();
+            }
+            MRUK.Instance.SceneLoadedEvent.AddListener(WithholdFloor);
+            try
+            {
+                game.Room.Retry();
+                yield return Wait(() => game.Room.Status == RoomPlacementStatus.UnsafeRoom, "missing floor recovery menu", 30);
+                Require(anchor && boundary.Length >= 3 && !game.BoardView.gameObject.activeSelf &&
+                    game.Panel.Visible, "Incomplete floor geometry exposed the game board.");
+            }
+            finally
+            {
+                MRUK.Instance.SceneLoadedEvent.RemoveListener(WithholdFloor);
+                if (anchor && boundary != null) anchor.PlaneBoundary2D.AddRange(boundary);
+            }
+            yield return Wait(() => game.Room.Status == RoomPlacementStatus.Confirmed && game.Stage == GameStage.Welcome,
+                "automatic fit after the saved boundary arrived", 55);
+            Record("Withheld the real MRUK fixture's floor outline beyond the localization timeout. The game kept the board hidden, then fitted the restored scan and opened Welcome without a rescan or button press.");
         }
 
         private static IEnumerator VerifyRoomRecovery(MRUK.LoadDeviceResult result, RoomPlacementStatus status,

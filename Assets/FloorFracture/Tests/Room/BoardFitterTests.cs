@@ -88,8 +88,9 @@ namespace FloorFracture.Tests
             Assert.That(BoardFitter.Fits(Floor(Rectangle(-3,-3,3,3),hole,obstacle), fit), Is.True);
         }
 
-        [Test]
-        public void LocalizesEitherFloorAnchorAndRejectsOutsideWrongStoreyAndAmbiguousRooms()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void LocalizesFloorWithAbsentOrStaleHintAndRejectsOutsideWrongStoreyAndAmbiguousRooms(bool split)
         {
             var root = new GameObject("MRUK localization fixture");
             root.SetActive(false);
@@ -101,12 +102,12 @@ namespace FloorFracture.Tests
                     host.transform.SetParent(root.transform, false);
                     host.transform.position = Vector3.right * x;
                     var room = host.AddComponent<MRUKRoom>();
-                    foreach (float start in new[] { -2f, 0f })
+                    foreach (float start in split ? new[] { -2f, 0f } : new[] { -2f })
                     {
                         var floor = new GameObject("FLOOR").AddComponent<MRUKAnchor>();
                         floor.transform.SetParent(host.transform,false);
                         floor.transform.localRotation = Quaternion.Euler(-90,0,0);
-                        floor.PlaneBoundary2D.AddRange(Rectangle(start,-1,start+2,1));
+                        floor.PlaneBoundary2D.AddRange(Rectangle(start,-1,split ? start+2 : 2f,1));
                         room.FloorAnchors.Add(floor);
                     }
                     return room;
@@ -125,12 +126,26 @@ namespace FloorFracture.Tests
                 Assert.That(At(10,active), Is.SameAs(other));
                 Assert.That(At(4,active), Is.Null);
                 Assert.That(At(0,active,2), Is.Null);
+                Assert.That(At(0,active,float.NaN), Is.Null);
                 Assert.That(MrukFloorReader.FindContainingRoom(rooms,active,new Vector3(0,1.6f,0),0,false), Is.Null,
                     "An Editor room without a local device anchor cannot supply runtime tracking.");
                 other.transform.position = Vector3.zero;
                 Assert.That(At(0), Is.Null, "Two competing floor regions with no current room hint.");
             }
             finally { Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void MeasuresTheCalibratedFloorUnderTheEyeInWorldLockedSpace()
+        {
+            var origin = new Vector3(5, -.8f, -4);
+            var rotation = Quaternion.Euler(1.5f, 37, -.75f);
+            var floorPoint = origin + rotation * new Vector3(1.6f, 0, 2.1f);
+            var eye = floorPoint + Vector3.up * 1.45f;
+            Assert.That(MrukFloorReader.TrackingFloorHeight(origin, rotation * Vector3.up, eye),
+                Is.EqualTo(floorPoint.y).Within(.0001f));
+            Assert.That(float.IsNaN(MrukFloorReader.TrackingFloorHeight(origin, Vector3.right, eye)), Is.True);
+            Assert.That(float.IsNaN(MrukFloorReader.TrackingFloorHeight(origin, Vector3.down, eye)), Is.True);
         }
 
         [Test]
