@@ -1,0 +1,111 @@
+{
+    "result": "passed",
+    "startedUtc": "2026-11-19T23:53:00.2458330Z",
+    "finishedUtc": "2026-11-19T23:54:20.7900460Z",
+    "unityVersion": "6000.6.9f1",
+    "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+    "failure": "",
+    "fixture": "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode",
+    "input": "Simulated world poses, grip state, and visible menu selection. Unity physics and unscaled game time.",
+    "imagesDescribe": "Monoscopic Editor renders of the actual scene. Board images use an elevated observer camera.",
+    "columns": 4,
+    "rows": 4,
+    "seed": 379,
+    "checks": [
+        "Five actual Meta Building Blocks share one tracked rig, one underlay, a left/right controller model pair and two SDK ray/direct-grab pairs.",
+        "MRUK Rec Room supplied floor and furniture, and the placement preview drew its clearance grid.",
+        "The left simulated ray confirmed the footprint and the right ray opened Settings through independent trigger presses.",
+        "Welcome and Settings routed through their visible menu choices. The development menu selected seed 379.",
+        "The left grip picked up and released a real Rigidbody. A miss reset it and a hit advanced the tutorial.",
+        "Two distinct headset projections completed practice and left the first countdown waiting for readiness.",
+        "Walked each guaranteed stationary step through Last Tile. Level 2 rebuilt and waited for readiness.",
+        "Six natural endings played before a repeat. The next bag changed ending. Full playback, skip, results, and restart used the normal production controller.",
+        "The development chooser played Water with reduced motion through its natural results transition."
+    ],
+    "images": [
+        "room-preview.png",
+        "classic-glass.png",
+        "neighboring-hole.png",
+        "ending-snow.png",
+        "ending-lava.png",
+        "ending-crystal.png",
+        "ending-sand.png",
+        "ending-water.png",
+        "ending-space.png"
+    ],
+    "captureNotes": [],
+    "endingOrder": [
+        "Snow",
+        "Lava",
+        "Crystal",
+        "Sand",
+        "Water",
+        "Space",
+        "Crystal"
+    ],
+    "waves": [
+        {
+            "mode": "Classic",
+            "start": 9,
+            "guaranteed": 5,
+            "score": 1,
+            "survived": true,
+            "plannedDeadline": 13.111663003117913,
+            "observedAfterResolution": 13.111748249716554
+        },
+        {
+            "mode": "Memory",
+            "start": 5,
+            "guaranteed": 1,
+            "score": 2,
+            "survived": true,
+            "plannedDeadline": 19.391950042517006,
+            "observedAfterResolution": 19.391965206916097
+        },
+        {
+            "mode": "Memory",
+            "start": 1,
+            "guaranteed": 2,
+            "score": 3,
+            "survived": true,
+            "plannedDeadline": 25.672009708049885,
+            "observedAfterResolution": 25.672096251417234
+        },
+        {
+            "mode": "Classic",
+            "start": 2,
+            "guaranteed": 6,
+            "score": 4,
+            "survived": true,
+            "plannedDeadline": 31.952241666666666,
+            "observedAfterResolution": 31.952392502834467
+        },
+        {
+            "mode": "Classic",
+            "start": 6,
+            "guaranteed": 10,
+            "score": 5,
+            "survived": true,
+            "plannedDeadline": 38.232398079648526,
+            "observedAfterResolution": 38.232440958049885
+        },
+        {
+            "mode": "LastTile",
+            "start": 10,
+            "guaranteed": 11,
+            "score": 6,
+            "survived": true,
+            "plannedDeadline": 44.51254712301587,
+            "observedAfterResolution": 44.51272216553288
+        },
+        {
+            "mode": "Classic",
+            "start": 10,
+            "guaranteed": 6,
+            "score": 0,
+            "survived": false,
+            "plannedDeadline": 51.31297974773243,
+            "observedAfterResolution": 51.31301741780045
+        }
+    ]
+}

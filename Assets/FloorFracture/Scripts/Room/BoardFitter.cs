@@ -7,24 +7,26 @@ namespace FloorFracture
 {
     public readonly struct BoardPlacement
     {
-        public const float TileSize = 0.5f;
         public const float Clearance = 0.4f;
         public readonly int Columns;
         public readonly int Rows;
         public readonly Vector2 Center;
         public readonly float FloorHeight;
         public readonly float AngleDegrees;
+        public readonly float Pitch;
 
         public Pose Pose => new Pose(new Vector3(Center.x, FloorHeight, Center.y),
             Quaternion.Euler(0f, -AngleDegrees, 0f));
 
-        public BoardPlacement(Vector2 center, float floorHeight, float angleDegrees, int columns, int rows)
+        public BoardPlacement(Vector2 center, float floorHeight, float angleDegrees, int columns, int rows,
+            float pitch = BoardState.MinPitch)
         {
             Center = center;
             FloorHeight = floorHeight;
             AngleDegrees = angleDegrees;
             Columns = columns;
             Rows = rows;
+            Pitch = pitch;
         }
 
         public Vector2 ToWorldXZ(float x, float z)
@@ -36,49 +38,143 @@ namespace FloorFracture
 
         public Vector2[] ClearanceOutline()
         {
-            float x = Columns * TileSize / 2f + Clearance;
-            float z = Rows * TileSize / 2f + Clearance;
+            float x = Columns * Pitch / 2f + Clearance;
+            float z = Rows * Pitch / 2f + Clearance;
             return new[] { ToWorldXZ(-x, -z), ToWorldXZ(x, -z), ToWorldXZ(x, z), ToWorldXZ(-x, z) };
         }
     }
 
     public static class BoardFitter
     {
-        private static readonly Vector2Int[] Sizes =
+        private const float PitchPrecision = 0.0005f;
+        private const float ScoreTolerance = 0.00001f;
+
+        private readonly struct Candidate
         {
-            new Vector2Int(4, 4), new Vector2Int(4, 3), new Vector2Int(3, 4), new Vector2Int(3, 3),
-            new Vector2Int(4, 2), new Vector2Int(2, 4), new Vector2Int(3, 2), new Vector2Int(2, 3),
-            new Vector2Int(2, 2)
-        };
+            public readonly Frame Frame;
+            public readonly int Columns, Rows;
+            public readonly float MaximumPitch, MaximumScore;
+            public Candidate(Frame frame, int columns, int rows, float maximumPitch)
+            {
+                Frame = frame;
+                Columns = columns;
+                Rows = rows;
+                MaximumPitch = maximumPitch;
+                MaximumScore = Score(columns * rows, maximumPitch);
+            }
+        }
+
+        // Weight covered glass area by the playable area of one pane. At equal physical
+        // coverage this favors a wider step, while a long narrow room can still add columns.
+        private static float Score(int cells, float pitch)
+        {
+            float paneArea = pitch * pitch;
+            return cells * paneArea * paneArea;
+        }
 
         public static bool TryFind(IReadOnlyList<RoomFloor> floors, Vector2 preferredCenter, out BoardPlacement placement,
-            CancellationToken cancellation = default)
+            CancellationToken cancellation = default, IReadOnlyList<Vector2> suggestedCenters = null)
         {
             placement = default;
             if (floors == null || !FloorGeometry.Finite(preferredCenter)) return false;
-            var frames = new List<Frame>();
+            var suggestions = new List<Vector2>();
+            if (suggestedCenters != null)
+                foreach (var suggestion in suggestedCenters)
+                    if (FloorGeometry.Finite(suggestion)) suggestions.Add(suggestion);
+            suggestions.Sort((a, b) => (a - preferredCenter).sqrMagnitude.CompareTo((b - preferredCenter).sqrMagnitude));
+            var candidates = new List<Candidate>();
+            int frameOrder = 0;
             foreach (var floor in floors)
             {
+                cancellation.ThrowIfCancellationRequested();
                 if (!IsUsable(floor)) continue;
                 var angles = new List<float> { 0f };
                 AddEdgeDirections(floor.Boundary, angles);
                 foreach (var obstacle in floor.Obstacles) AddEdgeDirections(obstacle, angles);
                 for (int angle = 5; angle < 90; angle += 5) AddAngle(angle, angles);
-                foreach (float angle in angles) frames.Add(new Frame(floor, angle));
-            }
-
-            foreach (var size in Sizes)
-            {
-                Vector2 half = HalfSize(size.x, size.y);
-                foreach (var frame in frames)
+                foreach (float angle in angles)
                 {
-                    cancellation.ThrowIfCancellationRequested();
-                    if (!frame.TryFindCenter(half, frame.ToLocal(preferredCenter), cancellation, out var center)) continue;
-                    placement = new BoardPlacement(frame.ToWorld(center), frame.Height, frame.Angle, size.x, size.y);
-                    return true;
+                    var frame = new Frame(floor, angle);
+                    frame.PrepareSearch(preferredCenter, suggestions, frameOrder++);
+                    // Every legal footprint contains this one. In a cluttered scan a
+                    // single failed search removes this orientation for all 49 shapes.
+                    if (frame.PitchLimit(BoardState.MinAxis, BoardState.MinAxis) < BoardState.MinPitch - FloorGeometry.Epsilon ||
+                        !frame.TryFindCenter(HalfSize(BoardState.MinAxis, BoardState.MinAxis, BoardState.MinPitch),
+                            cancellation, out _)) continue;
+                    for (int columns = BoardState.MinAxis; columns <= BoardState.MaxAxis; ++columns)
+                    for (int rows = BoardState.MinAxis; rows <= BoardState.MaxAxis; ++rows)
+                    {
+                        float upper = frame.PitchLimit(columns, rows);
+                        if (upper >= BoardState.MinPitch - FloorGeometry.Epsilon)
+                            candidates.Add(new Candidate(frame, columns, rows, Mathf.Max(BoardState.MinPitch, upper)));
+                    }
                 }
             }
-            return false;
+            candidates.Sort((a, b) =>
+            {
+                int score = b.MaximumScore.CompareTo(a.MaximumScore);
+                return score != 0 ? score : a.Frame.Order.CompareTo(b.Frame.Order);
+            });
+            float minimumArea = LegacyCoverage(candidates, cancellation);
+            float bestScore = 0f, bestDistance = float.PositiveInfinity;
+            foreach (var candidate in candidates)
+            {
+                cancellation.ThrowIfCancellationRequested();
+                if (candidate.MaximumScore < bestScore - ScoreTolerance) break;
+                if (candidate.MaximumScore <= bestScore && bestDistance == 0f) break;
+                int columns = candidate.Columns, rows = candidate.Rows;
+                Frame frame = candidate.Frame;
+                float pitch = candidate.MaximumPitch;
+                float coveragePitch = Mathf.Sqrt(minimumArea / (columns * rows));
+                if (columns * rows * pitch * pitch < minimumArea) continue;
+                if (!frame.TryFindCenter(HalfSize(columns, rows, pitch), cancellation, out var center))
+                {
+                    // Smaller rectangles nest inside larger ones. Only search pitches that
+                    // can improve the current winner and retain an explicitly certified fit.
+                    float cutoff = Mathf.Sqrt(Mathf.Sqrt(Mathf.Max(0f, bestScore - ScoreTolerance) / (columns * rows)));
+                    float low = Mathf.Max(coveragePitch, Mathf.Max(BoardState.MinPitch, cutoff)), high = pitch;
+                    if (low >= high || !frame.TryFindCenter(HalfSize(columns, rows, low), cancellation, out center))
+                        continue;
+                    while (high - low > PitchPrecision)
+                    {
+                        float mid = (low + high) * 0.5f;
+                        if (frame.TryFindCenter(HalfSize(columns, rows, mid), cancellation, out var trial))
+                        {
+                            low = mid;
+                            center = trial;
+                        }
+                        else high = mid;
+                    }
+                    pitch = low;
+                }
+                if (columns * rows * pitch * pitch < minimumArea) continue;
+                Vector2 world = frame.ToWorld(center);
+                float score = Score(columns * rows, pitch), distance = (world - preferredCenter).sqrMagnitude;
+                if (score < bestScore - ScoreTolerance ||
+                    (Mathf.Abs(score - bestScore) <= ScoreTolerance && distance >= bestDistance)) continue;
+                bestScore = score;
+                bestDistance = distance;
+                placement = new BoardPlacement(world, frame.Height, frame.Angle, columns, rows, pitch);
+            }
+            return bestScore > 0f;
+        }
+
+        private static float LegacyCoverage(List<Candidate> candidates, CancellationToken cancellation)
+        {
+            // Preserve the largest playable area that the previous fixed 50 cm, 2–4
+            // pane-per-axis layout could actually fit on these same floor and obstacle polygons.
+            int mostCells = 0;
+            foreach (var candidate in candidates)
+            {
+                int cells = candidate.Columns * candidate.Rows;
+                if (candidate.Columns > 4 || candidate.Rows > 4 || cells <= mostCells) continue;
+                cancellation.ThrowIfCancellationRequested();
+                var half = HalfSize(candidate.Columns, candidate.Rows, BoardState.MinPitch);
+                if (!candidate.Frame.TryFindCenter(half, cancellation, out _)) continue;
+                mostCells = cells;
+                if (cells == 16) break;
+            }
+            return mostCells * BoardState.MinPitch * BoardState.MinPitch;
         }
 
         public static bool Fits(RoomFloor floor, BoardPlacement placement)
@@ -86,9 +182,11 @@ namespace FloorFracture
             if (!IsUsable(floor) || !FloorGeometry.Finite(placement.Center) ||
                 !FloorGeometry.Finite(placement.AngleDegrees) || !FloorGeometry.Finite(placement.FloorHeight) ||
                 Mathf.Abs(floor.Height - placement.FloorHeight) > 0.025f ||
-                placement.Columns < 2 || placement.Columns > 4 || placement.Rows < 2 || placement.Rows > 4) return false;
+                placement.Columns < BoardState.MinAxis || placement.Columns > BoardState.MaxAxis ||
+                placement.Rows < BoardState.MinAxis || placement.Rows > BoardState.MaxAxis ||
+                !(placement.Pitch >= BoardState.MinPitch && placement.Pitch <= BoardState.MaxPitch)) return false;
             var frame = new Frame(floor, placement.AngleDegrees);
-            return frame.Admits(frame.ToLocal(placement.Center), HalfSize(placement.Columns, placement.Rows));
+            return frame.Admits(frame.ToLocal(placement.Center), HalfSize(placement.Columns, placement.Rows, placement.Pitch));
         }
 
         internal static bool IsUsable(RoomFloor floor)
@@ -103,9 +201,8 @@ namespace FloorFracture
             return true;
         }
 
-        private static Vector2 HalfSize(int columns, int rows) => new Vector2(
-            columns * BoardPlacement.TileSize / 2f + BoardPlacement.Clearance,
-            rows * BoardPlacement.TileSize / 2f + BoardPlacement.Clearance);
+        private static Vector2 HalfSize(int columns, int rows, float pitch) => new Vector2(
+            columns * pitch / 2f + BoardPlacement.Clearance, rows * pitch / 2f + BoardPlacement.Clearance);
 
         private static void AddEdgeDirections(Vector2[] outline, List<float> angles)
         {
@@ -160,9 +257,14 @@ namespace FloorFracture
         private sealed class Frame
         {
             public readonly float Height, Angle;
+            public int Order { get; private set; }
             private readonly Vector2 right, forward;
             private readonly Shape floor;
             private readonly List<Shape> obstacles = new List<Shape>();
+            private readonly List<Vector2> failedHalfSizes = new List<Vector2>();
+            private readonly List<Vector2> suggestions = new List<Vector2>();
+            private readonly List<Vector3> spanLimits = new List<Vector3>();
+            private Vector2 preferred;
 
             public Frame(RoomFloor source, float angle)
             {
@@ -176,6 +278,43 @@ namespace FloorFracture
 
             public Vector2 ToLocal(Vector2 point) => new Vector2(Vector2.Dot(point, right), Vector2.Dot(point, forward));
             public Vector2 ToWorld(Vector2 point) => right * point.x + forward * point.y;
+
+            public void PrepareSearch(Vector2 preferredCenter, List<Vector2> suggestedCenters, int order)
+            {
+                preferred = ToLocal(preferredCenter);
+                Order = order;
+                foreach (var suggestion in suggestedCenters) suggestions.Add(ToLocal(suggestion));
+                // The board's projection onto every floor-edge normal must fit between
+                // the floor's extreme points. In particular, a diagonal frame cannot
+                // inflate the apparent width of a long, narrow room.
+                var span = floor.Max - floor.Min;
+                spanLimits.Add(new Vector3(1f, 0f, span.x));
+                spanLimits.Add(new Vector3(0f, 1f, span.y));
+                for (int i = 0; i < floor.Points.Length; ++i)
+                {
+                    var edge = floor.Points[(i + 1) % floor.Points.Length] - floor.Points[i];
+                    var normal = new Vector2(-edge.y, edge.x) / edge.magnitude;
+                    float min = float.PositiveInfinity, max = float.NegativeInfinity;
+                    foreach (var p in floor.Points)
+                    {
+                        float projection = Vector2.Dot(p, normal);
+                        min = Mathf.Min(min, projection);
+                        max = Mathf.Max(max, projection);
+                    }
+                    spanLimits.Add(new Vector3(Mathf.Abs(normal.x), Mathf.Abs(normal.y), max - min));
+                }
+            }
+
+            public float PitchLimit(int columns, int rows)
+            {
+                float limit = BoardState.MaxPitch;
+                foreach (var span in spanLimits)
+                {
+                    float clearance = 2f * BoardPlacement.Clearance * (span.x + span.y);
+                    limit = Mathf.Min(limit, (span.z - clearance) / (columns * span.x + rows * span.y));
+                }
+                return limit;
+            }
 
             private Shape Project(Vector2[] points)
             {
@@ -207,7 +346,18 @@ namespace FloorFracture
                 return true;
             }
 
-            public bool TryFindCenter(Vector2 half, Vector2 preferred, CancellationToken cancellation, out Vector2 center)
+            public bool TryFindCenter(Vector2 half, CancellationToken cancellation, out Vector2 center)
+            {
+                foreach (var failed in failedHalfSizes)
+                    if (half.x >= failed.x && half.y >= failed.y) { center = default; return false; }
+                if (Search(half, cancellation, out center)) return true;
+                for (int i = failedHalfSizes.Count - 1; i >= 0; --i)
+                    if (failedHalfSizes[i].x >= half.x && failedHalfSizes[i].y >= half.y) failedHalfSizes.RemoveAt(i);
+                failedHalfSizes.Add(half);
+                return false;
+            }
+
+            private bool Search(Vector2 half, CancellationToken cancellation, out Vector2 center)
             {
                 center = default;
                 var lower = floor.Min + half;
@@ -216,6 +366,8 @@ namespace FloorFracture
                 if (lower.x > upper.x + e || lower.y > upper.y + e) return false;
                 var target = new Vector2(Mathf.Clamp(preferred.x, lower.x, upper.x), Mathf.Clamp(preferred.y, lower.y, upper.y));
                 if (Admits(target, half)) { center = target; return true; }
+                foreach (var suggestion in suggestions)
+                    if (Admits(suggestion, half)) { center = suggestion; return true; }
                 var middle = (lower + upper) * 0.5f;
                 if (Admits(middle, half)) { center = middle; return true; }
 

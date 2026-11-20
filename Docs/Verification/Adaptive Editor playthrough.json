@@ -1,0 +1,393 @@
+{
+    "result": "passed",
+    "startedUtc": "2026-11-20T01:00:44.6110610Z",
+    "finishedUtc": "2026-11-20T01:02:38.6359150Z",
+    "unityVersion": "6000.6.9f1",
+    "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+    "failure": "",
+    "fixture": "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode",
+    "input": "Simulated world poses, grip state, and visible menu selection. Unity physics and unscaled game time.",
+    "imagesDescribe": "Monoscopic Editor renders of the actual scene. Player-view images use the simulated center eye. Room-preview, classic-glass, and neighboring-hole are elevated observer shots. Fall sequences use the same stationary eye position, looking toward the opening, slightly downward, and straight ahead as labeled.",
+    "columns": 6,
+    "rows": 3,
+    "seed": 379,
+    "sdkFloorCandidates": 8,
+    "pitch": 0.6524226069450378,
+    "depthProviderEnabledInAuthoredScene": true,
+    "depthSupportedInFixture": false,
+    "checks": [
+        "Meta Camera Rig, Passthrough, MR Utility Kit, Find Spawn Positions, Controller Tracking, and Interactions Rig supply the single tracked rig, room, floor candidates and left/right ray and grab controls.",
+        "The installed MRUK Room Guardian and EffectMesh share the stock one-metre guardian material. The saved scene enables one SDK environment depth provider and contains no example cube, occlusion root, raycast marker, or shared anchor.",
+        "The gameplay Canvas has one registered SDK ray surface and one SDK poke surface. Both SDK hand branches include a poke interactor, and the physical poke surface covers the menu row.",
+        "All ten pooled positional glass and ending-impact sources retain the actual Spatial Audio block and one enabled MetaXRAudioSource with spatialization enabled.",
+        "MRUK Rec Room supplied floor and furniture. The 6 × 3 board at 0.652 m pitch appeared at Welcome without a clearance approval prompt.",
+        "The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.",
+        "Welcome and Settings routed through their visible menu choices. The development menu selected seed 379.",
+        "The actual tutorial stone kept the stock Meta occlusion material and its individual visible _Color tint at runtime.",
+        "The left grip picked up and released a real Rigidbody. A miss reset it and a hit advanced the tutorial.",
+        "Two distinct headset projections completed practice and left the first countdown waiting for readiness.",
+        "Walked each guaranteed stationary step through Last Tile. Level 2 rebuilt and waited for readiness.",
+        "Six natural endings played before a repeat. The next bag changed ending. Full playback, skip, results, and restart used the normal production controller.",
+        "Water raised the shaft walls, fixed-spaced landmarks and floor together before impact. The tracked head stayed still through immersion and results.",
+        "Lava raised the shaft walls, fixed-spaced landmarks and floor together before impact. The tracked head stayed still through immersion and results.",
+        "Water reduced motion kept the chamber geometry stationary before contact and reached results.",
+        "Level 3 seed 379 showed fog, then a moving pane over hole 2. A deliberate miss recovered on permanent tile 7. Catching the moving glass locked its position and survived the deadline.",
+        "A simulated significant MRUK floor-anchor event withdrew the board. Reloading the real fixture produced a new verified fit and returned directly to Welcome.",
+        "Injected MRUK NoScenePermission. The blocked board showed App permissions and Try again. Retry loaded the fixture and restored Welcome.",
+        "Injected MRUK NoRoomsFound. The blocked board showed Space Setup and Check again. Retry loaded the fixture and restored Welcome."
+    ],
+    "images": [
+        "room-preview.png",
+        "classic-glass.png",
+        "classic-player-view.png",
+        "neighboring-hole.png",
+        "neighboring-hole-player-view.png",
+        "ending-lava.png",
+        "ending-water.png",
+        "ending-sand.png",
+        "ending-crystal.png",
+        "ending-space.png",
+        "ending-snow.png",
+        "fall-water-full-rim-opening.png",
+        "fall-water-full-mid-shaft-down.png",
+        "fall-water-full-mid-shaft-forward.png",
+        "fall-water-full-late-shaft-down.png",
+        "fall-water-full-contact-down.png",
+        "fall-water-full-contact-steep.png",
+        "fall-water-full-immersion-down.png",
+        "fall-lava-full-rim-opening.png",
+        "fall-lava-full-mid-shaft-down.png",
+        "fall-lava-full-mid-shaft-forward.png",
+        "fall-lava-full-late-shaft-down.png",
+        "fall-lava-full-contact-down.png",
+        "fall-lava-full-contact-steep.png",
+        "fall-lava-full-immersion-down.png",
+        "fall-water-reduced-rim-opening.png",
+        "fall-water-reduced-mid-shaft-down.png",
+        "fall-water-reduced-mid-shaft-forward.png",
+        "fall-water-reduced-late-shaft-down.png",
+        "fall-water-reduced-contact-down.png",
+        "fall-water-reduced-contact-steep.png",
+        "fall-water-reduced-immersion-down.png",
+        "level3-fog-player-view.png",
+        "level3-moving-pane-player-view.png",
+        "level3-locked-pane-player-view.png"
+    ],
+    "captureNotes": [],
+    "endingOrder": [
+        "Lava",
+        "Water",
+        "Sand",
+        "Crystal",
+        "Space",
+        "Snow",
+        "Water"
+    ],
+    "waves": [
+        {
+            "mode": "Classic",
+            "start": 8,
+            "guaranteed": 2,
+            "score": 1,
+            "survived": true,
+            "plannedDeadline": 12.359305583900227,
+            "observedAfterResolution": 12.359510792233559
+        },
+        {
+            "mode": "Memory",
+            "start": 2,
+            "guaranteed": 3,
+            "score": 2,
+            "survived": true,
+            "plannedDeadline": 18.63976987670068,
+            "observedAfterResolution": 18.6399508361678
+        },
+        {
+            "mode": "Memory",
+            "start": 3,
+            "guaranteed": 4,
+            "score": 3,
+            "survived": true,
+            "plannedDeadline": 24.92009816468254,
+            "observedAfterResolution": 24.92016716978458
+        },
+        {
+            "mode": "Classic",
+            "start": 4,
+            "guaranteed": 10,
+            "score": 4,
+            "survived": true,
+            "plannedDeadline": 31.20032983276644,
+            "observedAfterResolution": 31.200389788832197
+        },
+        {
+            "mode": "LastTile",
+            "start": 10,
+            "guaranteed": 9,
+            "score": 5,
+            "survived": true,
+            "plannedDeadline": 37.480481292517005,
+            "observedAfterResolution": 37.48061549744898
+        },
+        {
+            "mode": "Classic",
+            "start": 9,
+            "guaranteed": 3,
+            "score": 0,
+            "survived": false,
+            "plannedDeadline": 44.28062466695011,
+            "observedAfterResolution": 44.280721499433106
+        },
+        {
+            "mode": "Classic",
+            "start": 0,
+            "guaranteed": 6,
+            "score": 1,
+            "survived": true,
+            "plannedDeadline": 106.45446892006802,
+            "observedAfterResolution": 106.45449987244898
+        },
+        {
+            "mode": "Memory",
+            "start": 6,
+            "guaranteed": 7,
+            "score": 2,
+            "survived": true,
+            "plannedDeadline": 111.93456662414965,
+            "observedAfterResolution": 111.93464450113379
+        }
+    ],
+    "falls": [
+        {
+            "ending": "Water",
+            "motion": "full",
+            "plannedContact": 3.15,
+            "finishedAt": 6.72022766439909,
+            "firstSecondaryEffectAt": 3.150659623015869,
+            "landmarkSpan": 5.5,
+            "floorOpeningY": 0.009690221399068832,
+            "startingHazardY": -4.990309715270996,
+            "contactHazardY": 0.009690221399068832,
+            "immersionTintAlpha": 0.47999998927116394,
+            "maxPreContactOffsetError": 2.384185791015625e-7,
+            "maxTrackedHeadDisplacement": 0.0,
+            "maxTrackedHeadRotation": 0.0,
+            "samples": [
+                {
+                    "phase": "rim",
+                    "seconds": 0.10014095804989154,
+                    "landmarkY": 0.009690221399068832,
+                    "wallY": 0.009690221399068832,
+                    "floorY": -4.990309715270996,
+                    "landmarkTravel": 0.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "early-shaft",
+                    "seconds": 0.6502922477324233,
+                    "landmarkY": 0.3807370662689209,
+                    "wallY": 0.3807370662689209,
+                    "floorY": -4.6192626953125,
+                    "landmarkTravel": 0.37104684114456177,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "mid-shaft",
+                    "seconds": 1.7500046272675718,
+                    "landmarkY": 2.7598137855529785,
+                    "wallY": 2.7598137855529785,
+                    "floorY": -2.2401862144470215,
+                    "landmarkTravel": 2.7501235008239746,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "late-shaft",
+                    "seconds": 2.9800574121315293,
+                    "landmarkY": 4.963479518890381,
+                    "wallY": 4.963479518890381,
+                    "floorY": -0.036520544439554214,
+                    "landmarkTravel": 4.953789234161377,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "contact",
+                    "seconds": 3.270108666383223,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 5.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                },
+                {
+                    "phase": "immersion",
+                    "seconds": 5.800156958616782,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 1.9846194982528687,
+                    "landmarkTravel": 5.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                }
+            ]
+        },
+        {
+            "ending": "Lava",
+            "motion": "full",
+            "plannedContact": 3.15,
+            "finishedAt": 6.720070004251696,
+            "firstSecondaryEffectAt": 3.157879542233559,
+            "landmarkSpan": 5.5,
+            "floorOpeningY": 0.009690221399068832,
+            "startingHazardY": -4.990309715270996,
+            "contactHazardY": 0.009690221399068832,
+            "immersionTintAlpha": 0.0,
+            "maxPreContactOffsetError": 2.980232238769531e-7,
+            "maxTrackedHeadDisplacement": 0.0,
+            "maxTrackedHeadRotation": 0.0,
+            "samples": [
+                {
+                    "phase": "rim",
+                    "seconds": 0.10041300311790735,
+                    "landmarkY": 0.009690221399068832,
+                    "wallY": 0.009690221399068832,
+                    "floorY": -4.990309715270996,
+                    "landmarkTravel": 0.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "early-shaft",
+                    "seconds": 0.6502769628684746,
+                    "landmarkY": 0.380710631608963,
+                    "wallY": 0.380710631608963,
+                    "floorY": -4.619289398193359,
+                    "landmarkTravel": 0.3710204064846039,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "mid-shaft",
+                    "seconds": 1.7502055839002253,
+                    "landmarkY": 2.760298013687134,
+                    "wallY": 2.760298013687134,
+                    "floorY": -2.239701986312866,
+                    "landmarkTravel": 2.75060772895813,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "late-shaft",
+                    "seconds": 2.980076084183665,
+                    "landmarkY": 4.9634809494018555,
+                    "wallY": 4.9634809494018555,
+                    "floorY": -0.036519113928079605,
+                    "landmarkTravel": 4.953790664672852,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "contact",
+                    "seconds": 3.2701867559523805,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 5.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                },
+                {
+                    "phase": "immersion",
+                    "seconds": 5.450115249433111,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.8504472970962524,
+                    "landmarkTravel": 5.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                }
+            ]
+        },
+        {
+            "ending": "Water",
+            "motion": "reduced",
+            "plannedContact": 0.82,
+            "finishedAt": 3.930114044784574,
+            "firstSecondaryEffectAt": 0.8199594600340134,
+            "landmarkSpan": 5.5,
+            "floorOpeningY": 0.009690221399068832,
+            "startingHazardY": 0.009690221399068832,
+            "contactHazardY": 0.009690221399068832,
+            "immersionTintAlpha": 0.43208345770835876,
+            "maxPreContactOffsetError": 0.0,
+            "maxTrackedHeadDisplacement": 0.0,
+            "maxTrackedHeadRotation": 0.0,
+            "samples": [
+                {
+                    "phase": "rim",
+                    "seconds": 0.10010316751700543,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "landmarksVisible": false,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "early-shaft",
+                    "seconds": 0.4001220379818591,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "mid-shaft",
+                    "seconds": 0.7001889597505624,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "late-shaft",
+                    "seconds": 0.7611251629818554,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "contact",
+                    "seconds": 0.9400008715986417,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                },
+                {
+                    "phase": "immersion",
+                    "seconds": 2.9501590419501156,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                }
+            ]
+        }
+    ]
+}

@@ -41,8 +41,8 @@ namespace FloorFracture
         private global::GameSound sound;
         private RectTransform panel;
         private Canvas menuCanvas;
-        private PointableCanvas pointable;
 #if UNITY_EDITOR
+        private PointableCanvas pointable;
         private RayInteractable raySurface;
         public bool EditorSimulatesControllers => desktop != null && desktop.Active;
 #endif
@@ -112,14 +112,15 @@ namespace FloorFracture
 #endif
             if (!go) throw new InvalidOperationException("Install the Meta ray canvas with MenuSceneSetup before building this scene.");
             panel = (RectTransform)go.transform;
-            panel.localScale = Vector3.one * 0.00116f;
+            // A 39 cm panel at 56 cm keeps the original angular size and puts buttons within reach.
+            panel.localScale = Vector3.one * 0.00058f;
             menuCanvas = go.GetComponent<Canvas>();
             menuCanvas.renderMode = RenderMode.WorldSpace;
             menuCanvas.worldCamera = eye;
             menuCanvas.sortingOrder = 12;
-            pointable = go.GetComponentInChildren<PointableCanvas>(true);
 #if UNITY_EDITOR
-            if (pointable) raySurface = pointable.GetComponent<RayInteractable>();
+            raySurface = go.GetComponentInChildren<RayInteractable>(true);
+            if (raySurface) pointable = raySurface.GetComponent<PointableCanvas>();
 #endif
             var background = go.AddComponent<UnityEngine.UI.Image>();
             background.color = Paper;
@@ -177,7 +178,7 @@ namespace FloorFracture
             Vector3 forward = Vector3.ProjectOnPlane(Head.forward, Vector3.up);
             if (forward.sqrMagnitude < 0.01f) forward = Vector3.ProjectOnPlane(rig.transform.forward, Vector3.up);
             if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
-            Vector3 pos = Head.position + forward.normalized * 1.12f + Vector3.down * 0.105f;
+            Vector3 pos = Head.position + forward.normalized * .56f + Vector3.down * .07f;
             panel.SetPositionAndRotation(pos, Quaternion.LookRotation(pos - Head.position, Vector3.up));
         }
 
@@ -265,8 +266,7 @@ namespace FloorFracture
                 return;
             }
 #endif
-            // The SDK controller RayInteractors and PointableCanvasModule dispatch world-space
-            // uGUI events. There is no separate hardware raycast or trigger polling here.
+            // ISDK ray and poke interactors dispatch to the same world-space uGUI buttons.
         }
 
         private void OnEnable()
@@ -294,7 +294,8 @@ namespace FloorFracture
             else
 #endif
             {
-                if (!UniqueIdentifier.TryGetInstanceFromIdentifier<RayInteractor>(Context.Global.GetInstance(), id, out var source)) return;
+                if (!UniqueIdentifier.TryGetInstanceFromIdentifier<Component>(Context.Global.GetInstance(), id, out var source)
+                    || (!(source is RayInteractor) && !(source is PokeInteractor))) return;
                 var controller = source.GetComponentInParent<IController>();
                 var hand = controller == null ? source.GetComponentInParent<IHand>() : null;
                 if (controller == null && hand == null) return;

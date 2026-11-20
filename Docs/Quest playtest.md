@@ -15,9 +15,9 @@ Use one copy per APK and test room. Record observations from the headset and lea
 | Check | What to try | Observed result, dimensions, evidence |
 | --- | --- | --- |
 | 020, 026 | Launch from the Quest library. Move and turn your head, move each controller separately, and compare the floor and scanned furniture against the real room. | |
-| 023–024, 032–034 | Deny spatial permission, grant it, and try a room with no saved scan. Use the recovery buttons. Decline one preview and check its replacement before confirming. | |
-| 028–034 | Spacious floor. Walk the ordinary route and check every corner of the outer clearance. | |
-| 028–034 | Narrow floor. Record the rectangular board dimensions and whether each tile is reachable. | |
+| 023–024, 032–034 | Deny spatial permission, grant it, and try a room with no saved scan. On a valid scan, check automatic placement and the dimensions on Welcome. Choose Play area → Try another spot and inspect the replacement or recovery message. | |
+| 028–034 | Spacious floor. Record rows, columns and centimetres per pane. Walk an ordinary one-step route. Compare coverage, pane width and margin with the smaller room. | |
+| 028–034 | Narrow floor. Record the rectangular board dimensions, centimetres per pane and whether each tile is reachable. | |
 | 028–034 | Furniture beside a corner or crossing the center. Compare the outline with the obstruction. | |
 | 033–034 | Insufficient room. Record the message, passthrough visibility, and result of rescanning. | |
 | 037–044, 120 | Use each ray from seated and standing menu positions. Try both grips, miss with the stone, repeat, skip, and change each setting. Describe any coaching. | |

@@ -4,21 +4,53 @@ using UnityEngine;
 // All facets of a feature share one mesh. A cloud of embers costs one renderer.
 internal static class FallMeshes
 {
+    static readonly Vector2[] Rim = {
+        new Vector2(-.76f,-1), new Vector2(.76f,-1), new Vector2(1,-.76f), new Vector2(1,.76f),
+        new Vector2(.76f,1), new Vector2(-.76f,1), new Vector2(-1,.76f), new Vector2(-1,-.76f)
+    };
+
+    static Vector3 RimPoint(int side, float y, float inset = 1f)
+    {
+        Vector2 point = Rim[side % Rim.Length] * inset;
+        return new Vector3(point.x,y,point.y);
+    }
+
     internal static Mesh Shaft()
     {
         var mesh = new Builder();
-        Vector2[] rim = {
-            new Vector2(-.76f,-1), new Vector2(.76f,-1), new Vector2(1,-.76f), new Vector2(1,.76f),
-            new Vector2(.76f,1), new Vector2(-.76f,1), new Vector2(-1,.76f), new Vector2(-1,-.76f)
-        };
-        for (int i = 0; i < rim.Length; i++)
+        // Rings near the lip give the tile-sized mouth a short, flared throat.
+        float[] levels = { 0f, -.20f, -.45f, -.75f, -1.15f, -1.45f, -7f };
+        for (int i = 0; i < Rim.Length; i++)
         {
-            Vector2 a = rim[i], b = rim[(i + 1) % rim.Length];
-            Vector3 topA = new Vector3(a.x, 0, a.y), topB = new Vector3(b.x, 0, b.y);
             Color face = Gray(.64f + .24f * Mathf.Abs(Mathf.Sin(i * 1.8f)));
-            mesh.Quad(topA + Vector3.down * 12, topB + Vector3.down * 12, topB, topA, face, i);
+            for (int j = 1; j < levels.Length; j++)
+                mesh.Quad(RimPoint(i,levels[j]),RimPoint(i+1,levels[j]),
+                    RimPoint(i+1,levels[j-1]),RimPoint(i,levels[j-1]),face,i);
         }
         return mesh.Build("Chamber walls");
+    }
+
+    internal static Mesh Landmarks()
+    {
+        var mesh = new Builder();
+        for (int row = 0; row < 11; row++)
+        {
+            float y = -.02f - row*.54f;
+            bool wide = row % 3 == 0;
+            float inset = wide ? .91f : .955f;
+            float thickness = wide ? .10f : .055f;
+            for (int side = 0; side < Rim.Length; side++)
+            {
+                // Each ledge has a cap for a downward glance and a front edge at eye level.
+                mesh.Quad(RimPoint(side,y,.997f),RimPoint(side+1,y,.997f),
+                    RimPoint(side+1,y,inset),RimPoint(side,y,inset),Gray(wide ? .92f : .65f),side);
+                mesh.Quad(RimPoint(side,y-thickness,inset),RimPoint(side+1,y-thickness,inset),
+                    RimPoint(side+1,y,inset),RimPoint(side,y,inset),Gray(wide ? .73f : .46f),side);
+                mesh.Quad(RimPoint(side,y-thickness-.045f,.997f),RimPoint(side+1,y-thickness-.045f,.997f),
+                    RimPoint(side+1,y-thickness,inset),RimPoint(side,y-thickness,inset),Gray(.19f),side);
+            }
+        }
+        return mesh.Build("Eleven fixed shaft ledges");
     }
 
     internal static Mesh Disk()

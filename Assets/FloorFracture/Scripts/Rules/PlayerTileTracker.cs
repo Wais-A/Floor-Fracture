@@ -21,9 +21,8 @@ namespace FloorFracture
 
     public sealed class SlidingPane
     {
-        // The moving pane and its full travel fit inside one already-open 0.5 m cell.
-        public const float Travel = 0.09f;
-        public float HalfSize => 0.15f;
+        public float Travel { get; }
+        public float HalfSize { get; }
         public int Tile { get; }
         public Vector2 Direction { get; }
         public double MotionStartsAt { get; }
@@ -33,11 +32,14 @@ namespace FloorFracture
         private Vector2 lockedCenter;
         private const double OneWaySeconds = 1.20;
 
-        internal SlidingPane(int tile, Vector2 holeCenter, Vector2 direction, double start)
+        internal SlidingPane(int tile, Vector2 holeCenter, Vector2 direction, float pitch, double start)
         {
             Tile = tile;
             this.holeCenter = holeCenter;
             Direction = direction;
+            // Even at its turning point the moving pane clears the edge of its original hole.
+            Travel = pitch * 0.18f;
+            HalfSize = pitch * 0.30f;
             MotionStartsAt = start + 0.65;
         }
 

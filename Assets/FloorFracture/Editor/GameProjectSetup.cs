@@ -1,9 +1,21 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.XR.Management;
+using UnityEditor.XR.Management.Metadata;
+using UnityEditor.XR.OpenXR.Features;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.XR.Hands.OpenXR;
+using UnityEngine.XR.Management;
+using UnityEngine.XR.OpenXR;
+using UnityEngine.XR.OpenXR.Features;
+using UnityEngine.XR.OpenXR.Features.Interactions;
+using UnityEngine.XR.OpenXR.Features.Meta;
+using UnityEngine.XR.OpenXR.Features.MetaQuestSupport;
 
 namespace FloorFracture.Editor
 {
@@ -51,6 +63,7 @@ namespace FloorFracture.Editor
                 if(!flow.Rig) throw new InvalidOperationException("Room setup produced no tracked rig.");
                 MenuSceneSetup.Install(flow.transform);
                 StoneSceneSetup.Install();
+                SpatialAudioSceneSetup.Install();
                 Light keyLight=null;
                 foreach(var root in scene.GetRootGameObjects())
                     if(root.name=="Glass and controllers light") keyLight=root.GetComponent<Light>();
@@ -80,12 +93,40 @@ namespace FloorFracture.Editor
 
         static void ConfigureMixedReality()
         {
+            const BuildTargetGroup android=BuildTargetGroup.Android;
+            var manager=XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(android)?.Manager;
+            if(!manager) throw new InvalidOperationException("Android XR Plug-in Management settings are missing.");
+            if(!manager.activeLoaders.OfType<OpenXRLoader>().Any()&&
+                !XRPackageMetadataStore.AssignLoader(manager,typeof(OpenXRLoader).FullName,android))
+                throw new InvalidOperationException("Could not assign the Android OpenXR loader.");
+            var loader=manager.activeLoaders.OfType<OpenXRLoader>().First();
+            if(manager.activeLoaders.Count!=1&&!manager.TrySetLoaders(new List<XRLoader>{loader}))
+                throw new InvalidOperationException("Could not select OpenXR as the single Android loader.");
+            EditorUtility.SetDirty(manager);
+            FeatureHelpers.RefreshFeatures(android);
+            var settings=OpenXRSettings.GetSettingsForBuildTargetGroup(android);
+            EnableFeature<MetaQuestFeature>(settings);
+            EnableFeature<ARSessionFeature>(settings);
+            EnableFeature<AROcclusionFeature>(settings);
+            EnableFeature<OculusTouchControllerProfile>(settings);
+            EnableFeature<HandTracking>(settings);
             var config=OVRProjectConfig.CachedProjectConfig;
             config.anchorSupport=OVRProjectConfig.AnchorSupport.Enabled;
             config.sceneSupport=OVRProjectConfig.FeatureSupport.Required;
             config.insightPassthroughSupport=OVRProjectConfig.FeatureSupport.Required;
+            config.handTrackingSupport=OVRProjectConfig.HandTrackingSupport.ControllersAndHands;
+            config.systemLoadingScreenBackground=OVRProjectConfig.SystemLoadingScreenBackground.ContextualPassthrough;
             OVRProjectConfig.CommitProjectConfig(config);
             OVRManifestPreprocessor.GenerateOrUpdateAndroidManifest(true);
+        }
+
+        static void EnableFeature<T>(OpenXRSettings settings) where T:OpenXRFeature
+        {
+            var feature=settings?settings.GetFeature<T>():null;
+            if(!feature) throw new InvalidOperationException("Android OpenXR feature is missing: "+typeof(T).Name);
+            if(feature.enabled) return;
+            feature.enabled=true;
+            EditorUtility.SetDirty(feature);
         }
 
         public static void BuildAndroid()

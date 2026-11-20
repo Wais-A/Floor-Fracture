@@ -100,11 +100,11 @@ public sealed class FallSequence : MonoBehaviour
 
     void Draw()
     {
-        float intro = reduced ? .82f : 1.35f;
-        float duration = reduced ? 3.15f : 4.8f;
-        float p = Mathf.Clamp01((age-intro)/duration);
-        float enter = Mathf.Clamp01(age/intro);
-        float immersion = scenery.Draw(age,p,reduced,enter);
+        float contact = reduced ? .82f : 3.15f;
+        float end = reduced ? 3.93f : 6.72f;
+        float p = Mathf.InverseLerp(contact,end,age);
+        float descent = reduced ? 1f : FallScenery.Ease(.15f,contact,age);
+        float immersion = scenery.Draw(age,p,reduced,FallScenery.ShaftDepth*descent);
         if (!entryReported && age >= (reduced ? .32f : .83f))
         {
             entryReported = true;
@@ -113,24 +113,29 @@ public sealed class FallSequence : MonoBehaviour
             if (generation != currentGeneration || !IsPlaying) return;
         }
         float fade = FallScenery.Ease(.80f,1,p);
-        float air = FallScenery.Ease(0,.65f,enter);
+        float air = reduced ? .25f : Mathf.Lerp(.12f,1,FallScenery.Ease(.15f,2.65f,age));
         float ambiance = 0;
         float tint = 0;
         Color tintColor = Color.black;
         switch (kind)
         {
             case FloorEnding.Water:
-                if (!impactPlayed && (reduced ? p >= .39f : scenery.WaterAtEntryFloor))
+                if (!impactPlayed && age >= contact)
                 {
                     Vector3 point = scenery.SplashPosition();
-                    scenery.Splash(point); sound.WaterImpact(point); impactPlayed = true;
+                    scenery.Splash(point,reduced); sound.WaterImpact(point); impactPlayed = true;
                 }
-                air *= 1-Mathf.Max(immersion,.45f*FallScenery.Ease(.39f,.50f,p));
-                ambiance = Mathf.Max(immersion,.16f*FallScenery.Ease(.39f,.58f,p));
+                air *= 1-Mathf.Max(immersion,.70f*FallScenery.Ease(0,.17f,p));
+                ambiance = Mathf.Max(immersion,.18f*FallScenery.Ease(0,.20f,p));
                 tintColor = new Color(.015f,.19f,.24f); tint = .48f*immersion;
                 break;
             case FloorEnding.Lava:
-                ambiance = FallScenery.Ease(.03f,.59f,p); air *= 1-ambiance;
+                if (!impactPlayed && age >= contact)
+                {
+                    sound.LavaImpact(scenery.SplashPosition());
+                    impactPlayed = true;
+                }
+                ambiance = FallScenery.Ease(0,.42f,p); air *= 1-FallScenery.Ease(0,.20f,p);
                 break;
             case FloorEnding.Crystal:
                 air *= 1-FallScenery.Ease(.03f,.45f,p);
@@ -153,9 +158,9 @@ public sealed class FallSequence : MonoBehaviour
         }
         if (reduced) air *= .33f;
         sound.MixFall(air*(1-fade),ambiance*(1-fade));
-        if (reduced && age < 1.05f)
+        if (reduced && age < .70f)
         {
-            float cover = FallScenery.Ease(0,.31f,age)*(1-FallScenery.Ease(.45f,1.04f,age));
+            float cover = FallScenery.Ease(0,.31f,age)*(1-FallScenery.Ease(.40f,.70f,age));
             scenery.SetVeil(Color.black,cover);
         }
         else

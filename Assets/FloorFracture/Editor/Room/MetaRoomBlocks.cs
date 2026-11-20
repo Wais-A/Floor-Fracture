@@ -16,6 +16,10 @@ namespace FloorFracture.Editor
         public const string PassthroughId = "f0540b20-dfd6-420e-b20d-c270f88dc77e";
         public const string ControllersId = "5817f7c0-f2a5-45f9-a5ca-64264e0166e8";
         public const string RoomId = "d4413f4f-542f-451f-92ee-4801f27d676a";
+        public const string FloorSpawnsId = "93762ef0-9738-45f4-bb87-bdb9a0acb994";
+        public const string GuardianId = "715d6e5e-2d15-475d-9b2b-43ce3eca2f3d";
+        public const string OcclusionId = "c1dbe32c-fed2-4835-8e6a-3fbb4f4f4315";
+        public const string DepthProviderId = "ece9de6e-19c8-4f64-bb33-313ed23e6c5c";
         public const string InteractionsId = "81f55626-5fad-45e9-a1df-184f330da7ba";
         public const string OvrInteractionsRoutineId = "2063f481-1b63-4eda-9ee8-a00df98536bc";
 

@@ -8,7 +8,9 @@ internal sealed class FallScenery
     static readonly int Tint = Shader.PropertyToID("_Tint"), Role = Shader.PropertyToID("_Role"),
         Theme = Shader.PropertyToID("_Theme"), Age = Shader.PropertyToID("_Age"),
         Reveal = Shader.PropertyToID("_Reveal"), Level = Shader.PropertyToID("_Level"),
-        Motion = Shader.PropertyToID("_Motion"), Opacity = Shader.PropertyToID("_Opacity");
+        Motion = Shader.PropertyToID("_Motion"), Opacity = Shader.PropertyToID("_Opacity"),
+        Mouth = Shader.PropertyToID("_Mouth"), MouthRight = Shader.PropertyToID("_MouthRight");
+    internal const float ShaftDepth = 5f;
     static readonly Color[] wallTints = {
         new Color(.19f,.28f,.30f), new Color(.25f,.15f,.12f), new Color(.18f,.17f,.25f),
         new Color(.18f,.19f,.26f), new Color(.44f,.31f,.19f), new Color(.26f,.40f,.53f)
@@ -21,7 +23,7 @@ internal sealed class FallScenery
     readonly Transform world;
     readonly Material surfaceMaterial, fadeMaterial;
     readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
-    readonly MeshRenderer walls, background, floor, nativeWater, pillars, motes, opening;
+    readonly MeshRenderer walls, landmarks, background, floor, nativeWater, pillars, motes, opening;
     MeshRenderer veil;
     readonly List<Mesh> ownedMeshes = new List<Mesh>();
     readonly Mesh[] moteMeshes = new Mesh[6];
@@ -31,6 +33,7 @@ internal sealed class FallScenery
     FloorEnding kind;
     Transform head;
     float eyeHeight, startRadius, radius;
+    Vector3 mouthRight;
 
     internal FallScenery(Material waterOverride, GameObject splashOverride, GameObject fireOverride)
     {
@@ -41,6 +44,7 @@ internal sealed class FallScenery
         Mesh disk = Own(FallMeshes.Disk());
         crystalMesh = Own(FallMeshes.Spires(false)); flameMesh = Own(FallMeshes.Spires(true));
         walls = Part("Shaft walls", Own(FallMeshes.Shaft()), surfaceMaterial);
+        landmarks = Part("Shaft landmarks", Own(FallMeshes.Landmarks()), surfaceMaterial);
         background = Part("Chamber darkness", boxMesh, surfaceMaterial);
         floor = Part("Hazard surface", disk, surfaceMaterial);
         var native = waterOverride ? waterOverride : Resources.Load<Material>("Endings/MetaFloorZone/materials/Water");
@@ -81,7 +85,15 @@ internal sealed class FallScenery
         eyeHeight = Mathf.Max(.25f, viewer.position.y-center.y);
         startRadius = Mathf.Max(.08f, width*.5f);
         Vector3 offset = viewer.position-center; offset.y=0;
-        radius = Mathf.Max(1.65f, offset.magnitude + 1.2f);
+        radius = Mathf.Max(startRadius+.65f,1.48f,offset.magnitude+1.00f);
+        mouthRight = world.right;
+        walls.transform.localScale = landmarks.transform.localScale = new Vector3(radius,1,radius);
+        float surfaceRadius = radius*1.40f;
+        floor.transform.localScale = new Vector3(surfaceRadius,1,surfaceRadius);
+        if (nativeWater) nativeWater.transform.localScale = floor.transform.localScale;
+        float ringScale = Mathf.Clamp(radius*.55f,.78f,1.02f);
+        pillars.transform.localScale = new Vector3(ringScale,1,ringScale);
+        motes.transform.localScale = kind == FloorEnding.Sand ? pillars.transform.localScale : Vector3.one;
         pillars.GetComponent<MeshFilter>().sharedMesh = kind == FloorEnding.Lava ? flameMesh : crystalMesh;
         if (kind != FloorEnding.Crystal)
         {
@@ -98,50 +110,50 @@ internal sealed class FallScenery
     }
 
     // Returns the submersion factor at the viewer's actual height.
-    internal float Draw(float age, float progress, bool reduced, float entrance)
+    internal float Draw(float age, float progress, bool reduced, float travel)
     {
         bool visible = !reduced || age >= .32f;
-        float chamber = reduced ? 1 : Smooth(entrance);
-        float shaftRadius = Mathf.Lerp(startRadius,radius,chamber);
-        float top = Mathf.Lerp(0,eyeHeight+3.45f,chamber);
-        float surfaceY = -3.4f;
+        // The chamber and its destination are one moving world until the feet reach the surface.
+        // Only the upper metre of the throat widens as the lip draws near.
+        float top = travel;
+        float mouthRadius = Mathf.Lerp(startRadius,Mathf.Max(startRadius,Mathf.Min(radius,.77f)),Ease(0,1.35f,travel));
+        float surfaceY = travel-ShaftDepth;
         Color wallColor = wallTints[(int)kind], sky = skyTints[(int)kind];
-        float wallAlpha = 1, particleAlpha = Ease(.01f,.22f,progress);
-        float floorAlpha = 0, pillarsAlpha = 0, light = 0;
+        float wallAlpha = 1, particleAlpha = Ease(0,.17f,progress);
+        float floorAlpha = 1, pillarsAlpha = 0, light = 0;
         int floorRole = 0;
-        Color surfaceColor = Color.white;
+        Color surfaceColor = wallColor*.70f;
         float immersion = 0;
         switch (kind)
         {
             case FloorEnding.Water:
-                surfaceY = reduced ? eyeHeight-1.12f : RisingWater(progress);
+                if (!reduced)
+                    surfaceY += (eyeHeight+.40f)*Ease(.07f,.79f,progress);
                 immersion = reduced ? Ease(.50f,.73f,progress) :
                     Mathf.SmoothStep(0,1,Mathf.InverseLerp(-.09f,.14f,world.position.y+surfaceY-head.position.y));
-                floorAlpha = 1; floorRole = 2; surfaceColor = new Color(.035f,.20f,.22f);
+                floorRole = 2; surfaceColor = new Color(.035f,.20f,.22f);
                 particleAlpha *= immersion;
                 break;
             case FloorEnding.Lava:
-                surfaceY = reduced ? eyeHeight-1.17f : Mathf.Lerp(-3.4f,eyeHeight-.67f,Ease(.10f,.81f,progress));
-                floorAlpha = Ease(.10f,.27f,progress); floorRole = 3;
-                pillarsAlpha = Ease(.32f,.57f,progress);
+                if (!reduced) surfaceY += Mathf.Max(0,eyeHeight-.75f)*Ease(.10f,.68f,progress);
+                floorRole = 3;
+                pillarsAlpha = Ease(0,.12f,progress);
                 break;
             case FloorEnding.Crystal:
-                surfaceY = -.37f; pillarsAlpha = Ease(.01f,.12f,progress);
+                pillarsAlpha = Ease(0,.10f,progress);
                 break;
             case FloorEnding.Space:
-                float retreat = Ease(.04f,.54f,progress);
-                if (!reduced) { top -= retreat*9f; shaftRadius += retreat*1.2f; }
-                wallAlpha = 1-retreat;
-                particleAlpha *= 1-Ease(.78f,.97f,progress);
+                wallAlpha = floorAlpha = 1-Ease(0,.15f,progress);
+                particleAlpha = Ease(0,.13f,progress)*(1-Ease(.78f,.97f,progress));
                 break;
             case FloorEnding.Sand:
-                surfaceY = reduced ? eyeHeight-1.2f : Mathf.Lerp(-2.5f,eyeHeight-.14f,Ease(.06f,.79f,progress));
+                if (!reduced) surfaceY += Mathf.Max(0,eyeHeight-.14f)*Ease(.06f,.79f,progress);
                 float lastLight = Ease(.62f,.87f,progress);
                 wallColor = Color.Lerp(wallColor, Color.black, lastLight);
                 sky = Color.Lerp(sky,Color.black,lastLight);
                 surfaceColor = Color.Lerp(new Color(.72f,.49f,.24f), Color.black,lastLight);
                 particleAlpha *= 1-lastLight;
-                floorAlpha = Ease(.01f,.12f,progress); floorRole = 4;
+                floorRole = 4;
                 light = Ease(.04f,.30f,progress)*(1-Ease(.84f,.99f,progress));
                 break;
             case FloorEnding.Snow:
@@ -153,21 +165,26 @@ internal sealed class FallScenery
         properties.Clear();
         properties.SetFloat(Theme,(int)kind); properties.SetFloat(Age,age);
         properties.SetFloat(Reveal,progress); properties.SetFloat(Level,level); properties.SetFloat(Motion,motion);
-        Paint(background,kind == FloorEnding.Space ? 8 : 0,sky,visible ? Ease(.10f,.93f,chamber) : 0);
-        walls.transform.localPosition = new Vector3(0,top,0);
-        walls.transform.localScale = new Vector3(shaftRadius,1,shaftRadius);
+        Vector3 center = world.position;
+        float rimY = center.y+top;
+        properties.SetVector(Mouth,new Vector4(center.x,rimY,center.z,mouthRadius));
+        properties.SetVector(MouthRight,new Vector4(mouthRight.x,mouthRight.z,mouthRadius/radius,reduced ? 0 : 1));
+        float overhead = reduced ? 1 : Ease(.06f,1.35f,rimY-head.position.y);
+        Paint(background,kind == FloorEnding.Space ? 8 : 0,sky,visible ? overhead : 0);
+        walls.transform.localPosition = landmarks.transform.localPosition = Vector3.up*top;
         Paint(walls,1,wallColor,visible ? wallAlpha : 0);
-        float surfaceRadius = shaftRadius*1.46f;
+        Color ledgeColor = Color.Lerp(wallColor,new Color(.84f,.88f,.85f),.64f);
+        Paint(landmarks,9,ledgeColor,visible ? wallAlpha : 0);
         floor.transform.localPosition = new Vector3(0,surfaceY,0);
-        floor.transform.localScale = new Vector3(surfaceRadius,1,surfaceRadius);
         Paint(floor,floorRole,surfaceColor,visible ? floorAlpha : 0);
         if (nativeWater)
         {
-            nativeWater.enabled = visible && kind == FloorEnding.Water;
+            // The source graph uses transparency and cannot apply our per-eye opening mask.
+            // Its overlay joins the already visible procedural water once both eyes are inside.
+            nativeWater.enabled = visible && kind == FloorEnding.Water && (reduced || rimY > head.position.y+.12f);
             nativeWater.transform.localPosition = floor.transform.localPosition + Vector3.up*.009f;
-            nativeWater.transform.localScale = floor.transform.localScale;
         }
-        pillars.transform.localPosition = Vector3.up*(kind == FloorEnding.Lava ? surfaceY-.11f : eyeHeight-1.65f);
+        pillars.transform.localPosition = Vector3.up*(kind == FloorEnding.Lava ? surfaceY-.11f : 0);
         Paint(pillars,kind == FloorEnding.Lava ? 7 : 5,Color.white, visible ? pillarsAlpha : 0);
         if (replacementFire)
         {
@@ -199,21 +216,16 @@ internal sealed class FallScenery
         return center;
     }
 
-    internal bool WaterAtEntryFloor => floor.transform.localPosition.y >= 0;
-
-    float RisingWater(float progress)
-    {
-        if (progress < .39f) return Mathf.Lerp(-3.4f,.02f,Ease(0,.39f,progress));
-        float belowEyes = Mathf.Max(.04f,eyeHeight-.42f);
-        if (progress < .58f) return Mathf.Lerp(.02f,belowEyes,Ease(.39f,.58f,progress));
-        return Mathf.Lerp(belowEyes,eyeHeight+.40f,Ease(.58f,.87f,progress));
-    }
-
-    internal void Splash(Vector3 point)
+    internal void Splash(Vector3 point, bool reduced)
     {
         if (!splashPrefab) return;
-        if (!splash) splash = Object.Instantiate(splashPrefab,world);
+        if (!splash)
+        {
+            splash = Object.Instantiate(splashPrefab,world);
+            splash.name = "Water contact splash";
+        }
         splash.transform.SetPositionAndRotation(point,world.rotation*splashPrefab.transform.localRotation);
+        splash.transform.localScale = splashPrefab.transform.localScale*(reduced ? .5f : 1);
         splash.SetActive(true);
         var system = splash.GetComponent<ParticleSystem>();
         if (system)

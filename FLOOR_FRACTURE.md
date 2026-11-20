@@ -15,13 +15,13 @@ The real room stays visible. On a clear patch of floor, a rectangle of smoky gla
 | Unity OpenXR, Unity OpenXR: Meta and AR Foundation | OpenXR input and Unity's AR abstractions for passthrough and captured room geometry. Portable gameplay code can run on another supported device with a room provider. | The room setup, floor-fit behavior, interaction assets and sample visuals would need separate integration. Device-specific capabilities still need device-specific verification. |
 | Meta XR Core, Interaction and MRUK with Unity's Android OpenXR loader | The previous course exercises use these packages. MRUK supplies room anchors and floor polygons. The Floor Zone sample demonstrates a portal in a real floor. | Scene setup, permission flow and sample assets are Quest-specific. Board rules use independent coordinates and seeds so another room provider could reuse them. |
 
-Wais approved Unity `6000.6.9f1`. The project uses URP `17.6.0`, Meta XR `209.0.0`, Unity OpenXR `1.19.0`, ARM64 and Android package `com.wa003.floorfracture`. [Unity OpenXR: Meta](https://docs.unity3d.com/Packages/com.unity.xr.meta-openxr@2.7/manual/index.html) · [Meta Floor Zone](https://developers.meta.com/vr/documentation/unity/unity-sample-mruk-floor-zone/)
+Wais approved Unity `6000.6.9f1`. The project uses URP `17.6.0`, Meta XR `209.0.0`, Unity OpenXR `1.19.0`, Unity OpenXR: Meta `2.7.0`, ARM64 and Android package `com.wa003.floorfracture`. Use the SDK's Building Blocks for the tracked rig, passthrough, controllers, MRUK and stone. One world-space menu receives Meta ray and fingertip poke events. Room Guardian outlines nearby scanned objects, and Meta's environment-depth material lets a foreground object cover the practice stone. Project code selects valid footprints, decides wave outcomes and presents the glass and ending effects. [Unity OpenXR: Meta](https://docs.unity3d.com/Packages/com.unity.xr.meta-openxr@2.7/manual/index.html) · [Meta Building Blocks](https://developers.meta.com/vr/documentation/unity/unity-building-blocks-overview/) · [Meta Floor Zone](https://developers.meta.com/vr/documentation/unity/unity-sample-mruk-floor-zone/)
 
 ## First minute
 
 1. Load the captured room and ask for spatial data when needed. The player can start Space Setup if the headset has no usable room.
-2. Fit the largest clear rectangle from 2×2 through 4×4. Trial dimensions are 0.5 m per pane and 0.4 m around the board. Preview the entire footprint. The player confirms that the real floor is clear or asks for another position.
-3. Either controller ray selects menu controls. The optional tutorial presents a grabbable stone and a marked pane. Letting go over the pane demonstrates the shatter. A miss returns the stone. The player then steps between two practice positions to learn the ring.
+2. Meta's Find Spawn Positions block proposes patches in the saved scan. The board fitter checks the whole rectangle against the floor perimeter and scanned obstructions, with 40 cm on all sides. Small rooms can use 50 cm square panes. The next Quest trial grows both pane width (up to 67 cm) and the number of panes (up to eight along each axis). Welcome shows the measured dimensions over the fitted glass. Start is available directly. Play area offers another spot and Space Setup.
+3. Touch a menu button with one fingertip, point and pinch with a hand, or point and pull the controller trigger. The optional tutorial presents a grabbable stone and a marked pane. Letting go over the pane demonstrates the shatter. A miss returns the stone. The player then steps between two practice positions to learn the ring.
 4. Stand on an intact pane and start the first Classic wave. Its five-second countdown gives the player time to find a stationary one-step route. Moving early keeps the original timer running.
 
 ## Wave rules
@@ -33,14 +33,39 @@ Wais approved Unity `6000.6.9f1`. The project uses URP `17.6.0`, Meta XR `209.0.
 
 ## Loss and replay
 
-The player keeps head tracking throughout. Wall details rise around them to suggest a fall. Reduced motion uses a fade into the reveal, and Skip goes to the same results. A separate shuffle selects water, lava, crystal, space, sand or snow, with no immediate repeat between shuffles. Water passes eye height with bubbles and muffled sound. Lava lights the lower walls before flames and embers appear. Crystal lights travel around the shaft, space opens into stars, sand fills a buried chamber, and snow builds to a whiteout. Each ends in black before results. Restart clears the run and restores passthrough.
+On a full-motion loss, the player should see the tile break, successive ledges pass at eye level and the landing surface approach from below. After contact, water slowly passes eye height with bubbles and muffled sound, or flames and embers surround the player. The first headset build made the liquid rise while the player felt stationary. Wais will review the revised descent. Reduced motion fades into a stationary reveal and Skip goes to results. A separate shuffle selects water, lava, crystal, space, sand or snow, with no immediate repeat between shuffles. Crystal lights travel around the shaft, space opens into stars, sand fills a buried chamber, and snow builds to a whiteout. Each ends in black before results. Restart clears the run and restores passthrough.
+
+## AI after the core headset milestone
+
+Wais chose fixed spoken tutorial and results lines, generated once and bundled for offline Quest playback. He will choose a provider and voice after the revised gameplay test. Spoken prompts should leave time to watch the stone drop or find the marker. The same instructions and score stay visible. A later optional **Why did I lose?** experiment can use the recorded wave type, deadline and supporting tile while the player is stationary.
+
+Before an AI trial, Wais chooses the feature and provider. Meta's SDK supports different execution locations per provider. Confirm that the chosen model runs on Quest 3 as intended, measure latency and memory, and compare frame times on the same build. An optional explanation can operate on game events without sending a room image. [Meta AI Building Blocks](https://developers.meta.com/vr/documentation/unity/unity-ai-building-blocks-overview/)
+
+The installed 209 `UnityInferenceEngineProvider` implements text-only chat and requires a compatible model and tokenizer. That makes the results coach a concrete offline experiment. The installed Text To Speech block has OpenAI and ElevenLabs providers for generating the clips during authoring. The shipped clips can play from the APK with networking off. Test the coach on a known breaking start, a Memory recall error and an expired gap grace. The answer must match the recorded cause in every case, and the ordinary Results controls must work while it runs.
+
+## Where the game lives
+
+Open `Assets/FloorFracture/Scenes/FloorFracture.unity`. Its **Floor Fracture** object has `GameFlow` and references the room provider and tracked rig. **Tools → Floor Fracture → Prepare game scene** reapplies the configured SDK blocks and keeps the main scene in the Android build list.
+
+| Responsibility | Unity source and verification point |
+|---|---|
+| Room, permission and footprint | `Scripts/Room/RoomBoardPlacement.cs` on the MRUK instance owns loading, permission recovery, automatic placement and relocation. Meta's Find Spawn Positions offers floor candidates. `MrukFloorReader` reads floor and obstacle shapes. `BoardFitter` validates the rectangle and margin. The Rec Room fixture is Editor-only. [Complete Building Blocks review](<./Docs/Meta Building Blocks.md>) |
+| Tracked rig and direct grab | SDK Camera Rig, Passthrough, Controller Tracking, Interactions Rig and MR Utility Kit blocks are serialized in the scene. `Resources/PracticeStone.prefab` carries the SDK Grab Interaction block and a Rigidbody. `Scripts/Game/PracticeStone.cs` handles the lesson, release, gravity, floor crossing and miss recovery. |
+| Controller menus | The scene has one world-space canvas with Meta’s Ray Canvas and Poke Canvas Quick Actions. Both SDK surfaces dispatch to the same choices. `Scripts/Menu/GamePanel.cs` owns the menu choices, hover feedback and positioning. Desktop fixture input is Editor-only. |
+| Rules and reproducibility | `Scripts/Rules/BoardState.cs` owns intact glass, score, wave pattern and deadline. `WavePlanner.cs` constructs connected, reachable survivors from a seed. `PlayerTileTracker.cs` projects the tracked head into board coordinates, handles support, and samples at the deadline. Each wave logs its seed, starting cell, safety choices and deadline. |
+| Timing, decisions and replay | `Scripts/Game/GameFlow.cs` owns countdown, exactly-once scoring, level rebuild, pause, loss and restart. It tells the presentation what happened. Focus or tracking loss during a wave cancels the countdown. |
+| Glass and shafts | `Resources/GlassTile.prefab`, `Scripts/Glass/GlassGeometry.cs` and `GlassTile.cs` share fitted warning and shard geometry. `GlassBoardView.cs` combines adjoining shaft walls. `ShardPool.cs` batches falling fragments into one mesh. Shader resources mask geometry beneath the real floor. |
+| Endings and audio | `Scripts/Presentation/Endings/FallSequence.cs` selects an ending and sequences blackout and results. `FallScenery.cs` and `FallMeshes.cs` build the shaft and hazards, with original material and audio resources plus the credited water sample. `GameSound.cs` schedules centered ticks, directional impact and echo using the stock Spatial Audio block prefab. |
+| Measurements | `Scripts/Diagnostics/QuestRunMetrics.cs` records supported Unity counters in Android development builds. Pair its local CSV with the headset's OVR Metrics capture. [Performance guide](<./Docs/Quest performance.md>) |
+
+Paths in this table are relative to `Assets/FloorFracture/`. The initial tuning values are an 8 mm marker tolerance between equivalent stationary surfaces, 0.3 s to cross a gap, five seconds on level 1, and a 0.4 s reduction per level to a provisional 2.5 s floor. A sliding surface spans 60% of its pane width and travels up to 18% of that width from its hole center. At 50 cm pitch that gives a 30 cm square and 9 cm of travel. The headset determines the final comfort values. [Seeded reproduction instructions](./README.md#reproduce-and-verify)
 
 ## Evidence and delivery
 
 | Milestone | Evidence |
 |---|---|
 | November 20, initial design | Editable design, eight-page PDF and course template in `Docs/`. Submission is recorded only when confirmed. |
-| December 2, interaction | On Quest 3, demonstrate a deliberate early step and a deliberate failure at the deadline. |
+| December 2, interaction | Wais demonstrated early survival, neighboring glass shattering and a deliberate loss on Quest 3 on November 19. His feedback opened revisions to the fall, room prompt and board scale. [Headset playtest](<./Docs/Verification/Quest 3 playtest.md>) |
 | December 9, final design and repository | Verify a clean checkout, record the shipped features, headset measurements, and two outside players' actual feedback. |
 | December 11, video | Capture and review 3–5 minutes of real headset footage, with an adjacent shatter, placement, stone, advanced wave, loss and comfort control. |
 

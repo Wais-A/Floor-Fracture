@@ -12,11 +12,14 @@ public sealed class GameSound : MonoBehaviour
     Vector3 weightedPosition;
     AudioClip click, tick, deadline, impact, fragments, echo, clear, wind, submerged, heat, chime, sand, snow, splash;
     float fallGain, ambienceGain, accentGain;
-    bool spatializer;
+    public const string SpatialVoiceResource = "GlassSpatialVoice";
+    GameObject spatialVoicePrefab;
 
     void Awake()
     {
-        spatializer = !string.IsNullOrEmpty(AudioSettings.GetSpatializerPluginName());
+        spatialVoicePrefab = Resources.Load<GameObject>(SpatialVoiceResource);
+        if (!spatialVoicePrefab)
+            throw new System.InvalidOperationException("Prepare the game scene to create the Meta Spatial Audio prefab.");
         click = Clip("Click"); tick = Clip("Tick"); deadline = Clip("Deadline");
         impact = Clip("Impact"); fragments = Clip("Fragments"); echo = Clip("Echo"); clear = Clip("Clear");
         wind = Clip("Air"); submerged = Clip("Submerged"); heat = Clip("Heat"); chime = Clip("Chime");
@@ -41,16 +44,16 @@ public sealed class GameSound : MonoBehaviour
 
     AudioSource Voice(string name, bool isSpatial)
     {
+        if (isSpatial)
+        {
+            var emitter = Instantiate(spatialVoicePrefab, transform);
+            emitter.name = name;
+            return emitter.GetComponent<AudioSource>();
+        }
         var child = new GameObject(name);
         child.transform.SetParent(transform, false);
         var source = child.AddComponent<AudioSource>();
         source.playOnAwake = false;
-        source.spatialBlend = isSpatial ? 1f : 0f;
-        source.spatialize = isSpatial && spatializer;
-        source.dopplerLevel = 0f;
-        source.minDistance = 1.15f;
-        source.maxDistance = 16f;
-        source.rolloffMode = AudioRolloffMode.Logarithmic;
         return source;
     }
 
@@ -134,13 +137,15 @@ public sealed class GameSound : MonoBehaviour
     }
 
     internal void WaterImpact(Vector3 position) => Accent(splash, position, .84f);
+    internal void LavaImpact(Vector3 position) => Accent(echo, position, .92f, .60f);
     internal void CrystalChime(Vector3 position) => Accent(chime, position, .78f);
 
-    void Accent(AudioClip clip, Vector3 position, float gain)
+    void Accent(AudioClip clip, Vector3 position, float gain, float pitch = 1f)
     {
         if (!clip) return;
         accent.transform.position = position;
         accent.clip = clip;
+        accent.pitch = pitch;
         accentGain = gain;
         accent.volume = gain * volume;
         accent.Play();

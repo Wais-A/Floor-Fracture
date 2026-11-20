@@ -11,6 +11,7 @@ namespace FloorFracture.Tests
         [Test] public void ModesAndReset() => BoardRuleChecks.ModesAndReset();
         [Test] public void SlidersAndGrace() => BoardRuleChecks.SlidingAndGrace();
         [Test] public void EverySeededSurvivalPath() => Debug.Log(BoardRuleChecks.CheckSequences());
+        [Test] public void LargerBoardSurvivalPaths() => Debug.Log(BoardRuleChecks.CheckLargerBoards());
 
         [MenuItem("Tools/Floor Fracture/Run board rule checks")]
         public static void RunAll() => Debug.Log(BoardRuleChecks.RunAll());

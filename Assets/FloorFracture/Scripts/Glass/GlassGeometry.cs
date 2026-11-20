@@ -6,6 +6,7 @@ namespace FloorFracture
     // All local coordinates are metres. The same faces supply the visible cracks and the shards.
     public static class GlassGeometry
     {
+        public const float AuthoredPitch = .50f;
         public const float Half = .242f;
         public static readonly Vector2[] Points = {
             new(-Half,-Half), new(.038f,-Half), new(Half,-Half), new(Half,.068f),

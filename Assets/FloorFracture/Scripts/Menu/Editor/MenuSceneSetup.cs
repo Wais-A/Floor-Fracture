@@ -25,8 +25,10 @@ namespace FloorFracture.Editor
             canvas.renderMode = RenderMode.WorldSpace;
             ((RectTransform)child).sizeDelta = new Vector2(672, 370);
             child.localScale = Vector3.one * 0.00116f;
-            if (!child.GetComponentInChildren<PointableCanvas>(true))
+            if (!child.GetComponentInChildren<RayInteractable>(true))
                 QuickActionsAPI.AddRayCanvasInteraction(child.gameObject);
+            if (!child.GetComponentInChildren<PokeInteractable>(true))
+                QuickActionsAPI.AddPokeCanvasInteraction(child.gameObject);
 
             var module = UnityEngine.Object.FindAnyObjectByType<PointableCanvasModule>();
             if (!module)
@@ -36,12 +38,18 @@ namespace FloorFracture.Editor
                 module = Undo.AddComponent<PointableCanvasModule>(es.gameObject);
             }
             module.ExclusiveMode = true;
-            var target = child.GetComponentInChildren<PointableCanvas>(true);
-            if (!target || target.Canvas != canvas || !target.GetComponent<RayInteractable>())
-                throw new InvalidOperationException("The Meta Ray Canvas Quick Action did not wire the menu surface.");
+            RequireCanvas<RayInteractable>(child, canvas);
+            RequireCanvas<PokeInteractable>(child, canvas);
             EditorUtility.SetDirty(module);
             EditorUtility.SetDirty(canvas);
             EditorSceneManager.MarkSceneDirty(gameRoot.gameObject.scene);
+        }
+
+        private static void RequireCanvas<T>(Transform root, Canvas canvas) where T : Component
+        {
+            var surfaces = root.GetComponentsInChildren<T>(true);
+            if (surfaces.Length != 1 || !surfaces[0].TryGetComponent<PointableCanvas>(out var pointable) || pointable.Canvas != canvas)
+                throw new InvalidOperationException($"The Meta menu needs one {typeof(T).Name} wired to its Canvas.");
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Meta.XR.EnvironmentDepth;
 using Meta.XR.MRUtilityKit;
 using Oculus.Interaction;
 using Oculus.Interaction.Input;
@@ -16,6 +17,9 @@ namespace FloorFracture.Editor
         private const string CorePrefabs = "Packages/com.meta.xr.sdk.core/Prefabs/";
         private const string CoreBlocks = "Packages/com.meta.xr.sdk.core/Editor/BuildingBlocks/BlockData/";
         private const string RoomBlock = "Packages/com.meta.xr.mrutilitykit/Editor/BuildingBlocks/MRUtilityKit/MRUtilityKit.asset";
+        private const string GuardianBlock = "Packages/com.meta.xr.mrutilitykit/Editor/BuildingBlocks/RoomGuardian/RoomGuardian.asset";
+        private const string GuardianPrefab = "Packages/com.meta.xr.mrutilitykit/Core/Tools/RoomGuardian.prefab";
+        private const string FloorSpawnsBlock = "Packages/com.meta.xr.mrutilitykit/Editor/BuildingBlocks/FindSpawnPositions/FindSpawnPositions.asset";
         private const string InteractionsBlock = "Packages/com.meta.xr.sdk.interaction.ovr/Editor/Blocks/Interactions/Interactions.asset";
         private const string RoomPrefab = "Packages/com.meta.xr.mrutilitykit/Core/Tools/MRUK.prefab";
         private const string OutlineShader = "Assets/FloorFracture/Scripts/Room/RoomOutlines.shader";
@@ -91,6 +95,16 @@ namespace FloorFracture.Editor
             var mruk = Single<MRUK>(scene);
             if (!mruk) mruk = Instantiate(RoomPrefab, scene).GetComponent<MRUK>();
             MetaRoomBlocks.Ensure(scene, RoomBlock, MetaRoomBlocks.RoomId, 1);
+            InstallGuardianAndDepth(scene, rig);
+            var floorSpawns = MetaRoomBlocks.Ensure(scene, FloorSpawnsBlock, MetaRoomBlocks.FloorSpawnsId, 1)[0].GetComponent<FindSpawnPositions>();
+            if (!floorSpawns || !floorSpawns.SpawnObject)
+                throw new InvalidOperationException("Meta's Find Spawn Positions block must supply its floor marker prefab.");
+            floorSpawns.SpawnOnStart = MRUK.RoomFilter.None;
+            floorSpawns.SpawnLocations = FindSpawnPositions.SpawnLocation.OnTopOfSurfaces;
+            floorSpawns.Labels = MRUKAnchor.SceneLabels.FLOOR;
+            floorSpawns.SpawnAmount = 8;
+            floorSpawns.MaxIterations = 12;
+            Record(floorSpawns);
             mruk.EnableWorldLock = true;
             mruk.SceneSettings.LoadSceneOnStartup = false;
             mruk.SceneSettings.DataSource = MRUK.SceneDataSource.Device;
@@ -103,6 +117,7 @@ namespace FloorFracture.Editor
             if (!shader) throw new InvalidOperationException("Missing placement preview shader at " + OutlineShader);
             var data = new SerializedObject(placement);
             data.FindProperty("rig").objectReferenceValue = rig;
+            data.FindProperty("floorSpawns").objectReferenceValue = floorSpawns;
             data.FindProperty("outlineShader").objectReferenceValue = shader;
             data.ApplyModifiedPropertiesWithoutUndo();
             Record(placement);
@@ -112,6 +127,38 @@ namespace FloorFracture.Editor
             ConfigureInteractions(rig, interaction.gameObject);
             EditorSceneManager.MarkSceneDirty(scene);
             return placement;
+        }
+
+        private static void InstallGuardianAndDepth(Scene scene, OVRCameraRig rig)
+        {
+            var block = MetaRoomBlocks.Ensure(scene, GuardianBlock, MetaRoomBlocks.GuardianId, 1)[0];
+            var guardian = block.GetComponent<RoomGuardian>();
+            var mesh = block.GetComponent<EffectMesh>();
+            var template = AssetDatabase.LoadAssetAtPath<GameObject>(GuardianPrefab);
+            if (!guardian || !mesh || !template || Single<RoomGuardian>(scene) != guardian)
+                throw new InvalidOperationException("The Room Guardian block must supply one guardian and its room mesh.");
+            var stockGuardian = template.GetComponent<RoomGuardian>();
+            var stockMesh = template.GetComponent<EffectMesh>();
+            guardian.GuardianDistance = 1f;
+            guardian.GuardianMaterial = stockGuardian.GuardianMaterial;
+            mesh.MeshMaterial = guardian.GuardianMaterial;
+            mesh.SpawnOnStart = stockMesh.SpawnOnStart;
+            mesh.Labels = stockMesh.Labels;
+            Record(guardian);
+            Record(mesh);
+
+            // The Occlusion Dependencies prefab owns depth acquisition. A separate
+            // environment raycast example would introduce a second depth manager.
+            var providerBlock = MetaRoomBlocks.Ensure(scene, CoreBlocks + "Occlusion/OcclusionDependencyBlock.asset",
+                MetaRoomBlocks.DepthProviderId, 1)[0];
+            var depth = providerBlock.GetComponent<EnvironmentDepthManager>();
+            if (!depth || Single<EnvironmentDepthManager>(scene) != depth)
+                throw new InvalidOperationException("The gameplay scene must have one environment depth provider.");
+            depth.enabled = true;
+            depth.CustomTrackingSpace = rig.trackingSpace;
+            depth.OcclusionShadersMode = OcclusionShadersMode.SoftOcclusion;
+            depth.RemoveHands = false;
+            Record(depth);
         }
 
         private static void ConfigureInteractions(OVRCameraRig rig, GameObject interaction)

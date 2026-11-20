@@ -1,0 +1,141 @@
+{
+  "apkSha256": "5004950a8c2094e3d56c272176bd385e49972984e35736b0373c547ce0464437",
+  "dataSource": "Physical Quest 3 Unity development-player CSV files retrieved through Meta MCP. Stage FPS is total frames divided by total window duration.",
+  "ovrMetrics": "The headset had no OVR Metrics capture for this package during these sessions.",
+  "sessions": [
+    {
+      "file": "20261119T235238255Z-0b68ae00.csv",
+      "sha256": "ccbb9b47829052be6a5858bace44370508433db4b84a511f865414a06b9d792b",
+      "buildGuid": "676b76552f3e4fa49bb42314779b8bc4",
+      "graphics": "Vulkan",
+      "headset": "Oculus Quest 3",
+      "refreshHz": [
+        72.0
+      ],
+      "boardDimensions": [
+        "3x4"
+      ],
+      "shatterCounts": [],
+      "endings": [],
+      "gpuTimingSamples": 0,
+      "stages": {
+        "Room": {
+          "frames": 1362,
+          "seconds": 19.075,
+          "unityFps": 71.402,
+          "meanFrameMs": 14.005,
+          "maxFrameMs": 88.656,
+          "framesAtOrOver13p9ms": 695
+        },
+        "Welcome": {
+          "frames": 296,
+          "seconds": 4.131,
+          "unityFps": 71.653,
+          "meanFrameMs": 13.956,
+          "maxFrameMs": 32.599,
+          "framesAtOrOver13p9ms": 149
+        },
+        "Ready": {
+          "frames": 428,
+          "seconds": 5.947,
+          "unityFps": 71.969,
+          "meanFrameMs": 13.895,
+          "maxFrameMs": 16.647,
+          "framesAtOrOver13p9ms": 220
+        },
+        "PracticeStone": {
+          "frames": 3753,
+          "seconds": 52.132,
+          "unityFps": 71.99,
+          "meanFrameMs": 13.891,
+          "maxFrameMs": 25.978,
+          "framesAtOrOver13p9ms": 1878
+        }
+      }
+    },
+    {
+      "file": "20261119T235518206Z-81b9217c.csv",
+      "sha256": "1fcea9f265ca585f7c661dd45b4b470cc436b209b3caf57a8a1e0390463c7eaf",
+      "buildGuid": "676b76552f3e4fa49bb42314779b8bc4",
+      "graphics": "Vulkan",
+      "headset": "Oculus Quest 3",
+      "refreshHz": [
+        72.0
+      ],
+      "boardDimensions": [
+        "3x4"
+      ],
+      "shatterCounts": [
+        4,
+        4,
+        4,
+        4,
+        2,
+        1
+      ],
+      "endings": [
+        "Lava",
+        "Water"
+      ],
+      "gpuTimingSamples": 0,
+      "stages": {
+        "Room": {
+          "frames": 500,
+          "seconds": 7.014,
+          "unityFps": 71.286,
+          "meanFrameMs": 14.028,
+          "maxFrameMs": 50.779,
+          "framesAtOrOver13p9ms": 246
+        },
+        "Welcome": {
+          "frames": 223,
+          "seconds": 3.088,
+          "unityFps": 72.215,
+          "meanFrameMs": 13.848,
+          "maxFrameMs": 16.745,
+          "framesAtOrOver13p9ms": 104
+        },
+        "Ready": {
+          "frames": 1932,
+          "seconds": 26.837,
+          "unityFps": 71.99,
+          "meanFrameMs": 13.891,
+          "maxFrameMs": 18.389,
+          "framesAtOrOver13p9ms": 959
+        },
+        "Countdown": {
+          "frames": 2386,
+          "seconds": 33.15,
+          "unityFps": 71.976,
+          "meanFrameMs": 13.894,
+          "maxFrameMs": 34.455,
+          "framesAtOrOver13p9ms": 1195
+        },
+        "BetweenWaves": {
+          "frames": 593,
+          "seconds": 8.264,
+          "unityFps": 71.757,
+          "meanFrameMs": 13.936,
+          "maxFrameMs": 32.456,
+          "framesAtOrOver13p9ms": 292
+        },
+        "Fall": {
+          "frames": 873,
+          "seconds": 12.283,
+          "unityFps": 71.074,
+          "meanFrameMs": 14.07,
+          "maxFrameMs": 113.517,
+          "framesAtOrOver13p9ms": 440
+        },
+        "Results": {
+          "frames": 622,
+          "seconds": 8.647,
+          "unityFps": 71.932,
+          "meanFrameMs": 13.902,
+          "maxFrameMs": 17.786,
+          "framesAtOrOver13p9ms": 312
+        }
+      }
+    }
+  ]
+}

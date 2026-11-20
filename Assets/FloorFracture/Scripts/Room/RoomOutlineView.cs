@@ -47,20 +47,8 @@ namespace FloorFracture
             }
             if (preview)
             {
-                float x = fit.Columns * BoardPlacement.TileSize * 0.5f;
-                float z = fit.Rows * BoardPlacement.TileSize * 0.5f;
                 float y = fit.FloorHeight + 0.02f;
-                var grid = new Color32(178, 245, 244, 176);
-                for (int c = 0; c <= fit.Columns; c++)
-                {
-                    float t = c * BoardPlacement.TileSize - x;
-                    Line(fit.ToWorldXZ(t, -z), fit.ToWorldXZ(t, z), y, 0.012f, grid);
-                }
-                for (int r = 0; r <= fit.Rows; r++)
-                {
-                    float t = r * BoardPlacement.TileSize - z;
-                    Line(fit.ToWorldXZ(-x, t), fit.ToWorldXZ(x, t), y, 0.012f, grid);
-                }
+                // The live glass already marks every cell while the welcome panel is open.
                 Loop(fit.ClearanceOutline(), y, 0.023f, new Color32(255, 213, 123, 219));
             }
             mesh.Clear();

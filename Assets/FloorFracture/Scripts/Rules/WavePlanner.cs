@@ -23,15 +23,15 @@ namespace FloorFracture
         public IReadOnlyList<int> BreakingTiles { get; }
         public IReadOnlyList<int> SafeTiles { get; }
         public IReadOnlyList<int> StationarySafe { get; }
-        internal int StationaryMask { get; }
+        internal ulong StationaryMask { get; }
         internal int NewSliderTile { get; }
         internal Vector2 SlideDirection { get; }
 
-        private readonly int breakingMask;
-        private readonly int safeMask;
+        private readonly ulong breakingMask;
+        private readonly ulong safeMask;
 
         internal WavePlan(BoardState board, int level, int number, int seed, int start, int guaranteed,
-            int stationary, int newSlider, Vector2 slideDirection, WaveMode mode, double now)
+            ulong stationary, int newSlider, Vector2 slideDirection, WaveMode mode, double now)
         {
             Level = level;
             Number = number;
@@ -50,9 +50,9 @@ namespace FloorFracture
             // An earlier, locked pane can break over its old hole. A new optional pane is
             // separate from the permanent survivors, so its underlying hole never fills in.
             breakingMask = board.StationaryMask & ~stationary;
-            if (board.Slider != null) breakingMask |= 1 << board.Slider.Tile;
+            if (board.Slider != null) breakingMask |= 1UL << board.Slider.Tile;
             safeMask = stationary;
-            if (newSlider >= 0) safeMask |= 1 << newSlider;
+            if (newSlider >= 0) safeMask |= 1UL << newSlider;
             StationarySafe = CellList(stationary, board.Count);
             SafeTiles = newSlider < 0 ? StationarySafe : CellList(safeMask, board.Count);
             BreakingTiles = CellList(breakingMask, board.Count);
@@ -63,12 +63,12 @@ namespace FloorFracture
         public bool ShowsWarnings(double now) =>
             now >= StartsAt && now <= Deadline && (Mode != WaveMode.Memory || now < RevealEndsAt);
 
-        private static bool Contains(int mask, int index)
+        private static bool Contains(ulong mask, int index)
         {
-            return index >= 0 && index < 16 && (mask & (1 << index)) != 0;
+            return index >= 0 && index < 64 && (mask & (1UL << index)) != 0;
         }
 
-        private static IReadOnlyList<int> CellList(int mask, int count)
+        private static IReadOnlyList<int> CellList(ulong mask, int count)
         {
             var cells = new List<int>();
             for (int i = 0; i < count; ++i)
@@ -88,14 +88,15 @@ namespace FloorFracture
             bool opening = level == 1 && number == 1;
             int seed = PatternSeed(board, start, level, number, opening);
             var random = new Generator(seed);
-            int eligible = board.StationaryMask & ~(1 << start);
-            int adjacent = board.NeighborMask(start) & eligible;
-            int visited = 0, options = 0, largest = 0;
+            ulong eligible = board.StationaryMask & ~(1UL << start);
+            ulong adjacent = board.NeighborMask(start) & eligible;
+            ulong visited = 0, options = 0;
+            int largest = 0;
             for (int tile = 0; tile < board.Count; ++tile)
             {
-                int bit = 1 << tile;
+                ulong bit = 1UL << tile;
                 if ((adjacent & ~visited & bit) == 0) continue;
-                int component = Flood(board, bit, eligible);
+                ulong component = Flood(board, bit, eligible);
                 visited |= component;
                 int size = CountBits(component);
                 if (size < largest) continue;
@@ -105,7 +106,7 @@ namespace FloorFracture
             }
             if (options == 0) throw new InvalidOperationException("The starting pane has no stationary step.");
             int guaranteed = Pick(options, ref random, opening);
-            int componentMask = Flood(board, 1 << guaranteed, eligible);
+            ulong componentMask = Flood(board, 1UL << guaranteed, eligible);
             int intact = CountBits(board.StationaryMask);
             int maximum = Math.Min(largest, Math.Max(1, intact - 1));
             int minimum = Math.Min(maximum, Math.Max(2, (intact + 1) / 2));
@@ -113,27 +114,27 @@ namespace FloorFracture
                 ? Math.Min(maximum, (2 * intact + 2) / 3)
                 : minimum + random.Next(maximum - minimum + 1);
 
-            int survivors = 1 << guaranteed;
+            ulong survivors = 1UL << guaranteed;
             for (int size = 1; size < target; ++size)
             {
-                int frontier = board.AdjacentMask(survivors) & componentMask & ~survivors;
+                ulong frontier = board.AdjacentMask(survivors) & componentMask & ~survivors;
                 if (frontier == 0)
                 {
                     // A new constraint that exhausts the candidate set still leaves a fair finale.
-                    survivors = 1 << guaranteed;
+                    survivors = 1UL << guaranteed;
                     break;
                 }
-                survivors |= 1 << Pick(frontier, ref random, opening);
+                survivors |= 1UL << Pick(frontier, ref random, opening);
             }
 
-            WaveMode mode = survivors == (1 << guaranteed)
+            WaveMode mode = survivors == (1UL << guaranteed)
                 ? WaveMode.LastTile : ChooseMode(board.Seed, regularWavesSurvived);
             int sliderTile = -1;
             Vector2 slideDirection = Vector2.zero;
             if (mode != WaveMode.LastTile && level >= 3 && board.Slider == null)
             {
                 // Only use old holes, and only cells sharing an edge with a permanent survivor.
-                int candidates = board.AdjacentMask(survivors) & board.FullMask & ~board.StationaryMask;
+                ulong candidates = board.AdjacentMask(survivors) & board.FullMask & ~board.StationaryMask;
                 if (candidates != 0)
                 {
                     sliderTile = Pick(candidates, ref random, false);
@@ -160,7 +161,7 @@ namespace FloorFracture
             unchecked
             {
                 uint shape = (uint)(board.Width | (board.Height << 4) | (start << 8));
-                uint value = Mix(shape) ^ Mix((uint)board.StationaryMask);
+                uint value = Mix(shape) ^ Mix((uint)board.StationaryMask) ^ Mix((uint)(board.StationaryMask >> 32));
                 value ^= Mix((uint)level) ^ Mix((uint)number * 0x9e3779b9u);
                 value ^= opening ? 0u : Mix((uint)board.Seed);
                 if (board.Slider != null) value ^= Mix((uint)(board.Slider.Tile + 1));
@@ -168,9 +169,9 @@ namespace FloorFracture
             }
         }
 
-        private static int Flood(BoardState board, int seed, int allowed)
+        private static ulong Flood(BoardState board, ulong seed, ulong allowed)
         {
-            int group = seed, frontier = seed;
+            ulong group = seed, frontier = seed;
             while (frontier != 0)
             {
                 frontier = board.AdjacentMask(frontier) & allowed & ~group;
@@ -179,7 +180,7 @@ namespace FloorFracture
             return group;
         }
 
-        private static int CountBits(int mask)
+        private static int CountBits(ulong mask)
         {
             int count = 0;
             while (mask != 0)
@@ -190,11 +191,11 @@ namespace FloorFracture
             return count;
         }
 
-        private static int Pick(int mask, ref Generator random, bool first)
+        private static int Pick(ulong mask, ref Generator random, bool first)
         {
             int skip = first ? 0 : random.Next(CountBits(mask));
-            for (int tile = 0; tile < 16; ++tile)
-                if ((mask & (1 << tile)) != 0 && skip-- == 0) return tile;
+            for (int tile = 0; mask != 0; ++tile, mask >>= 1)
+                if ((mask & 1) != 0 && skip-- == 0) return tile;
             throw new InvalidOperationException("Cannot select a tile from an empty pattern.");
         }
 

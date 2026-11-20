@@ -13,7 +13,7 @@ namespace FloorFracture.Tests
             DeadlinesAndPause();
             ModesAndReset();
             SlidingAndGrace();
-            return CheckSequences();
+            return CheckSequences() + " " + CheckLargerBoards();
         }
 
         public static string CheckSequences()
@@ -57,7 +57,7 @@ namespace FloorFracture.Tests
                 Resolve(board, prior, path[i]);
                 start = path[i].Tile;
             }
-            int oldMask = IntactMask(board);
+            ulong oldMask = IntactMask(board);
             int oldSlider = board.Slider == null ? -1 : board.Slider.Tile;
             ulong state = (uint)oldMask | ((ulong)(uint)start << 16) |
                 ((ulong)(uint)(oldSlider + 1) << 20) | ((ulong)(uint)path.Count << 25);
@@ -65,27 +65,7 @@ namespace FloorFracture.Tests
             ++plans;
             WavePlan plan = board.BeginWave(start, level, path.Count + 1, path.Count * 10);
             Check(path.Count < width * height, "Every sequence must terminate.");
-            Check(plan.StartingTile == start && plan.IsBreaking(start) && !plan.IsSafe(start), "Start must break.");
-            Check(Adjacent(plan.GuaranteedTile, start, width) && board.IsIntact(plan.GuaranteedTile) &&
-                Has(plan.StationarySafe, plan.GuaranteedTile), "Mandatory step must be orthogonal and permanent.");
-            int survivors = 0;
-            foreach (int tile in plan.StationarySafe) survivors |= 1 << tile;
-            Check(survivors != oldMask && (survivors & ~oldMask) == 0, "Permanent glass must strictly shrink.");
-            int reachable = 1 << plan.GuaranteedTile, priorReach;
-            do
-            {
-                priorReach = reachable;
-                foreach (int a in plan.StationarySafe)
-                    foreach (int b in plan.StationarySafe)
-                        if ((reachable & (1 << a)) != 0 && Adjacent(a, b, width)) reachable |= 1 << b;
-            } while (priorReach != reachable);
-            Check(reachable == survivors, "Permanent survivors must be a single connected group.");
-            for (int i = 0; i < board.Count; ++i)
-            {
-                bool surface = board.IsIntact(i) || (board.Slider != null && board.Slider.Tile == i);
-                Check(surface == (plan.IsBreaking(i) ^ plan.IsSafe(i)), "Plan must partition all supporting panes.");
-            }
-            Check((plan.Mode == WaveMode.LastTile) == (plan.StationarySafe.Count == 1), "Finale must leave one permanent pane.");
+            ValidatePlan(board, plan, start, oldMask);
             if (plan.Mode == WaveMode.LastTile)
             {
                 Check(plan.SafeTiles.Count == 1 && plan.IsSafe(plan.GuaranteedTile), "Final pane must be stationary.");
@@ -117,6 +97,83 @@ namespace FloorFracture.Tests
             }
         }
 
+        public static string CheckLargerBoards()
+        {
+            int starts = 0, plans = 0, choices = 0, visited63 = 0;
+            foreach (int seed in new[] { 0, 379, -17, int.MinValue })
+            foreach (int level in new[] { 1, 3 })
+            for (int width = 2; width <= 8; ++width)
+            for (int height = 2; height <= 8; ++height)
+            {
+                if (width <= 4 && height <= 4) continue; // All branches are replayed by CheckSequences.
+                for (int initial = 0; initial < width * height; ++initial)
+                {
+                    ++starts;
+                    int start = initial;
+                    var board = new BoardState(width, height, seed, 0.67f);
+                    for (int number = 1; ; ++number)
+                    {
+                        Check(number < board.Count, "Large-board shrinking must terminate.");
+                        ulong oldMask = IntactMask(board);
+                        var wave = board.BeginWave(start, level, number, number * 10);
+                        ValidatePlan(board, wave, start, oldMask);
+                        ++plans;
+                        choices += wave.SafeTiles.Count;
+                        if (start == 63 || wave.IsSafe(63) || wave.IsBreaking(63)) ++visited63;
+                        // Vary routes through the connected group; when offered, also test a
+                        // transition from the optional moving platform over its old hole.
+                        uint pick = unchecked((uint)(seed + initial * 17 + number * 13));
+                        start = board.Slider != null && wave.IsSafe(board.Slider.Tile) && (pick & 1) != 0
+                            ? board.Slider.Tile : wave.SafeTiles[(int)(pick % (uint)wave.SafeTiles.Count)];
+                        Resolve(board, wave, new Step(start, false));
+                        if (wave.Mode == WaveMode.LastTile) break;
+                    }
+                }
+            }
+            Check(visited63 > 0, "The high bit must participate in actual waves.");
+            return $"Larger boards cleared {starts} seeded starting positions, tested {plans} waves " +
+                   $"and checked onward reachability for {choices} advertised choices.";
+        }
+
+        private static void ValidatePlan(BoardState board, WavePlan plan, int start, ulong oldMask)
+        {
+            Check(plan.StartingTile == start && plan.IsBreaking(start) && !plan.IsSafe(start), "Start must break.");
+            Check(Adjacent(plan.GuaranteedTile, start, board.Width) && board.IsIntact(plan.GuaranteedTile) &&
+                Has(plan.StationarySafe, plan.GuaranteedTile), "Mandatory step must be orthogonal and permanent.");
+            ulong survivors = 0;
+            foreach (int tile in plan.StationarySafe) survivors |= 1UL << tile;
+            Check(survivors != oldMask && (survivors & ~oldMask) == 0, "Permanent glass must strictly shrink.");
+            ulong reachable = 1UL << plan.GuaranteedTile, priorReach;
+            do
+            {
+                priorReach = reachable;
+                foreach (int tile in plan.StationarySafe)
+                    if ((NeighborBits(tile, board.Width, board.Height) & reachable) != 0) reachable |= 1UL << tile;
+            } while (priorReach != reachable);
+            Check(reachable == survivors, "Permanent survivors must be a single connected group.");
+            for (int i = 0; i < board.Count; ++i)
+            {
+                bool surface = board.IsIntact(i) || (board.Slider != null && board.Slider.Tile == i);
+                Check(surface == (plan.IsBreaking(i) ^ plan.IsSafe(i)), "Plan must partition all supporting panes.");
+                if (plan.IsSafe(i) && plan.Mode != WaveMode.LastTile)
+                    Check((NeighborBits(i, board.Width, board.Height) & survivors) != 0,
+                        "Every choice must have a stationary orthogonal neighbor for the next wave.");
+            }
+            Check(!plan.IsBreaking(-1) && !plan.IsSafe(-1) && !plan.IsBreaking(64) && !plan.IsSafe(64),
+                "Indices outside the 64-bit footprint must not alias valid tile indices.");
+            Check((plan.Mode == WaveMode.LastTile) == (plan.StationarySafe.Count == 1), "Finale must leave one permanent pane.");
+        }
+
+        private static ulong NeighborBits(int tile, int width, int height)
+        {
+            ulong bits = 0;
+            if (tile % width > 0) bits |= 1UL << (tile - 1);
+            if (tile % width < width - 1) bits |= 1UL << (tile + 1);
+            if (tile / width > 0) bits |= 1UL << (tile - width);
+            if (tile / width < height - 1) bits |= 1UL << (tile + width);
+            return bits;
+        }
+
         private static void Resolve(BoardState board, WavePlan plan, Step step)
         {
             if (step.CatchFirst)
@@ -140,11 +197,12 @@ namespace FloorFracture.Tests
 
         public static void CoordinatesAndSeams()
         {
-            for (int w = 2; w <= 4; ++w)
-            for (int h = 2; h <= 4; ++h)
+            foreach (float pitch in new[] {0.5f, 0.57f, 0.6367f, 0.67f})
+            for (int w = 2; w <= 8; ++w)
+            for (int h = 2; h <= 8; ++h)
             {
-                var board = new BoardState(w, h, 0);
-                float left = -w * 0.25f, bottom = -h * 0.25f;
+                var board = new BoardState(w, h, 0, pitch);
+                float left = -w * pitch * 0.5f, bottom = -h * pitch * 0.5f;
                 Check(board.IndexAt(new Vector2(left, bottom)) == 0, "Near outer edges are inclusive.");
                 Check(board.IndexAt(new Vector2(Next(left, false), bottom)) == -1 &&
                     board.IndexAt(new Vector2(-left, bottom)) == -1 && board.IndexAt(new Vector2(left, -bottom)) == -1,
@@ -155,14 +213,14 @@ namespace FloorFracture.Tests
                     Check(board.IndexAt(p) == i, "Center/index round trip failed.");
                     if (i % w + 1 < w)
                     {
-                        float edge = p.x + 0.25f;
+                        float edge = (i % w + 1 - w * 0.5f) * pitch;
                         Check(board.IndexAt(new Vector2(Next(edge, false), p.y)) == i &&
                             board.IndexAt(new Vector2(edge, p.y)) == i + 1 &&
                             board.IndexAt(new Vector2(Next(edge, true), p.y)) == i + 1, "X seam lost one float of precision.");
                     }
                     if (i / w + 1 < h)
                     {
-                        float edge = p.y + 0.25f;
+                        float edge = (i / w + 1 - h * 0.5f) * pitch;
                         Check(board.IndexAt(new Vector2(p.x, Next(edge, false))) == i &&
                             board.IndexAt(new Vector2(p.x, edge)) == i + w, "Z seam lost one float of precision.");
                     }
@@ -201,7 +259,7 @@ namespace FloorFracture.Tests
             var board = new BoardState(4, 4, 3);
             var first = board.BeginWave(0, 1, 1, 10);
             Check(first.Duration == 5 && first.ShowsWarnings(14.99), "Opening wave must show danger for five seconds.");
-            int full = IntactMask(board);
+            ulong full = IntactMask(board);
             Vector2 safe = board.Center(first.GuaranteedTile);
             Check(board.Tick(safe, true, 14.9999) == WaveResult.Pending && IntactMask(board) == full &&
                 ReferenceEquals(first, board.ActiveWave), "Early safety must not advance or reroll the wave.");
@@ -286,11 +344,14 @@ namespace FloorFracture.Tests
 
         public static void SlidingAndGrace()
         {
+            foreach (float pitch in new[] {0.50f, 0.61f, 0.67f})
             foreach (Vector2 side in new[] { Vector2.right, Vector2.left, Vector2.up, Vector2.down })
             {
-                BoardState board = SlidingFixture();
+                BoardState board = SlidingFixture(pitch);
                 var pane = board.Slider;
                 var wave = board.ActiveWave;
+                Check(Math.Abs(pane.HalfSize - 0.30f * pitch) < 1e-6f &&
+                    Math.Abs(pane.Travel - 0.18f * pitch) < 1e-6f, "The moving pane must scale with physical pitch.");
                 double t = pane.MotionStartsAt + 0.3;
                 Vector2 center = pane.CenterAt(t);
                 Check(pane.CenterAt(wave.StartsAt).Equals(pane.CenterAt(pane.MotionStartsAt)) &&
@@ -298,7 +359,7 @@ namespace FloorFracture.Tests
                 foreach (double time in new[] { t - 1, t, t + 0.3, t + 1.8, t + 6 })
                 {
                     Vector2 d = pane.CenterAt(time) - board.Center(pane.Tile);
-                    Check(Math.Abs(d.x) + pane.HalfSize <= 0.25f && Math.Abs(d.y) + pane.HalfSize <= 0.25f,
+                    Check(Math.Abs(d.x) + pane.HalfSize <= pitch * 0.5f && Math.Abs(d.y) + pane.HalfSize <= pitch * 0.5f,
                         "Every moving pane edge must stay inside the old hole.");
                 }
                 board.Tick(center + side * (pane.HalfSize + 0.002f), true, t);
@@ -337,9 +398,9 @@ namespace FloorFracture.Tests
             }
         }
 
-        private static BoardState SlidingFixture()
+        private static BoardState SlidingFixture(float pitch = 0.5f)
         {
-            var board = new BoardState(4, 4, 143);
+            var board = new BoardState(4, 4, 143, pitch);
             var first = board.BeginWave(0, 3, 1, 0);
             Resolve(board, first, new Step(first.GuaranteedTile, false));
             board.BeginWave(first.GuaranteedTile, 3, 2, 10);
@@ -350,11 +411,11 @@ namespace FloorFracture.Tests
         private static bool Adjacent(int a, int b, int width) =>
             Math.Abs(a % width - b % width) + Math.Abs(a / width - b / width) == 1;
 
-        private static int IntactMask(BoardState board)
+        private static ulong IntactMask(BoardState board)
         {
-            int mask = 0;
+            ulong mask = 0;
             for (int i = 0; i < board.Count; ++i)
-                if (board.IsIntact(i)) mask |= 1 << i;
+                if (board.IsIntact(i)) mask |= 1UL << i;
             return mask;
         }
 

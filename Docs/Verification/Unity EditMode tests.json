@@ -1,0 +1,181 @@
+{
+  "status": "completed",
+  "duration": 130.29,
+  "summary": {
+    "total": 24,
+    "passed": 24,
+    "failed": 0,
+    "skipped": 0,
+    "inconclusive": 0
+  },
+  "results": [
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.ChoosesLargestBoardIncludingBothRectangularOrientations(2,2)",
+      "status": "Passed",
+      "duration": 0.0140178,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.ChoosesLargestBoardIncludingBothRectangularOrientations(2,3)",
+      "status": "Passed",
+      "duration": 0.0009325,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.ChoosesLargestBoardIncludingBothRectangularOrientations(2,4)",
+      "status": "Passed",
+      "duration": 0.0010176,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.ChoosesLargestBoardIncludingBothRectangularOrientations(3,2)",
+      "status": "Passed",
+      "duration": 0.0005236,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.ChoosesLargestBoardIncludingBothRectangularOrientations(3,3)",
+      "status": "Passed",
+      "duration": 0.0004487,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.ChoosesLargestBoardIncludingBothRectangularOrientations(3,4)",
+      "status": "Passed",
+      "duration": 0.0004802,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.ChoosesLargestBoardIncludingBothRectangularOrientations(4,2)",
+      "status": "Passed",
+      "duration": 0.0007021,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.ChoosesLargestBoardIncludingBothRectangularOrientations(4,3)",
+      "status": "Passed",
+      "duration": 0.0002012,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.ChoosesLargestBoardIncludingBothRectangularOrientations(4,4)",
+      "status": "Passed",
+      "duration": 6.17e-05,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.ConcavityBetweenFourInteriorCornersIsRejected",
+      "status": "Passed",
+      "duration": 0.0002682,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.ExcludingADeclinedPatchProducesADisjointPreview",
+      "status": "Passed",
+      "duration": 0.0071816,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.FindsOffsetSlotBoundedOnlyByFurnitureAndAThinWall",
+      "status": "Passed",
+      "duration": 0.0191459,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.FourCornersTouchingTheOutsideOfAnExactNotchIsNotFloor",
+      "status": "Passed",
+      "duration": 0.0002048,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.InteriorFurnitureCrossingWallsAndEnclosingVolumesAreRejected",
+      "status": "Passed",
+      "duration": 0.0001891,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.KeepsFullSizedTilesWhenTheMinimumCannotFit",
+      "status": "Passed",
+      "duration": 0.0043994,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.RejectsCrossedOrMissingFloorGeometry",
+      "status": "Passed",
+      "duration": 0.0002649,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.RejectsFurnitureOnlyInMarginAndAcceptsExactClearance",
+      "status": "Passed",
+      "duration": 0.0001134,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.RotatedExactWidthFloorPreservesPoseAndMetricPitch(23.68f)",
+      "status": "Passed",
+      "duration": 0.0026037,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardFitterTests.RotatedExactWidthFloorPreservesPoseAndMetricPitch(0.005f)",
+      "status": "Passed",
+      "duration": 0.0007938,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardRulesEditorTests.CoordinatesAndSeams",
+      "status": "Passed",
+      "duration": 0.0061792,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardRulesEditorTests.DeadlinesAndPause",
+      "status": "Passed",
+      "duration": 0.0008212,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardRulesEditorTests.EverySeededSurvivalPath",
+      "status": "Passed",
+      "duration": 129.6495293,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardRulesEditorTests.ModesAndReset",
+      "status": "Passed",
+      "duration": 0.0033449,
+      "message": null,
+      "stackTrace": null
+    },
+    {
+      "fullName": "FloorFracture.Tests.BoardRulesEditorTests.SlidersAndGrace",
+      "status": "Passed",
+      "duration": 0.0008952,
+      "message": null,
+      "stackTrace": null
+    }
+  ]
+}

@@ -10,12 +10,13 @@ using UnityEngine.Android;
 
 namespace FloorFracture
 {
-    public enum RoomPlacementStatus { Loading, PermissionDenied, NoRoom, UnsafeRoom, NoFit, Preview, Confirmed }
+    public enum RoomPlacementStatus { Loading, PermissionDenied, NoRoom, UnsafeRoom, NoFit, Confirmed }
 
     [DisallowMultipleComponent, RequireComponent(typeof(MRUK))]
     public sealed class RoomBoardPlacement : MonoBehaviour
     {
         [SerializeField] private OVRCameraRig rig;
+        [SerializeField] private FindSpawnPositions floorSpawns;
         [SerializeField] private Shader outlineShader = null;
 #if UNITY_EDITOR
         [Tooltip("Load the installed MRUK Rec Room sample and draw its scanned outlines in Play Mode.")]
@@ -25,6 +26,7 @@ namespace FloorFracture
         public RoomPlacementStatus Status { get; private set; } = RoomPlacementStatus.Loading;
         public string Message { get; private set; } = "Loading your room…";
         public BoardPlacement Placement { get; private set; }
+        public int ScannedSpawnCount { get; private set; }
         public event Action Changed;
 
         private const string DeniedMessage = "Allow spatial data for Floor Fracture in app permissions, then retry.";
@@ -46,7 +48,7 @@ namespace FloorFracture
                 if (useEditorFixture) return true;
 #endif
                 var eye = rig ? rig.centerEyeAnchor : null;
-                return eye && mruk.IsWorldLockActive && mruk.GetCurrentRoom() == room && room.IsPositionInRoom(eye.position, false);
+                return eye && room.IsLocal && mruk.IsWorldLockActive && mruk.GetCurrentRoom() == room && room.IsPositionInRoom(eye.position, false);
             }
         }
 
@@ -61,6 +63,7 @@ namespace FloorFracture
         {
             mruk.RoomUpdatedEvent.AddListener(RoomChanged);
             mruk.RoomRemovedEvent.AddListener(RoomChanged);
+            AddAnchorListeners();
         }
 
         private void Start() => Retry();
@@ -69,6 +72,7 @@ namespace FloorFracture
         {
             mruk.RoomUpdatedEvent.RemoveListener(RoomChanged);
             mruk.RoomRemovedEvent.RemoveListener(RoomChanged);
+            RemoveAnchorListeners();
         }
 
         private void OnDestroy() => outlines?.Dispose();
@@ -89,23 +93,21 @@ namespace FloorFracture
 
         public void Decline()
         {
-            if (busy || Status != RoomPlacementStatus.Preview) return;
+            if (busy || Status != RoomPlacementStatus.Confirmed) return;
             // The missed object could be anywhere in this rectangle. A replacement must
             // leave the entire declined area outside its clearance.
             declined.Add(Placement.ClearanceOutline());
             LoadRoom(false, true);
         }
 
-        public bool Confirm()
+        public void ShowClearance(bool visible)
         {
-            if (Status != RoomPlacementStatus.Preview) return false;
-            if (!IsRoomLocalized || !TryReadFloors() || !floors.Exists(f => BoardFitter.Fits(f, Placement)))
-            {
-                SetState(RoomPlacementStatus.UnsafeRoom, "The scan or tracking changed. Look around the room, then retry placement.");
-                return false;
-            }
-            SetState(RoomPlacementStatus.Confirmed, "Play area confirmed.");
-            return true;
+            bool show = visible && Status == RoomPlacementStatus.Confirmed;
+            List<RoomFloor> fixture = null;
+#if UNITY_EDITOR
+            if (show && useEditorFixture) fixture = floors;
+#endif
+            outlines.Show(show, Placement, fixture);
         }
 
         public void OpenPermissionSettings()
@@ -130,13 +132,14 @@ namespace FloorFracture
         private async void LoadRoom(bool capture, bool reuseRoom)
         {
             busy = true;
+            ScannedSpawnCount = 0;
             CancellationToken lifetime = destroyCancellationToken;
             SetState(RoomPlacementStatus.Loading, capture ? "Opening Space Setup…" : "Loading your room…");
             try
             {
                 if (!reuseRoom || !room)
                 {
-                    room = null;
+                    SetRoom(null);
                     floors = null;
                     MRUK.LoadDeviceResult result;
 #if UNITY_EDITOR
@@ -168,20 +171,30 @@ namespace FloorFracture
                     }
                     lifetime.ThrowIfCancellationRequested();
                     if (!AcceptLoad(result)) return;
-                    room = mruk.GetCurrentRoom();
-#if UNITY_EDITOR
-                    if (!room && useEditorFixture && mruk.Rooms.Count == 1) room = mruk.Rooms[0];
-#endif
                 }
-                if (!room)
+                if (mruk.Rooms.Count == 0)
                 {
                     SetState(RoomPlacementStatus.NoRoom, MissingRoomMessage);
                     return;
                 }
-                // MRUK may report a saved room before the headset localizes its anchors.
-                float deadline = Time.realtimeSinceStartup + 4f;
-                while (!IsRoomLocalized && Time.realtimeSinceStartup < deadline)
+                // GetCurrentRoom may initially return the first saved room until the headset
+                // localizes. Only accept the current room after world lock and eye containment agree.
+                SetState(RoomPlacementStatus.Loading, "Look around your scanned room while the headset finds its floor.");
+                float focusedSeconds = 0f;
+                while (focusedSeconds < 8f)
+                {
+                    if (!reuseRoom)
+                    {
+                        var current = mruk.GetCurrentRoom();
+#if UNITY_EDITOR
+                        if (!current && useEditorFixture && mruk.Rooms.Count == 1) current = mruk.Rooms[0];
+#endif
+                        SetRoom(current);
+                    }
+                    if (IsRoomLocalized) break;
+                    if (HasPlacementFocus) focusedSeconds += Mathf.Min(Time.unscaledDeltaTime, 0.1f);
                     await Awaitable.NextFrameAsync(lifetime);
+                }
                 if (!IsRoomLocalized || !TryReadFloors())
                 {
                     SetState(RoomPlacementStatus.UnsafeRoom, "A level floor could not be verified here. Look around from inside the scanned room or rescan it.");
@@ -197,9 +210,11 @@ namespace FloorFracture
                     searchFloors.Add(new RoomFloor(floor.Boundary, obstructions, floor.Height));
                 }
                 int scanRevision = revision;
+                var suggestions = ReadSpawnCenters(preferred);
                 BoardPlacement fit = default;
-                bool found = await Task.Run(() => BoardFitter.TryFind(searchFloors, preferred, out fit, lifetime), lifetime);
+                bool found = await Task.Run(() => BoardFitter.TryFind(searchFloors, preferred, out fit, lifetime, suggestions), lifetime);
                 lifetime.ThrowIfCancellationRequested();
+                if (!CheckCurrentPermission()) return;
                 if (revision != scanRevision || !IsRoomLocalized)
                 {
                     SetState(RoomPlacementStatus.UnsafeRoom, "The room changed while checking the floor. Look around and retry.");
@@ -212,9 +227,17 @@ namespace FloorFracture
                         : "A 2 × 2 board needs 1.8 × 1.8 m of clear floor. Clear more space and rescan.");
                     return;
                 }
+                // Fetch the current anchors on Unity's thread again after the background search.
+                if (!TryReadFloors() || !floors.Exists(floor => BoardFitter.Fits(floor, fit)))
+                {
+                    SetState(RoomPlacementStatus.UnsafeRoom, "The scan changed during placement. Look around and check again.");
+                    return;
+                }
                 Placement = fit;
-                SetState(RoomPlacementStatus.Preview,
-                    $"Check the {fit.Columns} × {fit.Rows} grid and its outer clearance. Confirm only if the whole area is clear.");
+                int tileCm = Mathf.RoundToInt(fit.Pitch * 100f);
+                int marginCm = Mathf.RoundToInt(BoardPlacement.Clearance * 100f);
+                SetState(RoomPlacementStatus.Confirmed,
+                    $"Your room scan fits {fit.Columns} × {fit.Rows} panes at {tileCm} cm each, with at least {marginCm} cm around the board.");
             }
             catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
             catch (Exception error)
@@ -245,21 +268,90 @@ namespace FloorFracture
             return MrukFloorReader.TryRead(room, y, rig.centerEyeAnchor.position.y - y, out floors);
         }
 
+        // Floor Zone uses this same Meta block to locate open floor. The SDK markers are
+        // transient search points. Only a fitted rectangle is presented to the player.
+        private List<Vector2> ReadSpawnCenters(Vector2 preferred)
+        {
+            if (!floorSpawns) throw new InvalidOperationException("The room needs Meta's Find Spawn Positions block.");
+            var centers = new List<Vector2>(floorSpawns.SpawnAmount);
+            try
+            {
+                floorSpawns.StartSpawn(room);
+                foreach (var marker in floorSpawns.SpawnedObjects)
+                {
+                    Vector3 point = marker.transform.position;
+                    marker.SetActive(false);
+                    centers.Add(new Vector2(point.x, point.z));
+                }
+            }
+            finally { floorSpawns.ClearSpawnedPrefabs(); }
+            centers.Sort((a, b) => (a - preferred).sqrMagnitude.CompareTo((b - preferred).sqrMagnitude));
+            ScannedSpawnCount = centers.Count;
+            return centers;
+        }
+
+        private static bool HasPlacementFocus
+        {
+            get
+            {
+#if UNITY_ANDROID && !UNITY_EDITOR
+                return Application.isFocused && OVRManager.hasInputFocus;
+#else
+                return true;
+#endif
+            }
+        }
+
+        private void SetRoom(MRUKRoom value)
+        {
+            if (room == value) return;
+            RemoveAnchorListeners();
+            room = value;
+            if (isActiveAndEnabled) AddAnchorListeners();
+        }
+
+        private void AddAnchorListeners()
+        {
+            if (!room) return;
+            room.AnchorCreatedEvent.AddListener(AnchorChanged);
+            room.AnchorUpdatedEvent.AddListener(AnchorChanged);
+            room.AnchorRemovedEvent.AddListener(AnchorChanged);
+        }
+
+        private void RemoveAnchorListeners()
+        {
+            if (!room) return;
+            room.AnchorCreatedEvent.RemoveListener(AnchorChanged);
+            room.AnchorUpdatedEvent.RemoveListener(AnchorChanged);
+            room.AnchorRemovedEvent.RemoveListener(AnchorChanged);
+        }
+
+        // MRUK emits individual floor/furniture changes independently of its room-level event.
+        private void AnchorChanged(MRUKAnchor anchor) => RoomChanged(anchor.Room);
+
         private void RoomChanged(MRUKRoom changedRoom)
         {
             if (!room || changedRoom != room) return;
             revision++;
-            if (Status == RoomPlacementStatus.Preview || Status == RoomPlacementStatus.Confirmed)
-                SetState(RoomPlacementStatus.UnsafeRoom, "The room scan changed. Retry to check and confirm a new play area.");
+            if (Status == RoomPlacementStatus.Confirmed)
+                SetState(RoomPlacementStatus.UnsafeRoom, "The room scan changed. Check again to fit the board to the updated room.");
         }
 
         private void OnApplicationFocus(bool focused)
         {
+            if (focused && Status == RoomPlacementStatus.Confirmed) CheckCurrentPermission();
+        }
+
+        private bool CheckCurrentPermission()
+        {
 #if UNITY_ANDROID && !UNITY_EDITOR
-            if (focused && (Status == RoomPlacementStatus.Preview || Status == RoomPlacementStatus.Confirmed) &&
-                !Permission.HasUserAuthorizedPermission(OVRPermissionsRequester.ScenePermission))
+            if (!Permission.HasUserAuthorizedPermission(OVRPermissionsRequester.ScenePermission))
+            {
                 SetState(RoomPlacementStatus.PermissionDenied, DeniedMessage);
+                return false;
+            }
 #endif
+            return true;
         }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -268,12 +360,28 @@ namespace FloorFracture
             const string permission = OVRPermissionsRequester.ScenePermission;
             if (Permission.HasUserAuthorizedPermission(permission)) return true;
             var result = new TaskCompletionSource<bool>();
-            using var cancellation = lifetime.Register(() => result.TrySetCanceled());
             var callbacks = new PermissionCallbacks();
             callbacks.PermissionGranted += _ => result.TrySetResult(true);
             callbacks.PermissionDenied += _ => result.TrySetResult(false);
             callbacks.PermissionRequestDismissed += _ => result.TrySetResult(false);
             Permission.RequestUserPermission(permission, callbacks);
+            // Unity can omit callbacks when another system permission dialog was already open.
+            // Check the actual grant, allow unbounded time inside the system UI, and restore
+            // the retry/settings controls if the game regains input without a decision.
+            float focusedSeconds = 0f;
+            double nextCheck = 0.0;
+            while (!result.Task.IsCompleted)
+            {
+                double now = Time.realtimeSinceStartupAsDouble;
+                if (now >= nextCheck)
+                {
+                    if (Permission.HasUserAuthorizedPermission(permission)) return true;
+                    nextCheck = now + 0.25;
+                }
+                focusedSeconds = HasPlacementFocus ? focusedSeconds + Mathf.Min(Time.unscaledDeltaTime, 0.1f) : 0f;
+                if (focusedSeconds >= 10f) return Permission.HasUserAuthorizedPermission(permission);
+                await Awaitable.NextFrameAsync(lifetime);
+            }
             return await result.Task;
         }
 #endif
@@ -284,9 +392,9 @@ namespace FloorFracture
             Message = message;
             bool showFixture = false;
 #if UNITY_EDITOR
-            showFixture = useEditorFixture && (next == RoomPlacementStatus.Preview || next == RoomPlacementStatus.NoFit);
+            showFixture = useEditorFixture && next == RoomPlacementStatus.NoFit;
 #endif
-            outlines.Show(next == RoomPlacementStatus.Preview, Placement, showFixture ? floors : null);
+            outlines.Show(false, Placement, showFixture ? floors : null);
             Changed?.Invoke();
         }
     }

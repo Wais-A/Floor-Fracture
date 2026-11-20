@@ -10,6 +10,8 @@ Shader "Floor Fracture/Ending chamber"
         _Level("World surface height", Float) = -20
         _Motion("Motion", Float) = 1
         _Opacity("Opacity", Float) = 1
+        _Mouth("World opening center and half width", Vector) = (0,0,0,1)
+        _MouthRight("Opening right, width ratio and clipping", Vector) = (1,0,1,0)
     }
     SubShader
     {
@@ -29,6 +31,7 @@ Shader "Floor Fracture/Ending chamber"
             CBUFFER_START(UnityPerMaterial)
                 half4 _Tint;
                 float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity;
+                float4 _Mouth, _MouthRight;
             CBUFFER_END
             struct Attributes
             {
@@ -45,6 +48,7 @@ Shader "Floor Fracture/Ending chamber"
                 float2 uv : TEXCOORD0;
                 float3 world : TEXCOORD1;
                 float seed : TEXCOORD2;
+                float shaftHeight : TEXCOORD3;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
             Varyings Vert(Attributes v)
@@ -54,6 +58,9 @@ Shader "Floor Fracture/Ending chamber"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 float3 p = v.positionOS.xyz;
                 float seed = v.seed.x;
+                o.shaftHeight = p.y;
+                if (_Role == 1 || _Role == 9)
+                    p.xz *= lerp(_MouthRight.z,1,smoothstep(0,1.35,-p.y));
                 if (_Role == 6 && _Theme != 3)
                 {
                     float direction = (_Theme == 4 || _Theme == 5) ? -1 : 1;
@@ -79,10 +86,27 @@ Shader "Floor Fracture/Ending chamber"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 half3 color = i.color.rgb * _Tint.rgb;
                 float2 xz = i.world.xz;
+                if (_MouthRight.w > .5)
+                {
+                    // Each eye sees below-floor objects only through the broken tile until
+                    // the top of the shaft passes that eye. Passthrough surrounds the opening.
+                    float3 eye = GetCameraPositionWS();
+                    if (eye.y > _Mouth.y + .003)
+                    {
+                        float down = eye.y - i.world.y;
+                        clip(down - .001);
+                        float t = (eye.y - _Mouth.y) / max(down,.001);
+                        clip(1.001 - t);
+                        float2 hit = lerp(eye.xz,xz,t) - _Mouth.xz;
+                        float2 right = _MouthRight.xy;
+                        float2 local = abs(float2(dot(hit,right),dot(hit,float2(-right.y,right.x))));
+                        clip(_Mouth.w - max(local.x,local.y));
+                        clip(_Mouth.w*1.76 - local.x - local.y);
+                    }
+                }
                 if (_Role == 1)
                 {
-                    // The seams travel with the wall mesh, giving a stable cue for ascent.
-                    float row = i.uv.y*22;
+                    float row = -i.shaftHeight/.27;
                     float seams = min(frac(row),1-frac(row));
                     float brick = frac(i.uv.x*4 + floor(row)*.5 + i.seed*.19);
                     float mortar = smoothstep(.008,.041,min(seams,min(brick,1-brick)));
@@ -90,7 +114,7 @@ Shader "Floor Fracture/Ending chamber"
                     if (_Theme == 1)
                     {
                         float glow = saturate(1-abs(i.world.y - _Level - .18)*.40);
-                        color += half3(.58,.105,.008) * glow * saturate(_Reveal*3.5);
+                        color += half3(.58,.105,.008) * glow;
                     }
                     if (_Theme == 0)
                     {
@@ -133,6 +157,8 @@ Shader "Floor Fracture/Ending chamber"
                     float reveal = smoothstep(.04,.46,_Reveal) * (1-smoothstep(.79,.98,_Reveal));
                     color += half3(.065,.086,.16)*band*band*reveal;
                 }
+                else if (_Role == 9)
+                    color *= .88 + .12 * sin(i.seed*1.9);
                 return half4(color, _Opacity);
             }
             ENDHLSL

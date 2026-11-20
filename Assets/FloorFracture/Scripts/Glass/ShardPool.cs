@@ -19,16 +19,18 @@ namespace FloorFracture
         readonly Vector3[] centroids=new Vector3[16];
         Mesh mesh;
         MeshRenderer view;
+        float paneScale;
         public int ActiveCount => active.Count;
 
-        public void Initialize(Material material)
+        public void Initialize(Material material, float tileScale)
         {
+            paneScale=tileScale;
             mesh=new Mesh{name="Pooled falling glass"}; mesh.MarkDynamic();
             view=GlassTile.Part(transform,"Falling fragments",mesh,material); view.enabled=false;
             for(int i=0;i<GlassGeometry.Pieces.Length;i++)
             {
                 var p=GlassGeometry.Pieces[i]; var c=Vector3.zero;
-                foreach(int index in p) c+=GlassGeometry.Ground(GlassGeometry.Points[index]);
+                foreach(int index in p) c+=GlassGeometry.Ground(GlassGeometry.Points[index])*paneScale;
                 centroids[i]=c/p.Length;
             }
         }
@@ -62,7 +64,7 @@ namespace FloorFracture
                 var color=new Color(.24f*flash,.78f*flash,.84f*flash,1);
                 foreach(int i in face)
                 {
-                    vertices.Add(center+rot*(GlassGeometry.Ground(GlassGeometry.Points[i])-centroids[piece.Face])); colors.Add(color);
+                    vertices.Add(center+rot*(GlassGeometry.Ground(GlassGeometry.Points[i])*paneScale-centroids[piece.Face])); colors.Add(color);
                 }
                 for(int i=1;i<face.Length-1;i++) { triangles.Add(first); triangles.Add(first+i); triangles.Add(first+i+1); }
             }

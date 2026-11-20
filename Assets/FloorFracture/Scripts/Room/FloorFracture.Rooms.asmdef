@@ -1,5 +1,5 @@
 {
     "name": "FloorFracture.Rooms",
     "rootNamespace": "FloorFracture",
-    "references": ["Oculus.VR", "meta.xr.mrutilitykit"]
+    "references": ["Oculus.VR", "meta.xr.mrutilitykit", "FloorFracture.Rules"]
 }

@@ -13,7 +13,7 @@ namespace FloorFracture
     [DisallowMultipleComponent, DefaultExecutionOrder(9000)]
     public sealed class QuestRunMetrics : MonoBehaviour
     {
-        const string Header = "kind,event,event_count,device_utc_ms,device_boot_ms,unity_start_s,unity_end_s,package,version,build_guid,unity_version,device,graphics,quality,scene,stage,columns,rows,run_seed,level,wave,wave_seed,mode,fog,slider,shatter_count,shatter_wave_seed,ending,reduced_motion,refresh_hz,frames,unity_fps,frame_ms_mean,frame_ms_max,frames_at_or_above_13_9ms,main_thread_ms,timed_cpu_ms,timed_gpu_ms,xr_app_gpu_ms,draw_calls_mean,draw_calls_max,triangles_mean,triangles_max,head_yaw_deg,head_pitch_deg,head_turn_deg_s,main_samples,timed_cpu_samples,timed_gpu_samples,xr_gpu_samples,draw_samples,triangle_samples";
+        const string Header = "kind,event,event_count,device_utc_ms,device_boot_ms,unity_start_s,unity_end_s,package,version,build_guid,unity_version,device,graphics,quality,scene,stage,columns,rows,run_seed,level,wave,wave_seed,mode,fog,slider,shatter_count,shatter_wave_seed,ending,reduced_motion,refresh_hz,frames,unity_fps,frame_ms_mean,frame_ms_max,frames_at_or_above_13_9ms,main_thread_ms,timed_cpu_ms,timed_gpu_ms,xr_app_gpu_ms,draw_calls_mean,draw_calls_max,triangles_mean,triangles_max,head_yaw_deg,head_pitch_deg,head_turn_deg_s,main_samples,timed_cpu_samples,timed_gpu_samples,xr_gpu_samples,draw_samples,triangle_samples,pane_pitch_m";
         readonly List<XRDisplaySubsystem> displays = new List<XRDisplaySubsystem>(1);
         readonly FrameTiming[] timing = new FrameTiming[1];
         ProfilerRecorder draws, triangles, mainThread;
@@ -167,11 +167,12 @@ namespace FloorFracture
         {
             public GameStage Stage;
             public int Width, Height, Seed, Level, Wave, Shatter, Quality, Slider;
+            public float PanePitch;
             public int? WaveSeed, ShatterSeed;
             public WaveMode? Mode;
             public bool Fog, Reduced;
             public string Ending;
-            public bool Matches(SampleContext b) => Stage == b.Stage && Width == b.Width && Height == b.Height &&
+            public bool Matches(SampleContext b) => Stage == b.Stage && Width == b.Width && Height == b.Height && PanePitch == b.PanePitch &&
                 Seed == b.Seed && Level == b.Level && Wave == b.Wave && WaveSeed == b.WaveSeed && Mode == b.Mode &&
                 Fog == b.Fog && Slider == b.Slider && Shatter == b.Shatter && ShatterSeed == b.ShatterSeed &&
                 Ending == b.Ending && Reduced == b.Reduced && Quality == b.Quality;
@@ -184,6 +185,7 @@ namespace FloorFracture
             var slider = state?.Slider;
             var value = new SampleContext {
                 Stage = game.Stage, Width = state?.Width ?? 0, Height = state?.Height ?? 0,
+                PanePitch = state?.Pitch ?? 0f,
                 Seed = game.SelectedSeed, Level = game.Level, Wave = game.WaveNumber,
                 WaveSeed = wave?.Seed, Mode = wave?.Mode, Fog = wave?.Fog ?? false,
                 Slider = slider == null ? 0 : slider.Locked ? 2 : 1,
@@ -241,7 +243,8 @@ namespace FloorFracture
                 w.Draws.Mean,w.Draws.Peak,w.Triangles.Mean,w.Triangles.Peak,
                 measured && hasPose ? Number(yaw) : "",measured && hasPose ? Number(pitch) : "",w.TurnRate,
                 measured ? Integer(w.MainThreadMs.Count) : "",measured ? Integer(w.TimedCpuMs.Count) : "",measured ? Integer(w.TimedGpuMs.Count) : "",
-                measured ? Integer(w.XrGpuMs.Count) : "",measured ? Integer(w.Draws.Count) : "",measured ? Integer(w.Triangles.Count) : ""
+                measured ? Integer(w.XrGpuMs.Count) : "",measured ? Integer(w.Draws.Count) : "",measured ? Integer(w.Triangles.Count) : "",
+                board ? Number(c.PanePitch) : ""
             });
             try
             {

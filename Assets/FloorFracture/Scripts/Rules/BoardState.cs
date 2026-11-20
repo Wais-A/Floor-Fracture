@@ -5,7 +5,9 @@ namespace FloorFracture
 {
     public sealed class BoardState
     {
-        public const float Pitch = 0.5f;
+        public const int MinAxis = 2, MaxAxis = 8;
+        public const float MinPitch = 0.50f, MaxPitch = 0.67f;
+        public float Pitch { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
         public int Count => Width * Height;
@@ -15,34 +17,33 @@ namespace FloorFracture
         public SlidingPane Slider { get; private set; }
         public TileSample CurrentSample => tracker.Current;
         public bool BreaksApplied { get; private set; }
-        internal int StationaryMask { get; private set; }
-        internal int FullMask => (1 << Count) - 1;
+        internal ulong StationaryMask { get; private set; }
+        internal ulong FullMask => ulong.MaxValue >> (64 - Count);
 
         private readonly PlayerTileTracker tracker = new PlayerTileTracker();
-        private readonly int[] neighborMasks = new int[16];
+        private readonly float[] columnEdges = new float[MaxAxis + 1], rowEdges = new float[MaxAxis + 1];
+        private ulong leftColumn, rightColumn;
         private int regularWavesSurvived;
         private bool levelEnded;
 
-        public BoardState(int width, int height, int seed) { Reset(width, height, seed); }
+        public BoardState(int width, int height, int seed, float pitch = MinPitch) { Reset(width, height, seed, pitch); }
 
-        public void Reset(int width, int height, int seed)
+        public void Reset(int width, int height, int seed, float pitch = MinPitch)
         {
-            if (width < 2 || width > 4) throw new ArgumentOutOfRangeException(nameof(width));
-            if (height < 2 || height > 4) throw new ArgumentOutOfRangeException(nameof(height));
+            if (width < MinAxis || width > MaxAxis) throw new ArgumentOutOfRangeException(nameof(width));
+            if (height < MinAxis || height > MaxAxis) throw new ArgumentOutOfRangeException(nameof(height));
+            if (!(pitch >= MinPitch && pitch <= MaxPitch)) throw new ArgumentOutOfRangeException(nameof(pitch));
             Width = width;
             Height = height;
+            Pitch = pitch;
             Seed = seed;
             WavesSurvived = 0;
             regularWavesSurvived = 0;
-            for (int tile = 0; tile < Count; ++tile)
-            {
-                int neighbors = 0;
-                if (tile % Width > 0) neighbors |= 1 << (tile - 1);
-                if (tile % Width < Width - 1) neighbors |= 1 << (tile + 1);
-                if (tile >= Width) neighbors |= 1 << (tile - Width);
-                if (tile < Count - Width) neighbors |= 1 << (tile + Width);
-                neighborMasks[tile] = neighbors;
-            }
+            SetEdges(columnEdges, width, pitch);
+            SetEdges(rowEdges, height, pitch);
+            leftColumn = 0;
+            for (int row = 0; row < height; ++row) leftColumn |= 1UL << (row * width);
+            rightColumn = leftColumn << (width - 1);
             RebuildLevel();
         }
 
@@ -57,7 +58,7 @@ namespace FloorFracture
         }
 
         public bool IsIntact(int index) =>
-            index >= 0 && index < Count && (StationaryMask & (1 << index)) != 0;
+            index >= 0 && index < Count && (StationaryMask & (1UL << index)) != 0;
 
         public Vector2 Center(int index)
         {
@@ -68,32 +69,34 @@ namespace FloorFracture
 
         public int IndexAt(Vector2 localXZ)
         {
-            int x = CellOnAxis(localXZ.x, Width), z = CellOnAxis(localXZ.y, Height);
+            int x = CellOnAxis(localXZ.x, columnEdges, Width), z = CellOnAxis(localXZ.y, rowEdges, Height);
             return x < 0 || z < 0 ? -1 : z * Width + x;
         }
 
-        private static int CellOnAxis(float value, int length)
+        private static void SetEdges(float[] edges, int length, float pitch)
         {
-            float extent = length * Pitch * 0.5f;
-            if (!(value >= -extent && value < extent)) return -1;
-            // Comparing the input directly to exact half-metre boundaries preserves even
-            // the smallest representable displacement from a seam at zero.
+            // Store seam coordinates at the same single precision as tracked Vector2
+            // poses. Some Mono builds retain extra precision in an inline comparison.
+            for (int i = 0; i <= length; ++i) edges[i] = (i - length * 0.5f) * pitch;
+        }
+
+        private static int CellOnAxis(float value, float[] edges, int length)
+        {
+            if (!(value >= edges[0] && value < edges[length])) return -1;
             for (int i = 1; i < length; ++i)
-                if (value < (i - length * 0.5f) * Pitch) return i - 1;
+                if (value < edges[i]) return i - 1;
             return length - 1;
         }
 
-        internal int NeighborMask(int tile) => neighborMasks[tile];
+        internal ulong NeighborMask(int tile) => AdjacentMask(1UL << tile);
 
-        internal int AdjacentMask(int group)
+        internal ulong AdjacentMask(ulong group)
         {
-            int adjacent = 0;
-            for (int tile = 0; group != 0; ++tile, group >>= 1)
-                if ((group & 1) != 0) adjacent |= neighborMasks[tile];
-            return adjacent;
+            ulong horizontal = ((group & ~leftColumn) >> 1) | ((group & ~rightColumn) << 1);
+            return (horizontal | (group >> Width) | (group << Width)) & FullMask;
         }
 
-        internal bool Neighbors(int a, int b) => (neighborMasks[a] & (1 << b)) != 0;
+        internal bool Neighbors(int a, int b) => (NeighborMask(a) & (1UL << b)) != 0;
 
         public TileSample Sample(Vector2 localXZ, bool tracked, double now)
         {
@@ -113,7 +116,7 @@ namespace FloorFracture
 
             var plan = WavePlanner.Plan(this, startingTile, level, waveNumber, regularWavesSurvived, now);
             if (plan.NewSliderTile >= 0)
-                Slider = new SlidingPane(plan.NewSliderTile, Center(plan.NewSliderTile), plan.SlideDirection, now);
+                Slider = new SlidingPane(plan.NewSliderTile, Center(plan.NewSliderTile), plan.SlideDirection, Pitch, now);
             ActiveWave = plan;
             BreaksApplied = false;
             tracker.ResetTiming();

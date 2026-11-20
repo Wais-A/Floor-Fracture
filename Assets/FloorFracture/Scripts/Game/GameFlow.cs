@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace FloorFracture
 {
-    public enum GameStage { Room, Welcome, Settings, PracticeStone, PracticeStep, Ready, Countdown, BetweenWaves, Paused, Fall, Results, Development }
+    public enum GameStage { Room, Welcome, Settings, PracticeStone, PracticeStep, Ready, Countdown, BetweenWaves, Paused, Fall, Results, Development, PlayArea }
 
     public sealed class GameFlow : MonoBehaviour
     {
@@ -19,6 +19,8 @@ namespace FloorFracture
         GameSound sound;
         QuestRunMetrics metrics;
         PracticeStone tutorial;
+        OVRHand[] trackedHands;
+        bool skipPinchHeld;
         bool reduced, gentle, levelFinished, appPaused;
         int volume, lastBeat=-1, practiceStart=-1, endingIndex=-1;
         double waitUntil;
@@ -36,6 +38,7 @@ namespace FloorFracture
             if(!Room) Room=FindFirstObjectByType<RoomBoardPlacement>();
             if(!Rig) Rig=FindFirstObjectByType<OVRCameraRig>();
             if(!Room||!Rig) throw new InvalidOperationException("Floor Fracture scene requires its room provider and one OVRCameraRig.");
+            trackedHands = Rig.GetComponentsInChildren<OVRHand>(true);
             reduced=PlayerPrefs.GetInt("ff.reduced",0)!=0; gentle=PlayerPrefs.GetInt("ff.gentle",0)!=0;
             volume=PlayerPrefs.GetInt("ff.volume",3);
             sound=gameObject.AddComponent<GameSound>(); sound.SetVolume(volume/4f);
@@ -61,8 +64,6 @@ namespace FloorFracture
             Stage=GameStage.Room;
             switch(Room.Status)
             {
-                case RoomPlacementStatus.Preview:
-                    Panel.Show("Check your floor",Room.Message,Choice("This area is clear",()=>Room.Confirm()),Choice("Try another spot",Room.Decline),Choice("Space Setup",Room.RequestSpaceSetup)); break;
                 case RoomPlacementStatus.PermissionDenied:
                     Panel.Show("Allow spatial data",Room.Message,Choice("App permissions",Room.OpenPermissionSettings),Choice("Try again",Room.Retry)); break;
                 case RoomPlacementStatus.NoRoom:
@@ -75,22 +76,31 @@ namespace FloorFracture
         void StartBoard()
         {
             if(BoardView) { BoardView.gameObject.SetActive(false); Destroy(BoardView.gameObject); }
-            var fit=Room.Placement; State=new BoardState(fit.Columns,fit.Rows,SelectedSeed);
+            var fit=Room.Placement; State=new BoardState(fit.Columns,fit.Rows,SelectedSeed,fit.Pitch);
             var board=new GameObject("Confirmed glass board"); BoardView=board.AddComponent<GlassBoardView>(); BoardView.Build(State,fit.Pose);
             Level=WaveNumber=1; levelFinished=false;
         }
         void Home()
         {
             Stage=GameStage.Welcome; tutorial.End(); BoardView.ClearTransient(); BoardView.gameObject.SetActive(true);
+            Room.ShowClearance(true);
             var choices=new System.Collections.Generic.List<MenuChoice>{
                 Choice("Start",()=>Ready("Step onto intact glass, then start the wave.")),
-                Choice("Tutorial",StartPractice),Choice("Settings",Settings)};
+                Choice("Tutorial",StartPractice),Choice("Settings",Settings),Choice("Play area",PlayArea)};
             if(Debug.isDebugBuild||Application.isEditor) choices.Add(Choice("Development",Development));
-            Panel.Show("Floor Fracture","Move to glass that will hold before the countdown reaches zero.",choices.ToArray());
+            Panel.Show("Floor Fracture",Room.Message+"\nMove to glass that will hold before zero.",choices.ToArray());
+        }
+        void PlayArea()
+        {
+            Stage=GameStage.PlayArea;
+            Room.ShowClearance(true);
+            Panel.Show("Play area",Room.Message+"\nThe gold outline shows the margin. If something moved since your scan, choose another spot or update it.",
+                Choice("Back",Home),Choice("Try another spot",Room.Decline),Choice("Space Setup",Room.RequestSpaceSetup));
         }
         void Settings()
         {
-            Stage=GameStage.Settings; Panel.Show("Settings","The pulsing practice pane previews your warning intensity.",
+            Room.ShowClearance(false);
+            Stage=GameStage.Settings; Panel.Show("Settings","The pane previews your warning intensity. During a fall, pinch or press A or X to skip.",
                 Choice("Fall motion  ·  "+(reduced?"Reduced":"Full"),()=>{reduced=!reduced; SaveSettings(); Settings();}),
                 Choice("Warning  ·  "+(gentle?"Gentle":"Standard"),()=>{gentle=!gentle; SaveSettings(); Settings();}),
                 Choice("Volume  ·  "+volume*25+"%",()=>{volume=(volume+1)%5; SaveSettings(); sound.SetVolume(volume/4f); sound.Click(); Settings();}),
@@ -103,6 +113,7 @@ namespace FloorFracture
         }
         void StartPractice()
         {
+            Room.ShowClearance(false);
             Stage=GameStage.PracticeStone; BoardView.RestorePracticePane();
             tutorial.Begin(State,BoardView.Board,Panel,PracticeHit);
             Panel.Show("Try the glass","Grip the stone in front of you. Let go above the cracked pane.",Choice("Return stone",StartPractice),Choice("Skip tutorial",EndPractice));
@@ -120,6 +131,7 @@ namespace FloorFracture
         }
         void Ready(string text)
         {
+            Room.ShowClearance(false);
             Stage=GameStage.Ready; BoardView.gameObject.SetActive(true);
             Panel.Show("Level "+Level,text,Choice("Start wave",TryStart),Choice("Main menu",()=>{StartBoard(); Home();}));
         }
@@ -222,15 +234,32 @@ namespace FloorFracture
             Stage=GameStage.Fall; tutorial.End();
             var point=Panel.Head.position; point.y=BoardView.transform.position.y;
             int cell=State.CurrentSample.Index;
-            if(cell>=0) point=BoardView.transform.TransformPoint(GlassGeometry.Ground(State.Center(cell)));
-            Ending.SetOpening(point,BoardState.Pitch,BoardView.transform.eulerAngles.y);
+            if(cell>=0)
+            {
+                point=BoardView.transform.TransformPoint(GlassGeometry.Ground(State.Center(cell)));
+                BoardView.RevealLossAperture(cell);
+            }
+            Ending.SetOpening(point,State.Pitch,BoardView.transform.eulerAngles.y);
             Panel.Hide(); Ending.Begin(Panel.Head,reduced,ShowResults);
-            BoardView.SetReadout("A / X  ·  Skip",Panel.Head);
+            skipPinchHeld = HasSkipPinch();
+            BoardView.SetReadout("Pinch or A / X  ·  Skip",Panel.Head);
         }
+
+        bool HasSkipPinch()
+        {
+            foreach (var hand in trackedHands)
+                if (hand.isActiveAndEnabled && hand.IsActive() && hand.IsDataHighConfidence
+                    && !hand.IsSystemGestureInProgress && hand.IsPressed()) return true;
+            return false;
+        }
+
         void LateUpdate()
         {
             if(Stage!=GameStage.Fall) return;
-            if(OVRInput.GetDown(OVRInput.Button.One,OVRInput.Controller.LTouch)||OVRInput.GetDown(OVRInput.Button.One,OVRInput.Controller.RTouch)) Ending.Skip();
+            bool pinch = HasSkipPinch();
+            if ((pinch && !skipPinchHeld) || OVRInput.GetDown(OVRInput.Button.One, OVRInput.Controller.LTouch)
+                || OVRInput.GetDown(OVRInput.Button.One, OVRInput.Controller.RTouch)) Ending.Skip();
+            skipPinchHeld = pinch;
 #if UNITY_EDITOR
             if(UnityEngine.InputSystem.Keyboard.current?.spaceKey.wasPressedThisFrame==true) Ending.Skip();
 #endif
@@ -249,6 +278,7 @@ namespace FloorFracture
         void Development()
         {
             if(!Debug.isDebugBuild&&!Application.isEditor) return;
+            Room.ShowClearance(false);
             Stage=GameStage.Development;
             Panel.Show("Development","Seed "+SelectedSeed+"   ·   selected ending "+(endingIndex<0?"Shuffle":EndingNames[endingIndex]),
                 Choice("Seed 379 · level 1",()=>DevelopmentRun(1)),Choice("Seed 379 · level 3",()=>DevelopmentRun(3)),

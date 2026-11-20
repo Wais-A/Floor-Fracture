@@ -27,16 +27,19 @@ namespace FloorFracture
         {
             board=boardState; surface=boardTransform; input=panel; onHit=hit;
             Vector3 local=surface.InverseTransformPoint(input.Head.position+Vector3.ProjectOnPlane(input.Head.forward,Vector3.up).normalized*.35f);
-            int col=Mathf.Clamp(Mathf.FloorToInt(local.x/BoardState.Pitch+board.Width*.5f),0,board.Width-1);
-            int row=Mathf.Clamp(Mathf.FloorToInt(local.z/BoardState.Pitch+board.Height*.5f),0,board.Height-1);
+            int col=Mathf.Clamp(Mathf.FloorToInt(local.x/board.Pitch+board.Width*.5f),0,board.Width-1);
+            int row=Mathf.Clamp(Mathf.FloorToInt(local.z/board.Pitch+board.Height*.5f),0,board.Height-1);
             target=row*board.Width+col;
             if(!stone)
             {
                 var template=Resources.Load<GameObject>("PracticeStone");
                 if(!template) throw new InvalidOperationException("Missing baked Meta Grab Interaction stone.");
                 var go=Instantiate(template,transform); go.name="Practice stone";
-                var stoneRenderer=go.GetComponentInChildren<MeshRenderer>(); stoneRenderer.sharedMaterial=GlassTile.Surface;
-                GlassTile.Tint(stoneRenderer,new Color(.73f,.67f,.53f),.85f);
+                var stoneRenderer=go.GetComponentInChildren<MeshRenderer>();
+                var tint=new MaterialPropertyBlock();
+                stoneRenderer.GetPropertyBlock(tint);
+                tint.SetColor("_Color",new Color(.73f,.67f,.53f,1f));
+                stoneRenderer.SetPropertyBlock(tint);
                 stone=go.GetComponent<Rigidbody>(); grabbable=go.GetComponent<Grabbable>(); grabbable.WhenPointerEventRaised+=OnPointer;
             }
             ResetStone();

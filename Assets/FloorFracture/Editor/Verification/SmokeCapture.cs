@@ -7,9 +7,11 @@ using Object = UnityEngine.Object;
 
 namespace FloorFracture.Editor
 {
+    internal enum SmokeView { BoardObserver, CenterEye, Ending, FallRim, FallDown, FallForward }
+
     internal static class SmokeCapture
     {
-        public static string Write(string directory, string name, GameFlow game, bool showBoard)
+        public static string Write(string directory, string name, GameFlow game, SmokeView view)
         {
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return "The Editor process has no graphics device.";
             if (!game.Rig || !game.Rig.centerEyeAnchor) return "The scene camera was unavailable.";
@@ -26,21 +28,50 @@ namespace FloorFracture.Editor
                 camera.stereoTargetEye = StereoTargetEyeMask.None;
                 camera.clearFlags = CameraClearFlags.SolidColor;
                 camera.backgroundColor = Color.black;
-                camera.fieldOfView = 66f;
+                camera.fieldOfView = view == SmokeView.CenterEye ? 78f : 66f;
                 camera.aspect = (float)width / height;
                 camera.allowHDR = false;
                 camera.GetUniversalAdditionalCameraData().allowXRRendering = false;
-                if (showBoard)
+                if (view == SmokeView.BoardObserver)
                 {
-                    var pose = game.Room.Placement.Pose;
-                    var offset = name == "room-preview" ? new Vector3(-0.5f, 2.7f, -2.8f) : new Vector3(-0.35f,1.7f,-1.75f);
-                    var position = pose.position + pose.rotation * offset;
-                    camera.transform.SetPositionAndRotation(position, Quaternion.LookRotation(pose.position - position, Vector3.up));
+                    var fit = game.Room.Placement;
+                    var pose = fit.Pose;
+                    bool welcome = name == "room-preview";
+                    float margin = welcome ? BoardPlacement.Clearance : 0f;
+                    Vector3 direction = pose.rotation * new Vector3(-0.16f, 1f, -1.05f).normalized;
+                    var rotation = Quaternion.LookRotation(-direction, Vector3.up);
+                    float tanVertical = Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad * 0.5f);
+                    float distance = 0;
+                    for (int x = -1; x <= 1; x += 2)
+                        for (int z = -1; z <= 1; z += 2)
+                        {
+                            Vector3 corner = pose.rotation * new Vector3(x * (fit.Columns * fit.Pitch * 0.5f + margin),
+                                0f, z * (fit.Rows * fit.Pitch * 0.5f + margin));
+                            Vector3 projected = Quaternion.Inverse(rotation) * corner;
+                            float edge = Mathf.Max(Mathf.Abs(projected.y) / tanVertical, Mathf.Abs(projected.x) / (tanVertical * camera.aspect));
+                            distance = Mathf.Max(distance, edge - projected.z);
+                        }
+                    camera.transform.SetPositionAndRotation(pose.position + direction * distance * (welcome ? 1.3f : 1.10f), rotation);
                 }
                 else
                 {
-                    var eye = game.Panel.Head;
-                    camera.transform.SetPositionAndRotation(eye.position, eye.rotation * Quaternion.Euler(13f,0f,0f));
+                    var eye = game.Rig.centerEyeAnchor;
+                    var rotation = view == SmokeView.Ending ? eye.rotation * Quaternion.Euler(13f,0f,0f) : eye.rotation;
+                    if (view == SmokeView.FallRim || view == SmokeView.FallDown || view == SmokeView.FallForward)
+                    {
+                        Vector3 heading = Vector3.ProjectOnPlane(eye.forward, Vector3.up).normalized;
+                        if (heading.sqrMagnitude < 0.1f) heading = Vector3.forward;
+                        float pitch = view == SmokeView.FallRim ? 74f : view == SmokeView.FallDown ? 36f : 0f;
+                        rotation = Quaternion.LookRotation(heading, Vector3.up) * Quaternion.Euler(pitch, 0f, 0f);
+                    }
+                    camera.transform.SetPositionAndRotation(eye.position, rotation);
+                }
+
+                if (name == "classic-player-view")
+                {
+                    var board = game.BoardView.Board;
+                    CheckFraming(camera, board.Find("Occupied square").GetComponent<MeshRenderer>());
+                    CheckFraming(camera, board.Find("Countdown and score").GetComponent<MeshRenderer>());
                 }
 
                 var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
@@ -69,6 +100,19 @@ namespace FloorFracture.Editor
                 if (frame) Object.DestroyImmediate(frame);
                 Object.DestroyImmediate(holder);
                 RenderTexture.ReleaseTemporary(target);
+            }
+        }
+
+        private static void CheckFraming(Camera camera, MeshRenderer renderer)
+        {
+            if (!renderer.enabled) throw new InvalidOperationException("Missing player-view subject: " + renderer.name);
+            Bounds bounds = renderer.bounds;
+            for (int i = 0; i < 8; i++)
+            {
+                var point = camera.WorldToViewportPoint(new Vector3((i & 1) == 0 ? bounds.min.x : bounds.max.x,
+                    (i & 2) == 0 ? bounds.min.y : bounds.max.y, (i & 4) == 0 ? bounds.min.z : bounds.max.z));
+                if (point.z <= 0f || point.x < 0.01f || point.x > 0.99f || point.y < 0.01f || point.y > 0.99f)
+                    throw new InvalidOperationException($"The player-view photo clipped {renderer.name} at viewport {point:F3}.");
             }
         }
     }

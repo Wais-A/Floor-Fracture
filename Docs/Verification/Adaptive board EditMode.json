@@ -1,0 +1,49 @@
+{
+  "unity": "6000.6.9f1",
+  "unityTestFramework": "1.8.0",
+  "runnerExit": 0,
+  "testResult": "Passed",
+  "total": 30,
+  "passed": 30,
+  "failed": 0,
+  "seconds": 103.3869663,
+  "byAssembly": [
+    {
+      "name": "FloorFracture.Rooms.Tests.dll",
+      "result": "Passed",
+      "total": "24",
+      "passed": "24",
+      "duration": "0.079597"
+    },
+    {
+      "name": "FloorFracture.Rules.EditorTests.dll",
+      "result": "Passed",
+      "total": "6",
+      "passed": "6",
+      "duration": "103.303428"
+    }
+  ],
+  "recompiledAssemblies": {
+    "FloorFracture.Rules": {
+      "bytes": 17920,
+      "sha256": "8bcfd8044315e98dc1a1eb2faa4e28edb4849c4d499029516dba263f826dccc9"
+    },
+    "FloorFracture.Rooms": {
+      "bytes": 36864,
+      "sha256": "312debe3c5f26f6b12d4015baaa6b498398e2b4f70c03ee63e5b90aaff428db8"
+    },
+    "FloorFracture.Rules.EditorTests": {
+      "bytes": 23552,
+      "sha256": "f7bafb89e409f5f57bec39bfdb469fbe4e335af400673f1c666d59e95eff10f2"
+    },
+    "FloorFracture.Rooms.Tests": {
+      "bytes": 11776,
+      "sha256": "4ee794becc89163c6070bc9e81143982157f11e23a84d601384ba000dd096521"
+    }
+  },
+  "snapshotDiffVsCurrent": [
+    "Packages/manifest.json",
+    "Packages/packages-lock.json"
+  ],
+  "xmlSha256": "b488b719b0473d25f3d954c11468450fde2bb42f2a5c1d0ed96d9ce84fa7b4d7"
+}
