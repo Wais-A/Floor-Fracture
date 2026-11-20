@@ -43,8 +43,8 @@ namespace FloorFracture
 
         void Start()
         {
-            if(!Room) Room=FindFirstObjectByType<RoomBoardPlacement>();
-            if(!Rig) Rig=FindFirstObjectByType<OVRCameraRig>();
+            if(!Room) Room=FindAnyObjectByType<RoomBoardPlacement>();
+            if(!Rig) Rig=FindAnyObjectByType<OVRCameraRig>();
             if(!Room||!Rig) throw new InvalidOperationException("Floor Fracture scene requires its room provider and one OVRCameraRig.");
             float profileDepth = OVRPlugin.eyeDepth;
             if (profileDepth >= .035f && profileDepth <= .14f) eyeDepth = profileDepth;
@@ -56,8 +56,8 @@ namespace FloorFracture
             narration=gameObject.AddComponent<OfflineNarration>(); narration.Configure(narrated,volume/4f);
             Ending=gameObject.AddComponent<FallSequence>(); tutorial=gameObject.AddComponent<PracticeStone>();
             Panel=gameObject.AddComponent<GamePanel>(); Panel.Initialize(Rig,sound);
-#if DEVELOPMENT_BUILD
-            metrics=gameObject.AddComponent<QuestRunMetrics>();
+#if DEBUG && UNITY_ANDROID && !UNITY_EDITOR
+            if (Debug.isDebugBuild) metrics=gameObject.AddComponent<QuestRunMetrics>();
 #endif
             SelectedSeed=Environment.TickCount&int.MaxValue; Room.Changed+=RoomChanged; RoomChanged();
         }

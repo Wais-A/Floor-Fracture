@@ -162,7 +162,6 @@ namespace FloorFracture.Editor
             effect.Colliders = false;
             effect.CastShadow = false;
             effect.HideMesh = true;
-            effect.BorderSize = 0;
             Record(effect);
             return effect;
         }

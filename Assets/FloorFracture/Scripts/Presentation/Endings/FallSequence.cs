@@ -12,7 +12,7 @@ public sealed class FallSequence : MonoBehaviour
     [SerializeField] Material waterSurfaceOverride = null;
     [SerializeField] GameObject splashPrefabOverride = null;
     [SerializeField] GameObject lavaFlamesOverride = null;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+#if UNITY_EDITOR || DEBUG
     enum PreviewEnding { Shuffle = -1, Water, Lava, Crystal, Space, Sand, Snow }
     [SerializeField] PreviewEnding developmentEnding = PreviewEnding.Shuffle;
 #endif
@@ -58,8 +58,9 @@ public sealed class FallSequence : MonoBehaviour
 
     int SelectEnding(bool consume)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        if (developmentEnding != PreviewEnding.Shuffle) return (int)developmentEnding;
+#if UNITY_EDITOR || DEBUG
+        if ((Application.isEditor || Debug.isDebugBuild) && developmentEnding != PreviewEnding.Shuffle)
+            return (int)developmentEnding;
 #endif
         return consume ? shuffle.Next(enabledEndings) : shuffle.Peek(enabledEndings);
     }
@@ -91,8 +92,9 @@ public sealed class FallSequence : MonoBehaviour
     /// <summary>Water through snow are indices zero through five. A negative index restores the bag.</summary>
     public void SetDevelopmentEnding(int index)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        developmentEnding = index >= 0 && index < 6 ? (PreviewEnding)index : PreviewEnding.Shuffle;
+#if UNITY_EDITOR || DEBUG
+        if (Application.isEditor || Debug.isDebugBuild)
+            developmentEnding = index >= 0 && index < 6 ? (PreviewEnding)index : PreviewEnding.Shuffle;
 #endif
     }
 
