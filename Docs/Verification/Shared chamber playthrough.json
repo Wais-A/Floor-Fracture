@@ -1,0 +1,352 @@
+{
+  "sourceRevision": "cfc2b8ef50c7dbb9c825d476795f599fb0b32234",
+  "result": "passed",
+  "editorExitCode": 0,
+  "unity": "6000.6.9f1",
+  "startedUtc": "2026-11-20T04:14:31.4525810Z",
+  "finishedUtc": "2026-11-20T04:18:48.4483180Z",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "fixture": "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode",
+  "input": "Simulated world poses, grip state, and visible menu selection. Unity physics and unscaled game time.",
+  "room": {
+    "columns": 6,
+    "rows": 6,
+    "pitchMetres": 0.62071,
+    "sdkFloorCandidates": 8,
+    "nativeDepthEnabledInScene": true,
+    "liveEnvironmentDepthAvailableInEditorFixture": false
+  },
+  "checkCount": 27,
+  "capturedFrames": 48,
+  "checks": [
+    "Meta Camera Rig, Passthrough, MR Utility Kit, Find Spawn Positions, Controller Tracking, and Interactions Rig supply the single tracked rig, room, floor candidates and left/right ray and grab controls.",
+    "The gameplay scene keeps the app’s wall and furniture overlay inactive. MRUK still fits the board and the floor has its own depth mask. The saved scene enables one SDK environment depth provider and contains no example cube, occlusion root, raycast marker, or shared anchor.",
+    "The gameplay Canvas has one registered SDK ray surface and one SDK poke surface. Both SDK hand branches include a poke interactor, and the physical poke surface covers the menu row.",
+    "All ten pooled positional glass and ending-impact sources retain the actual Spatial Audio block and one enabled MetaXRAudioSource with spatialization enabled.",
+    "MRUK Rec Room supplied floor and furniture. The 6 × 6 board at 0.621 m pitch appeared at Welcome without a clearance approval prompt.",
+    "The exterior floor, neighboring hole and falling shaft rendered matching blue brick faces and mortar at the same physical scale.",
+    "Two-eye native mask and brick GPU checks with the bin at its starting position: 11105 floor, 1544 couch, 100 chair-leg and 70 bin pixels. 228 pixels of brick remained visible between the chair legs.",
+    "Two-eye native mask and brick GPU checks with the bin moved: 11442 floor, 1544 couch, 100 chair-leg and 42 bin pixels. 228 pixels of brick remained visible between the chair legs.",
+    "GPU readbacks of the actual MRUK floor showed masonry to its scanned edges with a clear glass footprint at the fitted orientation and a further 31-degree rotation. A board one metre above the floor left the full floor covered.",
+    "The SDK display event recalled Settings, Paused, and Results to 56 cm in front of the simulated eye. The menu stayed fixed during head movement, stayed hidden during play, and waited for tracking after suspension. The glass, floor anchor, and camera rig kept their poses.",
+    "The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.",
+    "Welcome and Settings routed through their visible menu choices. The development menu selected seed 379.",
+    "Tutorial marked and cracked the starting pane. An untimed step to adjacent clear glass shattered the pane behind the player, then restored it and reached Ready without creating a stone.",
+    "The actual tutorial stone kept the stock Meta occlusion material and its individual visible _Color tint at runtime.",
+    "A carried stone held still for 0.4 s dropped at 0.000 m/s. The SDK supplied 0.459 m/s before the stationary-drop check.",
+    "In optional stone practice, a cancelled SDK grab returned without a throw, a miss returned to reach, a distant drop broke its actual pane, and a moving release carried native throw velocity into another pane.",
+    "Walked each guaranteed stationary step through Last Tile. Level 2 rebuilt and waited for readiness.",
+    "The landing visible on the first surviving wave remained selected through later waves and matched the subsequent natural loss.",
+    "Six natural endings played before a repeat. The next bag changed ending. Full playback, skip, results, and restart used the normal production controller.",
+    "All six endings reached a black frame and Results in Full and Reduced. An early Skip also worked in both modes. Every Restart restored the board, score, room floor and audio.",
+    "Water showed the moving walls for 3.49 s after entry at 1.50 m eye height, before impact.",
+    "Lava showed the moving walls for 3.33 s after entry at 2.20 m eye height, before impact.",
+    "Water reduced motion kept the chamber geometry stationary before contact and reached results.",
+    "Level 3 seed 379 showed fog, then a moving pane over hole 23. A deliberate miss recovered on permanent tile 7. Catching the moving glass locked its position and survived the deadline.",
+    "A simulated significant MRUK floor-anchor event withdrew the board. Reloading the real fixture produced a new verified fit and returned directly to Welcome.",
+    "Injected MRUK NoScenePermission. The blocked board showed App permissions and Try again. Retry loaded the fixture and restored Welcome.",
+    "Injected MRUK NoRoomsFound. The blocked board showed Space Setup and Check again. Retry loaded the fixture and restored Welcome."
+  ],
+  "previewBeforeNaturalLoss": "Snow",
+  "naturalEndingOrder": [
+    "Snow",
+    "Lava",
+    "Crystal",
+    "Space",
+    "Sand",
+    "Water",
+    "Sand"
+  ],
+  "openLandings": [
+    {
+      "ending": "Water",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Water",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Lava",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Lava",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Crystal",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Crystal",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Sand",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Sand",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Snow",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Snow",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    }
+  ],
+  "renderMeasurement": "A camera 1.55 m above an intact neighboring pane rendered the shaft after the shards fell. Eye positions were 32 mm left and right. Each 96 × 96 image was read with the actual surface on and off. Changed pixels more than 1.5 cm inside the pane scored as visible. Changed pixels more than 2.5 cm outside scored as leaks. The edge tolerance accommodates rasterization.",
+  "falls": [
+    {
+      "ending": "Water",
+      "motion": "full",
+      "eyeHeight": 1.5,
+      "plannedContact": 4.44061,
+      "surfaceReachedAt": 4.44079495464851,
+      "finishedAt": 9.44110870890023,
+      "visibleWallSeconds": 3.4868967049319792,
+      "maxTrackedHeadDisplacement": 0.0,
+      "maxRigDisplacement": 0.0
+    },
+    {
+      "ending": "Lava",
+      "motion": "full",
+      "eyeHeight": 2.200000047683716,
+      "plannedContact": 4.44061,
+      "surfaceReachedAt": 4.483985374149654,
+      "finishedAt": 9.440867708333315,
+      "visibleWallSeconds": 3.32917254109978,
+      "maxTrackedHeadDisplacement": 0.0,
+      "maxRigDisplacement": 0.0
+    },
+    {
+      "ending": "Water",
+      "motion": "reduced",
+      "eyeHeight": 1.600000023841858,
+      "plannedContact": 0.82,
+      "surfaceReachedAt": -1.0,
+      "finishedAt": 3.930323044217687,
+      "visibleWallSeconds": 0.0,
+      "maxTrackedHeadDisplacement": 0.0,
+      "maxRigDisplacement": 0.0
+    }
+  ],
+  "endingTrials": [
+    {
+      "ending": "Water",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.443
+    },
+    {
+      "ending": "Water",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.18
+    },
+    {
+      "ending": "Lava",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.441
+    },
+    {
+      "ending": "Lava",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.181
+    },
+    {
+      "ending": "Crystal",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.441
+    },
+    {
+      "ending": "Crystal",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.18
+    },
+    {
+      "ending": "Space",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.442
+    },
+    {
+      "ending": "Space",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.18
+    },
+    {
+      "ending": "Sand",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.441
+    },
+    {
+      "ending": "Sand",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.181
+    },
+    {
+      "ending": "Snow",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.441
+    },
+    {
+      "ending": "Snow",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.181
+    },
+    {
+      "ending": "Water",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.931
+    },
+    {
+      "ending": "Water",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.181
+    },
+    {
+      "ending": "Lava",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.93
+    },
+    {
+      "ending": "Lava",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.181
+    },
+    {
+      "ending": "Crystal",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.93
+    },
+    {
+      "ending": "Crystal",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.181
+    },
+    {
+      "ending": "Space",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.93
+    },
+    {
+      "ending": "Space",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.18
+    },
+    {
+      "ending": "Sand",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.93
+    },
+    {
+      "ending": "Sand",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.18
+    },
+    {
+      "ending": "Snow",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.93
+    },
+    {
+      "ending": "Snow",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.181
+    }
+  ],
+  "editMode": {
+    "total": 52,
+    "passed": 52,
+    "failed": 0,
+    "skipped": 0,
+    "source": "Builds/Verification/Shared-chamber/editmode.xml"
+  },
+  "shuffleRegression": {
+    "source": "Assets/FloorFracture/Scripts/Presentation/Endings/EndingShuffle.cs",
+    "sourceSha256": "88660bf96c138349be12bc7931129c00b86415fde9fa31a4a78e13fa04145af2",
+    "runtime": "C# on .NET",
+    "seeds": 128,
+    "enabledCombinations": 63,
+    "shuffleBags": 24192,
+    "previewCalls": 589824,
+    "losses": 73728,
+    "result": "Every preview matched the next loss. Each shuffle bag contained every enabled ending once. An empty set returned no ending."
+  },
+  "localReport": "Builds/Verification/Shared-chamber/report.json",
+  "selectedCaptures": [
+    "Docs/Media/open-shaft-water.png",
+    "Docs/Media/open-shaft-lava.png"
+  ],
+  "headsetReview": "See Quest 3 playtest.md for wearer observations. Shader readbacks and timed trajectories in this file are Unity Editor measurements."
+}

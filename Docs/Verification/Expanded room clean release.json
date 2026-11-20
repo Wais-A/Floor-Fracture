@@ -1,0 +1,149 @@
+{
+  "sourceRevision": "621ef15fedb137207eb06d243799f734337f981c",
+  "apk": "Builds/CleanRelease/FloorFracture-expanded-621ef15.apk",
+  "bytes": 108574913,
+  "sha256": "0c36f2c4de9775e6a9180a999e02b7322fc06a48289b53362d750a4af8490707",
+  "unity": "6000.6.9f1 (8c45277fb9c5)",
+  "package": "com.wa003.floorfracture",
+  "platform": "Android",
+  "coldCheckout": {
+    "cleanTrackedStatus": true,
+    "gitObjectAlternates": false,
+    "initialUnityCacheDirectories": [],
+    "lfsObjectsChecked": 43,
+    "lfsIntegrity": "Git LFS fsck OK",
+    "unityGuidReferences": 50,
+    "unresolvedGuids": {},
+    "danglingLocalReferences": {}
+  },
+  "coldBuild": {
+    "editorExitCode": 134,
+    "editorShutdown": "After Unity wrote its successful build report, macOS recorded SIGABRT in ISDKEngineTelemetry.dylib on a background thread that was locking a mutex. This crash report concerns the Mac Editor shutdown.",
+    "quitTimeoutSeconds": 1200,
+    "errors": 0,
+    "warnings": 61,
+    "warningGroups": {
+      "Hidden/InferenceEngine/ScatterND": 14,
+      "Hidden/InferenceEngine/ConvTranspose": 11,
+      "Hidden/InferenceEngine/SliceSet": 6,
+      "UAC0009": 4,
+      "Hidden/InferenceEngine/GridSample": 4,
+      "Library/Bee/artifacts/Android/il2cppOutput/cpp: [Unity.TextMeshPro": 3,
+      "CS0618": 2,
+      "Hidden/InferenceEngine/ScatterElements": 2,
+      "EnvironmentDepth/OcclusionLit": 2,
+      "Universal Render Pipeline/Lit": 2,
+      "Read/Write is disabled on 1 mesh(es) referenced by components in this build. In future versions of Unity, the build process will": 1,
+      "The following asset(s) located in immutable packages were unexpectedly altered. Making changes to immutable packages isn't recom": 1,
+      "Using the Screen Space Ambient Occlusion render feature results in significant performance overhead when the application is runn": 1,
+      "[Optional] Latency Optimization is recommended to be set to <b>Prioritize Input Polling</b> when Meta Quest support is enabled.": 1,
+      "[Optional] Meta Quest supports Thin Link Time Optimization. This can optimize CPU performance and can only be done in non-develo": 1,
+      "This OpenXR Feature targets an API version with a patch version lower than 1.1.62, which is the recommended version for this pac": 1,
+      "Diagnostics Data is enabled, and it requires Debug Symbols to be either SymbolTable or Full to resolve stacktraces in crash repo": 1,
+      "Hidden/InferenceEngine/Pad": 1,
+      "Shader Graphs/Water": 1,
+      "Hidden/Universal Render Pipeline/ClusterDeferred": 1,
+      "Hidden/Universal Render Pipeline/StencilDeferred": 1
+    },
+    "optionsMask": 0,
+    "buildSeconds": 523.227631,
+    "editorDiagnostic": {
+      "buildReportResult": "Succeeded",
+      "faultingModule": "ISDKEngineTelemetry.dylib",
+      "signal": "SIGABRT",
+      "interactionSdk": "209.0.0",
+      "registryLatestAtReview": "209.0.0",
+      "macReportFilename": "Unity-2026-11-19-224240.ips",
+      "upstreamReleaseNotes": "https://developers.meta.com/vr/release-notes/"
+    }
+  },
+  "manifest": {
+    "debuggable": false,
+    "minimumApi": 32,
+    "targetApi": 34,
+    "installedAbis": [
+      "arm64-v8a"
+    ],
+    "arm64NativeLibraries": 22,
+    "scenePermission": true,
+    "v2SignatureVerified": true,
+    "certificate": "Android Debug development certificate",
+    "zipEntriesWithValidCrc": 899,
+    "verified16KiBAlignment": true
+  },
+  "scene": [
+    "Assets/FloorFracture/Scenes/FloorFracture.unity"
+  ],
+  "nativeRoomBlocks": [
+    "[BuildingBlock] Find Spawn Positions",
+    "[BuildingBlock] Room Guardian",
+    "[BuildingBlock] Occlusion Dependencies",
+    "[BuildingBlock] Effect Mesh - Surrounding Floor"
+  ],
+  "tutorialLabelsInPlayer": [
+    "Try the stone (optional)",
+    "Practice stepping"
+  ],
+  "developmentMenu": {
+    "labelsInMetadata": {
+      "Preview loss": true,
+      "Seed 379 · level 1": true
+    },
+    "compiledWelcomeAndDevelopmentMenusCheckDebugBuildOrEditor": true,
+    "compiledFallSelectionOverrideIsEmpty": true,
+    "retailGameFlowStartIncludesMetricsRecorder": false
+  },
+  "vulkanShaderPrograms": {
+    "Floor Fracture/Surrounding Brick": 6,
+    "Floor Fracture/Shaft and falling glass": 2,
+    "Floor Fracture/Ending chamber": 2
+  },
+  "packedAssets": {
+    "Assets/FloorFracture/Resources/Endings/Chamber.shader": {
+      "stream": "cb37d8b8fe6f432d9ab28501a1f75978",
+      "offset": 144,
+      "bytes": 15044,
+      "sha256": "cef87d5ebf18a1ac0e8ca97cc3e69523c1cad089915839add44fc45a010f6ced"
+    },
+    "Assets/FloorFracture/Resources/FloorFractureDepth.shader": {
+      "stream": "b18516750f30a4c2e8608114ec007bd5",
+      "offset": 144,
+      "bytes": 6048,
+      "sha256": "8626a38ad5eb9478d19d5e1bab27257e488f92463673775995778b1c433266ca"
+    },
+    "Assets/FloorFracture/Scripts/Room/SurroundingBrick.mat": {
+      "stream": "sharedassets0.assets",
+      "offset": 13872,
+      "bytes": 180,
+      "sha256": "ed2264c1b5a4fd5ce60a7dd9e7f7801b2ec8ab537c738ad18f5f7165ef6c33ba"
+    },
+    "Assets/FloorFracture/Scripts/Room/SurroundingBrick.shader": {
+      "stream": "sharedassets0.assets",
+      "offset": 30582544,
+      "bytes": 10980,
+      "sha256": "5404e19390619a1f1db28ccc92a4f58fc9aceda39dc831e130f61718da78021f"
+    }
+  },
+  "deviceReview": "The instrumented development APK is installed for the wearer trial. See Expanded room Quest build.json.",
+  "buildGuid": "4af1c3398c3c491a8789da372bc516cd",
+  "secondColdBuild": {
+    "withNoGraphics": true,
+    "sha256": "1f7c157db4632ed3b3c95e51d6fd4bee19d0e4f35b563b668c71a2aa7b63a9ed",
+    "bytes": 108574917,
+    "editorExitCode": 134,
+    "errors": 0,
+    "warnings": 61,
+    "verifiedArm64ReleaseSignatureAndAlignment": true,
+    "macReportFilename": "Unity-2026-11-19-225534.ips",
+    "faultingModule": "ISDKEngineTelemetry.dylib"
+  },
+  "recoveryTest": {
+    "sameImportedProjectWithEditorOnlyChange": true,
+    "interactiveSettingsChanged": false,
+    "adjustment": "At the end of a Mac batch build, call the installed Interaction SDK managed ShutDown method. The package starts the native session on Editor import and normally runs its shutdown hook during Play Mode.",
+    "editorExitCode": 0,
+    "errors": 0,
+    "warnings": 5,
+    "sdkShutdownInBuildLog": true
+  }
+}

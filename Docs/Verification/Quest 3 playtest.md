@@ -32,15 +32,26 @@ The signed brick build is `5674695daa384caba05d08902ec9fdc7`. The synthetic High
 
 The Quest recorded ten shatters and all six full-motion endings in the saved small-board session. Countdown frames averaged 71.97 FPS and fall frames averaged 71.98 FPS. The longest individual frames were 36.21 ms and 53.47 ms, respectively. These measurements come from Unity’s development-build recorder. [Run evidence](<./Brick floor Quest build.json>)
 
-## Expanded-room revision awaiting a headset
+## Expanded-room build installed on Quest 3
 
 Use the same saved room that showed 2 × 2 at 57.3 cm to compare the footprint. The separate simulator’s High-ceiling Room changed from 5 × 8 at 56 cm to 6 × 9 at 58.7 cm. The offline Rec Room changed from 5 × 6 at 51.7 cm to 6 × 6 at 62.1 cm. Both are simulations. [Simulator observation](<./Expanded room simulator.json>) · [Room regression cases](<./Expanded room EditMode.json>)
 
-- [ ] Install the verified APK after Wais reconnects. Match its installed SHA-256 and record the Welcome grid dimensions and pane width before comparing how the room feels.
+- [x] Installed and launched the revised game on the Quest 3 on November 19 at 10:29 p.m. The installed APK matched the tested SHA-256, spatial data was granted, and the game recorded build GUID `7fdcaf92922947548c00e55b14ae6090` with Vulkan. The first 13 samples were in room setup. [Quest build and startup evidence](<./Expanded room Quest build.json>)
+- [x] The expanded-room APK recorded 5 × 3 at 53.9 cm per pane at Welcome and again during gameplay. Wais said the play area was better. The scan identity and comfort of an ordinary step were not specified.
+- [x] Wais found the blue outlines on room walls and objects distracting. From a safe pane the opening looked shallower than the loss shaft. He wants the hazard visible before a loss and the landing to match what he saw through the glass.
 - [ ] Choose Tutorial, step off the pulsing pane onto an adjacent clear square, and start the first wave. Check whether the ring and the shatter make the rule clear with the rock untouched.
 - [ ] In optional stone practice, try a carry, pause and drop, then a short toss. Describe the release and whether the struck pane matches where the stone landed.
 - [ ] From a surviving square, compare the exterior brick and the blue wall of a neighboring hole. Look for clear glass openings and real furniture in front.
 - [ ] In one full-motion loss, watch the rim, passing walls, impact and final fade. Record whether the three seconds of shaft travel feel convincing. Try Reduced or Skip separately if desired.
+
+In the Editor, all six endings completed in Full and Reduced, presented their black frame and restored the board on Restart. The same checks passed with an early Skip in all twelve combinations. The physical pass still needs a wearer to judge the fall and activate Skip with a hand or controller. [Ending replay measurements](<./Expanded room ending replays.json>)
+
+## Shared chamber wearer review
+
+- [x] Installed the revised development APK on Quest 3 on November 19 at 11:19 p.m. The installed file matched the tested SHA-256. Spatial data was granted and the game activity resumed. The package contains the floor placement and occlusion blocks with the room outline mesh disabled. [Installation and package inspection](<./Shared chamber Quest build.json>)
+- [x] In the Unity fixture, twelve eye-position checks found the correct distant surface at 80 m through a neighboring opening. A naturally selected Snow preview persisted through several waves and the loss landed in Snow. [Unity playthrough](<./Shared chamber playthrough.json>)
+- [ ] During a wave, look at a familiar chair and wall. Check that the app draws no blue scan grid and that furniture still appears in front of the brick.
+- [ ] From intact glass, look into a neighboring opening and identify the distant destination. Stay on a cracking pane in the same run. Record whether you landed in the same place you saw and whether the passing walls still make the descent convincing.
 
 ## Earlier adaptive build
 

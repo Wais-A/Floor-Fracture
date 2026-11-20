@@ -64,10 +64,49 @@
     "[BuildingBlock] Occlusion Dependencies",
     "[BuildingBlock] Effect Mesh - Surrounding Floor"
   ],
-  "headsetInstallation": "Pending. The wearer will reconnect the Quest later.",
+  "headsetInstallation": {
+    "device": "Oculus Quest 3",
+    "updatedLocal": "2026-11-19 22:29:47",
+    "packageVersion": "0.1.0",
+    "installedApkSha256": "60d275f4096f3df342cff51dd48e317e23dd42255c8b5cd657f56ba2ab4b71e2",
+    "launchActivity": "com.unity3d.player.UnityPlayerGameActivity",
+    "scenePermissionGranted": true,
+    "runtimeBuildGuid": "7fdcaf92922947548c00e55b14ae6090",
+    "graphics": "Vulkan",
+    "startupCsv": "Builds/Quest/Expanded-room/20261120T033028101Z-09132cbf.csv",
+    "startupRows": 13,
+    "stagesObserved": {
+      "Room": 13
+    },
+    "boardSizesObserved": [],
+    "lastRecordedUnitySeconds": 13.524,
+    "wearerReview": "Wais described the play area as better. He asked to remove blue outlines around real walls and furniture and to make every open pane show the full shaft and the destination of the next loss."
+  },
   "developmentPlayerMetadata": [
     "Try the stone (optional)",
     "Practice stepping",
     "Practice stone held still"
-  ]
+  ],
+  "wearerSession": {
+    "localCsv": "Builds/Quest/Expanded-room/20261120T033028101Z-09132cbf-wearer.csv",
+    "records": 110,
+    "stages": {
+      "Room": 36,
+      "Welcome": 10,
+      "Ready": 3,
+      "Countdown": 22,
+      "BetweenWaves": 6,
+      "Fall": 10,
+      "Results": 23
+    },
+    "welcomeDimensions": [
+      {
+        "columns": 5,
+        "rows": 3,
+        "pitchMetres": 0.539
+      }
+    ],
+    "sameScanConfirmed": false,
+    "normalStepComfortConfirmed": false
+  }
 }
