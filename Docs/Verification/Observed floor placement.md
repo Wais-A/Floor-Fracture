@@ -8,7 +8,7 @@ The two builds read the same 17,291-vertex saved room. On the first survey pass,
 
 All 102 Edit Mode tests passed. All eight native Meta room recordings produced connected playable boards, with their padded panes rechecked and their rendered glass verified in Unity. The signed APK built with zero errors and eight warnings. Its SHA-256 matched the installed package at `597e568a6e13c2739eb19dfc141840bc9aba23a5b074f389fa270fa5854e6830`. [Edit Mode tests](<./Confident floor/EditMode.xml>) · [Recorded layouts](<./Confident floor/Recorded-rooms.tsv>)
 
-The Unity Play Mode check completed all 24 ending exits across six fall effects, including full motion, reduced motion, skip and restart.
+The Unity Play Mode check completed all 24 ending exits across six fall effects, including full motion, reduced motion, skip and restart. The run completed 35 checks, then stopped at the off-centre fall test. That assertion checks both the simulated eye’s distance from the pane centre and the shaft rim’s alignment. It does not report which measurement exceeded its limit.
 
 The wearer confirmed that many more panes fit well in the physical room and accepted the observed overlap with a scale and loose papers.
 
