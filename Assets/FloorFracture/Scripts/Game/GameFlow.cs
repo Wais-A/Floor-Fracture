@@ -114,12 +114,13 @@ namespace FloorFracture
         void Settings()
         {
             Room.ShowClearance(false);
-            Stage=GameStage.Settings; Panel.Show("Settings","The pane previews your warning intensity. During a fall, pinch or press A or X to skip.",
+            Stage=GameStage.Settings; Panel.Show("Settings","The sample shows your glass warning. During a fall, pinch or press A or X to skip.",
                 Choice("Fall motion  ·  "+(reduced?"Reduced":"Full"),()=>{reduced=!reduced; SaveSettings(); Settings();}),
                 Choice("Warning  ·  "+(gentle?"Gentle":"Standard"),()=>{gentle=!gentle; SaveSettings(); Settings();}),
-                Choice("Volume  ·  "+volume*25+"%",()=>{volume=(volume+1)%5; SaveSettings(); sound.SetVolume(volume/4f); sound.Click(); Settings();}),
+                Choice("Volume  ·  "+volume*25+"%",()=>{volume=(volume+1)%5; SaveSettings(); sound.SetVolume(volume/4f); Settings();}),
                 Choice("Narration  ·  "+(narrated?"On":"Off"),()=>{narrated=!narrated; SaveSettings(); Settings();}),
                 Choice("Back",Home));
+            Panel.ShowWarningPreview(gentle);
         }
         void SaveSettings()
         {
@@ -244,7 +245,7 @@ namespace FloorFracture
                     waitUntil=now+1.1;
                 }
             }
-            int warning=Stage==GameStage.Settings?0:Stage==GameStage.PracticeStep&&waitUntil==0?practiceStart:-1;
+            int warning=Stage==GameStage.PracticeStep&&waitUntil==0?practiceStart:-1;
             BoardView.Draw(null,sample,now,gentle,warning);
             string message=Stage==GameStage.BetweenWaves?(levelFinished?"LEVEL CLEAR":"SAFE"):Stage==GameStage.PracticeStone?"TRY ANY GLASS PANE":
                 Stage==GameStage.PracticeStep?(waitUntil>0?"SAFE":practiceStart<0?"STAND ON GLASS":"STEP TO CLEAR GLASS"):"";
@@ -295,10 +296,20 @@ namespace FloorFracture
         }
         void PauseRound()
         {
-            State?.Pause();
+            State.Pause();
             if(levelFinished) { State.RebuildLevel(); ++Level; WaveNumber=1; levelFinished=false; }
-            Stage=GameStage.Paused; BoardView.gameObject.SetActive(false); Room.ShowFloorSurface(false);
-            Panel.Show("Paused","Find the cleared board area. Show the glass when tracking is stable.",Choice("Show board",()=>Ready("Stand on a supported pane. Resume with a fresh countdown.")));
+            Stage=GameStage.Paused; BoardView.gameObject.SetActive(false);
+            BoardView.ClearTransient();
+            BoardView.Draw(null,State.CurrentSample,Now,gentle);
+            BoardView.SetReadout("",Panel.Head);
+            sound.ResetSounds();
+            Room.ShowFloorSurface(false);
+            Panel.Show("Paused","Find the cleared board area. Show the glass when tracking is stable.",Choice("Show board",ShowBoardAfterPause));
+        }
+        void ShowBoardAfterPause()
+        {
+            if(!Tracked) { Panel.SetBody("Return to the cleared room and look around. When the headset recognizes it, choose Show board."); return; }
+            Ready("Stand on a supported pane. Resume with a fresh countdown.");
         }
         void BeginFall()
         {
@@ -345,8 +356,8 @@ namespace FloorFracture
             string score = State.WavesSurvived == 1 ? "1 wave survived" : $"{State.WavesSurvived} waves survived";
             string result = State.LastLoss switch
             {
-                WaveLossReason.GapGraceExpired => $"The ring was over an open hole for {PlayerTileTracker.GapGrace:0.0} seconds.",
-                WaveLossReason.GapAtZero => "At zero, the ring was over an open hole.",
+                WaveLossReason.GapGraceExpired => $"You stayed over an open hole for {PlayerTileTracker.GapGrace:0.0} seconds.",
+                WaveLossReason.GapAtZero => "You were over an open hole at zero.",
                 WaveLossReason.MovingPane => "At zero, the moving glass under the ring shattered.",
                 WaveLossReason.MemoryPane => "At zero, the ring was on glass that cracked during the Memory reveal.",
                 WaveLossReason.CrackedPane => "At zero, the glass under the ring shattered.",

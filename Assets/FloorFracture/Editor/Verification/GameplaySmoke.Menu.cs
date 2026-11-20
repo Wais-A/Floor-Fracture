@@ -9,6 +9,91 @@ namespace FloorFracture.Editor
 {
     public static partial class GameplaySmoke
     {
+        private static IEnumerator VerifySettingsPreviewAndVolume()
+        {
+            var oldHead = head;
+            var canvas = game.Panel.transform.Find(GamePanel.CanvasName);
+            var preview = canvas.Find("Title/Warning preview");
+            Require(preview && preview.GetComponent<GlassTile>() && !preview.GetComponentInChildren<Collider>(),
+                "Settings should show a real glass sample that cannot intercept selections.");
+            var ordinary = game.BoardView.Board.Find("Glass 0, 0");
+            var reference = game.BoardView.Board.Find("Sliding pane").GetComponent<GlassTile>();
+            var cracks = preview.Find("Fissures").GetComponent<MeshRenderer>();
+            var eye = game.Rig.centerEyeAnchor.GetComponent<Camera>();
+            var sound = game.GetComponent<GameSound>();
+            int clicks = 0;
+            float clickVolume = -1f;
+            void HearClick(float volume) { ++clicks; clickVolume = volume; }
+            sound.EditorMenuClick += HearClick;
+            try
+            {
+                var corner = game.State.Center(game.State.Count - 1);
+                foreach (var stance in new[] { corner, corner + Vector2.one * (game.State.Pitch * 2) })
+                {
+                    StandAt(stance);
+                    game.Panel.Recenter();
+                    yield return Frames(2);
+                    Require(preview.gameObject.activeInHierarchy && cracks.enabled &&
+                        game.BoardView.GetComponentsInChildren<GlassTile>().All(tile => !tile.transform.Find("Fissures").GetComponent<MeshRenderer>().enabled),
+                        "Settings lit a board pane or failed to show the sample.");
+                    var leftEdge = preview.TransformPoint(Vector3.left * GlassGeometry.Half);
+                    var rightEdge = preview.TransformPoint(Vector3.right * GlassGeometry.Half);
+                    foreach (var point in new[] { leftEdge, rightEdge })
+                    {
+                        var viewport = eye.WorldToViewportPoint(point);
+                        Require(viewport.z > 0 && viewport.x > 0 && viewport.x < 1 && viewport.y > 0 && viewport.y < 1,
+                            "The warning sample fell outside the menu view.");
+                    }
+                    Require(Vector3.Angle(leftEdge - eye.transform.position, rightEdge - eye.transform.position) > 6f,
+                        "The menu warning sample became too small to read.");
+                    var instructions = (RectTransform)canvas.Find("Instructions");
+                    Require(instructions.InverseTransformPoint(leftEdge).x > instructions.rect.xMax,
+                        "The warning sample overlapped the Settings instructions.");
+                    Capture(game.State.IndexAt(stance) < 0 ? "settings-outside-board" : "settings-on-board", SmokeView.CenterEye);
+                }
+                for (int i = 0; i < 2; ++i)
+                {
+                    bool oldGentle = PlayerPrefs.GetInt("ff.gentle") != 0;
+                    Choose("Warning");
+                    bool gentle = PlayerPrefs.GetInt("ff.gentle") != 0;
+                    Require(gentle != oldGentle, "Warning setting did not persist.");
+                    reference.ShowWarning(true, Now, gentle);
+                    foreach (string name in new[] { "Smoky pane", "Rim", "Fissures" })
+                    {
+                        var sample = preview.Find(name);
+                        var properties = new MaterialPropertyBlock();
+                        sample.GetComponent<MeshRenderer>().GetPropertyBlock(properties);
+                        var tint = properties.GetColor("_Color");
+                        reference.transform.Find(name).GetComponent<MeshRenderer>().GetPropertyBlock(properties);
+                        Require(sample.GetComponent<MeshFilter>().sharedMesh == ordinary.Find(name).GetComponent<MeshFilter>().sharedMesh &&
+                            tint == properties.GetColor("_Color"), "Settings did not show the selected gameplay warning on " + name + ".");
+                    }
+                }
+                if (PlayerPrefs.GetInt("ff.gentle") != 0) Choose("Warning");
+                int level = PlayerPrefs.GetInt("ff.volume",3);
+                for (int i = 0; i < 5; ++i)
+                {
+                    int before = clicks;
+                    level = (level + 1) % 5;
+                    if (i == 0) yield return RayChoose(3, true);
+                    else Choose("Volume");
+                    Require(PlayerPrefs.GetInt("ff.volume") == level && clicks == before + 1 && Mathf.Approximately(clickVolume, level / 4f),
+                        "A volume choice must play exactly one click at the newly selected master volume, including mute.");
+                }
+                Choose("Back");
+                Require(game.Stage == GameStage.Welcome && !preview.gameObject.activeInHierarchy,
+                    "The Settings sample remained visible on Welcome.");
+            }
+            finally
+            {
+                sound.EditorMenuClick -= HearClick;
+                reference.ShowWarning(false, Now, false);
+                SetHead(oldHead);
+                game.Panel.Recenter();
+            }
+            Record("The Settings sample remained visible on and outside the board. It displayed the same pane, rim and fissures at both warning intensities. Each of the five volume selections played a single click at the newly chosen gain, including silent mute.");
+        }
+
         private sealed class FixtureDisplay : OVRDisplay
         {
             internal void NotifyRecenter()

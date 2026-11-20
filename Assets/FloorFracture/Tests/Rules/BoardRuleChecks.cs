@@ -15,6 +15,7 @@ namespace FloorFracture.Tests
             ReportsResolvedLoss();
             ModesAndReset();
             SlidingAndGrace();
+            CancelledSlidingWave();
             return CheckSequences() + " " + CheckLargerBoards();
         }
 
@@ -528,6 +529,62 @@ namespace FloorFracture.Tests
                 Check((board.Center(next.GuaranteedTile)-center).sqrMagnitude<=board.Pitch*board.Pitch*1.2501f,
                     "A catch anywhere on the lane needs a reachable onward step.");
             }
+        }
+
+        public static void CancelledSlidingWave()
+        {
+            foreach (bool catchBeforePause in new[] { false, true })
+            {
+                var board = SlidingFixture();
+                var wave = board.ActiveWave;
+                var pane = board.Slider;
+                double catchTime = pane.MotionStartsAt + .6;
+                Vector2 catchPoint = pane.CenterAt(catchTime);
+                if (catchBeforePause)
+                {
+                    board.Tick(catchPoint, true, catchTime);
+                    Check(board.CurrentSample.IsSlider && pane.Locked, "The pause fixture must catch the moving pane.");
+                    board.Pause();
+                }
+                else
+                    Check(board.Tick(board.Center(wave.StartingTile), false, wave.StartsAt + .2) == WaveResult.Paused,
+                        "Losing tracking before the moving pane starts must cancel the wave.");
+
+                Check(board.ActiveWave == null && board.Slider == null && !board.CurrentSample.IsSlider &&
+                    board.Tick(catchPoint, true, wave.Deadline + 1) == WaveResult.Pending &&
+                    !board.BreaksApplied && board.WavesSurvived == 1,
+                    "The canceled wave kept its moving pane, support, deadline, or score.");
+                Check(board.Sample(catchPoint, true, 39).Kind == SupportKind.Gap,
+                    "A newly introduced moving pane cannot support a player after cancellation.");
+                var start = board.Sample(board.Center(wave.StartingTile), true, 40);
+                var retry = board.BeginWave(start.Index, 3, 2, 40);
+                var replacement = board.Slider;
+                Check(retry.Seed == wave.Seed && retry.Deadline == 40 + wave.Duration &&
+                    replacement != null && !ReferenceEquals(replacement, pane) && !replacement.Locked &&
+                    replacement.Tile == pane.Tile && replacement.OtherHole == pane.OtherHole &&
+                    retry.IsSafe(pane.Tile) && !retry.IsBreaking(pane.Tile) &&
+                    replacement.CenterAt(40.64) == board.Center(pane.Tile) &&
+                    replacement.CenterAt(40.75) != board.Center(pane.Tile),
+                    "Retrying from the same glass must offer the safe slider again with a fresh discovery hold.");
+            }
+
+            var earned = SlidingFixture();
+            var offer = earned.ActiveWave;
+            var locked = earned.Slider;
+            double landing = locked.MotionStartsAt + .6;
+            Vector2 position = locked.CenterAt(landing);
+            earned.Tick(position, true, landing);
+            Resolve(earned, offer, new Step(locked.Tile, false));
+            var closing = earned.BeginWave(locked.Tile, 3, 3, 20);
+            earned.Pause();
+            var support = earned.Sample(position, true, 20.5);
+            Check(ReferenceEquals(earned.Slider, locked) && locked.Locked && locked.CenterAt(20.5) == position &&
+                support.IsSlider && earned.WavesSurvived == 2, "Pausing removed a catch already earned in a completed wave.");
+            var resumed = earned.BeginWave(support.Index, 3, 3, 20.5);
+            Check(resumed.IsBreaking(locked.Tile) && earned.Tick(position, true, closing.Deadline) == WaveResult.Pending &&
+                !earned.BreaksApplied && earned.Slider == locked, "A canceled shatter removed previously earned glass too early.");
+            Resolve(earned, resumed, new Step(resumed.GuaranteedTile, false));
+            Check(earned.Slider == null, "The earned pane must still shatter on the replacement wave's deadline.");
         }
 
         private static BoardState SlidingFixture(float pitch = 0.5f)

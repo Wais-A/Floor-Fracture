@@ -48,11 +48,12 @@ namespace FloorFracture
         {
             block.SetColor(ColorId,color); block.SetFloat(SheenId,sheen); r.SetPropertyBlock(block);
         }
-        public void ShowWarning(bool warn,float phase,bool low)
+        public void ShowWarning(bool warn,double now,bool low)
         {
             Initialize();
             if(!warn&&!lastWarning) return;
             // Slow luminance modulation. The branching shape stays visible at both intensity settings.
+            float phase=(float)(now%10)*.8f;
             float pulse=warn?Mathf.SmoothStep(0,1,.5f-.5f*Mathf.Cos(phase*2*Mathf.PI)):0;
             if(warn==lastWarning && low==lastLow && Mathf.Abs(pulse-lastPulse)<.025f) return;
             lastWarning=warn; lastLow=low; lastPulse=pulse; fracture.enabled=warn;

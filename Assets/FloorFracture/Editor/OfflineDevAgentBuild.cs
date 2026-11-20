@@ -40,7 +40,7 @@ namespace FloorFracture.Editor
             if (!File.Exists(AssetPath)) return;
             var settings = AssetDatabase.LoadMainAssetAtPath(AssetPath);
             if (!settings) throw new BuildFailedException("Could not read the local Meta DevAgent settings.");
-            // A fresh checkout can acquire its first settings asset in Meta's earlier callback.
+            // Preserve any settings file that became available after the early callback.
             if (!File.Exists(Backup)) BackUpFile();
 
             // A fresh instance has the SDK's disabled, unconfigured defaults. No editor token,

@@ -154,6 +154,7 @@ namespace FloorFracture.Editor
             Require(outlines && outlines.gameObject.activeInHierarchy && outlines.GetComponent<MeshFilter>().sharedMesh.vertexCount > 0,
                 "The Welcome screen did not show the fitted board's perimeter.");
             VerifyMenuAndSpatialAudio();
+            VerifyOccupancyRingMesh();
             VerifySpawnMarkersCleared();
             Record($"MRUK Rec Room supplied floor and furniture. The {placement.Columns} × {placement.Rows} board at {placement.Pitch:F3} m pitch appeared at Welcome without a clearance approval prompt.");
             Capture("room-preview", SmokeView.BoardObserver);
@@ -164,13 +165,10 @@ namespace FloorFracture.Editor
             yield return RayChoose(5, true); yield return Stage(GameStage.Welcome);
             Record("The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.");
             Choose("Settings"); yield return Stage(GameStage.Settings);
-            int oldMotion = PlayerPrefs.GetInt("ff.reduced",0), oldWarning = PlayerPrefs.GetInt("ff.gentle",0), oldVolume = PlayerPrefs.GetInt("ff.volume",3);
+            int oldMotion = PlayerPrefs.GetInt("ff.reduced",0);
             Choose("Fall motion"); Require(PlayerPrefs.GetInt("ff.reduced") != oldMotion, "Fall setting did not persist.");
             if (PlayerPrefs.GetInt("ff.reduced") != 0) Choose("Fall motion");
-            Choose("Warning"); Require(PlayerPrefs.GetInt("ff.gentle") != oldWarning, "Warning setting did not persist.");
-            if (PlayerPrefs.GetInt("ff.gentle") != 0) Choose("Warning");
-            Choose("Volume"); Require(PlayerPrefs.GetInt("ff.volume") != oldVolume, "Volume setting did not persist.");
-            Choose("Back"); yield return Stage(GameStage.Welcome);
+            yield return VerifySettingsPreviewAndVolume();
             Choose("Development"); Choose("Seed 379 · level 1"); yield return Stage(GameStage.Ready);
             Choose("Main menu"); yield return Stage(GameStage.Welcome);
             Require(game.State.Seed == 379, "Development run did not preserve the reproducible seed.");
@@ -357,8 +355,46 @@ namespace FloorFracture.Editor
                 yield return Stage(GameStage.Countdown, 4);
                 wave = game.State.ActiveWave;
             }
-            var slide = game.State.Slider;
             var moving = game.BoardView.transform.Find("Sliding pane");
+            var ring = game.BoardView.transform.Find("Occupied square").GetComponent<MeshRenderer>();
+            var timer = game.BoardView.transform.Find("Countdown and score").GetComponent<TextMesh>();
+            var canceled = wave;
+            var canceledPane = game.State.Slider;
+            yield return Frames(2);
+            game.gameObject.SendMessage("OnApplicationPause", true);
+            Require(game.Stage == GameStage.Paused && !game.BoardView.gameObject.activeInHierarchy &&
+                game.State.Slider == null && game.State.ActiveWave == null &&
+                !game.transform.Find("Menu and countdown").GetComponent<AudioSource>().isPlaying,
+                "Pausing did not withdraw the current slider offer or stop its countdown cue.");
+            game.gameObject.SendMessage("OnApplicationPause", false);
+            var roomField = typeof(RoomBoardPlacement).GetField("room",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Require(roomField != null, "The localized room fixture binding is missing.");
+            var localizedRoom = roomField.GetValue(game.Room);
+            try
+            {
+                roomField.SetValue(game.Room, null);
+                Require(game.Panel.Tracked && !game.Room.IsRoomLocalized, "The retry fixture needs a tracked headset in an unlocalized room.");
+                Choose("Show board");
+                Require(game.Stage == GameStage.Paused && !game.BoardView.gameObject.activeInHierarchy,
+                    "Show board revealed the previous placement before the room was localized.");
+                VerifyFloorVisibility(false);
+            }
+            finally { roomField.SetValue(game.Room, localizedRoom); }
+            Choose("Show board");
+            Require(game.Room.IsRoomLocalized && game.Stage == GameStage.Ready && game.BoardView.gameObject.activeInHierarchy &&
+                !moving.gameObject.activeSelf && !ring.enabled && !fog.enabled && timer.text.Length == 0,
+                "Showing the board exposed the canceled moving pane, ring, fog or countdown.");
+            VerifyFloorVisibility(true);
+            StandOn(canceled.StartingTile);
+            Choose("Start wave");
+            wave = game.State.ActiveWave;
+            var slide = game.State.Slider;
+            Require(wave != null && slide != null && !ReferenceEquals(canceledPane,slide) &&
+                wave.Seed == canceled.Seed && wave.Deadline > canceled.Deadline &&
+                wave.IsSafe(slide.Tile) && moving.gameObject.activeInHierarchy,
+                "Retry must show a fresh safe moving pane from the same stationary start.");
+            Record("Suspending a wave withdrew its moving pane and clock. Show board waited for room localization and reopened the existing holes. Starting from the same glass restored the safe moving pane with a full countdown.");
             var ordinary = game.BoardView.transform.Find($"Glass {wave.GuaranteedTile%game.State.Width}, {wave.GuaranteedTile/game.State.Width}");
             int score = game.State.WavesSurvived;
             Require(!slide.Locked && !game.State.IsIntact(slide.Tile) && game.State.IsIntact(wave.GuaranteedTile),
@@ -390,9 +426,8 @@ namespace FloorFracture.Editor
             StandAt(slide.CenterAt(Now)); yield return Frames(2);
             Require(slide.Locked && game.State.CurrentSample.IsSlider, "Landing on moving glass did not lock it.");
             Vector3 caught = moving.localPosition;
-            var ring = game.BoardView.transform.Find("Occupied square").GetComponent<MeshRenderer>();
             Vector3 ringOffset = ring.transform.localPosition-caught;
-            float ringEdge = (GlassGeometry.RingRadius+GlassGeometry.RingWidth*.5f)*ring.transform.localScale.x;
+            float ringEdge = GlassGeometry.RingOuterRadius*ring.transform.localScale.x;
             Require(ring.enabled && Mathf.Abs(ringOffset.x)+ringEdge<=slide.HalfSize &&
                 Mathf.Abs(ringOffset.z)+ringEdge<=slide.HalfSize, "The occupied ring extends beyond the glass supporting the player.");
             LookAtTile(slide.Tile, true); yield return Delay(0.20);

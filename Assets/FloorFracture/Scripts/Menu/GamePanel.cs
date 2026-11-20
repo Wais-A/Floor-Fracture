@@ -20,6 +20,7 @@ namespace FloorFracture
     {
         public const string CanvasName = "Floor Fracture Menu";
         private const float Width = 672, Margin = 32, RowHeight = 57, RowGap = 8;
+        private const float WarningPreviewSize = 144;
         private static readonly Color Paper = new Color32(13, 32, 41, 249);
         private static readonly Color Idle = new Color32(35, 66, 76, 255);
         private static readonly Color Hovered = new Color32(55, 109, 116, 255);
@@ -48,6 +49,8 @@ namespace FloorFracture
         public bool EditorSimulatesControllers => desktop != null && desktop.Active;
 #endif
         private UnityEngine.UI.Text title, body;
+        private GlassTile warningPreview;
+        private bool previewGentle;
         private Font font;
         private Camera eye;
         private OVRDisplay recenterDisplay;
@@ -139,6 +142,7 @@ namespace FloorFracture
         public void Show(string heading, string message, params MenuChoice[] options)
         {
             bool position = !Visible;
+            if (warningPreview) warningPreview.gameObject.SetActive(false);
             choices = options ?? Array.Empty<MenuChoice>();
             panel.gameObject.SetActive(true);
             if (position) ClearPointers();
@@ -157,14 +161,40 @@ namespace FloorFracture
                 Recenter();
         }
 
+        public void ShowWarningPreview(bool gentle)
+        {
+            if (!warningPreview)
+            {
+                // Keep the real pane and its branching cracks beside the Settings title,
+                // in reach even when the wearer opens the menu from outside the board.
+                var sample = new GameObject("Warning preview");
+                sample.transform.SetParent(title.rectTransform, false);
+                sample.transform.localPosition = new Vector3(title.rectTransform.rect.xMax - WarningPreviewSize / 2f,
+                    -WarningPreviewSize / 2f, -2f);
+                sample.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                sample.transform.localScale = Vector3.one * (WarningPreviewSize / GlassGeometry.AuthoredPitch);
+                warningPreview = sample.AddComponent<GlassTile>();
+                warningPreview.Initialize();
+                foreach (var renderer in sample.GetComponentsInChildren<MeshRenderer>())
+                    renderer.sortingOrder = menuCanvas.sortingOrder + 1;
+            }
+            previewGentle = gentle;
+            warningPreview.gameObject.SetActive(true);
+            warningPreview.ShowWarning(true, Time.unscaledTimeAsDouble, gentle);
+            SetBody(body.text);
+        }
+
         public void SetBody(string message)
         {
             body.text = message ?? "";
             Place(title.rectTransform, Margin, Margin - 6, Width - 2 * Margin, 61);
-            Place(body.rectTransform, Margin, 93, Width - 2 * Margin, 40);
+            bool showPreview = warningPreview && warningPreview.gameObject.activeSelf;
+            float bodyWidth = Width - 2 * Margin - (showPreview ? WarningPreviewSize + 20 : 0);
+            Place(body.rectTransform, Margin, 93, bodyWidth, 40);
             float bodyHeight = Mathf.Max(30, Mathf.Ceil(body.preferredHeight) + 4);
-            Place(body.rectTransform, Margin, 93, Width - 2 * Margin, bodyHeight);
-            float top = 93 + bodyHeight + (choices.Length > 0 ? 23 : 0);
+            Place(body.rectTransform, Margin, 93, bodyWidth, bodyHeight);
+            float headerBottom = Mathf.Max(93 + bodyHeight, showPreview ? Margin - 6 + WarningPreviewSize : 0);
+            float top = headerBottom + (choices.Length > 0 ? 23 : 0);
             for (int i = 0; i < choices.Length; ++i)
                 Place(rows[i].Rect, Margin, top + i * (RowHeight + RowGap), Width - 2 * Margin, RowHeight);
             float height = top + choices.Length * (RowHeight + RowGap) - (choices.Length > 0 ? RowGap : 0) + Margin;
@@ -273,8 +303,8 @@ namespace FloorFracture
                 if (lastSelectionFrame == Time.frameCount) return;
 #endif
                 lastSelectionFrame = Time.frameCount;
-                if (sound) sound.Click();
                 choices[index].OnSelect?.Invoke();
+                if (sound) sound.Click();
             });
             row.Text = Label(go.transform, "Label", 28, FontStyle.Bold, Ink);
             row.Text.alignment = TextAnchor.MiddleLeft;
@@ -302,6 +332,8 @@ namespace FloorFracture
 #endif
             bool tracked = Tracked;
             if (!Visible) { wasTracked = tracked; return; }
+            if (warningPreview && warningPreview.gameObject.activeSelf)
+                warningPreview.ShowWarning(true, Time.unscaledTimeAsDouble, previewGentle);
             if (!tracked) { ClearPointers(); wasTracked = false; Paint(); return; }
             if (!wasTracked) RequestMenuRecenter();
             wasTracked = true;

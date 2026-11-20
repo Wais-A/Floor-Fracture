@@ -12,6 +12,7 @@ namespace FloorFracture.Tests
         [Test] public void DeadlinesAndPause() => BoardRuleChecks.DeadlinesAndPause();
         [Test] public void ModesAndReset() => BoardRuleChecks.ModesAndReset();
         [Test] public void SlidersAndGrace() => BoardRuleChecks.SlidingAndGrace();
+        [Test] public void PausingRollsBackOnlyTheCurrentWavesSlider() => BoardRuleChecks.CancelledSlidingWave();
         [Test] public void ResultsExplainTheActualMemoryAndMovingPaneLoss() => BoardRuleChecks.ReportsResolvedLoss();
         [Test] public void EverySeededSurvivalPath() => Debug.Log(BoardRuleChecks.CheckSequences());
         [Test] public void LargerBoardSurvivalPaths() => Debug.Log(BoardRuleChecks.CheckLargerBoards());

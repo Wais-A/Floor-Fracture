@@ -151,7 +151,7 @@ namespace FloorFracture
                 if(!model.IsIntact(i)) bits|=1UL<<i;
                 bool visible=(bits&(1UL<<i))==0;
                 if(tiles[i].gameObject.activeSelf!=visible) tiles[i].gameObject.SetActive(visible);
-                if(visible) tiles[i].ShowWarning((shown&&wave.IsBreaking(i))||i==practiceWarning,(float)(now%10)*.80f,gentle);
+                if(visible) tiles[i].ShowWarning((shown&&wave.IsBreaking(i))||i==practiceWarning,now,gentle);
             }
             if(bits!=holeBits) RebuildHoles(bits);
             var slide=model.Slider;
@@ -159,7 +159,7 @@ namespace FloorFracture
             if(slide!=null)
             {
                 moving.transform.localPosition=GlassGeometry.Ground(slide.CenterAt(now));
-                moving.ShowWarning(shown&&wave.IsBreaking(slide.Tile),(float)(now%10)*.8f,gentle);
+                moving.ShowWarning(shown&&wave.IsBreaking(slide.Tile),now,gentle);
             }
             occupancy.enabled=sample.Kind==SupportKind.Glass && sample.Index>=0 && sample.Index!=practiceHole &&
                 (sample.IsSlider ? slide!=null && slide.Tile==sample.Index : model.IsIntact(sample.Index));
@@ -167,7 +167,7 @@ namespace FloorFracture
             {
                 var center=sample.IsSlider&&slide!=null?slide.CenterAt(now):model.Center(sample.Index);
                 // Keep the whole ring on the supporting glass when a foot overlaps a seam.
-                float inset=(GlassGeometry.Half-GlassGeometry.RingRadius-GlassGeometry.RingWidth)*occupancy.transform.localScale.x;
+                float inset=(GlassGeometry.Half-GlassGeometry.RingOuterRadius)*occupancy.transform.localScale.x;
                 Vector2 contact=sample.Stance-center;
                 contact.x=Mathf.Clamp(contact.x,-inset,inset);
                 contact.y=Mathf.Clamp(contact.y,-inset,inset);

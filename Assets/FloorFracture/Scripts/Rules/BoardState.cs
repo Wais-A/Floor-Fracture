@@ -148,8 +148,10 @@ namespace FloorFracture
 
         public void Pause()
         {
+            // The optional pane belongs to the wave that introduced it until that wave resolves.
+            if (ActiveWave != null && ActiveWave.NewSliderTile >= 0) Slider = null;
             ActiveWave = null;
-            tracker.ResetTiming();
+            tracker.Reset();
         }
 
         // Consume each result once. GameFlow supplies an unscaled monotonic timestamp and handles
@@ -162,8 +164,8 @@ namespace FloorFracture
             if (now < wave.StartsAt) throw new ArgumentOutOfRangeException(nameof(now));
             if (!tracked || IndexAt(localXZ) < 0)
             {
-                tracker.Sample(this, localXZ, tracked, now);
                 Pause();
+                tracker.Sample(this, localXZ, tracked, now);
                 return WaveResult.Paused;
             }
 

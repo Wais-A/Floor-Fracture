@@ -14,6 +14,9 @@ public sealed class GameSound : MonoBehaviour
     float fallGain, ambienceGain, accentGain;
     public const string SpatialVoiceResource = "GlassSpatialVoice";
     GameObject spatialVoicePrefab;
+#if UNITY_EDITOR
+    public event System.Action<float> EditorMenuClick;
+#endif
 
     void Awake()
     {
@@ -76,7 +79,11 @@ public sealed class GameSound : MonoBehaviour
 
     void Cue(AudioClip clip, float gain)
     {
-        if (isActiveAndEnabled && clip) ui.PlayOneShot(clip, gain);
+        if (!isActiveAndEnabled || !clip) return;
+        ui.PlayOneShot(clip, gain);
+#if UNITY_EDITOR
+        if (clip == click) EditorMenuClick?.Invoke(ui.volume);
+#endif
     }
 
     // Individual tile callers and a caller already supplying a wave centroid share one mix per frame.
