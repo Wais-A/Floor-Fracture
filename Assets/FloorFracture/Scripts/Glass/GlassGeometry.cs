@@ -9,6 +9,8 @@ namespace FloorFracture
         public const float AuthoredPitch = .50f;
         public const float Half = AuthoredPitch * BoardState.PaneHalfPitch;
         public const float RingRadius = .069f, RingWidth = .007f;
+        private const float KeylineWidth = RingWidth * .5f;
+        public const float RingOuterRadius = RingRadius + RingWidth * .5f + KeylineWidth;
         public static readonly Vector2[] Points = {
             new(-Half,-Half), new(.038f,-Half), new(Half,-Half), new(Half,.068f),
             new(Half,Half), new(-.050f,Half), new(-Half,Half), new(-Half,-.035f),
@@ -21,7 +23,7 @@ namespace FloorFracture
         public static Mesh Face => face ? face : face = Sheet(false);
         public static Mesh Rim => rim ? rim : rim = Sheet(true);
         public static Mesh Cracks => cracks ? cracks : cracks = CrackMesh();
-        public static Mesh Ring => ring ? ring : ring = Circle(RingRadius,RingWidth, false);
+        public static Mesh Ring => ring ? ring : ring = Circle(RingRadius,RingWidth,false,KeylineWidth);
         public static Vector3 Ground(Vector2 v,float height=0) => new(v.x,height,v.y);
 
         static int[][] MakePieces()
@@ -91,14 +93,21 @@ namespace FloorFracture
             return b.Create("Fitted fracture lines");
         }
 
-        public static Mesh Circle(float radius,float width,bool dashed)
+        public static Mesh Circle(float radius,float width,bool dashed,float keylineWidth=0f)
         {
             var b=new Builder();
+            float brightEdge=radius+width*.5f, outerEdge=brightEdge+keylineWidth;
+            var charcoal=new Color(.012f,.018f,.022f,1f);
             for(int i=0;i<40;i++)
             {
                 if(dashed && i%5==0) continue;
                 float a=i*Mathf.PI/20, z=(i+1)*Mathf.PI/20;
-                b.Stroke(new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius,new Vector2(Mathf.Cos(z),Mathf.Sin(z))*radius,width,.018f);
+                var start=new Vector2(Mathf.Cos(a),Mathf.Sin(a));
+                var end=new Vector2(Mathf.Cos(z),Mathf.Sin(z));
+                if(keylineWidth>0)
+                    b.Quad(Ground(start*brightEdge,.018f),Ground(end*brightEdge,.018f),
+                        Ground(end*outerEdge,.018f),Ground(start*outerEdge,.018f),charcoal,charcoal);
+                b.Stroke(start*radius,end*radius,width,.018f);
             }
             return b.Create("Occupancy ring");
         }
