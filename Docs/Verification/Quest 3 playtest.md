@@ -47,7 +47,8 @@ The signed brick build is `5674695daa384caba05d08902ec9fdc7`. The synthetic High
 - [x] Wais reviewed furniture in his physical room and reported, “Brick on the floor, furniture clearly in front.” The installed APK matched the local SHA-256, the spatial-data grant was active, and the app recorded Vulkan and the expected build GUID.
 - [ ] Move the bin with the headset off and recheck its old and new positions. Record any halo or brick on the object.
 - [ ] Look into an adjacent broken pane. The mouth should remain clear of brick.
-- [x] Wais held the Meta button with a menu open and reported, “Yes, the menu comes back.” The exact page and independent board-anchor check were not identified.
+- [x] Wais held the Meta button with a menu open and reported, “Yes, the menu comes back.” The observation confirms menu recall.
+- [ ] With Settings or Results open, note a glass corner against a real floor landmark. After the system recenter, record whether that page is still within reach and the corner still lines up.
 - [x] Wais reviewed the five-metre full-motion loss. It was faster, but impact could arrive before the walls became apparent. He requested at least three seconds of wall travel and a slower fade. This version failed the fall-feel check.
 - [x] Wais found the single-target rock tutorial frustrating. He chose an untimed stepping lesson first and optional stone practice. He requested that exterior brick match the blue shaft masonry.
 
