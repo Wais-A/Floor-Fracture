@@ -195,7 +195,7 @@ namespace FloorFracture
             return group;
         }
 
-        private static int CountBits(ulong mask)
+        internal static int CountBits(ulong mask)
         {
             int count = 0;
             while (mask != 0)

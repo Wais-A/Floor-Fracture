@@ -5,6 +5,8 @@ Shader "Floor Fracture/Surrounding Brick"
         [HideInInspector] _PortalComparison("Outside fall preview aperture test", Float) = 8
         [HideInInspector] _BoardFrame("Board center and orientation", Vector) = (0,0,1,0)
         [HideInInspector] _BoardHalfSize("Board half extents and floor height", Vector) = (0,0,0,0)
+        [HideInInspector] _BoardMaskLow("Pane mask, cells 0 to 31", Integer) = 0
+        [HideInInspector] _BoardMaskHigh("Pane mask, cells 32 to 63", Integer) = 0
         _EnvironmentDepthBias("Relative floor depth bias", Range(0, .1)) = .045
         [HideInInspector][NoScaleOffset] _FloorPreviousDepth("Previous native soft depth", 2DArray) = "" {}
         [HideInInspector] _FloorPreviousWeight("Previous capture weight", Float) = 0
@@ -20,6 +22,7 @@ Shader "Floor Fracture/Surrounding Brick"
             ZWrite Off
             Blend One OneMinusSrcAlpha
             HLSLPROGRAM
+            #pragma target 3.5
             #pragma vertex Vert
             #pragma fragment Frag
             #pragma multi_compile_instancing
@@ -51,10 +54,13 @@ Shader "Floor Fracture/Surrounding Brick"
             #undef SamplePreprocessedDepth
             #endif
             #include "Assets/FloorFracture/Scripts/Room/ShaftBrickwork.hlsl"
+            #include "Assets/FloorFracture/Scripts/Room/BoardFootprint.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BoardFrame;
                 float4 _BoardHalfSize;
+                uint _BoardMaskLow;
+                uint _BoardMaskHigh;
                 float _EnvironmentDepthBias;
                 float _FloorPreviousWeight;
                 float _RequireEnvironmentDepth;
@@ -97,8 +103,7 @@ Shader "Floor Fracture/Surrounding Brick"
                 #endif
                 float2 delta = input.world.xz - _BoardFrame.xy;
                 float2 board = float2(dot(delta, _BoardFrame.zw), dot(delta, float2(-_BoardFrame.w, _BoardFrame.z)));
-                float2 exterior = abs(board) - _BoardHalfSize.xy;
-                clip(max(max(exterior.x, exterior.y), abs(input.world.y - _BoardHalfSize.z) - .06));
+                if (FloorHasPane(board, input.world.y - _BoardHalfSize.z, _BoardHalfSize, _BoardMaskLow, _BoardMaskHigh)) discard;
 
                 // One world-space bond carries across every scanned patch, even when the board moves.
                 half3 color = ShaftBrickwork(input.world.xz);

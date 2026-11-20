@@ -1,0 +1,4 @@
+2026-11-20T22:43:26.2488920Z
+[Floor Fracture survey] saved mesh, vertices=17291, square=1.10 m, clear=4.73, furniture=4.37, meshObstacle=4.98, unobserved=0.50, liveObstacle=0.01, liveUnknown=0.00 m². Height relative to labelled floor (cm): mesh=0.0, tracking=-1.1, board=0.0.
+[Floor Fracture survey] refined saved mesh, vertices=17291, square=1.11 m, clear=5.21, furniture=4.07, meshObstacle=5.19, unobserved=0.61, liveObstacle=0.00, liveUnknown=0.00 m².
+[Floor Fracture survey] after live depth, vertices=17291, square=1.11 m, clear=5.21, furniture=4.07, meshObstacle=5.19, unobserved=0.61, liveObstacle=0.00, liveUnknown=0.00 m².

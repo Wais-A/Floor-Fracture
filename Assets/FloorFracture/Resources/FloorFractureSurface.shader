@@ -19,8 +19,10 @@ Shader "Floor Fracture/Surface"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 3.5
             #pragma multi_compile_instancing
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #pragma multi_compile _ HARD_OCCLUSION SOFT_OCCLUSION
+            #include "Packages/com.meta.xr.sdk.core/Shaders/EnvironmentDepth/URP/EnvironmentOcclusionURP.hlsl"
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
                 half _Fade, _Sheen;
@@ -55,7 +57,8 @@ Shader "Floor Fracture/Surface"
                     tint += _Sheen*(half3(.055,.105,.14)*sky + half3(.115,.21,.27)*broadReflection +
                         half3(.045,.085,.10)*grazing*grazing + half3(.10,.17,.18)*bevel*edgeLight);
                 }
-                return half4(tint,i.color.a*_Fade);
+                half visibility = META_DEPTH_GET_OCCLUSION_VALUE_WORLDPOS(i.world, .02);
+                return half4(tint,i.color.a*_Fade*visibility);
             }
             ENDHLSL
         }

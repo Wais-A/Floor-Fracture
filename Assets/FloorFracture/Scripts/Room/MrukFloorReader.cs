@@ -100,7 +100,7 @@ namespace FloorFracture
                 foreach (var obj in room.Anchors)
                 {
                     if (!obj) return false;
-                    if (obj.HasAnyLabel(NonObstacles)) continue;
+                    if (obj.HasAnyLabel(NonObstacles) && (obj.Label & ~NonObstacles) == 0) continue;
                     if (!TryProjectObstacle(obj, floorY, Mathf.Max(eyeHeight + 0.3f, 2.2f), out var footprint)) return false;
                     if (footprint != null) obstacles.Add(footprint);
                 }
@@ -119,6 +119,7 @@ namespace FloorFracture
             outline = null;
             var points = new List<Vector2>();
             float bottom = float.PositiveInfinity, top = float.NegativeInfinity;
+            bool complete = true;
             if (anchor.VolumeBounds.HasValue)
             {
                 var bounds = anchor.VolumeBounds.Value;
@@ -140,14 +141,15 @@ namespace FloorFracture
                 Project(new Vector3(r.xMax, r.yMax, 0f));
                 Project(new Vector3(r.xMin, r.yMax, 0f));
             }
-            if (points.Count == 0 || !FloorGeometry.Finite(top) || !FloorGeometry.Finite(bottom)) return false;
+            if (!complete || points.Count == 0 || !FloorGeometry.Finite(top) || !FloorGeometry.Finite(bottom)) return false;
             foreach (var p in points) if (!FloorGeometry.Finite(p)) return false;
-            if (top >= floorY - 0.05f && bottom <= floorY + headRoom) outline = FloorGeometry.ConvexHull(points);
+            if (top >= floorY - FloorMeshScan.HeightSearchRange - 0.05f && bottom <= floorY + headRoom) outline = FloorGeometry.ConvexHull(points);
             return true;
 
             void Project(Vector3 local)
             {
                 var world = anchor.transform.TransformPoint(local);
+                complete &= FloorGeometry.Finite(world.y);
                 points.Add(new Vector2(world.x, world.z));
                 top = Mathf.Max(top, world.y);
                 bottom = Mathf.Min(bottom, world.y);

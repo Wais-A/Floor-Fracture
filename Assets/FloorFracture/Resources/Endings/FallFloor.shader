@@ -4,6 +4,8 @@ Shader "Floor Fracture/Rising room floor"
     {
         [HideInInspector] _BoardFrame("Board center and orientation", Vector) = (0,0,1,0)
         [HideInInspector] _BoardHalfSize("Board half extents and floor height", Vector) = (0,0,0,0)
+        [HideInInspector] _BoardMaskLow("Pane mask, cells 0 to 31", Integer) = 0
+        [HideInInspector] _BoardMaskHigh("Pane mask, cells 32 to 63", Integer) = 0
         [HideInInspector] _Travel("Floor travel in metres", Float) = 0
         [HideInInspector] _OutsideOpening("Extra brick opening in a fall outside the grid", Vector) = (0,0,0,0)
     }
@@ -14,14 +16,17 @@ Shader "Floor Fracture/Rising room floor"
         {
             Cull Off ZWrite On
             HLSLPROGRAM
+            #pragma target 3.5
             #pragma vertex Vert
             #pragma fragment Frag
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Assets/FloorFracture/Scripts/Room/ShaftBrickwork.hlsl"
+            #include "Assets/FloorFracture/Scripts/Room/BoardFootprint.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BoardFrame, _BoardHalfSize, _OutsideOpening;
+                uint _BoardMaskLow, _BoardMaskHigh;
                 float _Travel;
             CBUFFER_END
             struct Attributes { float3 positionOS : POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -44,12 +49,11 @@ Shader "Floor Fracture/Rising room floor"
                 // Preserve the exact cutout and masonry coordinates of the anchored room floor.
                 float2 delta = input.world.xz - _BoardFrame.xy;
                 float2 board = float2(dot(delta, _BoardFrame.zw), dot(delta, float2(-_BoardFrame.w, _BoardFrame.z)));
-                float2 exterior = abs(board) - _BoardHalfSize.xy;
-                float height = abs(input.world.y - _Travel - _BoardHalfSize.z) - .06;
-                clip(max(max(exterior.x, exterior.y), height));
+                float heightAboveFloor = input.world.y - _Travel - _BoardHalfSize.z;
+                if (FloorHasPane(board, heightAboveFloor, _BoardHalfSize, _BoardMaskLow, _BoardMaskHigh)) discard;
                 delta = input.world.xz - _OutsideOpening.xy;
                 float2 outside = abs(float2(dot(delta, _BoardFrame.zw), dot(delta, float2(-_BoardFrame.w, _BoardFrame.z))));
-                clip(max(max(outside.x,outside.y) - _OutsideOpening.z,height));
+                clip(max(max(outside.x,outside.y) - _OutsideOpening.z, abs(heightAboveFloor) - .06));
                 return half4(ShaftBrickwork(input.world.xz), 1);
             }
             ENDHLSL

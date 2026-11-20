@@ -1,0 +1,3 @@
+11-20 17:55:36.846 I/Unity   ( 8877): [Floor Fracture survey] saved mesh, vertices=17291, square=1.88 m, clear=7.67, furniture=4.37, meshObstacle=2.55, unobserved=0.00, liveObstacle=0.00, liveUnknown=0.00 m². Height relative to labelled floor (cm): mesh=0.0, tracking=-2.1, board=0.0.
+11-20 17:55:37.913 I/Unity   ( 8877): [Floor Fracture depth] Candidate panes=21, hits=0, unobserved=0, warming=0, confirmed obstructions=0, result=True.
+11-20 17:55:37.918 I/Unity   ( 8877): [Floor Fracture room] Confirmed: Your room scan fits 21 connected panes at 40 cm each, covering 3.36 m². Saved rooms=1, world lock=True.

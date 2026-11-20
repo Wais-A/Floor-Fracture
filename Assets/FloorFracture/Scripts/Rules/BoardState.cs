@@ -8,11 +8,12 @@ namespace FloorFracture
     public sealed class BoardState
     {
         public const int MinAxis = 2, MaxPanes = 64, MaxAxis = MaxPanes / MinAxis;
-        public const float MinPitch = 0.50f, MaxPitch = 0.67f;
+        public const float CompactMinPitch = 0.40f, MinPitch = 0.50f, MaxPitch = 0.67f;
         public const float PaneHalfPitch = .484f;
         public float Pitch { get; private set; }
-        public int Width { get; private set; }
-        public int Height { get; private set; }
+        public BoardLayout Layout { get; private set; }
+        public int Width => Layout.Columns;
+        public int Height => Layout.Rows;
         public int Count => Width * Height;
         public int Seed { get; private set; }
         public int WavesSurvived { get; private set; }
@@ -22,15 +23,15 @@ namespace FloorFracture
         public bool BreaksApplied { get; private set; }
         public WaveLossReason LastLoss { get; private set; }
         internal ulong StationaryMask { get; private set; }
-        internal ulong FullMask => ulong.MaxValue >> (MaxPanes - Count);
+        internal ulong FullMask => Layout.Mask;
 
         private readonly PlayerTileTracker tracker = new PlayerTileTracker();
-        private readonly float[] columnEdges = new float[MaxAxis + 1], rowEdges = new float[MaxAxis + 1];
-        private ulong leftColumn, rightColumn;
+        private readonly float[] columnEdges = new float[MaxPanes + 1], rowEdges = new float[MaxPanes + 1];
         private int regularWavesSurvived;
         private bool levelEnded;
 
         public BoardState(int width, int height, int seed, float pitch = MinPitch) { Reset(width, height, seed, pitch); }
+        public BoardState(BoardLayout layout, int seed, float pitch) { Reset(layout, seed, pitch); }
 
         // Each pane occupies one bit. A long, narrow rectangle can use all 64 bits.
         public static int MaxRowsFor(int columns) =>
@@ -42,17 +43,20 @@ namespace FloorFracture
             if (maxRows == 0) throw new ArgumentOutOfRangeException(nameof(width));
             if (height < MinAxis || height > maxRows) throw new ArgumentOutOfRangeException(nameof(height));
             if (!(pitch >= MinPitch && pitch <= MaxPitch)) throw new ArgumentOutOfRangeException(nameof(pitch));
-            Width = width;
-            Height = height;
+            Reset(BoardLayout.Rectangle(width, height), seed, pitch);
+        }
+
+        private void Reset(BoardLayout layout, int seed, float pitch)
+        {
+            if (!layout.IsPlayable) throw new ArgumentException("The board needs at least two edge-connected panes.", nameof(layout));
+            if (!(pitch >= CompactMinPitch && pitch <= MaxPitch)) throw new ArgumentOutOfRangeException(nameof(pitch));
+            Layout = layout;
             Pitch = pitch;
             Seed = seed;
             WavesSurvived = 0;
             regularWavesSurvived = 0;
-            SetEdges(columnEdges, width, pitch);
-            SetEdges(rowEdges, height, pitch);
-            leftColumn = 0;
-            for (int row = 0; row < height; ++row) leftColumn |= 1UL << (row * width);
-            rightColumn = leftColumn << (width - 1);
+            SetEdges(columnEdges, Width, pitch);
+            SetEdges(rowEdges, Height, pitch);
             RebuildLevel();
         }
 
@@ -80,7 +84,7 @@ namespace FloorFracture
         public int IndexAt(Vector2 localXZ)
         {
             int x = CellOnAxis(localXZ.x, columnEdges, Width), z = CellOnAxis(localXZ.y, rowEdges, Height);
-            return x < 0 || z < 0 ? -1 : z * Width + x;
+            return Layout.HasPane(x, z) ? z * Width + x : -1;
         }
 
         private static void SetEdges(float[] edges, int length, float pitch)
@@ -113,11 +117,7 @@ namespace FloorFracture
         internal ulong StepMask(int from) =>
             Slider != null && Slider.Locked && from == Slider.Tile ? Slider.ExitMask(this) : NeighborMask(from);
 
-        internal ulong AdjacentMask(ulong group)
-        {
-            ulong horizontal = ((group & ~leftColumn) >> 1) | ((group & ~rightColumn) << 1);
-            return (horizontal | (group >> Width) | (group << Width)) & FullMask;
-        }
+        internal ulong AdjacentMask(ulong group) => Layout.Adjacent(group);
 
         public bool Neighbors(int a, int b) => (uint)a < (uint)Count && (uint)b < (uint)Count && (NeighborMask(a) & (1UL << b)) != 0;
 

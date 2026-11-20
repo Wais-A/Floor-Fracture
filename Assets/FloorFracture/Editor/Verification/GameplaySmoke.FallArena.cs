@@ -141,7 +141,7 @@ namespace FloorFracture.Editor
                 copies = originals.Select(original => instances.Single(copy => copy.sharedMesh == original.sharedMesh)).ToArray();
                 var vertices = board.Find("Opening stencil").GetComponent<MeshFilter>().sharedMesh.vertices;
                 var centers = Enumerable.Range(0,vertices.Length/4).Select(i => (vertices[4*i]+vertices[4*i+2])*.5f).ToArray();
-                for (int cell=0; cell<2; cell++)
+                foreach (int cell in new[] { CornerPane, AdjacentPane(CornerPane) })
                     Require(centers.Any(c => Vector3.Distance(c,GlassGeometry.Ground(game.State.Center(cell))) < .002f),
                         "The connected openings at the corner changed shape on entry.");
             }
@@ -169,7 +169,7 @@ namespace FloorFracture.Editor
                         copies[i].gameObject.activeInHierarchy == (travel>0f) && originals[i].GetComponent<MeshRenderer>().enabled == (travel<=0f),
                         "The rising room patch changed orientation or handed off on a different frame from the glass.");
                 }
-                var center = boardStart.position + boardStart.rotation * GlassGeometry.Ground(game.State.Center(0));
+                var center = boardStart.position + boardStart.rotation * GlassGeometry.Ground(game.State.Center(CornerPane));
                 evidence.offCenterMetres = Vector3.ProjectOnPlane(initialEye.position-center,Vector3.up).magnitude;
                 evidence.maxArenaRegistrationError = Mathf.Max(evidence.maxArenaRegistrationError,error);
                 Require(error < .002f && evidence.offCenterMetres > game.State.Pitch*.35f,
@@ -247,8 +247,8 @@ namespace FloorFracture.Editor
                 Require((reduced || overheadChecked) && !GameObject.Find("Rising scanned floor") &&
                     Vector3.Distance(game.BoardView.Board.position,boardStart.position) < .002f &&
                     Quaternion.Angle(game.BoardView.Board.rotation,boardStart.rotation) < .02f &&
-                    originals.All(p => p.GetComponent<MeshRenderer>().enabled),
-                    "Restart did not restore the glass and native brick at their original placement.");
+                    originals.All(p => !p.GetComponent<MeshRenderer>().enabled),
+                    "Restart did not restore the glass and passthrough around it.");
             }
         }
     }

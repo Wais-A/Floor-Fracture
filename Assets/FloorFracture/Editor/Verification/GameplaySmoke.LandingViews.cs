@@ -64,7 +64,10 @@ namespace FloorFracture.Editor
                 foreach (float pitch in pitches)
                 foreach (float offset in new[] { -.032f, .032f })
                 {
-                    Quaternion rotation = Quaternion.Euler(pitch,chamber.eulerAngles.y + 19,0);
+                    var towardPool = Vector3.ProjectOnPlane(surface.transform.position - eyePose.position, Vector3.up);
+                    float yaw = water && towardPool.sqrMagnitude > .01f
+                        ? Quaternion.LookRotation(towardPool).eulerAngles.y : chamber.eulerAngles.y + 19;
+                    Quaternion rotation = Quaternion.Euler(pitch,yaw,0);
                     probe.transform.SetPositionAndRotation(eyePose.position + rotation * Vector3.right * offset,rotation);
                     var first = Read(Color.magenta);
                     var view = new LandingView { ending=ending, reduced=reduced, seconds=age, pitchDegreesDown=pitch,
@@ -85,7 +88,7 @@ namespace FloorFracture.Editor
                         view.waterPixels = brightness.Count;
                         Require(brightness.Count > size*size/25, "Water disappeared from the sampled descent angle.");
                         view.waterLuminanceRange = brightness[brightness.Count*9/10]-brightness[brightness.Count/10];
-                        Require(view.waterLuminanceRange >= 8, "The descending Water surface lost its visible ripples.");
+                        Require(view.waterLuminanceRange >= 8, $"Water ripple contrast was {view.waterLuminanceRange} across {view.waterPixels} visible pixels at {age:F2} s, pitch {pitch:F0}.");
                     }
                     else
                     {

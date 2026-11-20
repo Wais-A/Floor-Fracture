@@ -12,12 +12,20 @@ Shader "Floor Fracture/Hole Mask"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 3.5
             #pragma multi_compile_instancing
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #pragma multi_compile _ HARD_OCCLUSION SOFT_OCCLUSION
+            #include "Packages/com.meta.xr.sdk.core/Shaders/EnvironmentDepth/URP/EnvironmentOcclusionURP.hlsl"
             struct V { float4 vertex:POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
-            struct F { float4 position:SV_POSITION; UNITY_VERTEX_OUTPUT_STEREO };
-            F vert(V v) { F o; UNITY_SETUP_INSTANCE_ID(v); UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o); o.position=TransformObjectToHClip(v.vertex.xyz); return o; }
-            half4 frag(F i):SV_Target { return 0; }
+            struct F { float4 position:SV_POSITION; float3 world:TEXCOORD0; UNITY_VERTEX_OUTPUT_STEREO };
+            F vert(V v) { F o; UNITY_SETUP_INSTANCE_ID(v); UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o); o.world=TransformObjectToWorld(v.vertex.xyz); o.position=TransformWorldToHClip(o.world); return o; }
+            half4 frag(F i):SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+                half visibility = META_DEPTH_GET_OCCLUSION_VALUE_WORLDPOS(i.world, .02);
+                clip(visibility - .5h);
+                return 0;
+            }
             ENDHLSL
         }
     }

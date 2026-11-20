@@ -20,7 +20,7 @@ namespace FloorFracture.Editor
             var chamber = GameObject.Find("Fall chamber");
             Require(chamber && chamber.GetComponentsInChildren<Renderer>().Any(r => r.enabled),
                 label + " needs a visible open chamber before the boundary check.");
-            VerifyFloorVisibility(true);
+            VerifyFloorVisibility(false);
 
             // A freshly broken interior pane is still inside the board. Walking across
             // it during the result display should neither start another wave nor pause.
@@ -44,7 +44,7 @@ namespace FloorFracture.Editor
             VerifyFloorVisibility(false);
             int expectedLevel = cleared ? level + 1 : level;
             Require(game.State.ActiveWave == null && game.State.WavesSurvived == score && game.Level == expectedLevel &&
-                game.WaveNumber == nextWave && Enumerable.Range(0, game.State.Count).All(i => game.State.IsIntact(i) == (cleared || remaining[i])),
+                game.WaveNumber == nextWave && Enumerable.Range(0, game.State.Count).All(i => game.State.IsIntact(i) == ((cleared && game.State.Layout.Contains(i)) || remaining[i])),
                 label + " pause changed the completed score, new level or surviving panes.");
             yield return Delay(cleared ? 1.85 : 1.35);
             Require(game.Stage == GameStage.Paused && game.Level == expectedLevel && game.State.WavesSurvived == score,
@@ -55,7 +55,7 @@ namespace FloorFracture.Editor
             Choose("Show board");
             Require(game.Stage == GameStage.Ready && game.BoardView.gameObject.activeInHierarchy,
                 label + " did not reveal the board for a localized player outside it.");
-            VerifyFloorVisibility(true);
+            VerifyFloorVisibility(false);
             Choose("Start wave");
             Require(game.Stage == GameStage.Ready && game.State.ActiveWave == null && game.State.WavesSurvived == score,
                 label + " started a wave from outside the glass.");
@@ -69,7 +69,7 @@ namespace FloorFracture.Editor
                 resumed.Level == expectedLevel && resumed.Number == nextWave && resumed.StartingTile == completed.GuaranteedTile &&
                 resumed.Deadline >= requested + resumed.Duration && game.State.WavesSurvived == score,
                 label + " did not resume from supported glass with one level advance and a fresh full countdown.");
-            Record($"{label} paused immediately on leaving the glass inside the tracked room. Glass, brick and chamber hid; score {score} survived. The off-board menu revealed the board and rejected Start until supported. Level {expectedLevel}, wave {nextWave} received a fresh {resumed.Duration:F1} seconds.");
+            Record($"{label} paused immediately on leaving the glass inside the tracked room. Glass and chamber hid; score {score} survived. The off-board menu revealed the board and rejected Start until supported. Level {expectedLevel}, wave {nextWave} received a fresh {resumed.Duration:F1} seconds.");
             if (cleared)
             {
                 // Return the next level to Ready for the rest of the playthrough.
