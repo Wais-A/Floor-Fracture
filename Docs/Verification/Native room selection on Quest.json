@@ -1,0 +1,39 @@
+{
+  "verifiedUtc": "2026-11-20T08:25:34.949060+00:00",
+  "hardware": "Oculus Quest 3",
+  "engine": "Unity 6000.6.9f1 Android IL2CPP, Meta XR MRUK 209",
+  "sceneSource": "Two synthetic rooms loaded on the physical Quest through the native MRUK JSON loader. No wearer or captured personal room was used.",
+  "buildGuid": "3440cd2047e74e1590c299bcfabeb42e",
+  "scratchPackage": "com.wa003.floorfracture.renderbench",
+  "localAndInstalledApkSha256": "fff8b604d86140e337b1fc10e62469e3e5935a2d43f2d1a3f1ddb4bcb8eebe26",
+  "sourceRoomFixtureSha256": "1b4a2d89d60f666760ab8000d63a52dd395d83a1b5574a9a0ebc8898f9319cad",
+  "rawDeviceReceipt": "scanned-room-device.json",
+  "rawDeviceReceiptSha256": "29f031975d94392499e13028b19647cef89bb3278321f63e165e09b0aa8882c8",
+  "nativeLoad": "Success",
+  "roomCount": 2,
+  "floorAnchors": 4,
+  "fit": {
+    "columns": 6,
+    "rows": 3,
+    "pitchMetres": 0.6666667,
+    "areaSquareMetres": 8.0
+  },
+  "selection": {
+    "locations": 8,
+    "hintConditions": [
+      "correct",
+      "absent",
+      "stale"
+    ],
+    "correctComparisons": 24,
+    "productionRequiresLocalDeviceRoom": true,
+    "syntheticRoomsAreNonlocal": true,
+    "nativeObservation": "Raw MRUK IsPositionInRoom rejected the left-only section of each room. In the first room it changed from false to true across the two sample points one millimetre on either side of the second section boundary. The game selected the correct room in all three hint conditions and rejected the outside point."
+  },
+  "cleanup": {
+    "scratchWasAbsentBeforeInstall": true,
+    "scratchAbsentAfterUninstall": true,
+    "ordinaryPackageInstalled": true,
+    "resumedActivity": "com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity"
+  }
+}

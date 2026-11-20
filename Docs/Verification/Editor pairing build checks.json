@@ -1,0 +1,61 @@
+{
+  "evidenceScope": "Isolated Quest build with the production Unity editor callbacks; build only",
+  "unity": "6000.6.9f1",
+  "previousArtifactDetectedOriginalInjectedFields": true,
+  "positiveControlComparison": {
+    "sourceTokenFoundInPlayer": true,
+    "injectedAddressFoundInPlayer": true,
+    "foundDevAgentResourceObject": true,
+    "sourceTokenFoundInDevAgentResource": true,
+    "injectedAddressFoundInDevAgentResource": true,
+    "serializedAddressIsEmpty": false,
+    "serializedTokenIsEmpty": false,
+    "serializedDevAgentIsDisabled": true
+  },
+  "normalBuildComparison": {
+    "sourceTokenFoundInPlayer": false,
+    "injectedAddressFoundInPlayer": false,
+    "foundDevAgentResourceObject": true,
+    "sourceTokenFoundInDevAgentResource": false,
+    "injectedAddressFoundInDevAgentResource": false,
+    "serializedAddressIsEmpty": true,
+    "serializedTokenIsEmpty": true,
+    "serializedDevAgentIsDisabled": true
+  },
+  "normalBuildRestoration": {
+    "succeeded": true,
+    "editorAssetRestored": true,
+    "editorMetaRestored": true,
+    "recoveryFileRemoved": true
+  },
+  "interruptionRecovery": {
+    "restoredOnEditorReopen": true,
+    "scrubbedDuringBuild": true,
+    "originalRecoverableDuringBuild": true,
+    "deliberateFailureOccurred": true,
+    "restoredAfterFailure": true,
+    "originalMetaRestored": true,
+    "backupRemoved": true,
+    "passed": true
+  },
+  "freshCheckoutBuildComparison": {
+    "sourceTokenFoundInPlayer": false,
+    "injectedAddressFoundInPlayer": false,
+    "foundDevAgentResourceObject": true,
+    "sourceTokenFoundInDevAgentResource": false,
+    "injectedAddressFoundInDevAgentResource": false,
+    "serializedAddressIsEmpty": true,
+    "serializedTokenIsEmpty": true,
+    "serializedDevAgentIsDisabled": true
+  },
+  "freshCheckoutOriginalFilesSetAsideBeforeBuild": true,
+  "freshCheckoutSdkGeneratedNewFiles": true,
+  "freshCheckoutBackupRemoved": true,
+  "freshCheckoutBuildSucceeded": true,
+  "currentProjectHookMatchesFreshBuild": true,
+  "originalAssetAndMetaPresentInProject": true,
+  "originalAssetAndMetaIgnored": true,
+  "originalAssetAndMetaOutOfIndex": true,
+  "trackedReferencesToLocalAssetGuid": false,
+  "passed": true
+}

@@ -2,11 +2,11 @@
   "status": "Reviewable working draft dated November 20, 2026",
   "word": {
     "path": "Docs/Floor Fracture Final Design Working Draft.docx",
-    "sha256": "1c8bb52d1354441a86917c2c2676e97ff7d0607fc80d64a3aab61b76fb60ac9a"
+    "sha256": "071f59cbc22ddea7bc6b459d6ab4e1b3e5b4bb5aeeb12fbf1e20136265b353e4"
   },
   "pdf": {
     "path": "Docs/Floor Fracture Final Design Working Draft.pdf",
-    "sha256": "6f09c68b2fa8e78ac314678a96373ff4f88308599e77046ba2c1162e0269b0ac"
+    "sha256": "bc4ca34bc7dd6a548dab38855a7c42e27385aea316ac96e0be62a28e3a267bbb"
   },
   "sourceDocuments": {
     "Docs/Final Project - Design Doc.docx": "8fb9ce31db2c80fc82feb4456f6cbfce3f422d01e22f0bd2f2c37e982bd7a2e3",
@@ -19,17 +19,19 @@
       612,
       792
     ],
-    "visualInspection": "All five US Letter pages were rendered with the bundled LibreOffice and inspected at 130 dpi. Pages 1, 2 and 5 matched the previous PDF pixel for pixel. Only sections 6 and 7 changed.",
-    "content": "All 130 nonempty Word paragraphs are present in the PDF. The 11 numbered section labels match the professor’s template. The Word and PDF hyperlink destinations match.",
+    "visualInspection": "All five US Letter pages were rendered with bundled LibreOffice and visually inspected at 130 dpi. Page 1 matched the prior PDF pixel for pixel. Six paragraphs changed in sections 4, 6, 7 and 10. Page breaks, tables and the professor’s 11 section labels remain intact.",
+    "content": "All 130 nonempty Word paragraphs appear in the PDF. The two Word hyperlink destinations match the PDF annotations. The external link targets were inspected locally. Submission and publication are owner decisions.",
     "links": [
       "https://github.com/Wais-A/Floor-Fracture",
       "https://github.com/oculus-samples/Unity-MRUtilityKitSample"
     ],
     "hardwareUpdate": "Section 7 identifies both Quest builds. The 5 × 3 session was worn. The 64-pane, 32-shatter scripted run is Maximum-A in 64 pane Quest measurements.json. The raw paired OVR CSV independently confirms 13 samples, 71–73 FPS, one stale frame and 5.041 ms peak application GPU time.",
-    "interactionUpdate": "Section 6 includes captioned offline narration, the recorded reason on Results and the 5.0 s starting timer with 0.4 s decrements and a 2.5 s trial floor. The ordinary-step check remains open."
+    "interactionUpdate": "Section 6 includes captioned offline narration, the recorded reason on Results and the 5.0 s starting timer with 0.4 s decrements and a 2.5 s trial floor. The ordinary-step check remains open.",
+    "roomAndPauseUpdate": "A two-patch MRUK Editor fixture fitted 6 × 3 at 0.667 m; its wave continued across the joined floor and paused outside. Room joining is sourced to 24f20ef. In ad3fca7 an interrupted wave hides the board and must wait for valid room localization and supported glass before a fresh countdown. Score is retained.",
+    "warningAndRingUpdate": "The room-scale Settings preview uses the live pane and both warning intensities, including off-board access. The integrated ring in 49976f4 and its check in 084cf29 preserve all 697 original bright pixels in each simulated eye. The charcoal outline added 369 right-eye and 371 left-eye pixels at or above 3:1 local luminance contrast on the RGB 235 floor. These are Unity Editor measurements of rendered pixels."
   },
   "pending": [
-    "Current build wearer retest, including stance, moving glass, furniture, Water and Space, Full/Reduced comfort, and physical inputs.",
+    "Current build wearer recheck, including joined floor patches, relocalization after a pause, ring visibility on a light floor, stance, moving glass, furniture, Water and Space, Full/Reduced comfort and physical inputs.",
     "At least two outside playtesters with direct observations.",
     "Repeat the scripted 64-pane hardware measurements with a wearer in the demo room and investigate frame-time spikes.",
     "Record the 3–5 minute Quest demo and add its link to the README and design document.",

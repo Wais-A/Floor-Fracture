@@ -1,0 +1,192 @@
+{
+  "date": "2026-11-20",
+  "experiment": "Swap only the occupied ring mesh in the same muted game state and frame. Render original, candidate and hidden using both fixed eyes on RGB 20 and 235 synthetic neutral floors. Each source image is 1200 \u00d7 900, 78 degree vertical FOV. A pixel counts as visible if any RGB channel differs by at least 8/255 against the hidden-ring control. Contrast is (Lbright+.05)/(Ldark+.05) after linearizing sRGB. The 3:1 count describes image pixels, not a human pass criterion.",
+  "fixture": {
+    "columns": 6,
+    "rows": 6,
+    "pitchMetres": 0.6207143068313599,
+    "seed": 379,
+    "occupiedCell": 16,
+    "mode": "Memory",
+    "masterVolume": 0.0,
+    "phase": "Gentle, trough",
+    "eyeSeparationMetres": 0.064
+  },
+  "geometry": {
+    "authoredPitch_m": 0.5,
+    "brightCentreRadius_m": 0.069,
+    "brightWidth_m": 0.007,
+    "keylineWidth_m": 0.0035,
+    "outerRadius_m": 0.076,
+    "baseline": {
+      "vertices": 160,
+      "triangles": 80,
+      "submeshes": 1,
+      "renderers": 1,
+      "materials": 1
+    },
+    "outlined": {
+      "vertices": 320,
+      "triangles": 160,
+      "submeshes": 1,
+      "renderers": 1,
+      "materials": 1
+    },
+    "rendering": "One mesh, one submesh, one shared material with vertex color, one renderer, one surface-shader pass. Triangle counts are geometry counts. Compositor draw-call timing was outside this test."
+  },
+  "cases": [
+    {
+      "floor": "dark",
+      "eye": "L",
+      "oldVisiblePixels": 697,
+      "outlinedVisiblePixels": 1068,
+      "baselineBrightPixelsRetainedExactly": 697,
+      "addedPixels": 371,
+      "oldPixelsLost": 0,
+      "baselineMedianOnOffLuminanceRatio": 8.204,
+      "addedOutlineMedianOnOffLuminanceRatio": 1.787,
+      "adjacentBrightAndCharcoalMedianLuminanceRatio": 14.66,
+      "pixelsAtLeast3to1": {
+        "baseline": 697,
+        "outlined": 697
+      },
+      "medianRGB": {
+        "originalBright": [
+          230,
+          255,
+          186
+        ],
+        "addedCharcoal": [
+          25,
+          37,
+          27
+        ]
+      },
+      "rawSHA256": {
+        "baseline": "cf08dac23f0acf0d390d0ed0011150c51c31ec47a1d2bd2d9af6ebe971b3b198",
+        "outlined": "e737d25a7ae5f0a548bc16069b22d1328a358ea736ef556974aa6c7e87428d8a",
+        "off": "2f4382add7eee0a84777d1751f081d38b7c6447d0b15b5ee3a8ae53c84e1e2e6"
+      }
+    },
+    {
+      "floor": "dark",
+      "eye": "R",
+      "oldVisiblePixels": 697,
+      "outlinedVisiblePixels": 1066,
+      "baselineBrightPixelsRetainedExactly": 697,
+      "addedPixels": 369,
+      "oldPixelsLost": 0,
+      "baselineMedianOnOffLuminanceRatio": 8.331,
+      "addedOutlineMedianOnOffLuminanceRatio": 1.76,
+      "adjacentBrightAndCharcoalMedianLuminanceRatio": 14.66,
+      "pixelsAtLeast3to1": {
+        "baseline": 697,
+        "outlined": 697
+      },
+      "medianRGB": {
+        "originalBright": [
+          230,
+          255,
+          186
+        ],
+        "addedCharcoal": [
+          25,
+          37,
+          27
+        ]
+      },
+      "rawSHA256": {
+        "baseline": "49e19936718b61f2b7a2bdfd87ba8cce17c0d89271e3ad0b1170b69e5e9fd9e9",
+        "outlined": "a25dff92af697f53b6929beee5d86e3ec53418671dfbc10f9ca1907e0a075b4e",
+        "off": "56011c5be0c1847ee7e5824e18246bb28b4aa711947a02197e3ab35d35f02225"
+      }
+    },
+    {
+      "floor": "light",
+      "eye": "L",
+      "oldVisiblePixels": 697,
+      "outlinedVisiblePixels": 1068,
+      "baselineBrightPixelsRetainedExactly": 697,
+      "addedPixels": 371,
+      "oldPixelsLost": 0,
+      "baselineMedianOnOffLuminanceRatio": 2.64,
+      "addedOutlineMedianOnOffLuminanceRatio": 5.553,
+      "adjacentBrightAndCharcoalMedianLuminanceRatio": 14.66,
+      "pixelsAtLeast3to1": {
+        "baseline": 0,
+        "outlined": 371
+      },
+      "medianRGB": {
+        "originalBright": [
+          230,
+          255,
+          186
+        ],
+        "addedCharcoal": [
+          25,
+          37,
+          27
+        ]
+      },
+      "rawSHA256": {
+        "baseline": "353d55a5dfe6745b2c32a38b2d5c97e3d3be0a9ef448051a9a19752f820e7802",
+        "outlined": "69c14f74e8a13dbaeecf15cfab987dc572691874ee08dee05a7f90659664dbfa",
+        "off": "9bbb6bff01202fdefde5e75fa459d035bd35641b5ac5342a6ec318dda7cb63a5"
+      }
+    },
+    {
+      "floor": "light",
+      "eye": "R",
+      "oldVisiblePixels": 697,
+      "outlinedVisiblePixels": 1066,
+      "baselineBrightPixelsRetainedExactly": 697,
+      "addedPixels": 369,
+      "oldPixelsLost": 0,
+      "baselineMedianOnOffLuminanceRatio": 2.667,
+      "addedOutlineMedianOnOffLuminanceRatio": 5.497,
+      "adjacentBrightAndCharcoalMedianLuminanceRatio": 14.66,
+      "pixelsAtLeast3to1": {
+        "baseline": 0,
+        "outlined": 369
+      },
+      "medianRGB": {
+        "originalBright": [
+          230,
+          255,
+          186
+        ],
+        "addedCharcoal": [
+          25,
+          37,
+          27
+        ]
+      },
+      "rawSHA256": {
+        "baseline": "aa27ff0d8f9add0ffe3630b091ba83e45d21bb34ff0cfc3ead481111d6e0b7cd",
+        "outlined": "3799d6026e97d38d557789721b0e849faf3c57ff1585e882ce9555b1119af350",
+        "off": "700de0cefe645dd274431aaafb060866071ce5ccddb2b29223d53e0922583c07"
+      }
+    }
+  ],
+  "reviewImage": {
+    "name": "occupancy-ring-comparison.png",
+    "sha256": "09adcd4922544384e432fa2000611727d1546a63e73df4898b5ff01f3c167450",
+    "path": "Docs/Media/occupancy-ring-comparison.png"
+  },
+  "limits": "Crops use one native render pixel per saved image pixel. Physical room textures, optics, display exposure, head movement and wearer recognition still need Quest review. The automated mesh check includes the bright stroke and outer keyline in the supported-pane boundary. This test measured rendered geometry and pixel changes, not GPU time.",
+  "raw": {
+    "integrated": "ring-integrated-frames/",
+    "independentCandidate": "ring-trial-frames/"
+  },
+  "integratedSource": {
+    "runtimeCommit": "49976f4",
+    "regressionCommit": "084cf29",
+    "gameplayStatus": "The isolated Unity 6000.6.9f1 project rendered the integrated GlassGeometry.Ring and ran VerifyOccupancyRingMesh on the actual occupied object. The control uses the original bright stroke without a keyline. All 10 per-case measurements exactly match the separate prototype A/B in each of 4 conditions.",
+    "sourceSHA256": {
+      "Assets/FloorFracture/Scripts/Glass/GlassGeometry.cs": "3f3ac95ac5a8e2f28e367fa6e0b225e1ef344e597ed117fcd5408ac5a0eb8981",
+      "Assets/FloorFracture/Scripts/Glass/GlassBoardView.cs": "367c3457c28a6478a645e531e873acb4702223dbd42c69502524b31fb80b009c",
+      "Assets/FloorFracture/Editor/Verification/GameplaySmoke.Floor.cs": "446e624c93a5729f6b7b36eec9c891233e78215a9ce5b41d40ca95dbc739ed2c"
+    }
+  },
+  "rawCaptureScope": "The two raw capture directories were used locally for the A/B analysis. This record and the reviewed comparison image are included in the project."
+}

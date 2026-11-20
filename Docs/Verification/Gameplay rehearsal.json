@@ -276,7 +276,19 @@
         "median_visible_scene_fraction": 0.63,
         "stereo_rms": 0.0154
       }
-    ]
+    ],
+    "quietIntervals": {
+      "thresholdDbfs": -60,
+      "setupSeconds": [
+        7.509,
+        35.99
+      ],
+      "closingSeconds": [
+        176.726,
+        188.311
+      ],
+      "scope": "The rehearsal contains gameplay effects and short prompts. The final shot list calls for presenter narration. This Editor capture predates the outlined ring and close-up warning sample."
+    }
   },
   "scope": "The Editor backdrop has no camera passthrough. The physical Quest shot list covers the real room, wearer input and headset appearance.",
   "localMovie": "Builds/Verification/Floor-entry/Floor Fracture gameplay rehearsal.mp4",

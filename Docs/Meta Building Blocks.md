@@ -20,6 +20,8 @@ The November 19, 2026 review covered all 68 serialized block definitions in the 
 
 The installed MRUK placement helper and the game’s footprint checks ran in five native synthetic rooms. GameRoom fitted 12 × 2, High-ceiling Room 6 × 9, Furniture-filled Room 4 × 4, Corridor 10 × 3 and L-shape Room 3 × 9. The complete rectangle cleared the recorded obstacles in each room within 1 mm. The separate Mac simulator showed both the Passthrough and Projection layers with a readable Welcome panel. [Room geometry and layer checks](<./Verification/Overnight simulator.json>) · [Mac window](<./Media/Meta simulator Welcome.jpg>)
 
+MRUK can describe a level floor as several anchors. The fitter takes the union of adjoining or overlapping coplanar outlines and checks the resulting rectangle against walls, furniture and interior holes. It uses Unity's existing polygon operations for this step. In a standalone Quest trial, joining two adjacent 2 × 2 m sections doubled the usable glass area to 8 m². A gap, a step or a wall kept the two sections separate. [Measured Quest layouts](<./Verification/Joined floors and canceled wave on Quest.json>)
+
 ## Blocks Wais added in Unity
 
 The saved `Assets/Scenes/SampleScene.unity` contains Wais’s experiments. The standalone build opens `Assets/FloorFracture/Scenes/FloorFracture.unity`. Open the first scene to inspect the sample objects or the second to test gameplay.

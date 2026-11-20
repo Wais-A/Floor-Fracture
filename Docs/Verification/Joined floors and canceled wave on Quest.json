@@ -1,0 +1,227 @@
+{
+  "verifiedUtc": "2026-11-20 08:06:04 UTC",
+  "result": "passed",
+  "scope": "On-headset execution of the game's BoardFitter and BoardState against synthetic room outlines and explicit timestamps. The native Android probe ran automatically. No physical room scan, wearer movement, optical tracking interruption or visual comfort measurement was used.",
+  "device": {
+    "model": "Quest 3",
+    "product": "eureka",
+    "serialSuffix": "03ZV",
+    "connection": "device",
+    "androidApi": 34,
+    "engine": "6000.6.9f1"
+  },
+  "build": {
+    "package": "com.wa003.floorfracture.renderbench",
+    "buildGuid": "a7ca2cc4a59f416a94583f8dda9e21cb",
+    "completedUtc": "2026-11-20T08:03:01.4325260Z",
+    "unity": "6000.6.9f1",
+    "profile": "Meta Quest",
+    "unityErrors": 0,
+    "unityWarnings": 8,
+    "apkBytes": 128780142,
+    "apkSha256": "8229b23812488b7ca9f8c9dbec10dac53aeccf20cb9b00de93b4ff52c8e711da",
+    "installedBaseApkSha256": "8229b23812488b7ca9f8c9dbec10dac53aeccf20cb9b00de93b4ff52c8e711da",
+    "packageMetadata": {
+      "versionCode": 1,
+      "versionName": "0.1.0",
+      "minApi": 32,
+      "targetApi": 34,
+      "abi": "arm64-v8a",
+      "launchActivity": "com.unity3d.player.UnityPlayerGameActivity",
+      "apkSignatureScheme": "v2",
+      "certificateSha256": "ec0521d8a6f2e9b4e04d28086dc771c30271e173f759a5c24d012f8e1a458ea9"
+    },
+    "zipCrc": {
+      "entries": 934,
+      "passed": true
+    },
+    "harnessSha256": "fa5fd222b55eca6da87a28ab7f9784c00438ec6a0bc5627f3b7eb2d4545c1dfc",
+    "ruleSources": {
+      "Room/BoardFitter.cs": {
+        "sha256": "be700cf230ba5827086a2aff4021ce25fa8e71988667009fac974533c3ab2dc3",
+        "matchesWorkspaceAtTest": true
+      },
+      "Rules/BoardState.cs": {
+        "sha256": "ea565cf14aaa7989207cab63fd8042d1b2bfd1e3549238560aafae48e85c5aaf",
+        "matchesWorkspaceAtTest": true
+      },
+      "Rules/PlayerTileTracker.cs": {
+        "sha256": "237c91eb9d7aac08946998d69f2be092847be399ffbf5478242e4421df49df4b",
+        "matchesWorkspaceAtTest": true
+      },
+      "Rules/WavePlanner.cs": {
+        "sha256": "042fcb4341941ef5c36547800ae3a919166b0b86b391aaac66fbf58c58da8e70",
+        "matchesWorkspaceAtTest": true
+      }
+    }
+  },
+  "roomCases": [
+    {
+      "name": "two adjoining 2-metre squares",
+      "expectedAreaSquareMetres": 8,
+      "columns": 6,
+      "rows": 3,
+      "pitchMetres": 0.6666666865348816,
+      "measuredAreaSquareMetres": 8,
+      "selectedFloorHeightMetres": 0,
+      "absoluteAreaErrorSquareMetres": 0,
+      "areaIndependentlyRecomputedWithinTolerance": true,
+      "passed": true
+    },
+    {
+      "name": "overlap on one plane",
+      "expectedAreaSquareMetres": 8,
+      "columns": 6,
+      "rows": 3,
+      "pitchMetres": 0.6666666865348816,
+      "measuredAreaSquareMetres": 8,
+      "selectedFloorHeightMetres": 0,
+      "absoluteAreaErrorSquareMetres": 0,
+      "areaIndependentlyRecomputedWithinTolerance": true,
+      "passed": true
+    },
+    {
+      "name": "a centimetre of missing floor",
+      "expectedAreaSquareMetres": 4,
+      "columns": 3,
+      "rows": 3,
+      "pitchMetres": 0.6666666865348816,
+      "measuredAreaSquareMetres": 4,
+      "selectedFloorHeightMetres": 0,
+      "absoluteAreaErrorSquareMetres": 0,
+      "areaIndependentlyRecomputedWithinTolerance": true,
+      "passed": true
+    },
+    {
+      "name": "eight-centimetre step",
+      "expectedAreaSquareMetres": 4,
+      "columns": 3,
+      "rows": 3,
+      "pitchMetres": 0.6666666865348816,
+      "measuredAreaSquareMetres": 4,
+      "selectedFloorHeightMetres": 0,
+      "absoluteAreaErrorSquareMetres": 0,
+      "areaIndependentlyRecomputedWithinTolerance": true,
+      "passed": true
+    },
+    {
+      "name": "wall down shared edge",
+      "expectedAreaSquareMetres": 4,
+      "columns": 3,
+      "rows": 3,
+      "pitchMetres": 0.6666666865348816,
+      "measuredAreaSquareMetres": 4,
+      "selectedFloorHeightMetres": 0,
+      "absoluteAreaErrorSquareMetres": 0,
+      "areaIndependentlyRecomputedWithinTolerance": true,
+      "passed": true
+    }
+  ],
+  "roomAreaToleranceSquareMetres": 0.001,
+  "pauseCases": {
+    "inputs": {
+      "columns": 4,
+      "rows": 4,
+      "seed": 0,
+      "level": 3,
+      "startingTile": 0,
+      "interruptedWave": 2,
+      "offerAtSeconds": 10,
+      "untrackedTickSeconds": 10.2,
+      "retryAtSeconds": 40,
+      "requiredScoreAfterRetry": 1
+    },
+    "removedCanceledWaveAndOfferedPane": true,
+    "samePaneReturnedAsSafeWithFreshDeadline": true,
+    "keptOneCompletedWave": true
+  },
+  "checks": {
+    "roomCasesPassed": 5,
+    "pauseChecksPassed": 3,
+    "reportBuildGuidMatchesApkRecord": true,
+    "installedBytesMatchLocalApk": true,
+    "rawReportHashMatchesPull": true,
+    "reportedError": "",
+    "mismatches": []
+  },
+  "runtimeEvidence": {
+    "deviceJson": "room-pause-device.json",
+    "deviceJsonSha256": "c80c98a27e4b517d1cbd7f3040ad9ba813520b23a9f1044698ffd45158d81300",
+    "pulledJsonSha256": "c80c98a27e4b517d1cbd7f3040ad9ba813520b23a9f1044698ffd45158d81300",
+    "unityLog": "11-20 03:04:29.215  9454  9487 I Unity   : Floor Fracture room and pause probe completed: True",
+    "runtimeReport": {
+      "device": "Oculus Quest 3",
+      "unity": "6000.6.9f1",
+      "buildGuid": "a7ca2cc4a59f416a94583f8dda9e21cb",
+      "error": "",
+      "cases": [
+        {
+          "name": "two adjoining 2-metre squares",
+          "columns": 6,
+          "rows": 3,
+          "pitch": 0.6666666865348816,
+          "area": 8,
+          "height": 0,
+          "passed": true
+        },
+        {
+          "name": "overlap on one plane",
+          "columns": 6,
+          "rows": 3,
+          "pitch": 0.6666666865348816,
+          "area": 8,
+          "height": 0,
+          "passed": true
+        },
+        {
+          "name": "a centimetre of missing floor",
+          "columns": 3,
+          "rows": 3,
+          "pitch": 0.6666666865348816,
+          "area": 4,
+          "height": 0,
+          "passed": true
+        },
+        {
+          "name": "eight-centimetre step",
+          "columns": 3,
+          "rows": 3,
+          "pitch": 0.6666666865348816,
+          "area": 4,
+          "height": 0,
+          "passed": true
+        },
+        {
+          "name": "wall down shared edge",
+          "columns": 3,
+          "rows": 3,
+          "pitch": 0.6666666865348816,
+          "area": 4,
+          "height": 0,
+          "passed": true
+        }
+      ],
+      "pauseClearedOffer": true,
+      "retrySafe": true,
+      "retainedScore": true,
+      "passed": true
+    },
+    "permissionDialog": "Android displayed the scratch package's grant-permissions activity after launch. The probe completed without accepting a permission or accessing room data."
+  },
+  "cleanup": {
+    "scratchAbsentBeforeInstall": true,
+    "scratchAndItsDeviceReportRemoved": true,
+    "ordinaryPackage": "com.wa003.floorfracture",
+    "ordinaryHashBefore": "cb4bdf6acdc14f9feff16f357493cfeeb2f977ecc41701a6f487afa7df9f604d",
+    "ordinaryHashAfter": "cb4bdf6acdc14f9feff16f357493cfeeb2f977ecc41701a6f487afa7df9f604d",
+    "ordinaryLastUpdateBefore": "2026-11-20 01:33:54",
+    "ordinaryLastUpdateAfter": "2026-11-20 01:33:54",
+    "ordinaryActivityAtStart": "ResumedActivity: ActivityRecord{fa5e9bb u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2489}",
+    "ordinaryActivityAtEnd": "ResumedActivity: ActivityRecord{fa5e9bb u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2489}",
+    "powerAtStart": "mWakefulness=Asleep",
+    "powerAtEnd": "mWakefulness=Asleep",
+    "ordinaryPackageReinstalled": false,
+    "deviceConfigurationChanged": false,
+    "usbReenumerationRequired": false
+  }
+}

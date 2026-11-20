@@ -17,3 +17,5 @@ Record Wais’s narration using the headset microphone or add a voice-over durin
 | 3:05–3:20 | Select **Restart** and show the intact board in the room. Put the repository address on screen. One possible closing line is “The same game adapts to different floors. Next I’d test what an offline coach could teach after a missed step. You can find Floor Fracture on my GitHub. Thanks for watching.” [Floor Fracture repository](https://github.com/Wais-A/Floor-Fracture) |
 
 Keep game sound in the edit. If you enable **Settings → Narration**, leave the practice or Results prompt audible before speaking. Record the furniture take and the falling-arena take as wearer observations, and describe any residual edge movement exactly as it appears.
+
+In the Editor rehearsal, room setup from 0:08–0:36 and the closing from 2:57–3:08 are largely quiet. Use the headset recorder’s opening sound check and the planned presenter lines for those parts of the final take. Record Settings and the occupancy ring from the current build.
