@@ -1,6 +1,6 @@
 # Floor Fracture
 
-A solo mixed-reality survival game for Meta Quest 3. Step off cracking glass before the countdown reaches zero. The real room stays visible around the board, and neighboring panes open into shafts below the floor.
+A solo mixed-reality survival game for Meta Quest 3. Step off cracking glass before the countdown reaches zero. Calm water covers the scanned floor around the glass. Real walls and furniture stay in view as neighboring panes open into shafts.
 
 [Main project document](./FLOOR_FRACTURE.md) · [Implementation checklist](<./Floor Fracture — Master Project Checklist.md>) · [Course design PDF](<./Docs/Floor Fracture Design Document.pdf>)
 

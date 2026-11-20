@@ -7,11 +7,11 @@ using Object = UnityEngine.Object;
 
 namespace FloorFracture.Editor
 {
-    internal enum SmokeView { BoardObserver, CenterEye, Ending, FallRim, FallDown, FallForward }
+    internal enum SmokeView { BoardObserver, RoomOverview, CenterEye, Ending, FallRim, FallDown, FallForward }
 
     internal static class SmokeCapture
     {
-        public static string Write(string directory, string name, GameFlow game, SmokeView view)
+        public static string Write(string directory, string name, GameFlow game, SmokeView view, Bounds? floorBounds)
         {
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return "The Editor process has no graphics device.";
             if (!game.Rig || !game.Rig.centerEyeAnchor) return "The scene camera was unavailable.";
@@ -52,6 +52,14 @@ namespace FloorFracture.Editor
                             distance = Mathf.Max(distance, edge - projected.z);
                         }
                     camera.transform.SetPositionAndRotation(pose.position + direction * distance * (welcome ? 1.3f : 1.10f), rotation);
+                }
+                else if (view == SmokeView.RoomOverview && floorBounds.HasValue)
+                {
+                    var bounds = floorBounds.Value;
+                    camera.orthographic = true;
+                    camera.orthographicSize = Mathf.Max(bounds.extents.z, bounds.extents.x / camera.aspect) * 1.08f;
+                    camera.transform.SetPositionAndRotation(bounds.center + Vector3.up * (bounds.extents.y + 5f),
+                        Quaternion.LookRotation(Vector3.down, Vector3.forward));
                 }
                 else
                 {

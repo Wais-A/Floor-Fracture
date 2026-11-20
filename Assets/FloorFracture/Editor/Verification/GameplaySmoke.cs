@@ -156,6 +156,7 @@ namespace FloorFracture.Editor
             VerifySpawnMarkersCleared();
             Record($"MRUK Rec Room supplied floor and furniture. The {placement.Columns} × {placement.Rows} board at {placement.Pitch:F3} m pitch appeared at Welcome without a clearance approval prompt.");
             Capture("room-preview", SmokeView.BoardObserver);
+            VerifySurroundingWater(placement);
             yield return RayChoose(3, false); yield return Stage(GameStage.Settings);
             Require(!outlines.gameObject.activeSelf, "The Welcome clearance perimeter stayed visible inside Settings.");
             yield return RayChoose(4, true); yield return Stage(GameStage.Welcome);
@@ -282,11 +283,14 @@ namespace FloorFracture.Editor
                 {
                     yield return Delay(3.75);
                     Require(game.Stage == GameStage.Fall, "The reveal ended before it could be captured.");
+                    VerifyWaterVisibility(false);
                     Capture("ending-" + ending.ToLowerInvariant(), SmokeView.Ending);
                 }
                 if (i != 1) game.Ending.Skip();
                 yield return Stage(GameStage.Results, 10);
+                VerifyWaterVisibility(false);
                 Choose("Restart"); yield return Stage(GameStage.Ready);
+                VerifyWaterVisibility(true);
                 Require(!game.Ending.IsPlaying && game.Level == 1 && game.State.WavesSurvived == 0 &&
                     game.State.ActiveWave == null && game.BoardView.gameObject.activeSelf, "Restart left scoring, ending, or board state behind.");
                 for (int cell = 0; cell < game.State.Count; cell++) Require(game.State.IsIntact(cell), "Restart left a hole.");
@@ -305,8 +309,10 @@ namespace FloorFracture.Editor
             scannedRoom.AnchorUpdatedEvent.Invoke(scannedRoom.FloorAnchors.First());
             Require(game.Room.Status == RoomPlacementStatus.UnsafeRoom && game.Stage == GameStage.Room && !game.BoardView.gameObject.activeSelf,
                 "A significant floor-anchor update left the previously confirmed board playable.");
+            VerifyWaterVisibility(false);
             Choose("Check again");
             yield return Wait(() => game.Room.Status == RoomPlacementStatus.Confirmed && game.Stage == GameStage.Welcome, "fresh verified fit after floor update", 55);
+            VerifyWaterVisibility(true);
             VerifySpawnMarkersCleared();
             Record("A simulated significant MRUK floor-anchor event withdrew the board. Reloading the real fixture produced a new verified fit and returned directly to Welcome.");
 
@@ -329,12 +335,14 @@ namespace FloorFracture.Editor
             Require(game.Room.Status == status && game.Stage == GameStage.Room && !game.BoardView.gameObject.activeSelf &&
                 labels.Contains(recoveryLabel) && labels.Contains(retryLabel) && labels.Contains(game.Room.Message),
                 "The room failure must hide the board and display its explanation and both recovery actions.");
+            VerifyWaterVisibility(false);
             yield return Frames(2);
             Choose(retryLabel);
             yield return Wait(() => game.Stage == GameStage.Welcome && game.Room.Status == RoomPlacementStatus.Confirmed,
                 "a valid room after " + result, 55);
             Require(game.BoardView.gameObject.activeSelf && game.State.ActiveWave == null,
                 "Retry must restore the board and leave the next round idle.");
+            VerifyWaterVisibility(true);
             Record("Injected MRUK " + result + ". The blocked board showed " + recoveryLabel +
                 " and " + retryLabel + ". Retry loaded the fixture and restored Welcome.");
         }
@@ -554,9 +562,9 @@ namespace FloorFracture.Editor
             }
         }
 
-        private static void Capture(string name, SmokeView view)
+        private static void Capture(string name, SmokeView view, Bounds? floorBounds = null)
         {
-            string detail = SmokeCapture.Write(Folder, name, game, view);
+            string detail = SmokeCapture.Write(Folder, name, game, view, floorBounds);
             if (detail == null) report.images.Add(name + ".png");
             else report.captureNotes.Add(name + " — " + detail);
             Save();
@@ -579,7 +587,7 @@ namespace FloorFracture.Editor
             public string result = "running", startedUtc, finishedUtc, unityVersion, scene, failure;
             public string fixture = "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode";
             public string input = "Simulated world poses, grip state, and visible menu selection. Unity physics and unscaled game time.";
-            public string imagesDescribe = "Monoscopic Editor renders of the actual scene. Player-view images use the simulated center eye. Room-preview, classic-glass, and neighboring-hole are elevated observer shots. Fall sequences use the same stationary eye position, looking toward the opening, slightly downward, and straight ahead as labeled.";
+            public string imagesDescribe = "Monoscopic Editor renders of the actual scene. Player-view images use the simulated center eye. Whole-room-water looks down on the scanned floor. Room-preview, classic-glass, and neighboring-hole are elevated observer shots. Fall sequences use the same stationary eye position, looking toward the opening, slightly downward, and straight ahead as labeled.";
             public int columns, rows, seed, sdkFloorCandidates;
             public float pitch;
             public bool depthProviderEnabledInAuthoredScene, depthSupportedInFixture;

@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using Meta.XR.BuildingBlocks;
+using Meta.XR.BuildingBlocks.Editor;
 using Meta.XR.EnvironmentDepth;
 using Meta.XR.MRUtilityKit;
 using Oculus.Interaction;
@@ -23,6 +25,8 @@ namespace FloorFracture.Editor
         private const string InteractionsBlock = "Packages/com.meta.xr.sdk.interaction.ovr/Editor/Blocks/Interactions/Interactions.asset";
         private const string RoomPrefab = "Packages/com.meta.xr.mrutilitykit/Core/Tools/MRUK.prefab";
         private const string OutlineShader = "Assets/FloorFracture/Scripts/Room/RoomOutlines.shader";
+        private const string EffectBlockFolder = "Packages/com.meta.xr.mrutilitykit/Editor/BuildingBlocks/EffectMesh/";
+        private const string WaterFolder = "Assets/FloorFracture/Scripts/Room/";
 
         // Called by the main scene author. Re-running keeps the same rig and room owner.
         public static RoomBoardPlacement InstallIntoActiveScene()
@@ -118,6 +122,7 @@ namespace FloorFracture.Editor
             var data = new SerializedObject(placement);
             data.FindProperty("rig").objectReferenceValue = rig;
             data.FindProperty("floorSpawns").objectReferenceValue = floorSpawns;
+            data.FindProperty("floorWaterMesh").objectReferenceValue = InstallFloorWater(scene);
             data.FindProperty("outlineShader").objectReferenceValue = shader;
             data.ApplyModifiedPropertiesWithoutUndo();
             Record(placement);
@@ -127,6 +132,48 @@ namespace FloorFracture.Editor
             ConfigureInteractions(rig, interaction.gameObject);
             EditorSceneManager.MarkSceneDirty(scene);
             return placement;
+        }
+
+        private static EffectMesh InstallFloorWater(Scene scene)
+        {
+            var marker = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<BuildingBlock>(true))
+                .SingleOrDefault(block => block.BlockId == MetaRoomBlocks.EffectMeshId);
+            if (!marker)
+            {
+                // Choose Meta's semantic-surface variant. The global-mesh variant includes walls and objects.
+                var definition = AssetDatabase.LoadAssetAtPath<BlockData>(EffectBlockFolder + "EffectMesh.asset");
+                var routine = AssetDatabase.LoadAssetAtPath<InstallationRoutine>(EffectBlockFolder + "EffectMeshInstallationRoutine.asset");
+                if (!definition || !routine || definition.Id != MetaRoomBlocks.EffectMeshId ||
+                    new SerializedObject(routine).FindProperty("EffectMeshTheme").intValue != 0)
+                    throw new InvalidOperationException("Meta's default Effect Mesh installer is unavailable.");
+                var objects = routine.Install(definition, null);
+                MetaRoomBlocks.RecordInstallation(definition, routine, objects);
+                marker = objects.Single().GetComponent<BuildingBlock>();
+            }
+
+            var effect = marker.GetComponent<EffectMesh>();
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(WaterFolder + "SurroundingWater.shader");
+            var sample = AssetDatabase.LoadAssetAtPath<Material>(
+                "Assets/FloorFracture/Resources/Endings/MetaFloorZone/materials/Water.mat");
+            if (!effect || !shader || !sample || !sample.GetTexture("_WaterNormal"))
+                throw new InvalidOperationException("The floor Effect Mesh or Floor Zone ripple texture is missing.");
+            var material = AssetDatabase.LoadAssetAtPath<Material>(WaterFolder + "SurroundingWater.mat");
+            if (!material)
+            {
+                material = new Material(shader);
+                material.SetTexture("_WaterNormal", sample.GetTexture("_WaterNormal"));
+                AssetDatabase.CreateAsset(material, WaterFolder + "SurroundingWater.mat");
+            }
+            effect.name = "[BuildingBlock] Effect Mesh - Surrounding Floor";
+            effect.Labels = MRUKAnchor.SceneLabels.FLOOR;
+            effect.SpawnOnStart = MRUK.RoomFilter.None;
+            effect.MeshMaterial = material;
+            effect.Colliders = false;
+            effect.CastShadow = false;
+            effect.HideMesh = true;
+            effect.BorderSize = 0;
+            Record(effect);
+            return effect;
         }
 
         private static void InstallGuardianAndDepth(Scene scene, OVRCameraRig rig)

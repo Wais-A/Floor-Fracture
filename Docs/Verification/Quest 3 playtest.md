@@ -11,6 +11,10 @@ Wais tested the first playable development APK in his room. Unity build `build_a
 | Clearance | “The position looked fine, but I had to judge clearance myself.” | Keep the good position. Show the fit calculated from the saved scan and make another spot or Space Setup optional. |
 | Scale | The glass felt confined. Wais wants more floor coverage and wider panes as space grows. He chose a middle width for the next trial and wants to judge it in the headset. | Trial range 50–67 cm per pane. Compare the measured grid size, perceived room to move and single-step reach in the same room. |
 
+## Surrounding-floor review
+
+On the water-floor build, stand on the glass and look across the room toward a wall and behind a chair. Water should fill the scanned floor right up to its edges. After a neighboring pane falls, look into the shaft from a safe pane. Record any water across the shaft, water in front of real furniture, flicker, or uncovered patches. Wearer feedback is pending.
+
 ## Repeat on the revised build
 
 The Editor completed the whole revised game loop with a 6 × 3 board at 65.24 cm per pane. At full motion the hazard started five metres below the rim and reached the opening at about 3.15 seconds. Wais’s physical review determines whether this reads as a fall. The first headset build has a separate measured baseline. [Revised Editor playthrough](<./Adaptive Editor playthrough.json>) · [First Quest metrics](<./First Quest run metrics.json>)

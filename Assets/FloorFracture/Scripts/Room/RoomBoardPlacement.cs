@@ -17,6 +17,7 @@ namespace FloorFracture
     {
         [SerializeField] private OVRCameraRig rig;
         [SerializeField] private FindSpawnPositions floorSpawns;
+        [SerializeField] private EffectMesh floorWaterMesh;
         [SerializeField] private Shader outlineShader = null;
 #if UNITY_EDITOR
         [Tooltip("Load the installed MRUK Rec Room sample and draw its scanned outlines in Play Mode.")]
@@ -36,6 +37,9 @@ namespace FloorFracture
         private MRUKRoom room;
         private List<RoomFloor> floors;
         private RoomOutlineView outlines;
+        private Material floorWater;
+        private MRUKRoom decoratedRoom;
+        private int decoratedRevision = -1;
         private bool busy;
         private int revision;
 
@@ -57,6 +61,11 @@ namespace FloorFracture
             mruk = GetComponent<MRUK>();
             if (!rig) rig = FindAnyObjectByType<OVRCameraRig>();
             outlines = new RoomOutlineView(transform, outlineShader);
+            if (floorWaterMesh && floorWaterMesh.MeshMaterial)
+            {
+                floorWater = new Material(floorWaterMesh.MeshMaterial);
+                floorWaterMesh.MeshMaterial = floorWater;
+            }
         }
 
         private void OnEnable()
@@ -73,9 +82,40 @@ namespace FloorFracture
             mruk.RoomUpdatedEvent.RemoveListener(RoomChanged);
             mruk.RoomRemovedEvent.RemoveListener(RoomChanged);
             RemoveAnchorListeners();
+            ShowFloorWater(false);
         }
 
-        private void OnDestroy() => outlines?.Dispose();
+        private void OnDestroy()
+        {
+            outlines?.Dispose();
+            if (floorWater) Destroy(floorWater);
+        }
+
+        public void ShowFloorWater(bool visible)
+        {
+            if (!floorWaterMesh || !floorWater) return;
+            if (!visible || Status != RoomPlacementStatus.Confirmed || !room)
+            {
+                floorWaterMesh.HideMesh = true;
+                return;
+            }
+
+            // The shader clips the whole grid, including panes that have already fallen.
+            var fit = Placement;
+            float angle = fit.AngleDegrees * Mathf.Deg2Rad;
+            floorWater.SetVector("_BoardFrame", new Vector4(fit.Center.x, fit.Center.y, Mathf.Cos(angle), Mathf.Sin(angle)));
+            floorWater.SetVector("_BoardHalfSize", new Vector4(fit.Columns * fit.Pitch * .5f, fit.Rows * fit.Pitch * .5f, fit.FloorHeight, 0));
+            if (decoratedRoom != room || decoratedRevision != revision)
+            {
+                // Apply the same reviewed scan as the glass, including every native floor patch.
+                floorWaterMesh.DestroyMesh();
+                foreach (var floor in room.FloorAnchors)
+                    if (floor) floorWaterMesh.CreateEffectMesh(floor);
+                decoratedRoom = room;
+                decoratedRevision = revision;
+            }
+            floorWaterMesh.HideMesh = false;
+        }
 
         public void Retry()
         {
@@ -390,6 +430,7 @@ namespace FloorFracture
         {
             Status = next;
             Message = message;
+            ShowFloorWater(next == RoomPlacementStatus.Confirmed);
             bool showFixture = false;
 #if UNITY_EDITOR
             showFixture = useEditorFixture && next == RoomPlacementStatus.NoFit;

@@ -6,7 +6,7 @@ Wais Almakaleh · CSCI 379, Design and Development for XR · Meta Quest 3
 
 ## What the player sees
 
-The real room stays visible. On a clear patch of floor, a rectangle of smoky glass panes sits flush with the ground. A small ring marks the pane under the player's head. A number floats near the far edge. Cracked edges pulse while the timer counts down. At zero every marked pane breaks together. From a neighboring safe square, the player sees fitted shards fall into the opening. If their own support gives way, the shaft grows around them, a surprise ending plays, the view fades to black, and a results panel offers Restart and Quit.
+The player sees their real walls and furniture. Calm water fills the scanned floor around a rectangle of smoky glass laid flush with the ground. A small ring marks the pane under the player's head. A number floats near the far edge. Cracked edges pulse while the timer counts down. At zero every marked pane breaks together. From a neighboring safe square, the player sees fitted shards fall into the opening. If their own support gives way, the shaft grows around them, a surprise ending plays, the view fades to black, and a results panel offers Restart and Quit.
 
 ## Why this Unity stack
 
@@ -42,6 +42,14 @@ Wais chose fixed spoken tutorial and results lines, generated once and bundled f
 Before an AI trial, Wais chooses the feature and provider. Meta's SDK supports different execution locations per provider. Confirm that the chosen model runs on Quest 3 as intended, measure latency and memory, and compare frame times on the same build. An optional explanation can operate on game events without sending a room image. [Meta AI Building Blocks](https://developers.meta.com/vr/documentation/unity/unity-ai-building-blocks-overview/)
 
 The installed 209 `UnityInferenceEngineProvider` implements text-only chat and requires a compatible model and tokenizer. That makes the results coach a concrete offline experiment. The installed Text To Speech block has OpenAI and ElevenLabs providers for generating the clips during authoring. The shipped clips can play from the APK with networking off. Test the coach on a known breaking start, a Memory recall error and an expired gap grace. The answer must match the recorded cause in every case, and the ordinary Results controls must work while it runs.
+
+## Water around the playable glass
+
+Once a room scan supplies a valid board, calm teal water covers the rest of the scanned floor up to the room's actual edges. The glass grid sits like a platform in that water. The visual stops at the outside edge of the grid. The glass, cracked panes and open shafts keep their own appearance. The 40 cm clearance margin still belongs to the space reserved around play. Water in that margin is scenery and never counts as a safe tile.
+
+Use the Meta MRUK **Effect Mesh** block with the **Floor** label and the approved Floor Zone water texture. A board-sized opening follows the fitted rectangle when it moves or rotates. Real walls, ceilings and furniture stay visible in passthrough. Hide the water whenever the scan becomes invalid or the game needs a clear room view. Wais chose water alone for the first version and will decide about wall styling later. [Meta Effect Mesh](https://developers.meta.com/vr/documentation/unity/unity-mr-utility-kit-manage-scene-data/) · [Meta Floor Zone](https://developers.meta.com/vr/documentation/unity/unity-sample-mruk-floor-zone/)
+
+The overhead Unity render shows the 6 × 3 board in Meta’s Rec Room fixture. The thin lines around the perimeter and furniture are the Editor’s room-scan preview. [View the whole floor](<./Docs/Media/whole-room-water.png>) · [Editor verification](<./Docs/Verification/Surrounding floor Editor playthrough.json>)
 
 ## Where the game lives
 
