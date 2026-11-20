@@ -22,7 +22,7 @@ namespace FloorFracture
 
     internal static class FloorGeometry
     {
-        // Allow coincident boundaries at exactly the specified 0.4 m clearance.
+        // Allow exact edge contact within 0.01 mm of floating-point roundoff.
         internal const float Epsilon = 0.00001f;
 
         internal static float Cross(Vector2 a, Vector2 b) => a.x * b.y - a.y * b.x;

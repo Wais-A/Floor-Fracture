@@ -7,7 +7,6 @@ namespace FloorFracture
 {
     public readonly struct BoardPlacement
     {
-        public const float Clearance = 0.4f;
         public readonly int Columns;
         public readonly int Rows;
         public readonly Vector2 Center;
@@ -36,10 +35,10 @@ namespace FloorFracture
             return Center + new Vector2(c * x - s * z, s * x + c * z);
         }
 
-        public Vector2[] ClearanceOutline()
+        public Vector2[] FootprintOutline()
         {
-            float x = Columns * Pitch / 2f + Clearance;
-            float z = Rows * Pitch / 2f + Clearance;
+            float x = Columns * Pitch / 2f;
+            float z = Rows * Pitch / 2f;
             return new[] { ToWorldXZ(-x, -z), ToWorldXZ(x, -z), ToWorldXZ(x, z), ToWorldXZ(-x, z) };
         }
     }
@@ -50,32 +49,30 @@ namespace FloorFracture
 
         private readonly struct Coverage : IComparable<Coverage>
         {
-            // Measure the rectangle between the outermost pane centers: a two-row
-            // strip offers one sideways step, a three-row board offers two. Round
-            // areas to cm² and lengths to mm so equivalent rotated fits tie.
-            private readonly int travelAreaCm2, shortTravelMm, glassAreaCm2;
+            // Cover as many physical square meters as possible. At equal area prefer
+            // the wider short side, then larger panes for an identical footprint.
+            // Round areas to cm² and lengths to mm so equivalent rotated fits tie.
+            private readonly int glassAreaCm2, shortSideMm, paneWidthMm;
 
             public Coverage(int columns, int rows, float pitch)
             {
-                float paneAreaCm2 = pitch * pitch * 10000f;
-                travelAreaCm2 = Mathf.RoundToInt((columns - 1) * (rows - 1) * paneAreaCm2);
-                shortTravelMm = Mathf.RoundToInt((Math.Min(columns, rows) - 1) * pitch * 1000f);
-                glassAreaCm2 = Mathf.RoundToInt(columns * rows * paneAreaCm2);
+                glassAreaCm2 = Mathf.RoundToInt(columns * rows * pitch * pitch * 10000f);
+                shortSideMm = Mathf.RoundToInt(Math.Min(columns, rows) * pitch * 1000f);
+                paneWidthMm = Mathf.RoundToInt(pitch * 1000f);
             }
 
             public int CompareTo(Coverage other)
             {
-                int travel = travelAreaCm2.CompareTo(other.travelAreaCm2);
-                if (travel != 0) return travel;
-                int width = shortTravelMm.CompareTo(other.shortTravelMm);
-                return width != 0 ? width : glassAreaCm2.CompareTo(other.glassAreaCm2);
+                int area = glassAreaCm2.CompareTo(other.glassAreaCm2);
+                if (area != 0) return area;
+                int width = shortSideMm.CompareTo(other.shortSideMm);
+                return width != 0 ? width : paneWidthMm.CompareTo(other.paneWidthMm);
             }
 
             public float MinimumCompetitivePitch(int columns, int rows)
             {
-                // Start just below this rounded travel area so the width and glass
-                // area tie breakers remain available at the same coverage.
-                return Mathf.Sqrt(Math.Max(0, travelAreaCm2 - 1) / (10000f * (columns - 1) * (rows - 1)));
+                // Include all pitches that could tie this rounded area.
+                return Mathf.Sqrt(Math.Max(0, glassAreaCm2 - 1) / (10000f * columns * rows));
             }
         }
 
@@ -122,23 +119,28 @@ namespace FloorFracture
                 var angles = new List<float> { 0f };
                 AddEdgeDirections(floor.Boundary, angles);
                 foreach (var obstacle in floor.Obstacles) AddEdgeDirections(obstacle, angles);
-                for (int angle = 5; angle < 90; angle += 5) AddAngle(angle, angles);
+                // Furniture can make the best rectangle fall between scan-edge directions.
+                for (int angle = 1; angle < 90; ++angle) AddAngle(angle, angles);
                 foreach (float angle in angles)
                 {
+                    cancellation.ThrowIfCancellationRequested();
                     var frame = new Frame(floor, angle);
                     frame.PrepareSearch(preferredCenter, suggestions);
                     // Every legal footprint contains this one. In a cluttered scan a
-                    // single failed search removes this orientation for all 49 shapes.
+                    // single failed search removes this orientation for every shape.
                     if (frame.PitchLimit(BoardState.MinAxis, BoardState.MinAxis) < BoardState.MinPitch - FloorGeometry.Epsilon ||
                         !frame.TryFindCenter(HalfSize(BoardState.MinAxis, BoardState.MinAxis, BoardState.MinPitch),
                             cancellation, out _)) continue;
-                    for (int columns = BoardState.MinAxis; columns <= BoardState.MaxAxis; ++columns)
-                    for (int rows = BoardState.MinAxis; rows <= BoardState.MaxAxis; ++rows)
+                    for (int columns = BoardState.MinAxis; columns <= frame.MaximumCounts.x; ++columns)
                     {
-                        float upper = frame.PitchLimit(columns, rows);
-                        if (upper >= BoardState.MinPitch - FloorGeometry.Epsilon)
-                            candidates.Add(new Candidate(frame, columns, rows, Mathf.Max(BoardState.MinPitch, upper),
-                                candidates.Count));
+                        int maxRows = Math.Min(frame.MaximumCounts.y, BoardState.MaxRowsFor(columns));
+                        for (int rows = BoardState.MinAxis; rows <= maxRows; ++rows)
+                        {
+                            float upper = frame.PitchLimit(columns, rows);
+                            if (upper >= BoardState.MinPitch - FloorGeometry.Epsilon)
+                                candidates.Add(new Candidate(frame, columns, rows, Mathf.Max(BoardState.MinPitch, upper),
+                                    candidates.Count));
+                        }
                     }
                 }
             }
@@ -147,27 +149,24 @@ namespace FloorFracture
                 int coverage = b.MaximumCoverage.CompareTo(a.MaximumCoverage);
                 return coverage != 0 ? coverage : a.Order.CompareTo(b.Order);
             });
-            float minimumArea = LegacyCoverage(candidates, cancellation);
             Coverage bestCoverage = default;
-            float bestDistance = float.PositiveInfinity;
+            int bestDistanceMm = int.MaxValue;
             int bestOrder = int.MaxValue;
             foreach (var candidate in candidates)
             {
                 cancellation.ThrowIfCancellationRequested();
                 int upperComparison = candidate.MaximumCoverage.CompareTo(bestCoverage);
                 if (upperComparison < 0 ||
-                    (upperComparison == 0 && bestDistance == 0f && candidate.Order >= bestOrder)) break;
+                    (upperComparison == 0 && bestDistanceMm == 0 && candidate.Order >= bestOrder)) break;
                 int columns = candidate.Columns, rows = candidate.Rows;
                 Frame frame = candidate.Frame;
                 float pitch = candidate.MaximumPitch;
-                float coveragePitch = Mathf.Sqrt(minimumArea / (columns * rows));
-                if (columns * rows * pitch * pitch < minimumArea) continue;
                 if (!frame.TryFindCenter(HalfSize(columns, rows, pitch), cancellation, out var center))
                 {
                     // Smaller rectangles nest inside larger ones. Only search pitches that
                     // can improve the current winner and retain an explicitly certified fit.
-                    float cutoff = bestCoverage.MinimumCompetitivePitch(columns, rows);
-                    float low = Mathf.Max(coveragePitch, Mathf.Max(BoardState.MinPitch, cutoff)), high = pitch;
+                    float low = Mathf.Max(BoardState.MinPitch, bestCoverage.MinimumCompetitivePitch(columns, rows));
+                    float high = pitch;
                     if (low >= high || !frame.TryFindCenter(HalfSize(columns, rows, low), cancellation, out center))
                         continue;
                     while (high - low > PitchPrecision)
@@ -182,37 +181,20 @@ namespace FloorFracture
                     }
                     pitch = low;
                 }
-                if (columns * rows * pitch * pitch < minimumArea) continue;
                 Vector2 world = frame.ToWorld(center);
                 var coverage = new Coverage(columns, rows, pitch);
                 int comparison = coverage.CompareTo(bestCoverage);
-                float distance = (world - preferredCenter).sqrMagnitude;
+                // Projecting the same Meta hint through different frames can differ
+                // by a few float bits. Compare physical distance at millimeter precision.
+                int distanceMm = Mathf.RoundToInt((world - preferredCenter).magnitude * 1000f);
                 if (comparison < 0 || (comparison == 0 &&
-                    (distance > bestDistance || (distance == bestDistance && candidate.Order >= bestOrder)))) continue;
+                    (distanceMm > bestDistanceMm || (distanceMm == bestDistanceMm && candidate.Order >= bestOrder)))) continue;
                 bestCoverage = coverage;
-                bestDistance = distance;
+                bestDistanceMm = distanceMm;
                 bestOrder = candidate.Order;
                 placement = new BoardPlacement(world, frame.Height, frame.Angle, columns, rows, pitch);
             }
             return bestOrder != int.MaxValue;
-        }
-
-        private static float LegacyCoverage(List<Candidate> candidates, CancellationToken cancellation)
-        {
-            // Preserve the largest playable area that the previous fixed 50 cm, 2–4
-            // pane-per-axis layout could actually fit on these same floor and obstacle polygons.
-            int mostCells = 0;
-            foreach (var candidate in candidates)
-            {
-                int cells = candidate.Columns * candidate.Rows;
-                if (candidate.Columns > 4 || candidate.Rows > 4 || cells <= mostCells) continue;
-                cancellation.ThrowIfCancellationRequested();
-                var half = HalfSize(candidate.Columns, candidate.Rows, BoardState.MinPitch);
-                if (!candidate.Frame.TryFindCenter(half, cancellation, out _)) continue;
-                mostCells = cells;
-                if (cells == 16) break;
-            }
-            return mostCells * BoardState.MinPitch * BoardState.MinPitch;
         }
 
         public static bool Fits(RoomFloor floor, BoardPlacement placement)
@@ -220,8 +202,7 @@ namespace FloorFracture
             if (!IsUsable(floor) || !FloorGeometry.Finite(placement.Center) ||
                 !FloorGeometry.Finite(placement.AngleDegrees) || !FloorGeometry.Finite(placement.FloorHeight) ||
                 Mathf.Abs(floor.Height - placement.FloorHeight) > 0.025f ||
-                placement.Columns < BoardState.MinAxis || placement.Columns > BoardState.MaxAxis ||
-                placement.Rows < BoardState.MinAxis || placement.Rows > BoardState.MaxAxis ||
+                placement.Rows < BoardState.MinAxis || placement.Rows > BoardState.MaxRowsFor(placement.Columns) ||
                 !(placement.Pitch >= BoardState.MinPitch && placement.Pitch <= BoardState.MaxPitch)) return false;
             var frame = new Frame(floor, placement.AngleDegrees);
             return frame.Admits(frame.ToLocal(placement.Center), HalfSize(placement.Columns, placement.Rows, placement.Pitch));
@@ -240,7 +221,7 @@ namespace FloorFracture
         }
 
         private static Vector2 HalfSize(int columns, int rows, float pitch) => new Vector2(
-            columns * pitch / 2f + BoardPlacement.Clearance, rows * pitch / 2f + BoardPlacement.Clearance);
+            columns * pitch / 2f, rows * pitch / 2f);
 
         private static void AddEdgeDirections(Vector2[] outline, List<float> angles)
         {
@@ -295,6 +276,7 @@ namespace FloorFracture
         private sealed class Frame
         {
             public readonly float Height, Angle;
+            public readonly Vector2Int MaximumCounts;
             private readonly Vector2 right, forward;
             private readonly Shape floor;
             private readonly List<Shape> obstacles = new List<Shape>();
@@ -310,8 +292,13 @@ namespace FloorFracture
                 right = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
                 forward = new Vector2(-right.y, right.x);
                 floor = Project(source.Boundary);
+                var span = floor.Max - floor.Min;
+                MaximumCounts = new Vector2Int(AxisCount(span.x), AxisCount(span.y));
                 foreach (var outline in source.Obstacles) obstacles.Add(Project(outline));
             }
+
+            private static int AxisCount(float meters) => Math.Min(BoardState.MaxAxis,
+                Mathf.FloorToInt((meters + FloorGeometry.Epsilon) / BoardState.MinPitch));
 
             public Vector2 ToLocal(Vector2 point) => new Vector2(Vector2.Dot(point, right), Vector2.Dot(point, forward));
             public Vector2 ToWorld(Vector2 point) => right * point.x + forward * point.y;
@@ -345,10 +332,7 @@ namespace FloorFracture
             {
                 float limit = BoardState.MaxPitch;
                 foreach (var span in spanLimits)
-                {
-                    float clearance = 2f * BoardPlacement.Clearance * (span.x + span.y);
-                    limit = Mathf.Min(limit, (span.z - clearance) / (columns * span.x + rows * span.y));
-                }
+                    limit = Mathf.Min(limit, span.z / (columns * span.x + rows * span.y));
                 return limit;
             }
 
@@ -374,7 +358,7 @@ namespace FloorFracture
                 foreach (var shape in obstacles)
                 {
                     if (shape.EdgesEnter(min, max)) return false;
-                    // A large furniture footprint can contain the whole padded board.
+                    // A large furniture footprint can contain the whole board.
                     if (shape.Points.Length >= 3 && center.x >= shape.Min.x && center.x <= shape.Max.x &&
                         center.y >= shape.Min.y && center.y <= shape.Max.y &&
                         FloorGeometry.Contains(shape.Points, center)) return false;

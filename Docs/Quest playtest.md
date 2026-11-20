@@ -8,7 +8,7 @@ Use one copy per APK and test room. Record observations from the headset and lea
 | APK filename, version, commit or SHA-256 | |
 | Headset OS, refresh rate, controller model | |
 | Main scene, build type, OVR Metrics capture filename | |
-| Board dimensions, tile pitch, margin, countdown, gap grace | |
+| Board dimensions, tile pitch, glass footprint, countdown, gap grace | |
 
 ### Room and controls
 
@@ -16,11 +16,11 @@ Use one copy per APK and test room. Record observations from the headset and lea
 | --- | --- | --- |
 | 020, 026 | Launch from the Quest library. Move and turn your head, move each controller separately, and compare the floor and scanned furniture against the real room. | |
 | 023–024, 032–034 | Deny spatial permission, grant it, and try a room with no saved scan. On a valid scan, check automatic placement and the dimensions on Welcome. Choose Play area → Try another spot and inspect the replacement or recovery message. | |
-| 028–034 | Spacious floor. Record rows, columns and centimetres per pane. Walk an ordinary one-step route. Compare coverage, pane width and margin with the smaller room. | |
+| 028–034 | Spacious floor. Record rows, columns and centimetres per pane. Walk an ordinary one-step route. Record the extent of clear floor beyond the board and any object or scan edge there. Keep the same saved scan when comparing builds. | |
 | 028–034 | Narrow floor. Record the rectangular board dimensions, centimetres per pane and whether each tile is reachable. | |
 | 028–034 | Furniture beside a corner or crossing the center. Compare the outline with the obstruction. | |
 | 033–034 | Insufficient room. Record the message, passthrough visibility, and result of rescanning. | |
-| 037–044, 120 | Use each ray from seated and standing menu positions. Try both grips, miss with the stone, repeat, skip, and change each setting. Describe any coaching. | |
+| 037–044, 120 | Use each ray from seated and standing menu positions. Finish the untimed stepping tutorial. Enter optional stone practice, try both grips, miss, hit any pane, and leave for the game. Describe any coaching. | |
 
 ### Movement, visibility, and endings
 

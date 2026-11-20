@@ -1,0 +1,268 @@
+{
+  "unity": "6000.6.9f1",
+  "testRunUtc": "2026-11-20 02:56:46Z",
+  "durationSeconds": 117.5854217,
+  "filter": "FloorFracture.Tests",
+  "passed": 52,
+  "failed": 0,
+  "fixtures": [
+    {
+      "room": "unobstructed square",
+      "sizeMetres": [
+        1.946,
+        1.946
+      ],
+      "previous": {
+        "columns": 2,
+        "rows": 2,
+        "pitchMetres": 0.573
+      },
+      "current": {
+        "columns": 3,
+        "rows": 3,
+        "pitchMetres": 0.648667
+      }
+    },
+    {
+      "room": "same square with cabinet across one third",
+      "sizeMetres": [
+        1.946,
+        1.946
+      ],
+      "previous": "no fit",
+      "current": {
+        "columns": 2,
+        "rows": 3,
+        "pitchMetres": 0.648667
+      }
+    },
+    {
+      "room": "clear long rectangle",
+      "sizeMetres": [
+        5.5,
+        2.54
+      ],
+      "previous": {
+        "columns": 8,
+        "rows": 3,
+        "pitchMetres": 0.58
+      },
+      "current": {
+        "columns": 11,
+        "rows": 5,
+        "pitchMetres": 0.5
+      }
+    }
+  ],
+  "shapeBounds": "At least two panes each way, 50–67 cm per pane, at most 64 panes total. Exact scan-edge bearings plus one-degree orientations.",
+  "tests": [
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.ABoardWithMoreGlassBeatsASmallerSquareNearThePlayer",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.AddsARowWhenClearFloorExtendsAlongTheLongSide",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.ConcavityBetweenFourInteriorCornersIsRejected",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.EqualGlassAreaFavorsTheWiderShapeThenLargerPanes",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.ExcludingADeclinedPatchProducesADisjointPreview",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FillsTheClearSquareThatPreviouslyProducedTwoByTwoAt57Centimeters",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FindsOffsetSlotBoundedOnlyByFurnitureAndAThinWall",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FindsTheLargerSixDegreeFitBetweenThreeSupports",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FourCornersTouchingTheOutsideOfAnExactNotchIsNotFloor",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FurnitureLimitsOnlyTheOccupiedSideOfTheSameSquare",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.InteriorFurnitureCrossingWallsAndEnclosingVolumesAreRejected",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.KeepsFullSizedTilesWhenTheMinimumCannotFit",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.KeepsTwoRowsWhenTheLongSideMeetsAWallOrFurniture(False)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.KeepsTwoRowsWhenTheLongSideMeetsAWallOrFurniture(True)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MatchesOrExceedsEveryAlignedShapeOnRectangularScans",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(1.0f,1.0f,2,2,0.5f,1.0f,1.0f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(1.8f,1.8f,3,3,0.6f,1.8f,1.8f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(1.94f,1.94f,3,3,0.6466667f,1.94f,1.94f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(2.06f,2.06f,4,4,0.515f,2.06f,2.06f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(2.3f,2.8f,4,5,0.56f,2.24f,2.8f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(2.8f,2.3f,5,4,0.56f,2.8f,2.24f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(3.2f,3.6f,6,7,0.5142857f,3.085714f,3.6f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(4.0f,4.2f,6,6,0.6666667f,4.0f,4.0f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(5.6f,5.6f,8,8,0.67f,5.36f,5.36f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(7.0f,7.0f,8,8,0.67f,5.36f,5.36f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(6.4f,2.0f,10,3,0.64f,6.4f,1.92f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(1.8f,6.8f,3,11,0.6f,1.8f,6.6f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(8.04f,2.68f,12,4,0.67f,8.04f,2.68f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(21.44f,1.34f,32,2,0.67f,21.44f,1.34f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.MaximizesTheWholeGlassFootprint(1.34f,21.44f,2,32,0.67f,1.34f,21.44f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.PreservesAnExactRotatedLegacyPatchBetweenFurniture",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.RectanglesCertifyHeadFirstThenClosestSuggestedCenterAndKeepFallback",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.RejectsCrossedOrMissingFloorGeometry",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.RejectsFurnitureInsideGlassAndAcceptsExactEdgeContact",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.RotatedExactWidthFloorPreservesPoseAndMetricPitch(23.68f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.RotatedExactWidthFloorPreservesPoseAndMetricPitch(0.005f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.CoordinatesAndSeams",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.DeadlinesAndPause",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.EverySeededSurvivalPath",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.ExistingShapesKeepTheirSeededPatterns(8,8,63,1312379596,55)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.ExistingShapesKeepTheirSeededPatterns(7,2,13,-682530180,6)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.ExistingShapesKeepTheirSeededPatterns(4,3,5,-1147934979,1)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.ExistingShapesKeepTheirSeededPatterns(2,2,0,-255926220,2)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.LargerBoardSurvivalPaths",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.LongDimensionsAndStartingPanesUseDistinctBitsInThePatternSeed",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.ModesAndReset",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.RejectsUnsupportedDimensionsBeforeResettingTheBoard(8,9)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.RejectsUnsupportedDimensionsBeforeResettingTheBoard(3,22)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.RejectsUnsupportedDimensionsBeforeResettingTheBoard(33,2)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.RejectsUnsupportedDimensionsBeforeResettingTheBoard(1,32)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.RejectsUnsupportedDimensionsBeforeResettingTheBoard(2,int.MaxValue)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.SlidersAndGrace",
+      "result": "Passed"
+    }
+  ]
+}

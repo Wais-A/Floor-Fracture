@@ -102,8 +102,8 @@ namespace FloorFracture.Tests
             int starts = 0, plans = 0, choices = 0, visited63 = 0;
             foreach (int seed in new[] { 0, 379, -17, int.MinValue })
             foreach (int level in new[] { 1, 3 })
-            for (int width = 2; width <= 8; ++width)
-            for (int height = 2; height <= 8; ++height)
+            for (int width = 2; width <= 32; ++width)
+            for (int height = 2; height <= 64 / width; ++height)
             {
                 if (width <= 4 && height <= 4) continue; // All branches are replayed by CheckSequences.
                 for (int initial = 0; initial < width * height; ++initial)
@@ -198,8 +198,8 @@ namespace FloorFracture.Tests
         public static void CoordinatesAndSeams()
         {
             foreach (float pitch in new[] {0.5f, 0.57f, 0.6367f, 0.67f})
-            for (int w = 2; w <= 8; ++w)
-            for (int h = 2; h <= 8; ++h)
+            for (int w = 2; w <= 32; ++w)
+            for (int h = 2; h <= 64 / w; ++h)
             {
                 var board = new BoardState(w, h, 0, pitch);
                 float left = -w * pitch * 0.5f, bottom = -h * pitch * 0.5f;

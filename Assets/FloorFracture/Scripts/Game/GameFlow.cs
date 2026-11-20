@@ -27,6 +27,7 @@ namespace FloorFracture
         string roundText,clockText;
         bool lastReveal;
         static readonly string[] EndingNames={"Water","Lava","Crystal","Space","Sand","Snow"};
+        const string StoneInstructions="Grab the stone with your hand or controller. Drop or gently toss it onto any intact glass pane.";
         static MenuChoice Choice(string text,Action action) => new(text,action);
         static double Now => Time.unscaledTimeAsDouble;
         bool Tracked => !appPaused&&Panel&&Panel.Tracked&&Room&&Room.IsRoomLocalized;
@@ -95,7 +96,7 @@ namespace FloorFracture
         {
             Stage=GameStage.PlayArea;
             Room.ShowClearance(true);
-            Panel.Show("Play area",Room.Message+"\nThe gold outline shows the margin. If something moved since your scan, choose another spot or update it.",
+            Panel.Show("Play area",Room.Message+"\nCheck that the outlined play area is still clear. If furniture moved since the scan, choose another spot or update your room.",
                 Choice("Back",Home),Choice("Try another spot",Room.Decline),Choice("Space Setup",Room.RequestSpaceSetup));
         }
         void Settings()
@@ -115,27 +116,50 @@ namespace FloorFracture
         void StartPractice()
         {
             Room.ShowClearance(false);
-            Stage=GameStage.PracticeStone; BoardView.RestorePracticePane();
-            tutorial.Begin(State,BoardView.Board,Panel,PracticeHit);
-            Panel.Show("Try the glass","Grip the stone in front of you. Let go above the cracked pane.",Choice("Return stone",StartPractice),Choice("Skip tutorial",EndPractice));
+            tutorial.End();
+            BoardView.ClearTransient();
+            Stage=GameStage.PracticeStep;
+            waitUntil=0;
+            practiceStart=-1;
+            Panel.Show("Practice stepping","Stand on intact glass and find the ring beneath you. Your pane will light up with cracks. Step onto clear glass beside it.",
+                Choice("Try the stone (optional)",StartStonePractice),Choice("Go to game",LeavePractice));
         }
-        void PracticeHit()
+        void StartStonePractice()
         {
-            int tile=tutorial.Target; BoardView.PracticeBreak(tile);
-            sound.Break(BoardView.transform.TransformPoint(GlassGeometry.Ground(State.Center(tile))),1);
-            Stage=GameStage.PracticeStep; practiceStart=-1; waitUntil=Now+1.1;
-            Panel.Show("Find your marker","Watch the shards. Then stand on intact glass and step onto another pane.",Choice("Repeat stone",StartPractice),Choice("Skip tutorial",EndPractice));
+            Room.ShowClearance(false);
+            Stage=GameStage.PracticeStone;
+            waitUntil=0;
+            BoardView.RestorePracticePane();
+            tutorial.Begin(State,BoardView.Board,Panel,StoneLanded);
+            Panel.Show("Stone practice",StoneInstructions,
+                Choice("Return stone",StartStonePractice),Choice("Practice stepping",StartPractice),Choice("Go to game",LeavePractice));
         }
-        void EndPractice()
+        void StoneLanded(int tile)
         {
-            tutorial.End(); BoardView.ClearTransient(); Ready("Practice complete. Stand on a pane and start when ready.");
+            if(tile<0)
+            {
+                Panel.SetBody("The stone missed the glass. Pick it up for another try on any intact pane.");
+                return;
+            }
+            BoardView.PracticeBreak(tile);
+            sound.Break(BoardView.Board.TransformPoint(GlassGeometry.Ground(State.Center(tile))),1);
+            Panel.SetBody("That pane shattered. The glass and stone will return for another try.");
+            waitUntil=Now+1.1;
         }
-        void Ready(string text)
+        void LeavePractice()
+        {
+            tutorial.End();
+            BoardView.ClearTransient();
+            Ready("Stand on intact glass and start when ready.");
+        }
+        void Ready(string text,bool offerStone=false)
         {
             Room.ShowFloorSurface(true);
             Room.ShowClearance(false);
             Stage=GameStage.Ready; BoardView.gameObject.SetActive(true);
-            Panel.Show("Level "+Level,text,Choice("Start wave",TryStart),Choice("Main menu",()=>{StartBoard(); Home();}));
+            var start=Choice("Start wave",TryStart);
+            var menu=Choice("Main menu",()=>{StartBoard(); Home();});
+            Panel.Show("Level "+Level,text,offerStone ? new[]{start,Choice("Try the stone (optional)",StartStonePractice),menu} : new[]{start,menu});
         }
         void TryStart()
         {
@@ -170,18 +194,38 @@ namespace FloorFracture
             }
             if(Stage==GameStage.Paused) return;
             var sample=State.Sample(HeadXZ,Tracked,now);
-            int warning=Stage==GameStage.Settings?0:(Stage==GameStage.PracticeStone?tutorial.Target:-1);
-            BoardView.Draw(null,sample,now,gentle,warning);
-            if(Stage==GameStage.PracticeStep&&now>=waitUntil)
+            if(Stage==GameStage.PracticeStone&&waitUntil>0&&now>=waitUntil)
             {
+                waitUntil=0;
                 BoardView.RestorePracticePane();
-                if(sample.Kind==SupportKind.Glass)
+                tutorial.ReturnStone();
+                Panel.SetBody(StoneInstructions);
+            }
+            if(Stage==GameStage.PracticeStep)
+            {
+                if(waitUntil>0&&now>=waitUntil)
                 {
-                    if(practiceStart<0) practiceStart=sample.Index;
-                    else if(sample.Index!=practiceStart) { sound.Completion(); EndPractice(); }
+                    BoardView.RestorePracticePane();
+                    Ready("You reached clear glass. In a wave, leave cracked glass before zero.",true);
+                }
+                else if(waitUntil==0&&sample.Kind==SupportKind.Glass&&practiceStart<0)
+                {
+                    practiceStart=sample.Index;
+                    Panel.SetBody("Your ring is on cracked glass. Step onto a clear pane that shares an edge with it. Take your time.");
+                }
+                else if(waitUntil==0&&sample.Kind==SupportKind.Glass&&State.Neighbors(practiceStart,sample.Index))
+                {
+                    BoardView.PracticeBreak(practiceStart);
+                    sound.Break(BoardView.Board.TransformPoint(GlassGeometry.Ground(State.Center(practiceStart))),1);
+                    sound.Completion();
+                    Panel.SetBody("You reached clear glass. The cracked pane you left just shattered.");
+                    waitUntil=now+1.1;
                 }
             }
-            string message=Stage==GameStage.BetweenWaves?(levelFinished?"LEVEL CLEAR":"SAFE"):Stage==GameStage.PracticeStone?"DROP THE STONE":Stage==GameStage.PracticeStep?"STEP TO ANOTHER PANE":"";
+            int warning=Stage==GameStage.Settings?0:Stage==GameStage.PracticeStep&&waitUntil==0?practiceStart:-1;
+            BoardView.Draw(null,sample,now,gentle,warning);
+            string message=Stage==GameStage.BetweenWaves?(levelFinished?"LEVEL CLEAR":"SAFE"):Stage==GameStage.PracticeStone?"TRY ANY GLASS PANE":
+                Stage==GameStage.PracticeStep?(waitUntil>0?"SAFE":practiceStart<0?"STAND ON GLASS":"STEP TO CLEAR GLASS"):"";
             BoardView.SetReadout(message,Panel.Head);
         }
         void UpdateWave(double now)

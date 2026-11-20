@@ -37,7 +37,7 @@ namespace FloorFracture.Editor
             var renderers = anchors.Values.Select(o => o.effectMeshGO.GetComponent<MeshRenderer>()).ToArray();
             var material = effect.MeshMaterial;
             Require(renderers.All(r => r && r.enabled && r.sharedMaterial == material) &&
-                material.shader.name == "Floor Fracture/Surrounding Brick" && material.HasProperty("_MortarColor"),
+                material.shader.name == "Floor Fracture/Surrounding Brick" && material.HasProperty("_RequireEnvironmentDepth"),
                 "The native floor patches must use the shaft-style brick material.");
 
             // Isolate the real scanned floor for a top-down GPU readback. Use the same mesh as its own reference.
@@ -83,8 +83,9 @@ namespace FloorFracture.Editor
                 var completeFloor = Read();
                 var colors = completeFloor.Where(IsBrick).ToArray();
                 Require(colors.Length > 100 && colors.Max(c => c.r) - colors.Min(c => c.r) > 20 &&
-                    colors.Count(c => c.r > c.g && c.g > c.b) > colors.Length * .8f,
-                    "Expected warm brick faces with distinguishable recessed joints.");
+                    colors.Count(c => c.b > c.g && c.g > c.r) > colors.Length * .95f,
+                    "Expected blue shaft stone with distinguishable recessed joints.");
+                VerifyMasonryMatch(material, camera, Read);
                 material.SetFloat("_RequireEnvironmentDepth", 1);
                 Require(!Read().Any(IsBrick), "A Quest without a depth frame would paint virtual brick over real objects.");
                 VerifyFloorDepth(renderers, material, camera, size, Read, completeFloor);
@@ -145,6 +146,71 @@ namespace FloorFracture.Editor
             Capture("whole-room-brick", SmokeView.RoomOverview, bounds);
             Capture("brick-player-height", SmokeView.FloorEdge);
             Record("GPU readbacks of the actual MRUK floor showed masonry to its scanned edges with a clear glass footprint at the fitted orientation and a further 31-degree rotation. A board one metre above the floor left the full floor covered.");
+        }
+
+        // Compare the actual shaders at identical metre coordinates and with neutral light.
+        private static void VerifyMasonryMatch(Material floorMaterial, Camera camera, System.Func<Color32[]> read)
+        {
+            const int layer = 31;
+            var rotation = camera.transform.rotation;
+            var position = camera.transform.position;
+            var size = camera.orthographicSize;
+            int mask = camera.cullingMask;
+            var sample = new GameObject("Masonry verification swatch");
+            var stencil = new GameObject("Verification aperture");
+            var mesh = new Mesh();
+            var aperture = new Material(Resources.Load<Shader>("FloorFractureMask"));
+            var neighbor = new Material(Resources.Load<Shader>("FloorFractureDepth"));
+            var chamber = new Material(Resources.Load<Shader>("Endings/Chamber"));
+            try
+            {
+                var vertices = new[] {new Vector3(-1,-1,0), new Vector3(1,-1,0), new Vector3(1,1,0), new Vector3(-1,1,0)};
+                mesh.vertices = vertices;
+                mesh.colors = Enumerable.Repeat(Color.white, 4).ToArray();
+                mesh.uv = vertices.Select(v => new Vector2(v.x, -v.y)).ToArray();
+                // FallMeshes supplies a face number in TEXCOORD1 on every shaft vertex.
+                mesh.uv2 = new Vector2[4];
+                mesh.triangles = new[] {0,1,2,0,2,3};
+                foreach (var obj in new[] {sample, stencil})
+                {
+                    obj.layer = layer;
+                    obj.transform.rotation = Quaternion.Euler(-90,0,0);
+                    obj.AddComponent<MeshFilter>().sharedMesh = mesh;
+                }
+                stencil.AddComponent<MeshRenderer>().sharedMaterial = aperture;
+                var surface = sample.AddComponent<MeshRenderer>();
+                surface.sharedMaterial = floorMaterial;
+                camera.cullingMask = 1 << layer;
+                camera.orthographicSize = .8f;
+                camera.transform.SetPositionAndRotation(Vector3.up * 2, Quaternion.LookRotation(Vector3.down, Vector3.forward));
+                var floor = read();
+                Require(floor.All(IsBrick), "The masonry swatch must fill the test camera.");
+                neighbor.SetFloat("_Courses", 1);
+                chamber.SetFloat("_Role", 1);
+                chamber.SetFloat("_Theme", 2);
+                foreach (var material in new[] {neighbor, chamber})
+                {
+                    surface.sharedMaterial = material;
+                    var pixels = read();
+                    int matched = 0;
+                    for (int i = 0; i < pixels.Length; i++)
+                    {
+                        var a = pixels[i]; var b = floor[i];
+                        if (Mathf.Abs(a.r - b.r) <= 2 && Mathf.Abs(a.g - b.g) <= 2 && Mathf.Abs(a.b - b.b) <= 2) matched++;
+                    }
+                    Require(matched >= floor.Length * .98f,
+                        $"{material.shader.name} matches the floor's masonry at {matched}/{floor.Length} pixels.");
+                }
+                Record("The exterior floor, neighboring hole and falling shaft rendered matching blue brick faces and mortar at the same physical scale.");
+            }
+            finally
+            {
+                camera.cullingMask = mask;
+                camera.orthographicSize = size;
+                camera.transform.SetPositionAndRotation(position, rotation);
+                foreach (Object item in new Object[] {sample, stencil, mesh, aperture, neighbor, chamber})
+                    Object.DestroyImmediate(item);
+            }
         }
 
         // Magenta is the sentinel for passthrough. No virtual geometry was drawn there.

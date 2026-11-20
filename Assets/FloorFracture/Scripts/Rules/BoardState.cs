@@ -5,7 +5,7 @@ namespace FloorFracture
 {
     public sealed class BoardState
     {
-        public const int MinAxis = 2, MaxAxis = 8;
+        public const int MinAxis = 2, MaxPanes = 64, MaxAxis = MaxPanes / MinAxis;
         public const float MinPitch = 0.50f, MaxPitch = 0.67f;
         public float Pitch { get; private set; }
         public int Width { get; private set; }
@@ -18,7 +18,7 @@ namespace FloorFracture
         public TileSample CurrentSample => tracker.Current;
         public bool BreaksApplied { get; private set; }
         internal ulong StationaryMask { get; private set; }
-        internal ulong FullMask => ulong.MaxValue >> (64 - Count);
+        internal ulong FullMask => ulong.MaxValue >> (MaxPanes - Count);
 
         private readonly PlayerTileTracker tracker = new PlayerTileTracker();
         private readonly float[] columnEdges = new float[MaxAxis + 1], rowEdges = new float[MaxAxis + 1];
@@ -28,10 +28,15 @@ namespace FloorFracture
 
         public BoardState(int width, int height, int seed, float pitch = MinPitch) { Reset(width, height, seed, pitch); }
 
+        // Each pane occupies one bit. A long, narrow rectangle can use all 64 bits.
+        public static int MaxRowsFor(int columns) =>
+            columns >= MinAxis && columns <= MaxAxis ? MaxPanes / columns : 0;
+
         public void Reset(int width, int height, int seed, float pitch = MinPitch)
         {
-            if (width < MinAxis || width > MaxAxis) throw new ArgumentOutOfRangeException(nameof(width));
-            if (height < MinAxis || height > MaxAxis) throw new ArgumentOutOfRangeException(nameof(height));
+            int maxRows = MaxRowsFor(width);
+            if (maxRows == 0) throw new ArgumentOutOfRangeException(nameof(width));
+            if (height < MinAxis || height > maxRows) throw new ArgumentOutOfRangeException(nameof(height));
             if (!(pitch >= MinPitch && pitch <= MaxPitch)) throw new ArgumentOutOfRangeException(nameof(pitch));
             Width = width;
             Height = height;
@@ -96,7 +101,7 @@ namespace FloorFracture
             return (horizontal | (group >> Width) | (group << Width)) & FullMask;
         }
 
-        internal bool Neighbors(int a, int b) => (NeighborMask(a) & (1UL << b)) != 0;
+        public bool Neighbors(int a, int b) => (uint)a < (uint)Count && (uint)b < (uint)Count && (NeighborMask(a) & (1UL << b)) != 0;
 
         public TileSample Sample(Vector2 localXZ, bool tracked, double now)
         {

@@ -1,17 +1,26 @@
 #ifndef FLOOR_FRACTURE_SHAFT_BRICKWORK
 #define FLOOR_FRACTURE_SHAFT_BRICKWORK
 
-// The shaft and room floor use the same half-brick running bond and mortar profile.
-float2 ShaftBrickCell(float2 courses, float offset)
+// Supply distances along the surface in metres. The room floor, broken glass and
+// falling chamber share the same blue stone, mortar, running bond and course size.
+half3 ShaftBrickwork(float2 metres)
 {
-    return float2(courses.x + floor(courses.y) * .5 + offset, courses.y);
-}
-
-float ShaftBrickFace(float2 cell, float filterWidth)
-{
+    const half3 stone = half3(.165, .285, .36);
+    const half3 mortar = half3(.044, .078, .099);
+    float2 courses = metres / float2(.54, .27);
+    float2 width = fwidth(courses);
+    float footprint = max(width.x, width.y);
+    float filterWidth = min(.16, footprint * .5);
+    float2 cell = float2(courses.x + floor(courses.y) * .5, courses.y);
     float2 position = frac(cell);
     float2 joint = min(position, 1 - position);
-    return smoothstep(.008 - filterWidth, .041 + filterWidth, min(joint.x, joint.y));
+    float face = smoothstep(.008 - filterWidth, .041 + filterWidth, min(joint.x, joint.y));
+    float shade = frac(52.9829189 * frac(dot(floor(cell), float2(.06711056, .00583715))));
+    float bevel = smoothstep(.018, .095, min(position.x, 1-position.y))
+                - smoothstep(.018, .095, min(1-position.x, position.y));
+    half3 detailed = lerp(mortar, stone * (.88 + .23 * shade + .12 * bevel), face);
+    // Very distant courses in the deep shaft become subpixel. Use their mean color.
+    return lerp(detailed, lerp(mortar, stone, .92), smoothstep(.28, .85, footprint));
 }
 
 #endif

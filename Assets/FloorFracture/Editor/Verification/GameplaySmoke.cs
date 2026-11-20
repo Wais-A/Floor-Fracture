@@ -151,7 +151,7 @@ namespace FloorFracture.Editor
                 "The playing board did not use the rectangular dimensions and actual tile pitch measured during fitting.");
             var outlines = game.Room.transform.Find("Placement outlines");
             Require(outlines && outlines.gameObject.activeInHierarchy && outlines.GetComponent<MeshFilter>().sharedMesh.vertexCount > 0,
-                "The Welcome screen did not show the verified board's clearance perimeter.");
+                "The Welcome screen did not show the fitted board's perimeter.");
             VerifyMenuAndSpatialAudio();
             VerifySpawnMarkersCleared();
             Record($"MRUK Rec Room supplied floor and furniture. The {placement.Columns} × {placement.Rows} board at {placement.Pitch:F3} m pitch appeared at Welcome without a clearance approval prompt.");
@@ -159,7 +159,7 @@ namespace FloorFracture.Editor
             VerifySurroundingBrick(placement);
             yield return VerifyMenuRecenter();
             yield return RayChoose(3, false); yield return Stage(GameStage.Settings);
-            Require(!outlines.gameObject.activeSelf, "The Welcome clearance perimeter stayed visible inside Settings.");
+            Require(!outlines.gameObject.activeSelf, "The Welcome board perimeter stayed visible inside Settings.");
             yield return RayChoose(4, true); yield return Stage(GameStage.Welcome);
             Record("The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.");
             Choose("Settings"); yield return Stage(GameStage.Settings);
@@ -177,35 +177,7 @@ namespace FloorFracture.Editor
             Record("Welcome and Settings routed through their visible menu choices. The development menu selected seed 379.");
 
             int first = (game.State.Height / 2) * game.State.Width + game.State.Width / 2;
-            StandOn(first);
-            Choose("Tutorial"); yield return Stage(GameStage.PracticeStone);
-            var tutorial = game.GetComponent<PracticeStone>();
-            Require(tutorial && tutorial.Body && tutorial.Body.gameObject.activeInHierarchy && !tutorial.Body.useGravity && tutorial.Body.GetComponent<Grabbable>() &&
-                tutorial.Body.GetComponentInChildren<GrabInteractable>(true), "The reachable Meta grab stone was missing.");
-            var stoneBlock = tutorial.Body.GetComponentsInChildren<BuildingBlock>(true)
-                .SingleOrDefault(block => block.BlockId == "f8766c17-aaf8-4b55-9431-de8deea83842");
-            Require(stoneBlock &&
-                stoneBlock.InstallationRoutineCheckpoint?.InstallationRoutineId == "f8338144-8280-4ff6-9455-ae2bb9c20fe8",
-                "The practice stone did not retain its Grab Interaction block installation.");
-            VerifyStoneOcclusion(tutorial);
-            yield return DropStone(tutorial, false);
-            yield return Frames(3);
-            Vector3 forward = Vector3.ProjectOnPlane(game.Panel.Head.forward, Vector3.up).normalized;
-            Vector3 reachablePoint = game.Panel.Head.position + forward * 0.34f + Vector3.down * 0.27f;
-            Require(game.Stage == GameStage.PracticeStone && tutorial.Body.gameObject.activeInHierarchy &&
-                !tutorial.Body.useGravity && Vector3.Distance(tutorial.Body.position, reachablePoint) < 0.04f,
-                $"Miss recovery expected {reachablePoint:F3}, observed {tutorial.Body.position:F3}, " +
-                $"gravity {tutorial.Body.useGravity}, active {tutorial.Body.gameObject.activeInHierarchy}, stage {game.Stage}.");
-            yield return DropStone(tutorial, true);
-            yield return Stage(GameStage.PracticeStep);
-            Record("The left grip picked up and released a real Rigidbody. A miss reset it and a hit advanced the tutorial.");
-            StandOn(first);
-            yield return Delay(1.4);
-            Require(game.State.CurrentSample.Index == first, "The tutorial marker did not select the first step.");
-            int neighbor = first % game.State.Width == 0 ? first + 1 : first - 1;
-            StandOn(neighbor);
-            yield return Stage(GameStage.Ready);
-            Record("Two distinct headset projections completed practice and left the first countdown waiting for readiness.");
+            yield return VerifyTutorial(first);
             Choose("Start wave"); yield return Stage(GameStage.Countdown);
 
             bool sawMemory = false, sawLastTile = false;
@@ -282,7 +254,7 @@ namespace FloorFracture.Editor
                 order.Add(ending);
                 if (i < 6)
                 {
-                    yield return Delay(1.61);
+                    yield return Delay(5.04);
                     Require(game.Stage == GameStage.Fall, "The reveal ended before it could be captured.");
                     VerifyFloorVisibility(false);
                     Capture("ending-" + ending.ToLowerInvariant(), SmokeView.Ending);
@@ -423,26 +395,6 @@ namespace FloorFracture.Editor
                 }
             }
             throw new InvalidOperationException("Seed 379 produced no optional moving pane on this fitted board.");
-        }
-
-        private static IEnumerator DropStone(PracticeStone stone, bool hit)
-        {
-            var board = game.BoardView.Board;
-            Pose grip = new Pose(stone.Body.position, board.rotation);
-            SetHands(grip, false); yield return Frames(2);
-            SetHands(grip, true); yield return Frames(2);
-            var grabbable = stone.Body.GetComponent<Grabbable>();
-            Require(grabbable.SelectingPointsCount == 1, "The ISDK grabbable did not register the simulated controller.");
-            var local = game.State.Center(stone.Target);
-            Vector3 drop = hit ? new Vector3(local.x,0.6f,local.y) :
-                new Vector3((game.State.Width * 0.5f + 1f) * game.State.Pitch, 0.6f, (game.State.Height * 0.5f + 1f) * game.State.Pitch);
-            grip.position = board.TransformPoint(drop);
-            SetHands(grip, true); yield return Frames(20);
-            Require(Vector3.Distance(stone.Body.position, board.TransformPoint(drop)) < 0.04f, "The held stone did not follow the injected grip pose.");
-            SetHands(grip, false);
-            yield return Wait(() => grabbable.SelectingPointsCount == 0 && !stone.Body.isKinematic && stone.Body.useGravity, "ISDK stone release", 3);
-            if (hit) yield return Stage(GameStage.PracticeStep, 5);
-            else yield return Wait(() => !stone.Body.useGravity, "miss reset", 5);
         }
 
         private static void VerifyInstalledBlocks()

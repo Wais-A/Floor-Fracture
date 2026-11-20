@@ -42,12 +42,12 @@ namespace FloorFracture
             public readonly List<Color> Colors = new();
             public readonly List<Vector2> Uv = new();
             public readonly List<int> Indices = new();
-            public void Quad(Vector3 a,Vector3 b,Vector3 c,Vector3 d,Color top,Color bottom,float uvHeight=1)
+            public void Quad(Vector3 a,Vector3 b,Vector3 c,Vector3 d,Color top,Color bottom,float uvHeight=1,float uvWidth=1)
             {
                 int first=Vertices.Count;
                 Vertices.Add(a); Vertices.Add(b); Vertices.Add(c); Vertices.Add(d);
                 Colors.Add(top); Colors.Add(top); Colors.Add(bottom); Colors.Add(bottom);
-                Uv.Add(Vector2.zero); Uv.Add(Vector2.right); Uv.Add(new Vector2(1,uvHeight)); Uv.Add(new Vector2(0,uvHeight));
+                Uv.Add(Vector2.zero); Uv.Add(new Vector2(uvWidth,0)); Uv.Add(new Vector2(uvWidth,uvHeight)); Uv.Add(new Vector2(0,uvHeight));
                 Indices.Add(first); Indices.Add(first+2); Indices.Add(first+1);
                 Indices.Add(first); Indices.Add(first+3); Indices.Add(first+2);
             }

@@ -6,6 +6,7 @@ using UnityEngine;
 public sealed class FallSequence : MonoBehaviour
 {
     const float Gravity = 9.8f;
+    const float RimHold = .40f;
     static readonly float FreeFallTime = Mathf.Sqrt(2f * FallScenery.ShaftDepth / Gravity);
     [SerializeField] FloorEndingSet enabledEndings = FloorEndingSet.All;
     [SerializeField] Material waterSurfaceOverride = null;
@@ -103,10 +104,11 @@ public sealed class FallSequence : MonoBehaviour
 
     void Draw(float age)
     {
-        float contact = reduced ? .82f : FreeFallTime;
-        float p = Mathf.Clamp01((age - contact) / (reduced ? 3.11f : 3.57f));
-        // The scenery rises past the tracked player by the distance fallen from rest.
-        float travel = reduced || age >= contact ? FallScenery.ShaftDepth : .5f * Gravity * age * age;
+        float contact = reduced ? .82f : RimHold + FreeFallTime;
+        float p = Mathf.Clamp01((age - contact) / (reduced ? 3.11f : 5f));
+        // Let the player register the broken rim, then accelerate the scenery past the tracked eye.
+        float fallingTime = Mathf.Clamp(age - RimHold, 0f, FreeFallTime);
+        float travel = age >= contact ? FallScenery.ShaftDepth : .5f * Gravity * fallingTime * fallingTime;
         float immersion = scenery.Draw(age, p, reduced, travel, out bool entered);
         if (!entryReported && entered)
         {
@@ -115,9 +117,9 @@ public sealed class FallSequence : MonoBehaviour
             ChamberEntered?.Invoke();
             if (generation != currentGeneration || !IsPlaying) return;
         }
-        float fade = FallScenery.Ease(.80f,1,p);
+        float fade = FallScenery.Ease(reduced ? .80f : .60f, 1f, p);
         // At constant acceleration, speed as a fraction of impact speed is t / tImpact.
-        float air = reduced ? .25f : Mathf.Clamp01(age / contact);
+        float air = reduced ? .25f : fallingTime / FreeFallTime;
         float ambiance = 0;
         float tint = 0;
         Color tintColor = Color.black;

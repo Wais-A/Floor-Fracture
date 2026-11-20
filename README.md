@@ -12,8 +12,8 @@ Open `Assets/FloorFracture/Scenes/FloorFracture.unity`. The Android build list p
 
 ## Play
 
-1. Open the game and allow spatial data. If there is no saved room, use Quest Space Setup to capture the floor and furniture. The game fits the board to the scan and shows its size on Welcome. The gold perimeter shows the clearance around it. Use **Play area** to try another spot or update the scan.
-2. Press a menu button with a fingertip, point and pinch with a hand, or point and press the controller trigger. Choose **Tutorial** to pick up the stone and release it over the cracked glass. A missed drop returns the stone.
+1. Open the game and allow spatial data. If there is no saved room, use Quest Space Setup to capture the floor and furniture. The game fits the board to the scan and shows its size on Welcome. The gold outline follows the playable glass perimeter. Use **Play area** to try another spot or update the scan.
+2. Press a menu button with a fingertip, point and pinch with a hand, or point and press the controller trigger. Choose **Tutorial** and stand on the glass. When your pane cracks, step onto a clear neighbor. After practicing, choose **Start wave**. **Try the stone (optional)** lets you grab a rock and drop or toss it onto any intact pane.
 3. Stand on a pane, choose **Start wave**, and step to intact glass. Your starting pane always breaks. The ring shows your current support. In Memory, remember the cracks before they disappear. Last Tile completes the level.
 4. During a fall, a fresh index pinch with either tracked hand, or A or X on a controller, skips ahead to Results. **Settings** includes reduced-motion falls, warning intensity and volume. **Restart** rebuilds the board and resets the score.
 

@@ -38,11 +38,43 @@
       "pitchMetres": 0.573
     },
     "metricsFile": "Builds/Quest/Brick-floor/20261120T022833368Z-95bab8b2.csv",
-    "depthStartup": "The provider started. An initial frame reported XR_ERROR_CALL_ORDER_INVALID. The player subsequently saw the floor bricks and foreground furniture."
+    "depthStartup": "The provider started. An initial frame reported XR_ERROR_CALL_ORDER_INVALID. The player subsequently saw the floor bricks and foreground furniture.",
+    "gameplaySample": {
+      "csvRecords": 266,
+      "csvSha256": "cdb9a9d4412b86948578246e6c0b752d999f74a7885782fad36255092dbe43fe",
+      "stages": {
+        "Countdown": {
+          "windows": 52,
+          "frames": 3712,
+          "averageFps": 71.97,
+          "maxFrameMs": 36.205
+        },
+        "Fall": {
+          "windows": 50,
+          "frames": 3306,
+          "averageFps": 71.98,
+          "maxFrameMs": 53.467
+        }
+      },
+      "fullMotionEndingsRecorded": [
+        "Crystal",
+        "Lava",
+        "Sand",
+        "Snow",
+        "Space",
+        "Water"
+      ]
+    }
   },
   "wearerReview": {
     "floorAndFurniture": "Brick on the floor, furniture clearly in front",
-    "movingBin": "A separate physical before-and-after move has not been identified."
+    "movingBin": "A separate physical before-and-after move has not been identified.",
+    "scanComparison": "The 7 × 2 water and 2 × 2 brick sessions were in different rooms or scans.",
+    "playableArea": "The wearer found the 2 × 2 board too small and requested the largest board on clear floor.",
+    "menuRecenter": "Yes, the menu comes back. The page and grid anchoring were not separately identified.",
+    "fullMotion": "Faster but too short to read the descent. The wearer requested at least three seconds of visible passing walls and a slower fade.",
+    "masonry": "Match the outside bricks to the blue shaft bricks.",
+    "tutorial": "The throw was frustrating. Teach stepping first and keep the rock optional."
   },
   "packedAssets": {
     "Assets/FloorFracture/Scripts/Room/SurroundingBrick.mat": {

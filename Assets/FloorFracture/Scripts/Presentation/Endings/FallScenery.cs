@@ -10,7 +10,8 @@ internal sealed class FallScenery
         Reveal = Shader.PropertyToID("_Reveal"), Level = Shader.PropertyToID("_Level"),
         Motion = Shader.PropertyToID("_Motion"), Opacity = Shader.PropertyToID("_Opacity"),
         Mouth = Shader.PropertyToID("_Mouth"), MouthRight = Shader.PropertyToID("_MouthRight");
-    internal const float ShaftDepth = 5f;
+    // Four seconds under gravity leaves more than three seconds of walls after a standing eye enters.
+    internal const float ShaftDepth = 80f;
     static readonly Color[] wallTints = {
         new Color(.19f,.28f,.30f), new Color(.25f,.15f,.12f), new Color(.18f,.17f,.25f),
         new Color(.18f,.19f,.26f), new Color(.44f,.31f,.19f), new Color(.26f,.40f,.53f)
@@ -43,8 +44,8 @@ internal sealed class FallScenery
         boxMesh = Own(FallMeshes.Box());
         Mesh disk = Own(FallMeshes.Disk());
         crystalMesh = Own(FallMeshes.Spires(false)); flameMesh = Own(FallMeshes.Spires(true));
-        walls = Part("Shaft walls", Own(FallMeshes.Shaft()), surfaceMaterial);
-        landmarks = Part("Shaft landmarks", Own(FallMeshes.Landmarks()), surfaceMaterial);
+        walls = Part("Shaft walls", Own(FallMeshes.Shaft(ShaftDepth)), surfaceMaterial);
+        landmarks = Part("Shaft landmarks", Own(FallMeshes.Landmarks(ShaftDepth)), surfaceMaterial);
         background = Part("Chamber darkness", boxMesh, surfaceMaterial);
         floor = Part("Hazard surface", disk, surfaceMaterial);
         var native = waterOverride ? waterOverride : Resources.Load<Material>("Endings/MetaFloorZone/materials/Water");
@@ -59,7 +60,8 @@ internal sealed class FallScenery
             replacementFire = Object.Instantiate(fireOverride, world);
             replacementFire.SetActive(false);
         }
-        background.transform.localScale = new Vector3(12,13,12);
+        // Even a straight-down ray must meet the destination before it meets the sky enclosure.
+        background.transform.localScale = Vector3.one * (ShaftDepth + 8f);
         Hide();
     }
 
@@ -115,9 +117,9 @@ internal sealed class FallScenery
         bool visible = !reduced || age >= .32f;
         // The chamber and its destination are one moving world until the feet reach the surface.
         // Only the upper metre of the throat widens as the lip draws near.
-        float top = travel;
-        float mouthRadius = Mathf.Lerp(startRadius,Mathf.Max(startRadius,Mathf.Min(radius,.77f)),Ease(0,1.35f,travel));
-        float surfaceY = travel-ShaftDepth;
+        float top = reduced ? 5f : travel;
+        float mouthRadius = Mathf.Lerp(startRadius,Mathf.Max(startRadius,Mathf.Min(radius,.77f)),Ease(0,1.35f,top));
+        float surfaceY = reduced ? 0f : travel-ShaftDepth;
         Color wallColor = wallTints[(int)kind], sky = skyTints[(int)kind];
         float wallAlpha = 1, particleAlpha = Ease(0,.17f,progress);
         float floorAlpha = 1, pillarsAlpha = 0, light = 0;
@@ -170,7 +172,8 @@ internal sealed class FallScenery
         entered = reduced ? visible : rimY >= head.position.y;
         properties.SetVector(Mouth,new Vector4(center.x,rimY,center.z,mouthRadius));
         properties.SetVector(MouthRight,new Vector4(mouthRight.x,mouthRight.z,mouthRadius/radius,reduced ? 0 : 1));
-        float overhead = reduced ? 1 : Ease(.06f,1.35f,rimY-head.position.y);
+        // The shaft stays lit. Only the view past its walls gradually loses the room light.
+        float overhead = reduced ? 1 : Ease(.15f,26f,rimY-head.position.y);
         Paint(background,kind == FloorEnding.Space ? 8 : 0,sky,visible ? overhead : 0);
         walls.transform.localPosition = landmarks.transform.localPosition = Vector3.up*top;
         Paint(walls,1,wallColor,visible ? wallAlpha : 0);

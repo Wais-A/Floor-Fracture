@@ -18,7 +18,7 @@ namespace FloorFracture
             var holder = new GameObject("Placement outlines");
             root = holder.transform;
             root.SetParent(parent, false);
-            mesh = new Mesh { name = "Room and clearance outlines" };
+            mesh = new Mesh { name = "Room and board perimeter" };
             holder.AddComponent<MeshFilter>().sharedMesh = mesh;
             var renderer = holder.AddComponent<MeshRenderer>();
             renderer.shadowCastingMode = ShadowCastingMode.Off;
@@ -49,7 +49,7 @@ namespace FloorFracture
             {
                 float y = fit.FloorHeight + 0.02f;
                 // The live glass already marks every cell while the welcome panel is open.
-                Loop(fit.ClearanceOutline(), y, 0.023f, new Color32(255, 213, 123, 219));
+                Loop(fit.FootprintOutline(), y, 0.012f, new Color32(255, 213, 123, 219));
             }
             mesh.Clear();
             mesh.SetVertices(vertices);

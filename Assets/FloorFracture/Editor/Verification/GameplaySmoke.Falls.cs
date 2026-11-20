@@ -19,7 +19,9 @@ namespace FloorFracture.Editor
             // A real deadline loss shatters the occupied tile before the rim shot.
             StandOn(0);
             Vector3 bearing = Vector3.ProjectOnPlane(game.BoardView.Board.position - head.position, Vector3.up);
-            SetHead(new Pose(head.position, Quaternion.LookRotation(bearing, Vector3.up) * Quaternion.Euler(32f, 0f, 0f)));
+            Vector3 eyePosition = head.position;
+            eyePosition.y = game.BoardView.Board.position.y + (reduced ? 1.6f : ending == "Lava" ? 2.2f : 1.5f);
+            SetHead(new Pose(eyePosition, Quaternion.LookRotation(bearing, Vector3.up) * Quaternion.Euler(32f, 0f, 0f)));
             Pose trackedAtStart = head;
             Pose rigAtStart = new Pose(game.Rig.transform.position, game.Rig.transform.rotation);
             Choose("Start wave"); yield return Stage(GameStage.Countdown);
@@ -30,13 +32,13 @@ namespace FloorFracture.Editor
             var witness = new FallWitness(ending, reduced, trackedAtStart, rigAtStart);
             report.falls.Add(witness.evidence);
             yield return FallFrame(witness, "rim", 0.10, SmokeView.FallRim);
-            yield return FallFrame(witness, "early-shaft", reduced ? 0.40 : 0.25);
-            yield return FallFrame(witness, "mid-shaft", reduced ? 0.70 : 0.67, SmokeView.FallDown, SmokeView.FallForward);
-            yield return FallFrame(witness, "late-shaft", reduced ? 0.76 : 0.97, SmokeView.FallDown);
+            yield return FallFrame(witness, "early-shaft", reduced ? 0.40 : 1.20, reduced ? Array.Empty<SmokeView>() : new[] { SmokeView.FallForward });
+            yield return FallFrame(witness, "mid-shaft", reduced ? 0.70 : 2.70, SmokeView.FallDown, SmokeView.FallForward);
+            yield return FallFrame(witness, "late-shaft", reduced ? 0.76 : 4.27, SmokeView.FallDown, SmokeView.FallForward);
             yield return FallFrame(witness, "contact", witness.evidence.plannedContact + 0.12, SmokeView.FallDown, SmokeView.FallRim);
             Require(witness.SecondaryEffect(), ending + " produced no visible contact effect at the first post-impact sample.");
             witness.CheckArrival();
-            double immersionAt = reduced ? 2.95 : witness.evidence.plannedContact + (ending == "Water" ? 2.65 : 2.30);
+            double immersionAt = reduced ? 2.95 : witness.evidence.plannedContact + (ending == "Water" ? 3.70 : 3.10);
             yield return FallFrame(witness, "immersion", immersionAt, SmokeView.FallDown);
             witness.CheckImmersion();
             while (game.Stage == GameStage.Fall)
@@ -50,7 +52,7 @@ namespace FloorFracture.Editor
             Choose("Restart"); yield return Stage(GameStage.Ready);
             Record(reduced
                 ? ending + " reduced motion kept the chamber geometry stationary before contact and reached results."
-                : ending + " traversed five metres under gravity. The rim passed the stationary eye before the impact sound and hazard effect.");
+                : $"{ending} showed the moving walls for {witness.evidence.visibleWallSeconds:F2} s after entry at {witness.evidence.eyeHeight:F2} m eye height, before impact.");
         }
 
         private static IEnumerator FallFrame(FallWitness witness, string phase, double at, params SmokeView[] views)
@@ -72,10 +74,10 @@ namespace FloorFracture.Editor
 
         private sealed class FallWitness
         {
-            // Analytic reference distances in metres for a release from rest at 9.8 m/s².
+            // Elapsed seconds from shatter and analytic metres fallen after the 0.40-second rim hold.
             private static readonly (double seconds, float metres)[] GravityCheckpoints =
             {
-                (0.25, 0.30625f), (0.50, 1.225f), (0.75, 2.75625f), (0.90, 3.969f), (0.96, 4.51584f)
+                (0.30, 0f), (0.65, 0.30625f), (1.40, 4.9f), (2.40, 19.6f), (3.40, 44.1f), (4.15, 68.90625f), (4.40, 78.4f)
             };
             internal readonly FallEvidence evidence;
             internal readonly double expectedFinish;
@@ -84,7 +86,8 @@ namespace FloorFracture.Editor
             private readonly bool reduced, water;
             private readonly Pose eyePose, rigPose;
             private readonly Transform chamber, eye;
-            private readonly MeshRenderer marks, walls, floor, flames;
+            private readonly MeshRenderer marks, walls, floor, flames, sky, veil;
+            private readonly MaterialPropertyBlock material = new MaterialPropertyBlock();
             private readonly AudioSource wind, impact;
             private readonly float firstMarks, firstWalls, firstFloor, firstSpan;
             private int lastFrame = -1;
@@ -94,24 +97,31 @@ namespace FloorFracture.Editor
             internal FallWitness(string ending, bool reduced, Pose initialEye, Pose initialRig)
             {
                 this.reduced = reduced; water = ending == "Water";
-                start = Now; contact = reduced ? 0.82 : 1.01015; expectedFinish = reduced ? 3.93 : 4.58015;
+                start = Now; contact = reduced ? 0.82 : 4.44061; expectedFinish = reduced ? 3.93 : 9.44061;
                 eyePose = initialEye; rigPose = initialRig; eye = game.Rig.centerEyeAnchor;
                 var chamberObject = GameObject.Find("Fall chamber");
                 Require(chamberObject, "The active fall chamber is missing.");
                 chamber = chamberObject.transform;
                 marks = Renderer("Shaft landmarks"); walls = Renderer("Shaft walls"); floor = Renderer("Hazard surface"); flames = Renderer("Flames or crystals");
+                sky = Renderer("Chamber darkness"); veil = eye.Find("View fade").GetComponent<MeshRenderer>();
                 firstMarks = reduced ? marks.transform.position.y : chamber.position.y;
                 firstWalls = walls.transform.position.y; firstFloor = floor.transform.position.y;
                 wind = game.transform.Find("Shaft air").GetComponent<AudioSource>();
                 impact = game.transform.Find("Ending impact").GetComponent<AudioSource>();
                 Require(wind.clip && !impact.clip, "The fall did not start with shaft air and a silent impact source.");
                 firstSpan = marks.bounds.size.y;
-                Require(firstSpan > 2f, "The shaft landmark mesh lacks vertically separated geometry.");
                 float openingY = game.BoardView.Board.position.y;
-                Require(Mathf.Abs(firstFloor - (openingY - (reduced ? 0f : 5f))) < 0.10f,
+                Require(Mathf.Abs(firstFloor - (openingY - (reduced ? 0f : 80f))) < 0.10f,
                     $"The hazard began at {firstFloor:F2} m for an opening at {openingY:F2} m.");
                 evidence = new FallEvidence { ending = ending, motion = reduced ? "reduced" : "full", plannedContact = contact,
-                    landmarkSpan = firstSpan, floorOpeningY = openingY, startingHazardY = firstFloor };
+                    eyeHeight = eye.position.y - openingY, landmarkSpan = firstSpan, floorOpeningY = openingY, startingHazardY = firstFloor };
+                if (!reduced)
+                {
+                    Require(walls.enabled && marks.enabled && !veil.enabled, "The recognition beat did not expose the shaft lip and its walls.");
+                    Require(sky.bounds.min.y < firstFloor && eye.GetComponent<Camera>().farClipPlane > eye.position.y - firstFloor,
+                        "The camera or sky enclosure cuts off the deep destination.");
+                    CheckShaftMeshes();
+                }
                 Observe();
             }
 
@@ -121,6 +131,50 @@ namespace FloorFracture.Editor
                 var renderer = child ? child.GetComponent<MeshRenderer>() : null;
                 Require(renderer, "Missing fall evidence renderer: " + name);
                 return renderer;
+            }
+
+            private void CheckShaftMeshes()
+            {
+                // Probe the actual rendered wall mesh around its circumference at every metre.
+                var probe = new GameObject("Editor shaft cross sections") { hideFlags = HideFlags.HideAndDontSave };
+                try
+                {
+                    var collider = probe.AddComponent<MeshCollider>();
+                    collider.sharedMesh = walls.GetComponent<MeshFilter>().sharedMesh;
+                    for (int metre = 0; metre < 80; metre++)
+                    {
+                        Vector3 center = Vector3.down * (metre + .25f);
+                        for (int bearing = 0; bearing < 16; bearing++)
+                        {
+                            Vector3 outward = Quaternion.Euler(0f, 22.5f * bearing + 4f, 0f) * Vector3.forward;
+                            // The chamber material renders either winding.
+                            bool hit = collider.Raycast(new Ray(center, outward), out _, 2f) ||
+                                collider.Raycast(new Ray(center + 2f * outward, -outward), out _, 2f);
+                            Require(hit, $"A hole in the shaft wall faces {bearing * 22.5f + 4f:F0}° at {metre + .25f:F2} m depth.");
+                            evidence.testedWallRays++;
+                        }
+                    }
+                }
+                finally { UnityEngine.Object.DestroyImmediate(probe); }
+
+                var ledges = marks.GetComponent<MeshFilter>().sharedMesh;
+                var vertices = ledges.vertices;
+                var triangles = ledges.triangles;
+                var caps = new SortedSet<float>();
+                for (int i = 0; i < triangles.Length; i += 3)
+                {
+                    float y = vertices[triangles[i]].y;
+                    if (y == vertices[triangles[i + 1]].y && y == vertices[triangles[i + 2]].y) caps.Add(-y);
+                }
+                Require(caps.Count > 0 && caps.Min < .05f, "The opening is missing its visible ledge.");
+                float lastDepth = 0f;
+                foreach (float cap in caps)
+                {
+                    evidence.greatestLedgeSpacing = Mathf.Max(evidence.greatestLedgeSpacing, cap - lastDepth);
+                    lastDepth = cap;
+                }
+                evidence.greatestLedgeSpacing = Mathf.Max(evidence.greatestLedgeSpacing, 80f - lastDepth);
+                Require(evidence.greatestLedgeSpacing < 3.5f, $"The shaft has a {evidence.greatestLedgeSpacing:F2} m stretch without any physical ledges.");
             }
 
             internal bool SecondaryEffect()
@@ -158,6 +212,7 @@ namespace FloorFracture.Editor
                     CheckGravity(age, travel);
                     if (floor.transform.position.y >= evidence.floorOpeningY - .0001f && evidence.surfaceReachedAt < 0)
                         evidence.surfaceReachedAt = age;
+                    ObserveLighting(age, entered);
                 }
                 if (impact.clip && evidence.impactSoundAt < 0)
                 {
@@ -186,6 +241,31 @@ namespace FloorFracture.Editor
                 lastTravel = travel; lastAge = age;
             }
 
+            private void ObserveLighting(double age, bool entered)
+            {
+                if (entered && evidence.surfaceReachedAt < 0)
+                {
+                    walls.GetPropertyBlock(material);
+                    Require(walls.enabled && marks.enabled && walls.bounds.Contains(eye.position) && material.GetFloat("_Opacity") > .99f && !veil.enabled,
+                        $"The eye lost its clear view of the moving shaft at {age:F3} s.");
+                    evidence.visibleWallSeconds = age - evidence.chamberEnteredAt;
+                    if (sky.enabled)
+                    {
+                        sky.GetPropertyBlock(material);
+                        float darkness = material.GetFloat("_Opacity");
+                        if (darkness >= .05f && evidence.skyFirstDimAt < 0) evidence.skyFirstDimAt = age;
+                        if (darkness >= .95f && evidence.skyMostlyDarkAt < 0) evidence.skyMostlyDarkAt = age;
+                    }
+                }
+                if (!water && age >= contact && veil.enabled)
+                {
+                    veil.GetPropertyBlock(material);
+                    float darkness = material.GetColor("_Tint").a;
+                    if (darkness >= .05f && evidence.fadeStartedAt < 0) evidence.fadeStartedAt = age;
+                    if (darkness >= .95f && evidence.fadeDarkAt < 0) evidence.fadeDarkAt = age;
+                }
+            }
+
             private void CheckGravity(double age, float travel)
             {
                 // Interpolate the measured mesh positions between rendered frames at each reference time.
@@ -196,12 +276,12 @@ namespace FloorFracture.Editor
                     float between = (float)((target.seconds - lastAge) / (age - lastAge));
                     float measured = Mathf.Lerp(lastTravel, travel, between);
                     evidence.gravityChecks.Add(new GravityMeasurement { seconds = target.seconds, expectedMetres = target.metres, measuredMetres = measured });
-                    Require(Mathf.Abs(measured - target.metres) < 0.065f,
+                    Require(Mathf.Abs(measured - target.metres) < 0.10f,
                         $"The shaft travelled {measured:F3} m at {target.seconds:F2} s. Expected {target.metres:F3} m.");
                 }
 
                 double interval = age - speedSampleAge;
-                if (travel >= 4.999f || interval < 0.025) return;
+                if (travel >= 79.999f || interval < 0.025) return;
                 float speed = (travel - speedSampleTravel) / (float)interval;
                 Require(speed >= evidence.peakAirborneSpeed - 0.12f, $"The shaft slowed from {evidence.peakAirborneSpeed:F2} to {speed:F2} m/s before contact.");
                 evidence.peakAirborneSpeed = Mathf.Max(evidence.peakAirborneSpeed, speed);
@@ -223,8 +303,10 @@ namespace FloorFracture.Editor
                     evidence.firstSecondaryEffectAt >= evidence.impactSoundAt && evidence.firstSecondaryEffectAt < evidence.impactSoundAt + .15,
                     $"Entry, impact sound and hazard appeared at {evidence.chamberEnteredAt:F3}, {evidence.impactSoundAt:F3} and {evidence.firstSecondaryEffectAt:F3} s.");
                 if (reduced) return;
-                Require(Math.Abs(evidence.surfaceReachedAt - evidence.impactSoundAt) < .015 && Mathf.Abs(marks.transform.position.y - firstMarks - 5f) < .025f,
+                Require(Math.Abs(evidence.surfaceReachedAt - evidence.impactSoundAt) < .015 && Mathf.Abs(marks.transform.position.y - firstMarks - 80f) < .025f,
                     $"The shaft landed at {evidence.surfaceReachedAt:F3} s after travelling {marks.transform.position.y - firstMarks:F3} m.");
+                Require(evidence.visibleWallSeconds >= 3.0, $"Only {evidence.visibleWallSeconds:F2} s of clearly visible walls passed the {evidence.eyeHeight:F2} m eye before impact.");
+                Require(evidence.skyMostlyDarkAt - evidence.skyFirstDimAt > 1.0, "The room light above the shaft disappeared too quickly.");
             }
 
             internal void CheckImmersion()
@@ -235,8 +317,6 @@ namespace FloorFracture.Editor
                         "Lava's post-impact rise and surrounding flames were missing from the immersion frame.");
                     return;
                 }
-                var veil = eye.Find("View fade").GetComponent<MeshRenderer>();
-                var material = new MaterialPropertyBlock();
                 veil.GetPropertyBlock(material);
                 evidence.immersionTintAlpha = material.GetColor("_Tint").a;
                 Require(veil.enabled && evidence.immersionTintAlpha > 0.25f, "The Water immersion frame did not contain the underwater tint.");
@@ -252,14 +332,17 @@ namespace FloorFracture.Editor
                 {
                     var mid = evidence.samples.Find(s => s.phase == "mid-shaft");
                     var late = evidence.samples.Find(s => s.phase == "late-shaft");
-                    Require(evidence.gravityChecks.Count == GravityCheckpoints.Length && evidence.peakAirborneSpeed > 9f && evidence.peakAirborneSpeed < 10f,
+                    Require(evidence.gravityChecks.Count == GravityCheckpoints.Length && evidence.peakAirborneSpeed > 38f && evidence.peakAirborneSpeed < 40f,
                         $"The final measured airborne speed was {evidence.peakAirborneSpeed:F2} m/s.");
-                    Require(mid.landmarksVisible && late.landmarksVisible && !late.secondaryEffectActive && late.landmarkTravel > 4.4f,
+                    Require(mid.landmarksVisible && late.landmarksVisible && !late.secondaryEffectActive && late.landmarkTravel > 70f,
                         $"The shaft landmarks or approaching surface were missing before contact at {late.seconds:F3} s.");
+                    if (!water)
+                        Require(evidence.fadeDarkAt - evidence.fadeStartedAt > 1.15 && evidence.fadeStartedAt - contact > 3.0,
+                            $"The final veil darkened from 5% to 95% between {evidence.fadeStartedAt:F2} and {evidence.fadeDarkAt:F2} s.");
                     Require(evidence.windAtImpact > 0f, "The shaft air was silent on arrival.");
                     foreach (var sample in evidence.samples)
                         if (sample.seconds < contact)
-                            Require(Math.Abs(sample.windVolume / evidence.windAtImpact - sample.seconds / contact) < .06,
+                            Require(Math.Abs(sample.windVolume / evidence.windAtImpact - Math.Max(0, sample.seconds - .40) / (contact - .40)) < .06,
                                 $"The wind did not follow falling speed at {sample.seconds:F3} s.");
                 }
             }
@@ -270,6 +353,9 @@ namespace FloorFracture.Editor
         {
             public string ending, motion;
             public double plannedContact, finishedAt, chamberEnteredAt = -1, surfaceReachedAt = -1, impactSoundAt = -1, firstSecondaryEffectAt = -1;
+            public double visibleWallSeconds, skyFirstDimAt = -1, skyMostlyDarkAt = -1, fadeStartedAt = -1, fadeDarkAt = -1;
+            public float eyeHeight, greatestLedgeSpacing;
+            public int testedWallRays;
             public float landmarkSpan, floorOpeningY, startingHazardY, contactHazardY, immersionTintAlpha, maxPreContactOffsetError;
             public float maxTrackedHeadDisplacement, maxTrackedHeadRotation, maxRigDisplacement, maxRigRotation, peakAirborneSpeed, windAtImpact;
             public List<FallMeasurement> samples = new List<FallMeasurement>();

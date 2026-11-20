@@ -37,7 +37,6 @@ namespace FloorFracture.Editor
                     var fit = game.Room.Placement;
                     var pose = fit.Pose;
                     bool welcome = name == "room-preview";
-                    float margin = welcome ? BoardPlacement.Clearance : 0f;
                     Vector3 direction = pose.rotation * new Vector3(-0.16f, 1f, -1.05f).normalized;
                     var rotation = Quaternion.LookRotation(-direction, Vector3.up);
                     float tanVertical = Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad * 0.5f);
@@ -45,8 +44,8 @@ namespace FloorFracture.Editor
                     for (int x = -1; x <= 1; x += 2)
                         for (int z = -1; z <= 1; z += 2)
                         {
-                            Vector3 corner = pose.rotation * new Vector3(x * (fit.Columns * fit.Pitch * 0.5f + margin),
-                                0f, z * (fit.Rows * fit.Pitch * 0.5f + margin));
+                            Vector3 corner = pose.rotation * new Vector3(x * fit.Columns * fit.Pitch * 0.5f,
+                                0f, z * fit.Rows * fit.Pitch * 0.5f);
                             Vector3 projected = Quaternion.Inverse(rotation) * corner;
                             float edge = Mathf.Max(Mathf.Abs(projected.y) / tanVertical, Mathf.Abs(projected.x) / (tanVertical * camera.aspect));
                             distance = Mathf.Max(distance, edge - projected.z);

@@ -165,15 +165,17 @@ namespace FloorFracture
                 // The falling player's shaft supplies this tile's walls and destination.
                 // Keep the stencil aperture and the neighboring holes' regular geometry.
                 if(i==lossOpening) continue;
-                var down=Vector3.down*Depth; var bottom=new Color(.012f,.026f,.044f);
-                w.Quad(c[0]+down,c[1]+down,c[2]+down,c[3]+down,bottom,bottom);
+                var down=Vector3.down*Depth; var bottom=new Color(.08f,.08f,.08f);
+                w.Quad(c[0]+down,c[1]+down,c[2]+down,c[3]+down,bottom,bottom,model.Pitch,model.Pitch);
                 int col=i%model.Width, row=i/model.Width;
                 int[] neighbors={row>0?i-model.Width:-1,col+1<model.Width?i+1:-1,row+1<model.Height?i+model.Width:-1,col>0?i-1:-1};
                 for(int j=0;j<4;j++)
                 {
                     if(neighbors[j]>=0&&(bits&(1UL<<neighbors[j]))!=0) continue;
-                    var a=c[j]; var b=c[(j+1)%4]; var top=Color.Lerp(new Color(.14f,.27f,.30f),new Color(.21f,.35f,.38f),j*.21f);
-                    w.Quad(a,b,b+down,a+down,top,bottom,Depth);
+                    var a=c[j]; var b=c[(j+1)%4];
+                    float light=.82f+j*.05f;
+                    var top=new Color(light,light,light);
+                    w.Quad(a,b,b+down,a+down,top,bottom,Depth,model.Pitch);
                 }
             }
             m.Write(cutouts); w.Write(shaft); holes.enabled=underground.enabled=bits!=0;

@@ -15,11 +15,11 @@ internal static class FallMeshes
         return new Vector3(point.x,y,point.y);
     }
 
-    internal static Mesh Shaft()
+    internal static Mesh Shaft(float depth)
     {
         var mesh = new Builder();
         // Rings near the lip give the tile-sized mouth a short, flared throat.
-        float[] levels = { 0f, -.20f, -.45f, -.75f, -1.15f, -1.45f, -7f };
+        float[] levels = { 0f, -.20f, -.45f, -.75f, -1.15f, -1.45f, -depth - 1f };
         for (int i = 0; i < Rim.Length; i++)
         {
             Color face = Gray(.64f + .24f * Mathf.Abs(Mathf.Sin(i * 1.8f)));
@@ -30,15 +30,16 @@ internal static class FallMeshes
         return mesh.Build("Chamber walls");
     }
 
-    internal static Mesh Landmarks()
+    internal static Mesh Landmarks(float depth)
     {
         var mesh = new Builder();
-        for (int row = 0; row < 11; row++)
+        float distance = .02f;
+        for (int row = 0; distance <= depth; row++)
         {
-            float y = -.02f - row*.54f;
+            float y = -distance;
             bool wide = row % 3 == 0;
-            float inset = wide ? .91f : .955f;
-            float thickness = wide ? .10f : .055f;
+            float inset = row == 0 ? .76f : wide ? .89f : .955f;
+            float thickness = wide ? .16f : .065f;
             for (int side = 0; side < Rim.Length; side++)
             {
                 // Each ledge has a cap for a downward glance and a front edge at eye level.
@@ -49,8 +50,10 @@ internal static class FallMeshes
                 mesh.Quad(RimPoint(side,y-thickness-.045f,.997f),RimPoint(side+1,y-thickness-.045f,.997f),
                     RimPoint(side+1,y-thickness,inset),RimPoint(side,y-thickness,inset),Gray(.19f),side);
             }
+            // Keep the close lip ledges readable at release. Deeper, separate the bands as speed builds.
+            distance += distance < 5f ? .54f : distance < 18f ? 1.55f : wide ? 3.35f : 2.45f;
         }
-        return mesh.Build("Eleven fixed shaft ledges");
+        return mesh.Build("Fixed ledges from rim to landing");
     }
 
     internal static Mesh Disk()

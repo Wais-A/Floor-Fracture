@@ -49,7 +49,6 @@ Shader "Floor Fracture/Ending chamber"
                 float2 uv : TEXCOORD0;
                 float3 world : TEXCOORD1;
                 float seed : TEXCOORD2;
-                float shaftHeight : TEXCOORD3;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
             Varyings Vert(Attributes v)
@@ -59,7 +58,6 @@ Shader "Floor Fracture/Ending chamber"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 float3 p = v.positionOS.xyz;
                 float seed = v.seed.x;
-                o.shaftHeight = p.y;
                 if (_Role == 1 || _Role == 9)
                     p.xz *= lerp(_MouthRight.z,1,smoothstep(0,1.35,-p.y));
                 if (_Role == 6 && _Theme != 3)
@@ -80,6 +78,15 @@ Shader "Floor Fracture/Ending chamber"
                 o.world = TransformObjectToWorld(p);
                 o.positionCS = TransformWorldToHClip(o.world);
                 o.uv = v.uv; o.color = v.color; o.seed = seed;
+                if (_Role == 1)
+                {
+                    // The eight sides alternate flat faces and bevels. Project on each
+                    // face's tangent so a physical metre has the same bond as the floor.
+                    float angle = seed * (PI * .25);
+                    float2 along = float2(cos(angle), sin(angle));
+                    float radius = length(TransformObjectToWorldDir(float3(1,0,0), false));
+                    o.uv = float2(dot(p.xz, along) * radius, -p.y);
+                }
                 return o;
             }
             half4 Frag(Varyings i) : SV_Target
@@ -107,10 +114,11 @@ Shader "Floor Fracture/Ending chamber"
                 }
                 if (_Role == 1)
                 {
-                    float row = -i.shaftHeight/.27;
-                    float2 cell = ShaftBrickCell(float2(i.uv.x * 4, row), i.seed * .19);
-                    float mortar = ShaftBrickFace(cell, 0);
-                    color *= (.64+.36*mortar) * (.82+.18*sin(floor(row)*2.41+i.seed));
+                    half3 masonry = ShaftBrickwork(i.uv);
+                    half3 themeLight = color;
+                    color = masonry * i.color.rgb;
+                    float landing = 1 - smoothstep(.5, 4, i.world.y - _Level);
+                    color = lerp(color, masonry * .65 + themeLight * .35, landing * _Reveal);
                     if (_Theme == 1)
                     {
                         float glow = saturate(1-abs(i.world.y - _Level - .18)*.40);

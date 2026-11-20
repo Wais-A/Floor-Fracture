@@ -65,7 +65,7 @@ namespace FloorFracture
 
         private static bool Contains(ulong mask, int index)
         {
-            return index >= 0 && index < 64 && (mask & (1UL << index)) != 0;
+            return index >= 0 && index < BoardState.MaxPanes && (mask & (1UL << index)) != 0;
         }
 
         private static IReadOnlyList<int> CellList(ulong mask, int count)
@@ -161,6 +161,10 @@ namespace FloorFracture
             unchecked
             {
                 uint shape = (uint)(board.Width | (board.Height << 4) | (start << 8));
+                // Preserve the existing seeds where each dimension fits in four bits.
+                // Tag larger dimensions and give each its own six-bit field.
+                if (board.Width >= 16 || board.Height >= 16)
+                    shape = 0x80000000u | (uint)(board.Width | (board.Height << 6) | (start << 12));
                 uint value = Mix(shape) ^ Mix((uint)board.StationaryMask) ^ Mix((uint)(board.StationaryMask >> 32));
                 value ^= Mix((uint)level) ^ Mix((uint)number * 0x9e3779b9u);
                 value ^= opening ? 0u : Mix((uint)board.Seed);

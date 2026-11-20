@@ -13,6 +13,7 @@ Shader "Floor Fracture/Shaft and falling glass"
             #pragma fragment frag
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Assets/FloorFracture/Scripts/Room/ShaftBrickwork.hlsl"
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
                 half _Courses;
@@ -22,9 +23,9 @@ Shader "Floor Fracture/Shaft and falling glass"
             F vert(V v) { F o; UNITY_SETUP_INSTANCE_ID(v); UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o); o.position=TransformObjectToHClip(v.vertex.xyz); o.color=v.color*_Color; o.uv=v.uv; return o; }
             half4 frag(F i):SV_Target
             {
-                float mortar=smoothstep(.035,.08,abs(frac(i.uv.y*3)-.5));
-                float joints=smoothstep(.025,.07,abs(frac(i.uv.x*2.5+floor(i.uv.y*3)*.5)-.5));
-                return half4(i.color.rgb*lerp(1,.52+.48*mortar*joints,_Courses),1);
+                if (_Courses > .5)
+                    return half4(i.color.rgb * ShaftBrickwork(i.uv), 1);
+                return half4(i.color.rgb, 1);
             }
             ENDHLSL
         }

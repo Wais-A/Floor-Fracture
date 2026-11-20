@@ -22,12 +22,25 @@ Wais saw flickering blue color that did not read as water. He identified unused 
 The signed brick build is `5674695daa384caba05d08902ec9fdc7`. The synthetic High-ceiling Room fitted 5 × 8 panes at 56 cm. The offline Rec Room fitted 5 × 6 panes at 51.74 cm. Both are comparison rooms for the physical trial. [Build receipt](<./Brick floor Quest build.json>) · [Simulator check](<./Brick floor simulator.json>) · [Editor playthrough](<./Brick floor Editor playthrough.json>)
 
 - [x] Welcome recorded 2 × 2 at 57.3 cm per pane on the brick build.
-- [ ] Compare the fitted board with the space available in the current scan. Look along the previously unused long side and try one comfortable step.
+- [x] Wais confirmed the earlier 7 × 2 and this 2 × 2 came from different rooms or scans. He found the 2 × 2 too small to play and requested use of the whole clear patch up to obstructions.
 - [x] Wais reviewed furniture in his physical room and reported, “Brick on the floor, furniture clearly in front.” The installed APK matched the local SHA-256, the spatial-data grant was active, and the app recorded Vulkan and the expected build GUID.
 - [ ] Move the bin with the headset off and recheck its old and new positions. Record any halo or brick on the object.
 - [ ] Look into an adjacent broken pane. The mouth should remain clear of brick.
-- [ ] Open Settings, face another direction and hold the Meta button. Record whether the same menu moves into reach and the glass stays anchored. Repeat on Results.
-- [ ] With full motion enabled, stay on a marked square. Note whether the shaft now passes quickly before the Water or Lava impact. Compare Reduced and try Skip.
+- [x] Wais held the Meta button with a menu open and reported, “Yes, the menu comes back.” The exact page and independent board-anchor check were not identified.
+- [x] Wais reviewed the five-metre full-motion loss. It was faster, but impact could arrive before the walls became apparent. He requested at least three seconds of wall travel and a slower fade. This version failed the fall-feel check.
+- [x] Wais found the single-target rock tutorial frustrating. He chose an untimed stepping lesson first and optional stone practice. He requested that exterior brick match the blue shaft masonry.
+
+The Quest recorded ten shatters and all six full-motion endings in the saved small-board session. Countdown frames averaged 71.97 FPS and fall frames averaged 71.98 FPS. The longest individual frames were 36.21 ms and 53.47 ms, respectively. These measurements come from Unity’s development-build recorder. [Run evidence](<./Brick floor Quest build.json>)
+
+## Expanded-room revision awaiting a headset
+
+Use the same saved room that showed 2 × 2 at 57.3 cm to compare the footprint. The separate simulator’s High-ceiling Room changed from 5 × 8 at 56 cm to 6 × 9 at 58.7 cm. The offline Rec Room changed from 5 × 6 at 51.7 cm to 6 × 6 at 62.1 cm. Both are simulations. [Simulator observation](<./Expanded room simulator.json>) · [Room regression cases](<./Expanded room EditMode.json>)
+
+- [ ] Install the verified APK after Wais reconnects. Match its installed SHA-256 and record the Welcome grid dimensions and pane width before comparing how the room feels.
+- [ ] Choose Tutorial, step off the pulsing pane onto an adjacent clear square, and start the first wave. Check whether the ring and the shatter make the rule clear with the rock untouched.
+- [ ] In optional stone practice, try a carry, pause and drop, then a short toss. Describe the release and whether the struck pane matches where the stone landed.
+- [ ] From a surviving square, compare the exterior brick and the blue wall of a neighboring hole. Look for clear glass openings and real furniture in front.
+- [ ] In one full-motion loss, watch the rim, passing walls, impact and final fade. Record whether the three seconds of shaft travel feel convincing. Try Reduced or Skip separately if desired.
 
 ## Earlier adaptive build
 

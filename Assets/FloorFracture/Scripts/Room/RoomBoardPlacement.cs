@@ -190,9 +190,8 @@ namespace FloorFracture
         public void Decline()
         {
             if (busy || Status != RoomPlacementStatus.Confirmed) return;
-            // The missed object could be anywhere in this rectangle. A replacement must
-            // leave the entire declined area outside its clearance.
-            declined.Add(Placement.ClearanceOutline());
+            // A missed object could be anywhere in the declined footprint.
+            declined.Add(Placement.FootprintOutline());
             LoadRoom(false, true);
         }
 
@@ -330,7 +329,7 @@ namespace FloorFracture
                 {
                     SetState(RoomPlacementStatus.NoFit, declined.Count > 0
                         ? "No separate clear patch fits. Move the obstruction and retry, or open Space Setup to rescan."
-                        : "A 2 × 2 board needs 1.8 × 1.8 m of clear floor. Clear more space and rescan.");
+                        : "A 2 × 2 board needs a clear 1 × 1 m patch of scanned floor. Clear more space and rescan.");
                     return;
                 }
                 // Fetch the current anchors on Unity's thread again after the background search.
@@ -341,9 +340,8 @@ namespace FloorFracture
                 }
                 Placement = fit;
                 int tileCm = Mathf.RoundToInt(fit.Pitch * 100f);
-                int marginCm = Mathf.RoundToInt(BoardPlacement.Clearance * 100f);
                 SetState(RoomPlacementStatus.Confirmed,
-                    $"Your room scan fits {fit.Columns} × {fit.Rows} panes at {tileCm} cm each, with at least {marginCm} cm around the board.");
+                    $"Your room scan fits {fit.Columns} × {fit.Rows} panes at {tileCm} cm each, covering {fit.Columns * fit.Pitch:F2} × {fit.Rows * fit.Pitch:F2} m.");
             }
             catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
             catch (Exception error)
