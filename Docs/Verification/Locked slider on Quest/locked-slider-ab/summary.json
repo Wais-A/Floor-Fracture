@@ -1,0 +1,201 @@
+{
+  "method": "One Android build, fixed seed 4, 64 panes, Classic level three, natural first 32-pane break, default game gain, ordinary proximity and ordinary device volume. Four fresh app processes, cold / primed / primed / cold. Priming played 0.5 seconds of digital silence through the same first three spatially rendered voices at nonzero gain on Welcome, verified advancement, stopped and cleared the priming clips before gameplay. Controls waited the same second. The pooled real clips then played in both conditions.",
+  "cases": [
+    {
+      "case": "cold-1",
+      "completed": true,
+      "submittedEyeBufferSamples": 6,
+      "passed": true,
+      "seed": 4,
+      "waveSeed": -910919443,
+      "breakCount": 32,
+      "welcomeObservedFrames": 47,
+      "welcomeMaximumMs": 276.751,
+      "gameplayThroughTwoSecondsAfterFirstBreakMaxMs": 73.015,
+      "zeroPlusTwoSecondsMaxMs": 73.015,
+      "eventWindowFrames": 26,
+      "zeroWindowMaximumMs": 73.015,
+      "zeroWindowThresholdCount": 12,
+      "zeroWindowLongestFrame": {
+        "startAfterMarkerMs": 51.834,
+        "endAfterMarkerMs": 124.849,
+        "stage": "BetweenWaves"
+      },
+      "productionFirstBetweenWindowMaxMs": 72.976,
+      "loopCostMs": 0.084,
+      "holeUpdateCompletedAfterMs": 0.452,
+      "audioSchedulerObservedAfterMs": 2.493,
+      "impactScheduledAfterDspMs": 20.0,
+      "firstPositivePlaybackObservedAfterMarkerMs": {
+        "impact": 51.9,
+        "fragments": 124.888,
+        "echo": 321.504
+      },
+      "primedSilentVoicesAdvanced": 0,
+      "realGlassPlaybackObservations": {
+        "impact": 9,
+        "fragments": 11,
+        "echo": 17
+      },
+      "firstUrpCameraCallbackMs": 0.894,
+      "maxUrpCameraCallbackMs": 1.622,
+      "peakCameraCallback": {
+        "frame": 434,
+        "startMs": 317.449,
+        "endMs": 319.071,
+        "durationMs": 1.622
+      },
+      "cameraSamples": 19
+    },
+    {
+      "case": "warm-1",
+      "completed": true,
+      "submittedEyeBufferSamples": 6,
+      "passed": true,
+      "seed": 4,
+      "waveSeed": -910919443,
+      "breakCount": 32,
+      "welcomeObservedFrames": 47,
+      "welcomeMaximumMs": 268.553,
+      "gameplayThroughTwoSecondsAfterFirstBreakMaxMs": 17.179,
+      "zeroPlusTwoSecondsMaxMs": 17.179,
+      "eventWindowFrames": 32,
+      "zeroWindowMaximumMs": 17.179,
+      "zeroWindowThresholdCount": 16,
+      "zeroWindowLongestFrame": {
+        "startAfterMarkerMs": -14.071,
+        "endAfterMarkerMs": 3.108,
+        "stage": "BetweenWaves"
+      },
+      "productionFirstBetweenWindowMaxMs": 16.683,
+      "loopCostMs": 0.102,
+      "holeUpdateCompletedAfterMs": 2.163,
+      "audioSchedulerObservedAfterMs": 4.263,
+      "impactScheduledAfterDspMs": 20.0,
+      "firstPositivePlaybackObservedAfterMarkerMs": {
+        "impact": 27.791,
+        "fragments": 109.082,
+        "echo": 316.851
+      },
+      "primedSilentVoicesAdvanced": 3,
+      "realGlassPlaybackObservations": {
+        "impact": 10,
+        "fragments": 11,
+        "echo": 17
+      },
+      "firstUrpCameraCallbackMs": 1.013,
+      "maxUrpCameraCallbackMs": 1.637,
+      "peakCameraCallback": {
+        "frame": 440,
+        "startMs": 287.119,
+        "endMs": 288.755,
+        "durationMs": 1.637
+      },
+      "cameraSamples": 25
+    },
+    {
+      "case": "warm-2",
+      "completed": true,
+      "submittedEyeBufferSamples": 6,
+      "passed": true,
+      "seed": 4,
+      "waveSeed": -910919443,
+      "breakCount": 32,
+      "welcomeObservedFrames": 47,
+      "welcomeMaximumMs": 268.73,
+      "gameplayThroughTwoSecondsAfterFirstBreakMaxMs": 18.524,
+      "zeroPlusTwoSecondsMaxMs": 18.524,
+      "eventWindowFrames": 32,
+      "zeroWindowMaximumMs": 15.521,
+      "zeroWindowThresholdCount": 16,
+      "zeroWindowLongestFrame": {
+        "startAfterMarkerMs": -14.009,
+        "endAfterMarkerMs": 1.512,
+        "stage": "BetweenWaves"
+      },
+      "productionFirstBetweenWindowMaxMs": 15.474,
+      "loopCostMs": 0.081,
+      "holeUpdateCompletedAfterMs": 0.461,
+      "audioSchedulerObservedAfterMs": 2.669,
+      "impactScheduledAfterDspMs": 20.0,
+      "firstPositivePlaybackObservedAfterMarkerMs": {
+        "impact": 68.276,
+        "fragments": 109.43,
+        "echo": 317.621
+      },
+      "primedSilentVoicesAdvanced": 3,
+      "realGlassPlaybackObservations": {
+        "impact": 9,
+        "fragments": 11,
+        "echo": 17
+      },
+      "firstUrpCameraCallbackMs": 0.904,
+      "maxUrpCameraCallbackMs": 1.252,
+      "peakCameraCallback": {
+        "frame": 424,
+        "startMs": 64.596,
+        "endMs": 65.848,
+        "durationMs": 1.252
+      },
+      "cameraSamples": 25
+    },
+    {
+      "case": "cold-2",
+      "completed": true,
+      "submittedEyeBufferSamples": 7,
+      "passed": true,
+      "seed": 4,
+      "waveSeed": -910919443,
+      "breakCount": 32,
+      "welcomeObservedFrames": 47,
+      "welcomeMaximumMs": 262.821,
+      "gameplayThroughTwoSecondsAfterFirstBreakMaxMs": 16.576,
+      "zeroPlusTwoSecondsMaxMs": 15.816,
+      "eventWindowFrames": 32,
+      "zeroWindowMaximumMs": 15.39,
+      "zeroWindowThresholdCount": 14,
+      "zeroWindowLongestFrame": {
+        "startAfterMarkerMs": -13.996,
+        "endAfterMarkerMs": 1.394,
+        "stage": "BetweenWaves"
+      },
+      "productionFirstBetweenWindowMaxMs": 15.051,
+      "loopCostMs": 0.077,
+      "holeUpdateCompletedAfterMs": 0.468,
+      "audioSchedulerObservedAfterMs": 3.031,
+      "impactScheduledAfterDspMs": 20.0,
+      "firstPositivePlaybackObservedAfterMarkerMs": {
+        "impact": 28.638,
+        "fragments": 110.335,
+        "echo": 318.287
+      },
+      "primedSilentVoicesAdvanced": 0,
+      "realGlassPlaybackObservations": {
+        "impact": 11,
+        "fragments": 11,
+        "echo": 18
+      },
+      "firstUrpCameraCallbackMs": 0.973,
+      "maxUrpCameraCallbackMs": 1.285,
+      "peakCameraCallback": {
+        "frame": 423,
+        "startMs": 52.979,
+        "endMs": 54.265,
+        "durationMs": 1.285
+      },
+      "cameraSamples": 25
+    }
+  ],
+  "cleanup": {
+    "scratchAbsent": true,
+    "ordinaryRestored": true,
+    "ordinarySha256": "c04829b157a7c1284f30a70ec8992dd768ac0200d32e7e908c82bfc9443005d9",
+    "recordingRestored": true,
+    "proximityRestored": true,
+    "mediaVolumeRestored": true
+  },
+  "scratchBuild": "9165ee79af11488f835113d1de881e83",
+  "rawDirectory": "locked-slider-ab",
+  "urptiming": "Camera begin/end is a main-thread instrumented URP callback interval, not a synchronized GPU measurement. The first-playback values are observations with a nominal 30 ms polling interval.",
+  "coverage": "The narrow window covers 150 ms before through 300 ms after the game records the 32-pane shatter."
+}

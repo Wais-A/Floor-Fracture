@@ -1,0 +1,520 @@
+{
+  "verifiedUtc": "2026-11-20T08:49:55.772+00:00",
+  "performancePathVerified": true,
+  "lifecycleVerified": true,
+  "playerCompleted": true,
+  "playerError": "",
+  "source": "Current integrated Assets/FloorFracture; latest gameplay implementation 49976f4, verification commit 084cf29. Scratch package instruments the route and samples.",
+  "hardware": {
+    "device": "Oculus Quest 3",
+    "unity": "6000.6.9f1",
+    "graphics": "Vulkan",
+    "buildGuid": "d49ac6dc2a694b49aab7d8d4ba86ab96",
+    "package": "com.wa003.floorfracture.renderbench",
+    "apkSha256": "0ec4bcb212a3bf14f09e469e26accaef73953e8aacaafc7c99497ac7a53877a2",
+    "board": [
+      8,
+      8
+    ],
+    "panePitchMetres": 0.6,
+    "seed": 4,
+    "startingCell": 27,
+    "level": 3
+  },
+  "conditions": "Two runs in one process on an unattended physical Quest 3. MRUK loaded its synthetic Rec Room and supplied a fixed board. The fixture supplied rig stance and room/tracking readiness. Production tracking math, wave planner, sliding pane lock, countdown, renderer, deadline, pooled shatter and audio code ran. Android lifecycle was tested after both measured runs.",
+  "targets": {
+    "minimumFps": 72,
+    "frameIntervalBelowMs": 13.9
+  },
+  "audio": {
+    "gameVolume": 0.75,
+    "countdownVolume": 0.75,
+    "listenerVolume": 1.0,
+    "listenerPaused": false,
+    "sampleRateHz": 24000,
+    "positivePlaybackSamples": {
+      "countdown": 123,
+      "glassImpact": 36,
+      "fragments": 40,
+      "echo": 54
+    },
+    "androidMedia": {
+      "value": 15,
+      "minimum": 0,
+      "maximum": 15
+    },
+    "measurement": "Unmuted source polling at 30 ms intervals. The three glass clips also had positive playback sample positions. Speaker output and wearer perception were not recorded."
+  },
+  "runs": [
+    {
+      "run": 1,
+      "waves": [
+        {
+          "wave": 1,
+          "mode": "Classic",
+          "fog": true,
+          "waveSeed": -910919443,
+          "panesShattered": 32,
+          "deadlineGameSeconds": 7.588,
+          "observedResolutionGameSeconds": 7.596,
+          "observedResolutionLatenessMs": 8.317,
+          "productionShatterRealtimeSeconds": 7.592,
+          "shatterBootMs": 117579813,
+          "scoreAfterDeadline": 1,
+          "productionCountdown": {
+            "windows": 5,
+            "frames": 302,
+            "durationSeconds": 4.206,
+            "averageFps": 71.802,
+            "maxFrameMs": 28.779,
+            "atOrAbove13_9ms": 148,
+            "drawCallsMax": 114,
+            "trianglesMax": 2258
+          },
+          "spatialAudioShatterWindowMinus150Plus300ms": {
+            "frames": 26,
+            "durationSeconds": 0.446,
+            "averageFps": 58.262,
+            "maxFrameMs": 96.577,
+            "atOrAbove13_9ms": 13
+          },
+          "firstTwoSecondsAfterShatter": {
+            "frames": 137,
+            "durationSeconds": 2.0,
+            "averageFps": 68.516,
+            "maxFrameMs": 96.577,
+            "atOrAbove13_9ms": 73
+          }
+        },
+        {
+          "wave": 2,
+          "mode": "Memory",
+          "fog": false,
+          "waveSeed": 1486096070,
+          "panesShattered": 8,
+          "deadlineGameSeconds": 13.088,
+          "observedResolutionGameSeconds": 13.096,
+          "observedResolutionLatenessMs": 8.312,
+          "productionShatterRealtimeSeconds": 13.091,
+          "shatterBootMs": 117585313,
+          "scoreAfterDeadline": 2,
+          "productionCountdown": {
+            "windows": 6,
+            "frames": 303,
+            "durationSeconds": 4.208,
+            "averageFps": 72.006,
+            "maxFrameMs": 15.993,
+            "atOrAbove13_9ms": 149,
+            "drawCallsMax": 50,
+            "trianglesMax": 4062
+          },
+          "spatialAudioShatterWindowMinus150Plus300ms": {
+            "frames": 32,
+            "durationSeconds": 0.444,
+            "averageFps": 72.1,
+            "maxFrameMs": 15.95,
+            "atOrAbove13_9ms": 12
+          },
+          "firstTwoSecondsAfterShatter": {
+            "frames": 23,
+            "durationSeconds": 0.322,
+            "averageFps": 71.52,
+            "maxFrameMs": 15.95,
+            "atOrAbove13_9ms": 10
+          },
+          "unlockedCountdown": {
+            "windows": 2,
+            "frames": 74,
+            "durationSeconds": 1.026,
+            "averageFps": 72.125,
+            "maxFrameMs": 15.606,
+            "atOrAbove13_9ms": 36,
+            "drawCallsMax": 50,
+            "trianglesMax": 4062
+          },
+          "lockedCountdown": {
+            "windows": 4,
+            "frames": 229,
+            "durationSeconds": 3.182,
+            "averageFps": 71.967,
+            "maxFrameMs": 15.993,
+            "atOrAbove13_9ms": 113,
+            "drawCallsMax": 17,
+            "trianglesMax": 2928
+          },
+          "catch": {
+            "tile": 61,
+            "otherHole": 62,
+            "travelMetres": 0.189,
+            "observedGameSeconds": 9.916,
+            "secondsAfterWaveStarted": 1.028,
+            "secondsHeldBeforeDeadline": 3.172,
+            "supportAtCatch": true,
+            "lockedAndSupportedAtDeadline": true,
+            "nativeHeadTrackedDuringCatch": false
+          }
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "waves": [
+        {
+          "wave": 1,
+          "mode": "Classic",
+          "fog": true,
+          "waveSeed": -910919443,
+          "panesShattered": 32,
+          "deadlineGameSeconds": 21.837,
+          "observedResolutionGameSeconds": 21.846,
+          "observedResolutionLatenessMs": 8.321,
+          "productionShatterRealtimeSeconds": 21.814,
+          "shatterBootMs": 117594035,
+          "scoreAfterDeadline": 1,
+          "productionCountdown": {
+            "windows": 5,
+            "frames": 303,
+            "durationSeconds": 4.209,
+            "averageFps": 71.989,
+            "maxFrameMs": 16.264,
+            "atOrAbove13_9ms": 147,
+            "drawCallsMax": 114,
+            "trianglesMax": 2258
+          },
+          "spatialAudioShatterWindowMinus150Plus300ms": {
+            "frames": 32,
+            "durationSeconds": 0.442,
+            "averageFps": 72.362,
+            "maxFrameMs": 14.728,
+            "atOrAbove13_9ms": 13
+          },
+          "firstTwoSecondsAfterShatter": {
+            "frames": 145,
+            "durationSeconds": 2.012,
+            "averageFps": 72.053,
+            "maxFrameMs": 16.793,
+            "atOrAbove13_9ms": 70
+          }
+        },
+        {
+          "wave": 2,
+          "mode": "Memory",
+          "fog": false,
+          "waveSeed": 1486096070,
+          "panesShattered": 8,
+          "deadlineGameSeconds": 27.337,
+          "observedResolutionGameSeconds": 27.345,
+          "observedResolutionLatenessMs": 8.304,
+          "productionShatterRealtimeSeconds": 27.312,
+          "shatterBootMs": 117599534,
+          "scoreAfterDeadline": 2,
+          "productionCountdown": {
+            "windows": 6,
+            "frames": 303,
+            "durationSeconds": 4.207,
+            "averageFps": 72.023,
+            "maxFrameMs": 15.682,
+            "atOrAbove13_9ms": 141,
+            "drawCallsMax": 50,
+            "trianglesMax": 4062
+          },
+          "spatialAudioShatterWindowMinus150Plus300ms": {
+            "frames": 32,
+            "durationSeconds": 0.445,
+            "averageFps": 71.88,
+            "maxFrameMs": 15.169,
+            "atOrAbove13_9ms": 18
+          },
+          "firstTwoSecondsAfterShatter": {
+            "frames": 108,
+            "durationSeconds": 1.511,
+            "averageFps": 71.47,
+            "maxFrameMs": 26.78,
+            "atOrAbove13_9ms": 50
+          },
+          "unlockedCountdown": {
+            "windows": 2,
+            "frames": 73,
+            "durationSeconds": 1.012,
+            "averageFps": 72.134,
+            "maxFrameMs": 15.668,
+            "atOrAbove13_9ms": 36,
+            "drawCallsMax": 50,
+            "trianglesMax": 4062
+          },
+          "lockedCountdown": {
+            "windows": 4,
+            "frames": 230,
+            "durationSeconds": 3.195,
+            "averageFps": 71.987,
+            "maxFrameMs": 15.682,
+            "atOrAbove13_9ms": 105,
+            "drawCallsMax": 17,
+            "trianglesMax": 2928
+          },
+          "catch": {
+            "tile": 61,
+            "otherHole": 62,
+            "travelMetres": 0.182,
+            "observedGameSeconds": 24.151,
+            "secondsAfterWaveStarted": 1.014,
+            "secondsHeldBeforeDeadline": 3.186,
+            "supportAtCatch": true,
+            "lockedAndSupportedAtDeadline": true,
+            "nativeHeadTrackedDuringCatch": false
+          }
+        }
+      ]
+    }
+  ],
+  "compositor": {
+    "csvRows": 29,
+    "submittedEyeBufferSamples": 29,
+    "eyeBufferSizes": [
+      [
+        1344,
+        1408
+      ]
+    ],
+    "staleFrames": 19,
+    "refreshRatesHz": [
+      72
+    ],
+    "appGpuMedianMs": 3.38,
+    "appGpuMaxMs": 4.833,
+    "scope": "OVR records one sample per second for the package launch. GPU samples are separate from individual Unity frames."
+  },
+  "lifecycle": {
+    "armedDuringScoredCountdown": true,
+    "androidActivity": {
+      "armedUtc": "2026-11-20T08:49:48.336+00:00",
+      "resumedBefore": [
+        "com.wa003.floorfracture.renderbench/com.unity3d.player.UnityPlayerGameActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.controlbar.ControlBarActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.displaybar.DisplayBarActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.toasts.ToastsActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.bloom.BloomActivity",
+        "com.oculus.systemux/com.oculus.panelapp.activetaskbar.ActiveTaskBarActivity",
+        "com.wa003.floorfracture.renderbench/com.unity3d.player.UnityPlayerGameActivity"
+      ],
+      "pidBeforePresent": true,
+      "homeAction": "android.intent.action.MAIN + android.intent.category.HOME",
+      "homeResponse": [
+        "Status: ok",
+        "Activity: com.oculus.vrshell/.HomeActivity"
+      ],
+      "resumedDuringHome": [
+        "com.oculus.vrshell/.HomeActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.controlbar.ControlBarActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.displaybar.DisplayBarActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.toasts.ToastsActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.bloom.BloomActivity",
+        "com.oculus.systemux/com.oculus.panelapp.activetaskbar.ActiveTaskBarActivity",
+        "com.oculus.vrshell/.HomeActivity"
+      ],
+      "resumeRequestedUtc": "2026-11-20T08:49:49.661+00:00",
+      "resumedAfter": [
+        "com.wa003.floorfracture.renderbench/com.unity3d.player.UnityPlayerGameActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.controlbar.ControlBarActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.displaybar.DisplayBarActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.toasts.ToastsActivity",
+        "com.oculus.vrshell/com.oculus.panelapp.bloom.BloomActivity",
+        "com.oculus.systemux/com.oculus.panelapp.activetaskbar.ActiveTaskBarActivity",
+        "com.wa003.floorfracture.renderbench/com.unity3d.player.UnityPlayerGameActivity"
+      ],
+      "sameProcess": true
+    },
+    "productionPausedScorePreservedBoardHidden": true,
+    "requiredReadyThenFullFreshCountdown": true,
+    "callbacksAndStages": [
+      {
+        "event": "lifecycle-armed",
+        "stage": "Countdown",
+        "score": 1,
+        "gameSeconds": 37.268
+      },
+      {
+        "event": "android-unfocus",
+        "stage": "Paused",
+        "score": 1,
+        "gameSeconds": 37.546
+      },
+      {
+        "event": "android-pause",
+        "stage": "Paused",
+        "score": 1,
+        "gameSeconds": 37.546
+      },
+      {
+        "event": "android-focus",
+        "stage": "Paused",
+        "score": 1,
+        "gameSeconds": 37.546
+      },
+      {
+        "event": "android-unfocus",
+        "stage": "Paused",
+        "score": 1,
+        "gameSeconds": 37.546
+      },
+      {
+        "event": "android-unpause",
+        "stage": "Paused",
+        "score": 1,
+        "gameSeconds": 37.546
+      },
+      {
+        "event": "android-focus",
+        "stage": "Paused",
+        "score": 1,
+        "gameSeconds": 38.869
+      },
+      {
+        "event": "lifecycle-return",
+        "stage": "Paused",
+        "score": 1,
+        "gameSeconds": 38.908
+      },
+      {
+        "event": "lifecycle-retry",
+        "stage": "Countdown",
+        "score": 1,
+        "gameSeconds": 38.908
+      }
+    ],
+    "interruptedWaveSeed": 1486096070,
+    "retryWaveSeed": 1486096070,
+    "cancelledDeadline": 41.468,
+    "freshDeadline": 43.108,
+    "freshCountdownSeconds": 4.2
+  },
+  "cleanup": {
+    "ordinarySha256": "c04829b157a7c1284f30a70ec8992dd768ac0200d32e7e908c82bfc9443005d9",
+    "ordinaryForeground": true,
+    "scratchAbsent": true,
+    "ownScratchRemoved": true,
+    "csvRecordingRestored": true,
+    "proximityRestored": true,
+    "proximityOverrideUsed": false,
+    "mediaVolumeRestored": true
+  },
+  "raw": [
+    {
+      "file": "locked-slider-control.json",
+      "bytes": 4290,
+      "sha256": "629e0a2e31daef04536b2b50ba50903a309d9e0dd7dcfc8bb5b0d04147c50b45"
+    },
+    {
+      "file": "locked-slider-frames.csv",
+      "bytes": 88434,
+      "sha256": "62936ec960eb97ea7291da5b6ce394ce93f4e0f25139dab79040c83fe91b2dc1"
+    },
+    {
+      "file": "locked-slider-ovr-0.csv",
+      "bytes": 18326,
+      "sha256": "b7497fdc991d901b4813bb94a200660170aca8bc33d6a31216a72f9c5dcea310"
+    },
+    {
+      "file": "locked-slider-player.json",
+      "bytes": 13621,
+      "sha256": "9afa43c9b5cabcfe187345fdcc8d8d6c32760c33ff756e9de63fde8cfb13c33c"
+    },
+    {
+      "file": "locked-slider-unity.csv",
+      "bytes": 19564,
+      "sha256": "3fa9c85c7fa7fa9e95ce2dd360000073c8d4edfc3c565eb7b129d32b59bc4793"
+    }
+  ],
+  "firstBreakTiming": {
+    "longestIntervalMs": 96.577,
+    "intervalStartAfterMarkerMs": 28.471,
+    "intervalEndAfterMarkerMs": 125.048,
+    "stages": [
+      "BetweenWaves",
+      "BetweenWaves"
+    ],
+    "independentUnityWindowMaximumMs": 96.521
+  },
+  "unattendedPower": {
+    "ordinaryWakeKeypresses": 9,
+    "firstStandbyRunWithoutWakeKeys": {
+      "lockedCountdown": {
+        "windows": 4,
+        "frames": 229,
+        "durationSeconds": 3.18,
+        "averageFps": 72.013,
+        "maxFrameMs": 15.46,
+        "atOrAbove13_9ms": 112,
+        "drawCallsMax": 17,
+        "trianglesMax": 2928
+      },
+      "first32PaneTailMaximumMs": 75.461,
+      "rawFile": "locked-slider-first-standby/locked-slider-unity.csv"
+    },
+    "timingCoverage": "Post-shatter windows include only consecutive frame pairs with both endpoints in Countdown or BetweenWaves. Paused, setup and inter-run intervals are excluded. The first 8-pane tail encountered Paused after 0.31 s. The second 8-pane tail has about 1.51 s of continuous observations. Each shatter comparison in the narrow -150 ms to +300 ms window has complete gameplay coverage."
+  },
+  "spatialAudioComparison": {
+    "scope": "Four fresh processes on a single installed APK. Controls and variants took the same time on Welcome. Timings are in chronological order.",
+    "cases": [
+      {
+        "condition": "cold-1",
+        "breakWindowMaximumMs": 73.015,
+        "throughTwoSecondsAfterBreakMaxMs": 73.015,
+        "welcomeMaximumMs": 276.751,
+        "silentVoicesAdvanced": 0,
+        "submittedEyeBufferSamples": 6
+      },
+      {
+        "condition": "warm-1",
+        "breakWindowMaximumMs": 17.179,
+        "throughTwoSecondsAfterBreakMaxMs": 17.179,
+        "welcomeMaximumMs": 268.553,
+        "silentVoicesAdvanced": 3,
+        "submittedEyeBufferSamples": 6
+      },
+      {
+        "condition": "warm-2",
+        "breakWindowMaximumMs": 15.521,
+        "throughTwoSecondsAfterBreakMaxMs": 18.524,
+        "welcomeMaximumMs": 268.73,
+        "silentVoicesAdvanced": 3,
+        "submittedEyeBufferSamples": 6
+      },
+      {
+        "condition": "cold-2",
+        "breakWindowMaximumMs": 15.39,
+        "throughTwoSecondsAfterBreakMaxMs": 15.816,
+        "welcomeMaximumMs": 262.821,
+        "silentVoicesAdvanced": 0,
+        "submittedEyeBufferSamples": 7
+      }
+    ],
+    "slowControl": {
+      "breakLoopMs": 0.084,
+      "holeUpdateFinishedAfterZeroMs": 0.452,
+      "audioScheduledAfterZeroMs": 2.493,
+      "maximumUrpCameraCallbackMs": 1.622,
+      "longestFrameRelativeToZero": {
+        "startAfterMarkerMs": 51.834,
+        "endAfterMarkerMs": 124.849,
+        "stage": "BetweenWaves"
+      },
+      "firstAdvancedAudioSampleRelativeToZero": {
+        "impact": 51.9,
+        "fragments": 124.888,
+        "echo": 321.504
+      }
+    },
+    "interpretation": "The slow interval occurred between post-deadline frames, after the scripted break and first camera callback, during early real glass audio playback. Three nonzero-gain spatial voices played digital silence on Welcome in both warmed cases. The final unprimed control also remained fast. These observations leave shared runtime, driver, sound or asset cache effects unresolved and do not establish a reliable production fix. All real glass audio layers advanced in all four trials. Welcome already contained a startup frame of 263 to 277 ms in each case.",
+    "evidence": "locked-slider-ab/summary.json",
+    "sha256": "f01fbdc2442ac01b3863a617697ee14645f24a3b4f274d46740535ba0335d931",
+    "cleanup": {
+      "scratchAbsent": true,
+      "ordinaryRestored": true,
+      "ordinarySha256": "c04829b157a7c1284f30a70ec8992dd768ac0200d32e7e908c82bfc9443005d9",
+      "recordingRestored": true,
+      "proximityRestored": true,
+      "mediaVolumeRestored": true
+    }
+  }
+}

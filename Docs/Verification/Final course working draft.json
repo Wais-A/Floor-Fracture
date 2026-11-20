@@ -2,11 +2,11 @@
   "status": "Reviewable working draft dated November 20, 2026",
   "word": {
     "path": "Docs/Floor Fracture Final Design Working Draft.docx",
-    "sha256": "071f59cbc22ddea7bc6b459d6ab4e1b3e5b4bb5aeeb12fbf1e20136265b353e4"
+    "sha256": "9af130a2ec3b55f5257ce44cc604d62a313d421484e2340eac86afa2674f5699"
   },
   "pdf": {
     "path": "Docs/Floor Fracture Final Design Working Draft.pdf",
-    "sha256": "bc4ca34bc7dd6a548dab38855a7c42e27385aea316ac96e0be62a28e3a267bbb"
+    "sha256": "9e7453e7fe3b41fbf7da5a0c99cf3ca03b4bb8ab41a46cd63fb7df94a780922f"
   },
   "sourceDocuments": {
     "Docs/Final Project - Design Doc.docx": "8fb9ce31db2c80fc82feb4456f6cbfce3f422d01e22f0bd2f2c37e982bd7a2e3",
@@ -19,8 +19,8 @@
       612,
       792
     ],
-    "visualInspection": "All five US Letter pages were rendered with bundled LibreOffice and visually inspected at 130 dpi. Page 1 matched the prior PDF pixel for pixel. Six paragraphs changed in sections 4, 6, 7 and 10. Page breaks, tables and the professor’s 11 section labels remain intact.",
-    "content": "All 130 nonempty Word paragraphs appear in the PDF. The two Word hyperlink destinations match the PDF annotations. The external link targets were inspected locally. Submission and publication are owner decisions.",
+    "visualInspection": "All five US Letter pages were rendered with bundled LibreOffice and inspected at 130 dpi. Pages 1 and 2 matched the previous working draft pixel for pixel. Four paragraphs changed in sections 6, 7 and 10. Original headings, tables and page breaks remain intact.",
+    "content": "All 130 nonempty Word paragraphs appear in the five-page PDF. All 11 numbered headings and both Word hyperlink targets appear in the PDF. There are no embedded sketch objects.",
     "links": [
       "https://github.com/Wais-A/Floor-Fracture",
       "https://github.com/oculus-samples/Unity-MRUtilityKitSample"
@@ -28,10 +28,18 @@
     "hardwareUpdate": "Section 7 identifies both Quest builds. The 5 × 3 session was worn. The 64-pane, 32-shatter scripted run is Maximum-A in 64 pane Quest measurements.json. The raw paired OVR CSV independently confirms 13 samples, 71–73 FPS, one stale frame and 5.041 ms peak application GPU time.",
     "interactionUpdate": "Section 6 includes captioned offline narration, the recorded reason on Results and the 5.0 s starting timer with 0.4 s decrements and a 2.5 s trial floor. The ordinary-step check remains open.",
     "roomAndPauseUpdate": "A two-patch MRUK Editor fixture fitted 6 × 3 at 0.667 m; its wave continued across the joined floor and paused outside. Room joining is sourced to 24f20ef. In ad3fca7 an interrupted wave hides the board and must wait for valid room localization and supported glass before a fresh countdown. Score is retained.",
-    "warningAndRingUpdate": "The room-scale Settings preview uses the live pane and both warning intensities, including off-board access. The integrated ring in 49976f4 and its check in 084cf29 preserve all 697 original bright pixels in each simulated eye. The charcoal outline added 369 right-eye and 371 left-eye pixels at or above 3:1 local luminance contrast on the RGB 235 floor. These are Unity Editor measurements of rendered pixels."
+    "warningAndRingUpdate": "The room-scale Settings preview uses the live pane and both warning intensities, including off-board access. The integrated ring in 49976f4 and its check in 084cf29 preserve all 697 original bright pixels in each simulated eye. The charcoal outline added 369 right-eye and 371 left-eye pixels at or above 3:1 local luminance contrast on the RGB 235 floor. These are Unity Editor measurements of rendered pixels.",
+    "ordinaryRimUpdate": "Revision 72faf40 added a dark inner band to the intact cyan rim and preserved the original amber warning. Fixed simulated eye views 2.56 m from an intact pane showed more of each edge on a very light floor. In the separate Mac Meta XR Simulator, the final gameplay assembly showed 12 × 2 panes at 0.5620899 m, the shared two-tone rim, and the intact amber warning sample in Settings. The real wearer recheck remains open.",
+    "lockedSliderAndPauseUpdate": "Unattended Quest 3 scratch build d49ac6dc2a694b49aab7d8d4ba86ab96 instrumented an 8 × 8 level-three board. Two moving panes locked and supported the scripted stance at their deadlines. Locked-window maxima were 15.993 and 15.682 ms. First/repeat 32-pane shatter window maxima were 96.577 and 14.728 ms. Real Android Home/return preserved one point, kept the board hidden and required a fresh 4.2-second countdown. This launch predates 72faf40. It is separate from the worn 5 × 3 capture and the 8554b37e maximum-board render benchmark.",
+    "sourceEvidence": [
+      "Docs/Verification/safe-rim-comparison.json",
+      "Docs/Verification/Locked slider on Quest/locked-slider-device-review.json",
+      "Docs/Verification/64 pane Quest measurements.json",
+      "Docs/Verification/Shared chamber Quest session.json"
+    ]
   },
   "pending": [
-    "Current build wearer recheck, including joined floor patches, relocalization after a pause, ring visibility on a light floor, stance, moving glass, furniture, Water and Space, Full/Reduced comfort and physical inputs.",
+    "Current-build wearable recheck in the real demo room, including light/dark rims, tracking through physical removal/replacement, room fit, furniture, moving catch, Water and Space, Full/Reduced comfort and physical inputs.",
     "At least two outside playtesters with direct observations.",
     "Repeat the scripted 64-pane hardware measurements with a wearer in the demo room and investigate frame-time spikes.",
     "Record the 3–5 minute Quest demo and add its link to the README and design document.",

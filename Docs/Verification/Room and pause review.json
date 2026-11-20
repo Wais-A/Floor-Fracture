@@ -248,11 +248,16 @@
     {
       "path": "Docs/Verification/board-readability.json",
       "sha256": "32562c1afa8f484960f29ac2a54c30ad450658aabb917932e8c607e34069ae0e"
+    },
+    {
+      "path": "Docs/Verification/Muted shatter comparison.json",
+      "sha256": "a0e4a16a0ae09ef7894651ad27b389ba85eb5a0eeee131cb22e78261b366e830"
     }
   ],
   "limits": [
     "The separate 64-pane Quest frame-time capture used a previous fixture build. The 72.04 FPS average is not a new real-room frame-time measurement of this release.",
     "The older Git history and earlier APKs contain a local Meta editor pairing credential. The current release omits that credential. Use the history-free source snapshot for sharing.",
     "Current open items include real-room movement and comfort, two outside testers, final physical headset video, class submission and owner voice selection."
-  ]
+  ],
+  "scratchGameCopies": "Editor-only instruments live in separate test projects. The two ordinary APKs exclude them."
 }

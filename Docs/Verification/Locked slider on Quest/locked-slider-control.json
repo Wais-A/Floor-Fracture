@@ -1,0 +1,96 @@
+{
+  "startedUtc": "2026-11-20T08:48:57.256+00:00",
+  "hostPackage": "com.wa003.floorfracture.renderbench",
+  "expectedOrdinary": "c04829b157a7c1284f30a70ec8992dd768ac0200d32e7e908c82bfc9443005d9",
+  "scratchSha256": "0ec4bcb212a3bf14f09e469e26accaef73953e8aacaafc7c99497ac7a53877a2",
+  "buildGuid": "d49ac6dc2a694b49aab7d8d4ba86ab96",
+  "initialOrdinarySha256": "c04829b157a7c1284f30a70ec8992dd768ac0200d32e7e908c82bfc9443005d9",
+  "initialScratchSha256": "",
+  "initialProximity": {
+    "enabled": true,
+    "prox_override": "DISABLED",
+    "power_state": "STANDBY",
+    "autosleep_disabled": false,
+    "message": "Proximity sensor: enabled (normal behavior)"
+  },
+  "originalCsvRecording": false,
+  "originalMediaVolume": {
+    "value": 15,
+    "minimum": 0,
+    "maximum": 15
+  },
+  "launchMode": "Normal Android app launch with ordinary proximity behavior and periodic Android wake key events",
+  "launchUtc": "2026-11-20T08:49:08.801+00:00",
+  "firstPidPresent": true,
+  "ordinaryWakeKeypresses": 9,
+  "lifecycle": {
+    "armedUtc": "2026-11-20T08:49:48.336+00:00",
+    "resumedBefore": [
+      "com.wa003.floorfracture.renderbench/com.unity3d.player.UnityPlayerGameActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.controlbar.ControlBarActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.displaybar.DisplayBarActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.toasts.ToastsActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.bloom.BloomActivity",
+      "com.oculus.systemux/com.oculus.panelapp.activetaskbar.ActiveTaskBarActivity",
+      "com.wa003.floorfracture.renderbench/com.unity3d.player.UnityPlayerGameActivity"
+    ],
+    "pidBeforePresent": true,
+    "homeAction": "android.intent.action.MAIN + android.intent.category.HOME",
+    "homeResponse": [
+      "Status: ok",
+      "Activity: com.oculus.vrshell/.HomeActivity"
+    ],
+    "resumedDuringHome": [
+      "com.oculus.vrshell/.HomeActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.controlbar.ControlBarActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.displaybar.DisplayBarActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.toasts.ToastsActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.bloom.BloomActivity",
+      "com.oculus.systemux/com.oculus.panelapp.activetaskbar.ActiveTaskBarActivity",
+      "com.oculus.vrshell/.HomeActivity"
+    ],
+    "resumeRequestedUtc": "2026-11-20T08:49:49.661+00:00",
+    "resumedAfter": [
+      "com.wa003.floorfracture.renderbench/com.unity3d.player.UnityPlayerGameActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.controlbar.ControlBarActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.displaybar.DisplayBarActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.toasts.ToastsActivity",
+      "com.oculus.vrshell/com.oculus.panelapp.bloom.BloomActivity",
+      "com.oculus.systemux/com.oculus.panelapp.activetaskbar.ActiveTaskBarActivity",
+      "com.wa003.floorfracture.renderbench/com.unity3d.player.UnityPlayerGameActivity"
+    ],
+    "sameProcess": true
+  },
+  "newOvrCsvCount": 1,
+  "unityCsvPulled": true,
+  "ovrSourceNames": [
+    "com.wa003.floorfracture.renderbench#UnityPlayerGameActivity-20261120_034915.csv"
+  ],
+  "finalCsvRecording": false,
+  "removedOwnScratch": true,
+  "scratchAbsent": true,
+  "ordinaryRestored": true,
+  "finalProximity": {
+    "enabled": true,
+    "prox_override": "DISABLED",
+    "power_state": "HEADSET_UNMOUNTED",
+    "autosleep_disabled": false,
+    "message": "Proximity sensor: enabled (normal behavior)"
+  },
+  "finalMediaVolume": {
+    "value": 15,
+    "minimum": 0,
+    "maximum": 15
+  },
+  "finalOrdinarySha256": "c04829b157a7c1284f30a70ec8992dd768ac0200d32e7e908c82bfc9443005d9",
+  "finalActivity": [
+    "com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity",
+    "com.oculus.vrshell/com.oculus.panelapp.controlbar.ControlBarActivity",
+    "com.oculus.vrshell/com.oculus.panelapp.displaybar.DisplayBarActivity",
+    "com.oculus.vrshell/com.oculus.panelapp.toasts.ToastsActivity",
+    "com.oculus.vrshell/com.oculus.panelapp.bloom.BloomActivity",
+    "com.oculus.systemux/com.oculus.panelapp.activetaskbar.ActiveTaskBarActivity",
+    "com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity"
+  ],
+  "completedUtc": "2026-11-20T08:49:55.772+00:00"
+}

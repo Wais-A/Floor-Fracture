@@ -80,4 +80,4 @@ In the integrated run, Meta’s Rec Room fitted 6 × 6 at 62.1 cm. All 34 gamepl
 
 A stationary Quest also rendered a scripted 64-pane trial. A 32-pane break in fog and the following moving-glass wave averaged 72.04 FPS, with a longest frame of 18.82 ms. The wearer’s real-room performance comparison remains open. [Physical measurements](<./Docs/Verification/64 pane Quest measurements.json>)
 
-The tested game source is `084cf29`. The last wearer comparison cited here used `cfc2b8e`. Open the main checklist for outstanding wearer observations. Asset provenance is recorded in the credits. [Current release inspection](<./Docs/Verification/Room and pause review.json>) · [Asset credits](<./Docs/Asset credits.md>)
+The tested game source is `72faf40`. The last wearer comparison cited here used `cfc2b8e`. Open the main checklist for outstanding wearer observations. Asset provenance is recorded in the credits. [Current release inspection](<./Docs/Verification/Latest Quest release.json>) · [Asset credits](<./Docs/Asset credits.md>)

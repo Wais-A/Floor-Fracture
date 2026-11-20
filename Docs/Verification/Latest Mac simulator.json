@@ -1,0 +1,95 @@
+{
+  "sourceRevision": "72faf40ca67bad88e24e3278fb7ee768fb3fb342",
+  "utc": "2026-11-20T09:05:37.078757Z",
+  "result": "passed",
+  "scope": "Native Meta XR Simulator for Mac and the running Unity Editor. A desktop point of view and the simulator room supplied this evidence. Physical movement, real furniture edges, Quest performance and wearer recognition remain separate tests.",
+  "editor": "6000.6.9f1",
+  "project": "Floor Fracture",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "runtime": "OpenXR Display",
+  "xr": true,
+  "stereo": true,
+  "stereoMode": "MultiPass",
+  "uiDevicePreset": "Meta Quest 3",
+  "viewport": "Left eye",
+  "uiRefreshHz": 72,
+  "simulatorIPDmm": 60,
+  "process": "Meta XR Simulator",
+  "nativeWindowID": 16060,
+  "previousGameAssembly": "8d5b4350-e9f5-4c54-afcb-8cc2b5d18bf7",
+  "liveGameAssemblyMvid": "a8bb270b-06e6-4800-8129-c3b5abfe52c9",
+  "liveRoomsAssemblyMvid": "052d2235-52ed-425b-9620-a9b94896d25e",
+  "installedAssemblySha256": "587e7f2e8fd83e640219ccf1404963a6d39f4333a0fc58bf4b6da17e40a04d42",
+  "authoredSourceHashes": {
+    "Assets/FloorFracture/Scripts/Glass/GlassGeometry.cs": "de72da453474499280b1396b0896f03a095a34f9ca78acae60e1dea996d757ff",
+    "Assets/FloorFracture/Scripts/Glass/GlassTile.cs": "851bd6ec51b4f27209f278501649de995a25cb3268a48562e9fc89841318eb78"
+  },
+  "room": {
+    "room": "Confirmed",
+    "localized": true,
+    "rooms": 1,
+    "anchors": 27,
+    "floors": 1,
+    "spawns": 8,
+    "columns": 12,
+    "rows": 2,
+    "pitch": 0.5620899
+  },
+  "intactAndMovingRims": {
+    "safeRimLoaded": true,
+    "intactAssigned": true,
+    "movingIntactShares": true,
+    "warningDiffers": true,
+    "matchingBounds": true,
+    "ordinaryBounds": "(0.4930, 0.0000, 0.4930)",
+    "ordinaryVertices": 32,
+    "ordinaryTriangles": 16,
+    "warningVertices": 32,
+    "warningTriangles": 16,
+    "submeshes": 1,
+    "ordinaryMaterials": 1,
+    "brightVertices": 16,
+    "slateVertices": 16,
+    "originalWarningWhiteVertices": 32
+  },
+  "menu": {
+    "input": "Normal EditorChoose path selected Settings and Back. No setting was changed.",
+    "initialFrame": 9513,
+    "settings": {
+      "stage": "Settings",
+      "frame": 12096,
+      "utc": "2026-11-20T09:05:02.526846Z",
+      "warningPreview": true,
+      "warningRimIsUnsplit": true,
+      "warningDiffersFromSafe": true,
+      "warningMaterial": true,
+      "warningColor": "RGBA(1.0000, 0.4668, 0.1822, 1.0000)",
+      "cracks": true,
+      "ordinaryRimStillSplit": true,
+      "previewDegrees": 7.65268135
+    },
+    "finalFrame": 14575,
+    "finalStage": "Welcome",
+    "finalMenu": [
+      "Floor Fracture",
+      "Your room scan fits 12 × 2 panes at 56 cm each, covering 6.75 × 1.12 m.\nMove to glass that will hold before zero.",
+      "Start",
+      "Tutorial",
+      "Settings",
+      "Play area",
+      "Development"
+    ],
+    "finalPlayMode": true,
+    "previewHiddenOnWelcome": true
+  },
+  "image": {
+    "file": "simulator.jpg",
+    "captureUtc": "2026-11-20T09:05:48+00:00",
+    "size": [
+      2842,
+      1898
+    ],
+    "sha256": "991fa5d0bf7459b1e2b5aeb17d3ccf574872192905a24ea764b8980a0efefdb1",
+    "source": "macOS screencapture explicitly targeted the separate simulator window. The full native raster was exported to JPEG."
+  }
+}
