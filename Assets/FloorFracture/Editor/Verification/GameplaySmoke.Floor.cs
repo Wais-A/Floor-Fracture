@@ -10,6 +10,32 @@ namespace FloorFracture.Editor
 {
     public static partial class GameplaySmoke
     {
+        private static void VerifyOccupancyRingMesh()
+        {
+            var ring = game.BoardView.Board.Find("Occupied square");
+            var renderer = ring.GetComponent<MeshRenderer>();
+            var mesh = ring.GetComponent<MeshFilter>().sharedMesh;
+            Require(ring.GetComponentsInChildren<Renderer>(true).Length == 1 && mesh.subMeshCount == 1 &&
+                renderer.sharedMaterials.Length == 1 && renderer.sharedMaterial == GlassTile.Surface,
+                "The occupied pane should use one mesh draw with the shared glass material.");
+            var vertices = mesh.vertices;
+            var colors = mesh.colors;
+            int bright = 0, dark = 0;
+            float outer = 0f;
+            for (int i = 0; i < vertices.Length; ++i)
+            {
+                float radius = new Vector2(vertices[i].x,vertices[i].z).magnitude;
+                outer = Mathf.Max(outer,radius);
+                if (colors[i] == Color.white) { ++bright; continue; }
+                Require(colors[i].maxColorComponent <= 1f && Mathf.Max(colors[i].r,colors[i].g,colors[i].b) < .05f &&
+                    colors[i].a == 1f && radius >= GlassGeometry.RingRadius + GlassGeometry.RingWidth*.5f - .00001f,
+                    "The dark keyline must sit outside the original bright stroke.");
+                ++dark;
+            }
+            Require(bright > 0 && dark > 0 && Mathf.Abs(outer - GlassGeometry.RingOuterRadius) < .00001f,
+                "The occupied ring must retain its bright stroke and fit the exact radius reserved on supported glass.");
+        }
+
         private static EffectMesh FloorSurface =>
             (EffectMesh)new SerializedObject(game.Room).FindProperty("floorEffect").objectReferenceValue;
 
