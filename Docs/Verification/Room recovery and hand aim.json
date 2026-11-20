@@ -1,0 +1,257 @@
+{
+  "dateUtc": "2026-11-20T13:35:56.647295+00:00",
+  "gameSource": "a190c7b73f8277ed59c080be01383c575c189942",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "reportsFromWearer": [
+    "After another scan, the floor-level warning persisted.",
+    "Aiming at recovery choices with hands required an upward wrist bend and sometimes selected the wrong choice."
+  ],
+  "earlierPhysicalLog": {
+    "roomV1AnchorsDiscovered": 2,
+    "roomV1AnchorsInLatestQuery": 1,
+    "anchorsLocatedForRigidScenePose": 16,
+    "anchorsRequestedForRigidScenePose": 16,
+    "interpretation": "The previous player recorded successful anchor localization. It did not record the rejected game condition. The specific cause in this physical room remains unconfirmed."
+  },
+  "edits": [
+    "Validate the actual single or adjoining floor polygons at the tracked position and calibrated floor height when the native room hint is absent or stale.",
+    "Wait for app focus on return from Space Setup. Retry temporary discovery failures. Keep checking late geometry while recovery controls are available and fit only after the geometry validates.",
+    "Release the old MRUK floor meshes before replacing anchors, so reloading a room can rebuild the exterior brick.",
+    "Put Check again before Space Setup for an existing scan. Place the world-space panel 56 cm forward and 24 cm below the eyes, with 42 mm choices and 8 mm between them.",
+    "Use the tracked Meta HandPointerPose, native index pinch, controller and poke interactors. Discard a held press if its pooled row starts representing a different menu page."
+  ],
+  "editMode": {
+    "before": {
+      "LocalizesFloorWithAbsentOrStaleHintAndRejectsOutsideWrongStoreyAndAmbiguousRooms(False)": "Failed",
+      "LocalizesFloorWithAbsentOrStaleHintAndRejectsOutsideWrongStoreyAndAmbiguousRooms(True)": "Passed"
+    },
+    "finalPassed": 69,
+    "finalSkipped": 0,
+    "finalFailed": 0,
+    "newOrExpandedCases": [
+      "LocalizesFloorWithAbsentOrStaleHintAndRejectsOutsideWrongStoreyAndAmbiguousRooms(False)",
+      "LocalizesFloorWithAbsentOrStaleHintAndRejectsOutsideWrongStoreyAndAmbiguousRooms(True)",
+      "MeasuresTheCalibratedFloorUnderTheEyeInWorldLockedSpace"
+    ],
+    "durationSeconds": 52.39
+  },
+  "playMode": {
+    "utc": "2026-11-20T13:28:26.3134970Z",
+    "fixture": "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode",
+    "grid": [
+      6,
+      6
+    ],
+    "paneWidthMetres": 0.6207143068313599,
+    "checksPassed": 44,
+    "endingRoutes": 24,
+    "imagesVerifiedPresent": 52,
+    "relevantChecks": [
+      "The gameplay Canvas has one registered SDK ray surface and one SDK poke surface. Both SDK hand branches include a poke interactor, and the physical poke surface covers the menu row.",
+      "Both authored Meta hand-ray prefabs selected their intended recovery row once using synthetic system aim and index pinch with the palm pointing upward. Both targets were under 30 degrees above a chest-height hand. A pinch held across a page change triggered no new action.",
+      "The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.",
+      "Water showed the moving walls for 3.49 s after entry at 1.50 m eye height, before impact.",
+      "Lava showed the moving walls for 3.37 s after entry at 2.20 m eye height, before impact.",
+      "Injected MRUK NoScenePermission. The blocked board showed App permissions and Try again. Retry loaded the fixture and restored Welcome.",
+      "Injected MRUK NoRoomsFound. The blocked board showed Space Setup and Check again. Retry loaded the fixture and restored Welcome.",
+      "Withheld the real MRUK fixture's floor outline beyond the localization timeout. The game kept the board hidden, then fitted the restored scan and opened Welcome without a rescan or button press."
+    ]
+  },
+  "nativeMacSimulator": {
+    "platform": "Meta XR Simulator running the Unity gameplay scene in a separate Mac window. Agentic XR provided tracked hand poses and pinch edges.",
+    "handSelections": [
+      {
+        "hand": "left",
+        "button": "Settings",
+        "hoverErrorMm": 0.0001,
+        "stageAfterPinch": "Settings",
+        "titleAfterPinch": "Settings"
+      },
+      {
+        "hand": "right",
+        "button": "Back",
+        "hoverErrorMm": 0.0002,
+        "stageAfterPinch": "Welcome",
+        "titleAfterPinch": "Floor Fracture"
+      },
+      {
+        "hand": "right",
+        "button": "Check again",
+        "hoverErrorMm": 0.0001,
+        "stageAfterPinch": "Room",
+        "titleAfterPinch": "Reading your room"
+      }
+    ],
+    "recoveryTrigger": "Invoked the MRUK floor-anchor update event in the loaded game. Used the real recovery menu and saved-room requery.",
+    "savedRoomResult": "Your room scan fits 12 × 2 panes at 56 cm each, covering 6.75 × 1.12 m.",
+    "sdkVisualStartOffsetMetres": [
+      0.1,
+      0.1
+    ],
+    "sdkAimSourceBothHands": "HandPointerPose",
+    "inputAfterReview": "Left and right controllers, point and click enabled; normal Welcome page.",
+    "recoveryScreenshot": "Room recovery hand menu.jpg",
+    "screenshotSha256": "07c9d170078459122604fb490a88e8d545a955fe43a3ec7a97d9de11b43c928f"
+  },
+  "questFixture": {
+    "description": "A separate temporary Android application loaded two synthetic, single-floor MRUK rooms on the Quest and called the revised room reader. Positions inside both rooms and outside them were tested with correct, missing and stale hints.",
+    "package": "com.wa003.floorfracture.renderbench",
+    "apkSha256": "edbef4fd650aac342ad9db702bf4ccea2dc5dc0cab7f19a2b7ecb74d5721018f",
+    "checkedCases": 24,
+    "result": {
+      "build": "08bccc28e49a484c836171d8d2f1973c",
+      "device": "Oculus Quest 3",
+      "loadResult": "Success",
+      "exception": "",
+      "passed": true,
+      "syntheticRoomsAreNonlocal": true,
+      "liveFilterRejectsSynthetic": true,
+      "rooms": 2,
+      "floorSections": 2,
+      "columns": 6,
+      "rows": 3,
+      "pitch": 0.6666666865348816,
+      "area": 8.0,
+      "samples": [
+        {
+          "sample": "left side",
+          "nativeFirst": true,
+          "nativeSecond": false,
+          "expected": 0,
+          "hinted": 0,
+          "noHint": 0,
+          "staleHint": 0
+        },
+        {
+          "sample": "left interior",
+          "nativeFirst": true,
+          "nativeSecond": false,
+          "expected": 0,
+          "hinted": 0,
+          "noHint": 0,
+          "staleHint": 0
+        },
+        {
+          "sample": "adjacent interior",
+          "nativeFirst": true,
+          "nativeSecond": false,
+          "expected": 0,
+          "hinted": 0,
+          "noHint": 0,
+          "staleHint": 0
+        },
+        {
+          "sample": "center",
+          "nativeFirst": true,
+          "nativeSecond": false,
+          "expected": 0,
+          "hinted": 0,
+          "noHint": 0,
+          "staleHint": 0
+        },
+        {
+          "sample": "right side",
+          "nativeFirst": true,
+          "nativeSecond": false,
+          "expected": 0,
+          "hinted": 0,
+          "noHint": 0,
+          "staleHint": 0
+        },
+        {
+          "sample": "outside both rooms",
+          "nativeFirst": false,
+          "nativeSecond": false,
+          "expected": -1,
+          "hinted": -1,
+          "noHint": -1,
+          "staleHint": -1
+        },
+        {
+          "sample": "left side of second room",
+          "nativeFirst": false,
+          "nativeSecond": true,
+          "expected": 1,
+          "hinted": 1,
+          "noHint": 1,
+          "staleHint": 1
+        },
+        {
+          "sample": "right side of second room",
+          "nativeFirst": false,
+          "nativeSecond": true,
+          "expected": 1,
+          "hinted": 1,
+          "noHint": 1,
+          "staleHint": 1
+        }
+      ]
+    },
+    "removedAfterReview": true
+  },
+  "ordinaryQuestBuild": {
+    "mode": "retail",
+    "sourceRevision": "a190c7b73f8277ed59c080be01383c575c189942",
+    "apk": "Builds/Quest/Room-recovery-and-hand-aim/FloorFracture.apk",
+    "bytes": 108932428,
+    "sha256": "08584c5185c677d318a77bb8b416b549c7ad9da251a6f2a6eb4568026e2d2be9",
+    "buildGuid": "b7a1b6367cc94cf79f4aa5efb29198a7",
+    "unity": "6000.6.9f1",
+    "package": "com.wa003.floorfracture",
+    "activity": "com.unity3d.player.UnityPlayerGameActivity",
+    "buildErrors": 0,
+    "buildWarnings": 8,
+    "comparedAuthoredPaths": 241,
+    "crcVerifiedArchiveEntries": 918,
+    "arm64Libraries": 22,
+    "minimumApi": 32,
+    "targetApi": 34,
+    "debuggable": false,
+    "apkV2Verified": true,
+    "aligned16KiB": true,
+    "permissions": [
+      "android.permission.VIBRATE",
+      "com.oculus.permission.USE_ANCHOR_API",
+      "com.oculus.permission.USE_SCENE",
+      "com.oculus.permission.HAND_TRACKING",
+      "android.permission.INTERNET",
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.MODIFY_AUDIO_SETTINGS",
+      "android.permission.BLUETOOTH",
+      "com.wa003.floorfracture.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+    ],
+    "editorSettingsResourcePresent": true,
+    "editorPairingCredentialFound": false,
+    "scratchProbeFound": false,
+    "openXRAndMetaAudioPresent": true,
+    "packageContainsNewRoomAndMenuCode": true,
+    "singleFloorFixtureOrTestEntrypointInPlayerMetadata": false
+  },
+  "installedOnQuest": {
+    "utc": "2026-11-20T13:35:56.647295+00:00",
+    "device": "Quest 3",
+    "package": "com.wa003.floorfracture",
+    "installedApkSha256": "08584c5185c677d318a77bb8b416b549c7ad9da251a6f2a6eb4568026e2d2be9",
+    "buildGuid": "b7a1b6367cc94cf79f4aa5efb29198a7",
+    "ordinaryNonDebuggablePlayer": true,
+    "sameProcessRemainedInForegroundForAtLeastSeconds": 12,
+    "spatialDataGranted": true,
+    "fatalOrGameShaderErrorSeenInProcessLog": false,
+    "processLogLinesInWindow": 1806,
+    "scope": "Normal standalone APK launched on the physical headset unattended. No result is claimed about room appearance, menu selection or comfort.",
+    "unwornSavedRoomQuery": {
+      "savedRooms": 0,
+      "worldLock": false,
+      "gameStatus": "NoRoom",
+      "visibleMessage": "The headset hasn't found a saved room here yet. Look around and check again, or scan the floor and furniture in Space Setup."
+    }
+  },
+  "restored": {
+    "ordinaryGameForeground": true,
+    "headsetWearDetectionEnabled": true
+  },
+  "remainingWearerChecks": [
+    "Open in the same saved physical room, wait for the fitted board and compare its height and edges with the floor. If recovery appears, record its exact message.",
+    "With relaxed hands, point at Settings or Check again with each hand, pinch once and confirm the highlighted row opens once. Check near poke independently."
+  ]
+}

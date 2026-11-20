@@ -1,4 +1,5 @@
 {
+  "supersededBy": "Room recovery and hand aim.json",
   "sourceRevision": "1da914c52164f620edfa50c9b4fb15f3020a3c56",
   "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
   "unity": "6000.6.9f1",
