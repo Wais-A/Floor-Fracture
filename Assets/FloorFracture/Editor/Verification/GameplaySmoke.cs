@@ -238,6 +238,8 @@ namespace FloorFracture.Editor
                     report.previewBeforeNaturalLoss = EndingNames[Mathf.RoundToInt(selected.GetFloat("_Theme"))];
                     Capture("neighboring-hole-player-view", SmokeView.CenterEye);
                 }
+                if (index == 0 || plan.Mode == WaveMode.LastTile)
+                    yield return VerifyExitDuringWaveResult(plan);
                 yield return Wait(() => game.Stage != GameStage.BetweenWaves, "next wave or level", 8);
                 if (game.Stage == GameStage.Ready) break;
                 Require(game.Stage == GameStage.Countdown, "A safe stationary route did not advance the level.");

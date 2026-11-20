@@ -199,10 +199,11 @@ namespace FloorFracture
             if(!BoardView||!Panel||!Panel.Head||Stage==GameStage.Room) return;
             double now=Now;
             if(Stage==GameStage.Countdown) { UpdateWave(now); return; }
-            if(Stage==GameStage.Fall||Stage==GameStage.Results) return;
+            if(Stage==GameStage.Fall||Stage==GameStage.Results||Stage==GameStage.Paused) return;
+            var sample=State.Sample(HeadXZ,Tracked,now);
             if(Stage==GameStage.BetweenWaves)
             {
-                if(!Tracked) { PauseRound(); return; }
+                if(sample.Kind==SupportKind.Outside||sample.Kind==SupportKind.Untracked) { PauseRound(); return; }
                 if(now>=waitUntil)
                 {
                     if(levelFinished)
@@ -210,12 +211,10 @@ namespace FloorFracture
                         ++Level; WaveNumber=1; State.RebuildLevel(); BoardView.ClearTransient(); levelFinished=false;
                         Ready("The board has rebuilt. Take your place for the next level."); return;
                     }
-                    if(State.Sample(HeadXZ,true,now).Kind!=SupportKind.Glass) { PauseRound(); return; }
+                    if(sample.Kind!=SupportKind.Glass) { PauseRound(); return; }
                     TryStart(); return;
                 }
             }
-            if(Stage==GameStage.Paused) return;
-            var sample=State.Sample(HeadXZ,Tracked,now);
             if(Stage==GameStage.PracticeStone&&waitUntil>0&&now>=waitUntil)
             {
                 waitUntil=0;
