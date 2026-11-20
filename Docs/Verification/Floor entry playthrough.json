@@ -1,0 +1,1518 @@
+{
+  "gameplayRevision": "8dc6a96b10c75845f3b17b7982c0f60db70bb5d0",
+  "rawReport": "Builds/Verification/Floor-entry/PlayMode/report.json",
+  "rawSha256": "772e12fa259b5169c10e44b188c5281f1a7e962deffaaa9cbb7ba7950d548ecb",
+  "summary": {
+    "checks": 34,
+    "capturedFrames": 50,
+    "exitRoutes": 24,
+    "openLandingEyes": 12,
+    "waterViews": 8,
+    "spaceViews": 60,
+    "spaceViewsWithAnyExposedRoom": 0,
+    "measurements": "Programmatic two-eye renders use offset eye positions. The recorded image files use a single camera. Physical Quest appearance and motion comfort are separate."
+  },
+  "result": "passed",
+  "startedUtc": "2026-11-20T05:13:13.3325350Z",
+  "finishedUtc": "2026-11-20T05:17:43.0362690Z",
+  "unityVersion": "6000.6.9f1",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "fixture": "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode",
+  "input": "Simulated world poses, grip state, and visible menu selection. Unity physics and unscaled game time.",
+  "imagesDescribe": "Monoscopic Editor renders of the actual scene. Player-view images use the simulated center eye. Whole-room-brick looks down on the scanned floor. Room-preview, classic-glass, and neighboring-hole are elevated observer shots. Fall sequences use the same stationary eye position, looking toward the opening, slightly downward, and straight ahead as labeled.",
+  "columns": 6,
+  "rows": 6,
+  "seed": 379,
+  "sdkFloorCandidates": 8,
+  "pitch": 0.6207143068313599,
+  "checks": [
+    "Meta Camera Rig, Passthrough, MR Utility Kit, Find Spawn Positions, Controller Tracking, and Interactions Rig supply the single tracked rig, room, floor candidates and left/right ray and grab controls.",
+    "The gameplay scene keeps the app’s wall and furniture overlay inactive. MRUK fits the board and the brick samples the live stereo environment depth. The saved scene enables one SDK environment depth provider and contains no example cube, occlusion root, raycast marker, or shared anchor.",
+    "The gameplay Canvas has one registered SDK ray surface and one SDK poke surface. Both SDK hand branches include a poke interactor, and the physical poke surface covers the menu row.",
+    "All ten pooled positional glass and ending-impact sources retain the actual Spatial Audio block and one enabled MetaXRAudioSource with spatialization enabled.",
+    "MRUK Rec Room supplied floor and furniture. The 6 × 6 board at 0.621 m pitch appeared at Welcome without a clearance approval prompt.",
+    "The exterior floor, neighboring hole and falling shaft rendered matching blue brick faces and mortar at the same physical scale.",
+    "Native soft GPU readback, eye 0, bin in place: 1624 couch, 100 chair-leg and 84 bin pixels in passthrough; 228 visible brick pixels between the legs, 0 at the vacated bin center.",
+    "Native soft GPU readback, eye 1, bin in place: 1624 couch, 100 chair-leg and 84 bin pixels in passthrough; 228 visible brick pixels between the legs, 0 at the vacated bin center.",
+    "Native soft GPU readback, eye 0, bin moved: 1624 couch, 100 chair-leg and 49 bin pixels in passthrough; 228 visible brick pixels between the legs, 56 at the vacated bin center.",
+    "Native soft GPU readback, eye 1, bin moved: 1624 couch, 100 chair-leg and 49 bin pixels in passthrough; 228 visible brick pixels between the legs, 56 at the vacated bin center.",
+    "Furniture contact, lateral motion, 12852 matched floor-pixel pairs across both eyes: mean contrast change 0.0986 to 0.0254, peak 0.3611 to 0.1299, mean half-contrast edge travel 29.1 to 7.0 mm.",
+    "Furniture contact, alternating range error, 12852 matched floor-pixel pairs across both eyes: mean contrast change 0.2156 to 0.1006, peak 0.9796 to 0.3371, mean half-contrast edge travel 54.6 to 9.0 mm.",
+    "Furniture contact, irregular range error, 12852 matched floor-pixel pairs across both eyes: mean contrast change 0.1291 to 0.0929, peak 0.8249 to 0.4000, mean half-contrast edge travel 37.7 to 26.1 mm.",
+    "GPU readbacks of the actual MRUK floor showed masonry to its scanned edges with a clear glass footprint at the fitted orientation and a further 31-degree rotation. A board one metre above the floor left the full floor covered.",
+    "The SDK display event recalled Settings, Paused, and Results to 56 cm in front of the simulated eye. The menu stayed fixed during head movement, stayed hidden during play, and waited for tracking after suspension. The glass, floor anchor, and camera rig kept their poses.",
+    "The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.",
+    "Welcome and Settings routed through their visible menu choices. The development menu selected seed 379.",
+    "Tutorial marked and cracked the starting pane. An untimed step to adjacent clear glass shattered the pane behind the player, then restored it and reached Ready without creating a stone.",
+    "The actual tutorial stone kept the stock Meta occlusion material and its individual visible _Color tint at runtime.",
+    "A carried stone held still for 0.4 s dropped at 0.000 m/s. The SDK supplied 0.473 m/s before the stationary-drop check.",
+    "In optional stone practice, a cancelled SDK grab returned without a throw, a miss returned to reach, a distant drop broke its actual pane, and a moving release carried native throw velocity into another pane.",
+    "Walked each guaranteed stationary step through Last Tile. Level 2 rebuilt and waited for readiness.",
+    "The landing visible on the first surviving wave remained selected through later waves and matched the subsequent natural loss.",
+    "Six natural endings played before a repeat. The next bag changed ending. Full playback, skip, results, and restart used the normal production controller.",
+    "All six endings reached a black frame and Results in Full and Reduced. An early Skip also worked in both modes. Every Restart restored the board, score, room floor and audio.",
+    "Water showed the moving walls for 3.49 s after entry at 1.50 m eye height, before impact.",
+    "An off-grid preview opened the scanned brick at the exact tracked position during the hold and rise. Skip and Restart removed the temporary opening.",
+    "Lava showed the moving walls for 3.37 s after entry at 2.20 m eye height, before impact.",
+    "Water reduced motion kept the chamber geometry stationary before contact and reached results.",
+    "Level 3 seed 379 moved ordinary full-sized glass between holes 21 and 27. A miss recovered, a catch held through zero, and the warned pane broke into 16 fitted shards at (0.310, 0.480) m with measured width 0.601 m.",
+    "A simulated significant MRUK floor-anchor event withdrew the board. Reloading the real fixture produced a new verified fit and returned directly to Welcome.",
+    "Injected MRUK NoScenePermission. The blocked board showed App permissions and Try again. Retry loaded the fixture and restored Welcome.",
+    "Injected MRUK NoRoomsFound. The blocked board showed Space Setup and Check again. Retry loaded the fixture and restored Welcome.",
+    "Three non-silent local narration clips matched the tutorial and Results captions. Fresh settings, master mute, and skipped Results were silent. Stepping away, disabling narration, entering gameplay, and restarting stopped playback."
+  ],
+  "images": [
+    "room-preview.png",
+    "whole-room-brick.png",
+    "brick-player-height.png",
+    "classic-glass.png",
+    "classic-player-view.png",
+    "neighboring-hole.png",
+    "neighboring-hole-player-view.png",
+    "ending-water.png",
+    "ending-space.png",
+    "ending-sand.png",
+    "ending-lava.png",
+    "ending-snow.png",
+    "ending-crystal.png",
+    "open-shaft-water.png",
+    "open-shaft-lava.png",
+    "open-shaft-crystal.png",
+    "open-shaft-space.png",
+    "open-shaft-sand.png",
+    "open-shaft-snow.png",
+    "fall-water-full-rim-opening.png",
+    "fall-water-full-early-shaft-forward.png",
+    "fall-water-full-overhead.png",
+    "fall-water-full-mid-shaft-down.png",
+    "fall-water-full-mid-shaft-forward.png",
+    "fall-water-full-late-shaft-down.png",
+    "fall-water-full-late-shaft-forward.png",
+    "fall-water-full-contact-down.png",
+    "fall-water-full-contact-steep.png",
+    "fall-water-full-immersion-down.png",
+    "fall-lava-full-rim-opening.png",
+    "fall-lava-full-early-shaft-forward.png",
+    "fall-lava-full-overhead.png",
+    "fall-lava-full-mid-shaft-down.png",
+    "fall-lava-full-mid-shaft-forward.png",
+    "fall-lava-full-late-shaft-down.png",
+    "fall-lava-full-late-shaft-forward.png",
+    "fall-lava-full-contact-down.png",
+    "fall-lava-full-contact-steep.png",
+    "fall-lava-full-immersion-down.png",
+    "fall-water-reduced-rim-opening.png",
+    "fall-water-reduced-mid-shaft-down.png",
+    "fall-water-reduced-mid-shaft-forward.png",
+    "fall-water-reduced-late-shaft-down.png",
+    "fall-water-reduced-late-shaft-forward.png",
+    "fall-water-reduced-contact-down.png",
+    "fall-water-reduced-contact-steep.png",
+    "fall-water-reduced-immersion-down.png",
+    "level3-fog-player-view.png",
+    "level3-moving-pane-player-view.png",
+    "level3-locked-pane-player-view.png"
+  ],
+  "endingOrder": [
+    "Water",
+    "Space",
+    "Sand",
+    "Lava",
+    "Snow",
+    "Crystal",
+    "Lava"
+  ],
+  "waves": [
+    {
+      "mode": "Classic",
+      "start": 21,
+      "guaranteed": 15,
+      "score": 1,
+      "survived": true,
+      "plannedDeadline": 29.591830583900226,
+      "observedAfterResolution": 29.591964668367346
+    },
+    {
+      "mode": "Memory",
+      "start": 15,
+      "guaranteed": 16,
+      "score": 2,
+      "survived": true,
+      "plannedDeadline": 35.87202563066893,
+      "observedAfterResolution": 35.87207404336735
+    },
+    {
+      "mode": "Memory",
+      "start": 16,
+      "guaranteed": 17,
+      "score": 3,
+      "survived": true,
+      "plannedDeadline": 42.152327458900224,
+      "observedAfterResolution": 42.15233046343537
+    },
+    {
+      "mode": "Classic",
+      "start": 17,
+      "guaranteed": 11,
+      "score": 4,
+      "survived": true,
+      "plannedDeadline": 48.43239850481859,
+      "observedAfterResolution": 48.43259246031746
+    },
+    {
+      "mode": "Classic",
+      "start": 11,
+      "guaranteed": 10,
+      "score": 5,
+      "survived": true,
+      "plannedDeadline": 54.712677040816324,
+      "observedAfterResolution": 54.71279266581632
+    },
+    {
+      "mode": "Memory",
+      "start": 10,
+      "guaranteed": 9,
+      "score": 6,
+      "survived": true,
+      "plannedDeadline": 60.99296033871882,
+      "observedAfterResolution": 60.992998880385485
+    },
+    {
+      "mode": "LastTile",
+      "start": 9,
+      "guaranteed": 8,
+      "score": 7,
+      "survived": true,
+      "plannedDeadline": 67.27308208616779,
+      "observedAfterResolution": 67.27317721088436
+    },
+    {
+      "mode": "Classic",
+      "start": 21,
+      "guaranteed": 15,
+      "score": 0,
+      "survived": false,
+      "plannedDeadline": 74.07336870748298,
+      "observedAfterResolution": 74.07343762755102
+    },
+    {
+      "mode": "Classic",
+      "start": 0,
+      "guaranteed": 6,
+      "score": 1,
+      "survived": true,
+      "plannedDeadline": 244.86241725481858,
+      "observedAfterResolution": 244.86255708616778
+    },
+    {
+      "mode": "Memory",
+      "start": 6,
+      "guaranteed": 7,
+      "score": 2,
+      "survived": true,
+      "plannedDeadline": 250.3426415887188,
+      "observedAfterResolution": 250.3427474206349
+    }
+  ],
+  "falls": [
+    {
+      "ending": "Water",
+      "motion": "full",
+      "plannedContact": 4.44061,
+      "finishedAt": 9.440874666950094,
+      "chamberEnteredAt": 0.9534195365646099,
+      "surfaceReachedAt": 4.440908871882073,
+      "impactSoundAt": 4.440908871882073,
+      "firstSecondaryEffectAt": 4.440908871882073,
+      "visibleWallSeconds": 3.4870393778344635,
+      "skyFirstDimAt": 1.4251494118480537,
+      "skyMostlyDarkAt": 2.6134441255669003,
+      "fadeStartedAt": -1.0,
+      "fadeDarkAt": -1.0,
+      "eyeHeight": 1.5,
+      "greatestLedgeSpacing": 3.3500003814697266,
+      "testedWallRays": 1280,
+      "overheadGlassPixels": 18844,
+      "overheadBrickPixels": 5792,
+      "offCenterMetres": 0.33337655663490295,
+      "maxArenaRegistrationError": 1.9073486328125e-06,
+      "maxRoomAnchorDisplacement": 0.0,
+      "landmarkSpan": 79.65998840332031,
+      "floorOpeningY": 0.009690221399068832,
+      "startingHazardY": -79.99031066894531,
+      "contactHazardY": 0.009690221399068832,
+      "immersionTintAlpha": 0.6265499591827393,
+      "maxPreContactOffsetError": 3.814697265625e-06,
+      "maxTrackedHeadDisplacement": 0.0,
+      "maxTrackedHeadRotation": 0.0,
+      "maxRigDisplacement": 0.0,
+      "maxRigRotation": 0.0,
+      "peakAirborneSpeed": 39.47334289550781,
+      "windAtImpact": 0.09999997913837433,
+      "samples": [
+        {
+          "phase": "rim",
+          "seconds": 0.10034824971654643,
+          "landmarkY": 0.009690221399068832,
+          "wallY": 0.009690221399068832,
+          "floorY": -79.99031066894531,
+          "landmarkTravel": 0.0,
+          "windVolume": 0.0,
+          "landmarksVisible": true,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "early-shaft",
+          "seconds": 1.2002265376983985,
+          "landmarkY": 3.1474668979644775,
+          "wallY": 3.1474668979644775,
+          "floorY": -76.85253143310547,
+          "landmarkTravel": 3.1377766132354736,
+          "windVolume": 0.01980459690093994,
+          "landmarksVisible": true,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "mid-shaft",
+          "seconds": 2.700107667233567,
+          "landmarkY": 25.93311309814453,
+          "wallY": 25.93311309814453,
+          "floorY": -54.06688690185547,
+          "landmarkTravel": 25.923423767089844,
+          "windVolume": 0.05692475661635399,
+          "landmarksVisible": true,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "late-shaft",
+          "seconds": 4.2700690405328885,
+          "landmarkY": 73.39911651611328,
+          "wallY": 73.39911651611328,
+          "floorY": -6.600882530212402,
+          "landmarkTravel": 73.3894271850586,
+          "windVolume": 0.09577932208776474,
+          "landmarksVisible": true,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "contact",
+          "seconds": 4.560738286564629,
+          "landmarkY": 80.00968933105469,
+          "wallY": 80.00968933105469,
+          "floorY": 0.009690221399068832,
+          "landmarkTravel": 80.0,
+          "windVolume": 0.09620080888271332,
+          "landmarksVisible": true,
+          "secondaryEffectActive": true
+        },
+        {
+          "phase": "immersion",
+          "seconds": 8.140723122165525,
+          "landmarkY": 80.00968933105469,
+          "wallY": 80.00968933105469,
+          "floorY": 1.8834973573684692,
+          "landmarkTravel": 80.0,
+          "windVolume": 0.0,
+          "landmarksVisible": true,
+          "secondaryEffectActive": true
+        }
+      ],
+      "gravityChecks": [
+        {
+          "seconds": 0.3,
+          "expectedMetres": 0.0,
+          "measuredMetres": 0.0
+        },
+        {
+          "seconds": 0.65,
+          "expectedMetres": 0.3062500059604645,
+          "measuredMetres": 0.3062501549720764
+        },
+        {
+          "seconds": 1.4,
+          "expectedMetres": 4.900000095367432,
+          "measuredMetres": 4.90000057220459
+        },
+        {
+          "seconds": 2.4,
+          "expectedMetres": 19.600000381469727,
+          "measuredMetres": 19.60000228881836
+        },
+        {
+          "seconds": 3.4,
+          "expectedMetres": 44.099998474121094,
+          "measuredMetres": 44.100006103515625
+        },
+        {
+          "seconds": 4.15,
+          "expectedMetres": 68.90625,
+          "measuredMetres": 68.90624237060547
+        },
+        {
+          "seconds": 4.4,
+          "expectedMetres": 78.4000015258789,
+          "measuredMetres": 78.4000015258789
+        }
+      ]
+    },
+    {
+      "ending": "Lava",
+      "motion": "full",
+      "plannedContact": 4.44061,
+      "finishedAt": 9.440899333900205,
+      "chamberEnteredAt": 1.0704018778344562,
+      "surfaceReachedAt": 4.440643296485234,
+      "impactSoundAt": 4.440643296485234,
+      "firstSecondaryEffectAt": 4.451776254251683,
+      "visibleWallSeconds": 3.3699444586167715,
+      "skyFirstDimAt": 1.492851750283421,
+      "skyMostlyDarkAt": 2.645671003401361,
+      "fadeStartedAt": 7.711648667800432,
+      "fadeDarkAt": 9.169997959183661,
+      "eyeHeight": 2.200000047683716,
+      "greatestLedgeSpacing": 3.3500003814697266,
+      "testedWallRays": 1280,
+      "overheadGlassPixels": 18844,
+      "overheadBrickPixels": 5792,
+      "offCenterMetres": 0.33337655663490295,
+      "maxArenaRegistrationError": 1.9073486328125e-06,
+      "maxRoomAnchorDisplacement": 0.0,
+      "landmarkSpan": 79.65998840332031,
+      "floorOpeningY": 0.009690221399068832,
+      "startingHazardY": -79.99031066894531,
+      "contactHazardY": 0.009690221399068832,
+      "immersionTintAlpha": 0.0,
+      "maxPreContactOffsetError": 3.814697265625e-06,
+      "maxTrackedHeadDisplacement": 0.0,
+      "maxTrackedHeadRotation": 0.0,
+      "maxRigDisplacement": 0.0,
+      "maxRigRotation": 0.0,
+      "peakAirborneSpeed": 39.39984130859375,
+      "windAtImpact": 0.10000000149011612,
+      "samples": [
+        {
+          "phase": "rim",
+          "seconds": 0.10001412981858948,
+          "landmarkY": 0.009690221399068832,
+          "wallY": 0.009690221399068832,
+          "floorY": -79.99031066894531,
+          "landmarkTravel": 0.0,
+          "windVolume": 0.0,
+          "landmarksVisible": true,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "early-shaft",
+          "seconds": 1.2002404195011138,
+          "landmarkY": 3.1475753784179688,
+          "wallY": 3.1475753784179688,
+          "floorY": -76.85242462158203,
+          "landmarkTravel": 3.137885093688965,
+          "windVolume": 0.01980493776500225,
+          "landmarksVisible": true,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "mid-shaft",
+          "seconds": 2.7000446712017947,
+          "landmarkY": 25.93169403076172,
+          "wallY": 25.93169403076172,
+          "floorY": -54.06830596923828,
+          "landmarkTravel": 25.92200469970703,
+          "windVolume": 0.05692319944500923,
+          "landmarksVisible": true,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "late-shaft",
+          "seconds": 4.27012025226756,
+          "landmarkY": 73.40105438232422,
+          "wallY": 73.40105438232422,
+          "floorY": -6.598944664001465,
+          "landmarkTravel": 73.39136505126953,
+          "windVolume": 0.09578058123588562,
+          "landmarksVisible": true,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "contact",
+          "seconds": 4.560897002551002,
+          "landmarkY": 80.00968933105469,
+          "wallY": 80.00968933105469,
+          "floorY": 0.009690221399068832,
+          "landmarkTravel": 80.0,
+          "windVolume": 0.09600742906332016,
+          "landmarksVisible": true,
+          "secondaryEffectActive": true
+        },
+        {
+          "phase": "immersion",
+          "seconds": 7.541023086734668,
+          "landmarkY": 80.00968933105469,
+          "wallY": 80.00968933105469,
+          "floorY": 1.4164637327194214,
+          "landmarkTravel": 80.0,
+          "windVolume": 0.0,
+          "landmarksVisible": true,
+          "secondaryEffectActive": true
+        }
+      ],
+      "gravityChecks": [
+        {
+          "seconds": 0.3,
+          "expectedMetres": 0.0,
+          "measuredMetres": 0.0
+        },
+        {
+          "seconds": 0.65,
+          "expectedMetres": 0.3062500059604645,
+          "measuredMetres": 0.3062502443790436
+        },
+        {
+          "seconds": 1.4,
+          "expectedMetres": 4.900000095367432,
+          "measuredMetres": 4.90000057220459
+        },
+        {
+          "seconds": 2.4,
+          "expectedMetres": 19.600000381469727,
+          "measuredMetres": 19.599998474121094
+        },
+        {
+          "seconds": 3.4,
+          "expectedMetres": 44.099998474121094,
+          "measuredMetres": 44.09999465942383
+        },
+        {
+          "seconds": 4.15,
+          "expectedMetres": 68.90625,
+          "measuredMetres": 68.90625
+        },
+        {
+          "seconds": 4.4,
+          "expectedMetres": 78.4000015258789,
+          "measuredMetres": 78.4000015258789
+        }
+      ]
+    },
+    {
+      "ending": "Water",
+      "motion": "reduced",
+      "plannedContact": 0.82,
+      "finishedAt": 3.930537960600901,
+      "chamberEnteredAt": 0.32007470946709304,
+      "surfaceReachedAt": -1.0,
+      "impactSoundAt": 0.8201323767006556,
+      "firstSecondaryEffectAt": 0.8201323767006556,
+      "visibleWallSeconds": 0.0,
+      "skyFirstDimAt": -1.0,
+      "skyMostlyDarkAt": -1.0,
+      "fadeStartedAt": -1.0,
+      "fadeDarkAt": -1.0,
+      "eyeHeight": 1.600000023841858,
+      "greatestLedgeSpacing": 0.0,
+      "testedWallRays": 0,
+      "overheadGlassPixels": 0,
+      "overheadBrickPixels": 0,
+      "offCenterMetres": 0.0,
+      "maxArenaRegistrationError": 0.0,
+      "maxRoomAnchorDisplacement": 0.0,
+      "landmarkSpan": 79.65998840332031,
+      "floorOpeningY": 0.009690221399068832,
+      "startingHazardY": 0.009690221399068832,
+      "contactHazardY": 0.009690221399068832,
+      "immersionTintAlpha": 0.43203824758529663,
+      "maxPreContactOffsetError": 0.0,
+      "maxTrackedHeadDisplacement": 0.0,
+      "maxTrackedHeadRotation": 0.0,
+      "maxRigDisplacement": 0.0,
+      "maxRigRotation": 0.0,
+      "peakAirborneSpeed": 0.0,
+      "windAtImpact": 0.008249999955296516,
+      "samples": [
+        {
+          "phase": "rim",
+          "seconds": 0.10026566751699306,
+          "landmarkY": 5.009690284729004,
+          "wallY": 5.009690284729004,
+          "floorY": 0.009690221399068832,
+          "landmarkTravel": 0.0,
+          "windVolume": 0.008250000886619091,
+          "landmarksVisible": false,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "early-shaft",
+          "seconds": 0.4003150014172263,
+          "landmarkY": 5.009690284729004,
+          "wallY": 5.009690284729004,
+          "floorY": 0.009690221399068832,
+          "landmarkTravel": 0.0,
+          "windVolume": 0.008250000886619091,
+          "landmarksVisible": true,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "mid-shaft",
+          "seconds": 0.7001552933673452,
+          "landmarkY": 5.009690284729004,
+          "wallY": 5.009690284729004,
+          "floorY": 0.009690221399068832,
+          "landmarkTravel": 0.0,
+          "windVolume": 0.008250000886619091,
+          "landmarksVisible": true,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "late-shaft",
+          "seconds": 0.7600618339002096,
+          "landmarkY": 5.009690284729004,
+          "wallY": 5.009690284729004,
+          "floorY": 0.009690221399068832,
+          "landmarkTravel": 0.0,
+          "windVolume": 0.008250000886619091,
+          "landmarksVisible": true,
+          "secondaryEffectActive": false
+        },
+        {
+          "phase": "contact",
+          "seconds": 0.9412478741496386,
+          "landmarkY": 5.009690284729004,
+          "wallY": 5.009690284729004,
+          "floorY": 0.009690221399068832,
+          "landmarkTravel": 0.0,
+          "windVolume": 0.007478130515664816,
+          "landmarksVisible": true,
+          "secondaryEffectActive": true
+        },
+        {
+          "phase": "immersion",
+          "seconds": 2.9503044997165375,
+          "landmarkY": 5.009690284729004,
+          "wallY": 5.009690284729004,
+          "floorY": 0.009690221399068832,
+          "landmarkTravel": 0.0,
+          "windVolume": 0.0008243423071689904,
+          "landmarksVisible": true,
+          "secondaryEffectActive": true
+        }
+      ],
+      "gravityChecks": []
+    }
+  ],
+  "endingExits": [
+    {
+      "ending": "Water",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.440964625850341
+    },
+    {
+      "ending": "Water",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.18068120748299066
+    },
+    {
+      "ending": "Lava",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.441155208333342
+    },
+    {
+      "ending": "Lava",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.1805656675169871
+    },
+    {
+      "ending": "Crystal",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.440996577380957
+    },
+    {
+      "ending": "Crystal",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.18061162840137968
+    },
+    {
+      "ending": "Space",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.442800127551038
+    },
+    {
+      "ending": "Space",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.1804377480158621
+    },
+    {
+      "ending": "Sand",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.44115416666665
+    },
+    {
+      "ending": "Sand",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.18034645691611217
+    },
+    {
+      "ending": "Snow",
+      "reduced": false,
+      "skipped": false,
+      "seconds": 9.441686167800441
+    },
+    {
+      "ending": "Snow",
+      "reduced": false,
+      "skipped": true,
+      "seconds": 0.180351792800451
+    },
+    {
+      "ending": "Water",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.930246541950112
+    },
+    {
+      "ending": "Water",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.180287577947837
+    },
+    {
+      "ending": "Lava",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.93031621315194
+    },
+    {
+      "ending": "Lava",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.18035891439907914
+    },
+    {
+      "ending": "Crystal",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.9305732497165593
+    },
+    {
+      "ending": "Crystal",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.18026062216554806
+    },
+    {
+      "ending": "Space",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.930600836167798
+    },
+    {
+      "ending": "Space",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.1803647534013635
+    },
+    {
+      "ending": "Sand",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.930301452664395
+    },
+    {
+      "ending": "Sand",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.18038071145124945
+    },
+    {
+      "ending": "Snow",
+      "reduced": true,
+      "skipped": false,
+      "seconds": 3.9304312925169995
+    },
+    {
+      "ending": "Snow",
+      "reduced": true,
+      "skipped": true,
+      "seconds": 0.1805994968820812
+    }
+  ],
+  "previewBeforeNaturalLoss": "Water",
+  "openLandings": [
+    {
+      "ending": "Water",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Water",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Lava",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Lava",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Crystal",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Crystal",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Sand",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Sand",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Snow",
+      "eye": "left",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    },
+    {
+      "ending": "Snow",
+      "eye": "right",
+      "destinationPixels": 683,
+      "outsideAperturePixels": 0,
+      "depthMetres": 80.0
+    }
+  ],
+  "landingViews": [
+    {
+      "ending": "Water",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 1.3000969886779785,
+      "pitchDegreesDown": 41.0,
+      "roomPixels": 0,
+      "waterPixels": 1914,
+      "waterLuminanceRange": 31
+    },
+    {
+      "ending": "Water",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 1.3000969886779785,
+      "pitchDegreesDown": 41.0,
+      "roomPixels": 0,
+      "waterPixels": 1915,
+      "waterLuminanceRange": 31
+    },
+    {
+      "ending": "Water",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 2.700249671936035,
+      "pitchDegreesDown": 41.0,
+      "roomPixels": 0,
+      "waterPixels": 2847,
+      "waterLuminanceRange": 50
+    },
+    {
+      "ending": "Water",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 2.700249671936035,
+      "pitchDegreesDown": 41.0,
+      "roomPixels": 0,
+      "waterPixels": 2847,
+      "waterLuminanceRange": 50
+    },
+    {
+      "ending": "Water",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 3.9500112533569336,
+      "pitchDegreesDown": 21.0,
+      "roomPixels": 0,
+      "waterPixels": 3394,
+      "waterLuminanceRange": 42
+    },
+    {
+      "ending": "Water",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 3.9500112533569336,
+      "pitchDegreesDown": 21.0,
+      "roomPixels": 0,
+      "waterPixels": 3393,
+      "waterLuminanceRange": 43
+    },
+    {
+      "ending": "Water",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 4.300175666809082,
+      "pitchDegreesDown": 21.0,
+      "roomPixels": 0,
+      "waterPixels": 4246,
+      "waterLuminanceRange": 45
+    },
+    {
+      "ending": "Water",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 4.300175666809082,
+      "pitchDegreesDown": 21.0,
+      "roomPixels": 0,
+      "waterPixels": 4243,
+      "waterLuminanceRange": 45
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 4.49010705947876,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 4.49010705947876,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 4.49010705947876,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 4.49010705947876,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 4.49010705947876,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 4.49010705947876,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 4.660220146179199,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 4.660220146179199,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 4.660220146179199,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 4.660220146179199,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 4.660220146179199,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 4.660220146179199,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 4.830130100250244,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 4.830130100250244,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 4.830130100250244,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 4.830130100250244,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 4.830130100250244,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 4.830130100250244,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 5.020103931427002,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 5.020103931427002,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 5.020103931427002,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 5.020103931427002,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 5.020103931427002,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 5.020103931427002,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 5.140155792236328,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 5.140155792236328,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 5.140155792236328,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 5.140155792236328,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": false,
+      "seconds": 5.140155792236328,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": false,
+      "seconds": 5.140155792236328,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 0.8600689768791199,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 0.8600689768791199,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 0.8600689768791199,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 0.8600689768791199,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 0.8600689768791199,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 0.8600689768791199,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 0.9700636267662048,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 0.9700636267662048,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 0.9700636267662048,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 0.9700636267662048,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 0.9700636267662048,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 0.9700636267662048,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 1.080169916152954,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 1.080169916152954,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 1.080169916152954,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 1.080169916152954,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 1.080169916152954,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 1.080169916152954,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 1.2002876996994019,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 1.2002876996994019,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 1.2002876996994019,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 1.2002876996994019,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 1.2002876996994019,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 1.2002876996994019,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 1.3202471733093262,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 1.3202471733093262,
+      "pitchDegreesDown": 0.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 1.3202471733093262,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 1.3202471733093262,
+      "pitchDegreesDown": 62.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "left",
+      "reduced": true,
+      "seconds": 1.3202471733093262,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    },
+    {
+      "ending": "Space",
+      "eye": "right",
+      "reduced": true,
+      "seconds": 1.3202471733093262,
+      "pitchDegreesDown": -60.0,
+      "roomPixels": 0,
+      "waterPixels": 0,
+      "waterLuminanceRange": 0
+    }
+  ]
+}

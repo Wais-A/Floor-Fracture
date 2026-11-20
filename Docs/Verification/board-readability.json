@@ -1,0 +1,971 @@
+{
+  "date": "2026-11-20",
+  "method": {
+    "environment": "Unity 6000.6.9f1 Editor, Metal URP; deterministic seed 379, actual second-wave Memory reveal and previously shattered original pane. The first wave was survived through normal game controls. The occupant moved to the guaranteed safe glass in the next wave.",
+    "board": {
+      "columns": 6,
+      "rows": 6,
+      "pitchMetres": 0.6207143068313599,
+      "occupiedSafeCell": 16,
+      "warningCell": 15,
+      "priorHoleCell": 21
+    },
+    "conditions": {
+      "eyeOffsetsMetres": [
+        -0.032,
+        0.032
+      ],
+      "eyeGeometry": "Parallel cameras, 64 mm apart at a stationary 1.6 m standing pose, 78 degree vertical field of view; these are simulated eye views.",
+      "pixels": [
+        1200,
+        900
+      ],
+      "observedBareFloorRGB8": {
+        "dark": [
+          20,
+          20,
+          20
+        ],
+        "light": [
+          235,
+          235,
+          235
+        ]
+      },
+      "audio": "Master volume set to zero through the Settings control and checked on the live menu/countdown AudioSource.",
+      "warnings": [
+        "Standard",
+        "Gentle"
+      ],
+      "phases": [
+        "trough",
+        "crest"
+      ],
+      "depth": "Uniform backgrounds represent passthrough underlay, with native virtual glass and the open shaft rendered over them."
+    },
+    "controls": {
+      "ring": "Disable only the occupied ring renderer.",
+      "safe_face": "Disable only the smoky face of the occupied safe cell; its ring and rim stay rendered.",
+      "safe_rim": "Disable only the occupied safe cell rim.",
+      "crack_lines": "Disable only the selected breaking cell's fissure renderer; its warning face and rim stay rendered.",
+      "complete_warning": "Draw the same cell in normal intact styling; its position and background are fixed.",
+      "open_hole": "Temporarily close only the selected hole in the original aperture and connected-shaft meshes and re-enable its intact original glass."
+    },
+    "measurement": "Each pair uses the same camera and Unity frame. Measure within projected single-cell polygons (0.90, 0.84, 1.05, 0.98, 0.94, 0.82 \u00d7 the reference 0.98-pitch-wide polygon for ring, face, rim, crack, complete warning and hole respectively). A pixel counts when at least one sRGB channel differs by at least 8/255. The paired median intensity and luminance ratio use changed pixels only. Luminance ratio is (brighter relative luminance + .05) / (darker + .05) from linearized sRGB.",
+    "counts": {
+      "eye_floor_intensity_phase_cases": 16,
+      "matched_feature_pairs": 96,
+      "rendered_pngs": 112,
+      "pixels_per_frame": 1080000
+    },
+    "limits": "Physical Quest compositor exposure, room textures and furniture, device optics, moving-head comfort, and human recognition of warnings and timed shatter cues require wearer testing. Frame pacing and sound output fall outside this optical measurement.",
+    "identity": {
+      "runtime_assets_SHA256": "1645349305eaa26fee23b42963789f720416598f699eb8b2ce381ea206ebb044",
+      "digest_definition": "Sorted paths beneath Assets/FloorFracture/Scripts, Resources, and Scenes, including .meta. For each file concatenate its UTF-8 path relative to Assets/FloorFracture, a null byte, the ASCII SHA-256 of its contents, and a newline.",
+      "renderer": "URP on Metal, fixed diagonal close view above a safe pane, raw virtual colors composited over neutral underlays.",
+      "original_rendered_evidence_sha256": "27eaf60b524df81e4cee687df22d533103111bdf33ea04296f0773722797367d",
+      "render_directory_on_workstation": "board-frames/"
+    }
+  },
+  "featureRanges": {
+    "ring": {
+      "dark": {
+        "changed_pixels": [
+          697,
+          697
+        ],
+        "median_max_channel_change": [
+          187.0,
+          188.0
+        ],
+        "median_relative_luminance_ratio": [
+          8.204,
+          8.331
+        ]
+      },
+      "light": {
+        "changed_pixels": [
+          697,
+          697
+        ],
+        "median_max_channel_change": [
+          100.0,
+          101.0
+        ],
+        "median_relative_luminance_ratio": [
+          2.64,
+          2.667
+        ]
+      }
+    },
+    "safe_face": {
+      "dark": {
+        "changed_pixels": [
+          37294,
+          37338
+        ],
+        "median_max_channel_change": [
+          67.0,
+          68.0
+        ],
+        "median_relative_luminance_ratio": [
+          2.04,
+          2.072
+        ]
+      },
+      "light": {
+        "changed_pixels": [
+          37294,
+          37338
+        ],
+        "median_max_channel_change": [
+          93.0,
+          93.0
+        ],
+        "median_relative_luminance_ratio": [
+          2.424,
+          2.424
+        ]
+      }
+    },
+    "safe_rim": {
+      "dark": {
+        "changed_pixels": [
+          3901,
+          3902
+        ],
+        "median_max_channel_change": [
+          195.0,
+          195.0
+        ],
+        "median_relative_luminance_ratio": [
+          11.274,
+          11.274
+        ]
+      },
+      "light": {
+        "changed_pixels": [
+          3901,
+          3902
+        ],
+        "median_max_channel_change": [
+          77.0,
+          77.0
+        ],
+        "median_relative_luminance_ratio": [
+          1.231,
+          1.231
+        ]
+      }
+    },
+    "crack_lines": {
+      "dark": {
+        "changed_pixels": [
+          2428,
+          2462
+        ],
+        "median_max_channel_change": [
+          172.0,
+          172.0
+        ],
+        "median_relative_luminance_ratio": [
+          4.582,
+          6.138
+        ]
+      },
+      "light": {
+        "changed_pixels": [
+          2428,
+          2462
+        ],
+        "median_max_channel_change": [
+          116.0,
+          116.0
+        ],
+        "median_relative_luminance_ratio": [
+          1.657,
+          2.22
+        ]
+      }
+    },
+    "complete_warning": {
+      "dark": {
+        "changed_pixels": [
+          35428,
+          35429
+        ],
+        "median_max_channel_change": [
+          41.0,
+          41.0
+        ],
+        "median_relative_luminance_ratio": [
+          1.183,
+          1.183
+        ]
+      },
+      "light": {
+        "changed_pixels": [
+          35428,
+          35429
+        ],
+        "median_max_channel_change": [
+          32.0,
+          32.0
+        ],
+        "median_relative_luminance_ratio": [
+          1.337,
+          1.337
+        ]
+      }
+    },
+    "open_hole": {
+      "dark": {
+        "changed_pixels": [
+          23436,
+          23468
+        ],
+        "median_max_channel_change": [
+          26.0,
+          27.0
+        ],
+        "median_relative_luminance_ratio": [
+          1.107,
+          1.114
+        ]
+      },
+      "light": {
+        "changed_pixels": [
+          23514,
+          23547
+        ],
+        "median_max_channel_change": [
+          96.0,
+          96.0
+        ],
+        "median_relative_luminance_ratio": [
+          2.126,
+          2.143
+        ]
+      }
+    }
+  },
+  "caseFieldOrder": [
+    "ROI pixels",
+    "pixels with max absolute RGB delta >=8",
+    "median max channel delta across changed pixels",
+    "median paired luminance ratio across changed pixels"
+  ],
+  "cases": [
+    {
+      "floor": "dark",
+      "warning": "standard",
+      "pulse": "trough",
+      "eye": "L",
+      "features": {
+        "ring": [
+          43584,
+          697,
+          187.0,
+          8.204
+        ],
+        "safe_face": [
+          37991,
+          37294,
+          68.0,
+          2.072
+        ],
+        "safe_rim": [
+          59037,
+          3902,
+          195.0,
+          11.274
+        ],
+        "crack_lines": [
+          38478,
+          2452,
+          172.0,
+          4.582
+        ],
+        "complete_warning": [
+          35429,
+          35429,
+          41.0,
+          1.183
+        ],
+        "open_hole": [
+          23547,
+          23468,
+          26.0,
+          1.107
+        ]
+      }
+    },
+    {
+      "floor": "dark",
+      "warning": "standard",
+      "pulse": "trough",
+      "eye": "R",
+      "features": {
+        "ring": [
+          43585,
+          697,
+          188.0,
+          8.331
+        ],
+        "safe_face": [
+          38035,
+          37338,
+          67.0,
+          2.04
+        ],
+        "safe_rim": [
+          59037,
+          3901,
+          195.0,
+          11.274
+        ],
+        "crack_lines": [
+          38484,
+          2462,
+          172.0,
+          4.582
+        ],
+        "complete_warning": [
+          35428,
+          35428,
+          41.0,
+          1.183
+        ],
+        "open_hole": [
+          23514,
+          23436,
+          27.0,
+          1.114
+        ]
+      }
+    },
+    {
+      "floor": "dark",
+      "warning": "standard",
+      "pulse": "crest",
+      "eye": "L",
+      "features": {
+        "ring": [
+          43584,
+          697,
+          187.0,
+          8.204
+        ],
+        "safe_face": [
+          37991,
+          37294,
+          68.0,
+          2.072
+        ],
+        "safe_rim": [
+          59037,
+          3902,
+          195.0,
+          11.274
+        ],
+        "crack_lines": [
+          38478,
+          2428,
+          172.0,
+          6.138
+        ],
+        "complete_warning": [
+          35429,
+          35429,
+          41.0,
+          1.183
+        ],
+        "open_hole": [
+          23547,
+          23468,
+          26.0,
+          1.107
+        ]
+      }
+    },
+    {
+      "floor": "dark",
+      "warning": "standard",
+      "pulse": "crest",
+      "eye": "R",
+      "features": {
+        "ring": [
+          43585,
+          697,
+          188.0,
+          8.331
+        ],
+        "safe_face": [
+          38035,
+          37338,
+          67.0,
+          2.04
+        ],
+        "safe_rim": [
+          59037,
+          3901,
+          195.0,
+          11.274
+        ],
+        "crack_lines": [
+          38484,
+          2437,
+          172.0,
+          6.138
+        ],
+        "complete_warning": [
+          35428,
+          35428,
+          41.0,
+          1.183
+        ],
+        "open_hole": [
+          23514,
+          23436,
+          27.0,
+          1.114
+        ]
+      }
+    },
+    {
+      "floor": "dark",
+      "warning": "gentle",
+      "pulse": "trough",
+      "eye": "L",
+      "features": {
+        "ring": [
+          43584,
+          697,
+          187.0,
+          8.204
+        ],
+        "safe_face": [
+          37991,
+          37294,
+          68.0,
+          2.072
+        ],
+        "safe_rim": [
+          59037,
+          3902,
+          195.0,
+          11.274
+        ],
+        "crack_lines": [
+          38478,
+          2452,
+          172.0,
+          4.673
+        ],
+        "complete_warning": [
+          35429,
+          35429,
+          41.0,
+          1.183
+        ],
+        "open_hole": [
+          23547,
+          23468,
+          26.0,
+          1.107
+        ]
+      }
+    },
+    {
+      "floor": "dark",
+      "warning": "gentle",
+      "pulse": "trough",
+      "eye": "R",
+      "features": {
+        "ring": [
+          43585,
+          697,
+          188.0,
+          8.331
+        ],
+        "safe_face": [
+          38035,
+          37338,
+          67.0,
+          2.04
+        ],
+        "safe_rim": [
+          59037,
+          3901,
+          195.0,
+          11.274
+        ],
+        "crack_lines": [
+          38484,
+          2462,
+          172.0,
+          4.673
+        ],
+        "complete_warning": [
+          35428,
+          35428,
+          41.0,
+          1.183
+        ],
+        "open_hole": [
+          23514,
+          23436,
+          27.0,
+          1.114
+        ]
+      }
+    },
+    {
+      "floor": "dark",
+      "warning": "gentle",
+      "pulse": "crest",
+      "eye": "L",
+      "features": {
+        "ring": [
+          43584,
+          697,
+          187.0,
+          8.204
+        ],
+        "safe_face": [
+          37991,
+          37294,
+          68.0,
+          2.072
+        ],
+        "safe_rim": [
+          59037,
+          3902,
+          195.0,
+          11.274
+        ],
+        "crack_lines": [
+          38478,
+          2428,
+          172.0,
+          4.673
+        ],
+        "complete_warning": [
+          35429,
+          35429,
+          41.0,
+          1.183
+        ],
+        "open_hole": [
+          23547,
+          23468,
+          26.0,
+          1.107
+        ]
+      }
+    },
+    {
+      "floor": "dark",
+      "warning": "gentle",
+      "pulse": "crest",
+      "eye": "R",
+      "features": {
+        "ring": [
+          43585,
+          697,
+          188.0,
+          8.331
+        ],
+        "safe_face": [
+          38035,
+          37338,
+          67.0,
+          2.04
+        ],
+        "safe_rim": [
+          59037,
+          3901,
+          195.0,
+          11.274
+        ],
+        "crack_lines": [
+          38484,
+          2437,
+          172.0,
+          4.673
+        ],
+        "complete_warning": [
+          35428,
+          35428,
+          41.0,
+          1.183
+        ],
+        "open_hole": [
+          23514,
+          23436,
+          27.0,
+          1.114
+        ]
+      }
+    },
+    {
+      "floor": "light",
+      "warning": "standard",
+      "pulse": "trough",
+      "eye": "L",
+      "features": {
+        "ring": [
+          43584,
+          697,
+          100.0,
+          2.64
+        ],
+        "safe_face": [
+          37991,
+          37294,
+          93.0,
+          2.424
+        ],
+        "safe_rim": [
+          59037,
+          3902,
+          77.0,
+          1.231
+        ],
+        "crack_lines": [
+          38478,
+          2452,
+          116.0,
+          1.657
+        ],
+        "complete_warning": [
+          35429,
+          35429,
+          32.0,
+          1.337
+        ],
+        "open_hole": [
+          23547,
+          23547,
+          96.0,
+          2.126
+        ]
+      }
+    },
+    {
+      "floor": "light",
+      "warning": "standard",
+      "pulse": "trough",
+      "eye": "R",
+      "features": {
+        "ring": [
+          43585,
+          697,
+          101.0,
+          2.667
+        ],
+        "safe_face": [
+          38035,
+          37338,
+          93.0,
+          2.424
+        ],
+        "safe_rim": [
+          59037,
+          3901,
+          77.0,
+          1.231
+        ],
+        "crack_lines": [
+          38484,
+          2462,
+          116.0,
+          1.657
+        ],
+        "complete_warning": [
+          35428,
+          35428,
+          32.0,
+          1.337
+        ],
+        "open_hole": [
+          23514,
+          23514,
+          96.0,
+          2.143
+        ]
+      }
+    },
+    {
+      "floor": "light",
+      "warning": "standard",
+      "pulse": "crest",
+      "eye": "L",
+      "features": {
+        "ring": [
+          43584,
+          697,
+          100.0,
+          2.64
+        ],
+        "safe_face": [
+          37991,
+          37294,
+          93.0,
+          2.424
+        ],
+        "safe_rim": [
+          59037,
+          3902,
+          77.0,
+          1.231
+        ],
+        "crack_lines": [
+          38478,
+          2428,
+          116.0,
+          2.22
+        ],
+        "complete_warning": [
+          35429,
+          35429,
+          32.0,
+          1.337
+        ],
+        "open_hole": [
+          23547,
+          23547,
+          96.0,
+          2.126
+        ]
+      }
+    },
+    {
+      "floor": "light",
+      "warning": "standard",
+      "pulse": "crest",
+      "eye": "R",
+      "features": {
+        "ring": [
+          43585,
+          697,
+          101.0,
+          2.667
+        ],
+        "safe_face": [
+          38035,
+          37338,
+          93.0,
+          2.424
+        ],
+        "safe_rim": [
+          59037,
+          3901,
+          77.0,
+          1.231
+        ],
+        "crack_lines": [
+          38484,
+          2437,
+          116.0,
+          2.22
+        ],
+        "complete_warning": [
+          35428,
+          35428,
+          32.0,
+          1.337
+        ],
+        "open_hole": [
+          23514,
+          23514,
+          96.0,
+          2.143
+        ]
+      }
+    },
+    {
+      "floor": "light",
+      "warning": "gentle",
+      "pulse": "trough",
+      "eye": "L",
+      "features": {
+        "ring": [
+          43584,
+          697,
+          100.0,
+          2.64
+        ],
+        "safe_face": [
+          37991,
+          37294,
+          93.0,
+          2.424
+        ],
+        "safe_rim": [
+          59037,
+          3902,
+          77.0,
+          1.231
+        ],
+        "crack_lines": [
+          38478,
+          2452,
+          116.0,
+          1.69
+        ],
+        "complete_warning": [
+          35429,
+          35429,
+          32.0,
+          1.337
+        ],
+        "open_hole": [
+          23547,
+          23547,
+          96.0,
+          2.126
+        ]
+      }
+    },
+    {
+      "floor": "light",
+      "warning": "gentle",
+      "pulse": "trough",
+      "eye": "R",
+      "features": {
+        "ring": [
+          43585,
+          697,
+          101.0,
+          2.667
+        ],
+        "safe_face": [
+          38035,
+          37338,
+          93.0,
+          2.424
+        ],
+        "safe_rim": [
+          59037,
+          3901,
+          77.0,
+          1.231
+        ],
+        "crack_lines": [
+          38484,
+          2462,
+          116.0,
+          1.69
+        ],
+        "complete_warning": [
+          35428,
+          35428,
+          32.0,
+          1.337
+        ],
+        "open_hole": [
+          23514,
+          23514,
+          96.0,
+          2.143
+        ]
+      }
+    },
+    {
+      "floor": "light",
+      "warning": "gentle",
+      "pulse": "crest",
+      "eye": "L",
+      "features": {
+        "ring": [
+          43584,
+          697,
+          100.0,
+          2.64
+        ],
+        "safe_face": [
+          37991,
+          37294,
+          93.0,
+          2.424
+        ],
+        "safe_rim": [
+          59037,
+          3902,
+          77.0,
+          1.231
+        ],
+        "crack_lines": [
+          38478,
+          2428,
+          116.0,
+          1.69
+        ],
+        "complete_warning": [
+          35429,
+          35429,
+          32.0,
+          1.337
+        ],
+        "open_hole": [
+          23547,
+          23547,
+          96.0,
+          2.126
+        ]
+      }
+    },
+    {
+      "floor": "light",
+      "warning": "gentle",
+      "pulse": "crest",
+      "eye": "R",
+      "features": {
+        "ring": [
+          43585,
+          697,
+          101.0,
+          2.667
+        ],
+        "safe_face": [
+          38035,
+          37338,
+          93.0,
+          2.424
+        ],
+        "safe_rim": [
+          59037,
+          3901,
+          77.0,
+          1.231
+        ],
+        "crack_lines": [
+          38484,
+          2437,
+          116.0,
+          1.69
+        ],
+        "complete_warning": [
+          35428,
+          35428,
+          32.0,
+          1.337
+        ],
+        "open_hole": [
+          23514,
+          23514,
+          96.0,
+          2.143
+        ]
+      }
+    }
+  ],
+  "review_image": {
+    "name": "board-readability.png",
+    "sha256": "784ea3b7fa39aa5c5b5567a0cc64da82d4deba4765bd325420fd9eb162b4548d",
+    "view": "Left-eye Gentle warning at pulse trough above left-eye Standard and Gentle at crest.",
+    "path": "Docs/Media/board-readability.png"
+  },
+  "relationshipToRingTrial": "The board overview and its 96 matched controls use the original bright ring, before the independent keyline trial and integrated ring recapture in occupancy-ring-comparison.json."
+}

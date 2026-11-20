@@ -1,0 +1,89 @@
+{
+    "build": "3440cd2047e74e1590c299bcfabeb42e",
+    "device": "Oculus Quest 3",
+    "loadResult": "Success",
+    "exception": "",
+    "passed": true,
+    "syntheticRoomsAreNonlocal": true,
+    "liveFilterRejectsSynthetic": true,
+    "rooms": 2,
+    "floorSections": 4,
+    "columns": 6,
+    "rows": 3,
+    "pitch": 0.6666666865348816,
+    "area": 8.0,
+    "samples": [
+        {
+            "sample": "left section only",
+            "nativeFirst": false,
+            "nativeSecond": false,
+            "expected": 0,
+            "hinted": 0,
+            "noHint": 0,
+            "staleHint": 0
+        },
+        {
+            "sample": "one millimetre before second section",
+            "nativeFirst": false,
+            "nativeSecond": false,
+            "expected": 0,
+            "hinted": 0,
+            "noHint": 0,
+            "staleHint": 0
+        },
+        {
+            "sample": "one millimetre inside second section",
+            "nativeFirst": true,
+            "nativeSecond": false,
+            "expected": 0,
+            "hinted": 0,
+            "noHint": 0,
+            "staleHint": 0
+        },
+        {
+            "sample": "overlap",
+            "nativeFirst": true,
+            "nativeSecond": false,
+            "expected": 0,
+            "hinted": 0,
+            "noHint": 0,
+            "staleHint": 0
+        },
+        {
+            "sample": "right section only",
+            "nativeFirst": true,
+            "nativeSecond": false,
+            "expected": 0,
+            "hinted": 0,
+            "noHint": 0,
+            "staleHint": 0
+        },
+        {
+            "sample": "outside both rooms",
+            "nativeFirst": false,
+            "nativeSecond": false,
+            "expected": -1,
+            "hinted": -1,
+            "noHint": -1,
+            "staleHint": -1
+        },
+        {
+            "sample": "left section in separate room",
+            "nativeFirst": false,
+            "nativeSecond": false,
+            "expected": 1,
+            "hinted": 1,
+            "noHint": 1,
+            "staleHint": 1
+        },
+        {
+            "sample": "right section in separate room",
+            "nativeFirst": false,
+            "nativeSecond": true,
+            "expected": 1,
+            "hinted": 1,
+            "noHint": 1,
+            "staleHint": 1
+        }
+    ]
+}

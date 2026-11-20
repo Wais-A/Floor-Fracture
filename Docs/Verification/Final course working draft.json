@@ -1,0 +1,56 @@
+{
+  "status": "Reviewable working draft dated November 20, 2026",
+  "word": {
+    "path": "Docs/Floor Fracture Final Design Working Draft.docx",
+    "sha256": "cd32800c1f91a67467b29bf96067d621177c569dbabe5571986eadd5a2b39f69"
+  },
+  "pdf": {
+    "path": "Docs/Floor Fracture Final Design Working Draft.pdf",
+    "sha256": "097a79a69a3fa08cc0cc3416de0c0697660cbb5d9e7832da969c181d443ae6a6"
+  },
+  "sourceDocuments": {
+    "Docs/Final Project - Design Doc.docx": "8fb9ce31db2c80fc82feb4456f6cbfce3f422d01e22f0bd2f2c37e982bd7a2e3",
+    "Docs/Floor Fracture Design Document - Revised.pdf": "1e9522ce008b62a5e19edf754fa8a93011b1971d5f686eca49ecdd9f5474130a"
+  },
+  "verification": {
+    "pages": 5,
+    "sections": 11,
+    "pageSizePoints": [
+      612,
+      792
+    ],
+    "visualInspection": "Bundled LibreOffice exported five US Letter pages. All five renders were inspected at 130 dpi. Pages 1 and 2 matched the preceding draft pixel for pixel. Six body paragraphs changed across sections 6, 7, 8 and 10. The professor’s original table structure, all 11 section headings and both hyperlink targets were preserved.",
+    "content": "All 130 nonempty Word paragraphs appear in the five-page PDF. All 11 numbered headings and both Word hyperlink targets appear in the PDF. There are no embedded sketch objects.",
+    "links": [
+      "https://github.com/Wais-A/Floor-Fracture",
+      "https://github.com/oculus-samples/Unity-MRUtilityKitSample"
+    ],
+    "hardwareUpdate": "Section 7 identifies both Quest builds. The 5 × 3 session was worn. The 64-pane, 32-shatter scripted run is Maximum-A in 64 pane Quest measurements.json. The raw paired OVR CSV independently confirms 13 samples, 71–73 FPS, one stale frame and 5.041 ms peak application GPU time.",
+    "interactionUpdate": "Section 6 includes captioned offline narration, the recorded reason on Results and the 5.0 s starting timer with 0.4 s decrements and a 2.5 s trial floor. The ordinary-step check remains open.",
+    "roomAndPauseUpdate": "A two-patch MRUK Editor fixture fitted 6 × 3 at 0.667 m; its wave continued across the joined floor and paused outside. Room joining is sourced to 24f20ef. In ad3fca7 an interrupted wave hides the board and must wait for valid room localization and supported glass before a fresh countdown. Score is retained.",
+    "warningAndRingUpdate": "The room-scale Settings preview uses the live pane and both warning intensities, including off-board access. The integrated ring in 49976f4 and its check in 084cf29 preserve all 697 original bright pixels in each simulated eye. The charcoal outline added 369 right-eye and 371 left-eye pixels at or above 3:1 local luminance contrast on the RGB 235 floor. These are Unity Editor measurements of rendered pixels.",
+    "ordinaryRimUpdate": "Revision 72faf40 added a dark inner band to the intact cyan rim and preserved the original amber warning. Fixed simulated eye views 2.56 m from an intact pane showed more of each edge on a very light floor. In the separate Mac Meta XR Simulator, the final gameplay assembly showed 12 × 2 panes at 0.5620899 m, the shared two-tone rim, and the intact amber warning sample in Settings. The real wearer recheck remains open.",
+    "lockedSliderAndPauseUpdate": "Unattended Quest 3 scratch build d49ac6dc2a694b49aab7d8d4ba86ab96 instrumented an 8 × 8 level-three board. Two moving panes locked and supported the scripted stance at their deadlines. Locked-window maxima were 15.993 and 15.682 ms. First/repeat 32-pane shatter window maxima were 96.577 and 14.728 ms. Real Android Home/return preserved one point, kept the board hidden and required a fresh 4.2-second countdown. This launch predates 72faf40. It is separate from the worn 5 × 3 capture and the 8554b37e maximum-board render benchmark.",
+    "sourceEvidence": [
+      "Docs/Verification/safe-rim-comparison.json",
+      "Docs/Verification/Locked slider on Quest/locked-slider-device-review.json",
+      "Docs/Verification/64 pane Quest measurements.json",
+      "Docs/Verification/Shared chamber Quest session.json",
+      "Docs/Verification/Between-wave boundary/simulator.json",
+      "Docs/Verification/Quest offline narration.json",
+      "Docs/Verification/First shatter native trace.json",
+      "Docs/Verification/First opening warmup on Quest.json"
+    ],
+    "resultExitUpdate": "The 599e1b6 Mac simulator check drove the native simulated headset 6 cm beyond a 12 × 2 board during SAFE and LEVEL CLEAR. The glass, brick and chamber all disappeared. Score 1 stayed at level 1, wave 2. Score 8 advanced once to level 2, wave 1. Show board worked while outside, Start waited for supported glass, and the new timers were 5.0 and 4.6 seconds. The simulator pose and settings returned to Welcome. The graphics-only 1da914c import retained the verified game assembly.",
+    "offlineVoiceUpdate": "Physical Quest 3 probe build c488578d641446b6b6e1e82099622e6d, based on 72faf40 and denied INTERNET, produced PCM output for each of the three captioned clips at 75% volume. Muting retained the caption. Voice preference and perceived intelligibility still require a wearer.",
+    "firstOpeningUpdate": "A separate physical Quest trace measured three first-use Vulkan pipeline creations totaling 94.164 ms. The same clean-installed instrumented executable reached 70.99 and 74.70 ms across two cold controls, versus 17.01 ms when it warmed only those three states. The native Quest build profile enabled by revision 1da914c warms those states asynchronously. On a scripted fixed 64-pane fixture its two cold first-opening peaks were 19.424 and 15.749 ms. The profile-off control peaked at 78.175 ms. Both warmed frames remained above 13.9 ms. The authored document rounds timings to two decimals.",
+    "evidenceScope": "Section 7 identifies the worn 5 × 3 session and the previous scripted maximum-board test. Section 10 retains the first/repeat 32-pane shatter and two moving-pane catch peaks from the older unmuted d49ac6dc instrumented Quest run. These results are separate from the controlled warmup comparison and from the two latest build-profile trials."
+  },
+  "pending": [
+    "Current-build wearable recheck in the real demo room, including light/dark rims, tracking through physical removal/replacement, room fit, furniture, moving catch, Water and Space, Full/Reduced comfort and physical inputs.",
+    "At least two outside playtesters with direct observations.",
+    "Repeat the scripted 64-pane hardware measurements with a wearer in the demo room and investigate frame-time spikes.",
+    "Record the 3–5 minute Quest demo and add its link to the README and design document.",
+    "Course submission and instructor approval."
+  ]
+}

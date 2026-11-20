@@ -1,0 +1,321 @@
+{
+  "status": "Both result departures passed in the separate native Mac Meta XR Simulator. The main scene finished in Play Mode at Welcome.",
+  "gameCommit": "599e1b6b0e68b8891cd5547514721ab8d2322d67",
+  "runtime": {
+    "platform": "macOS",
+    "unity": "6000.6.9f1",
+    "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+    "gameAssemblyMvid": "eaff5e4e-cc57-4914-a67d-1044f9fbc428",
+    "openXrRuntime": "Meta XR Simulator 207.1.0.49.123 (Public)",
+    "simulatedDevice": "Meta Quest 3, 72 Hz, 60 mm IPD",
+    "roomScan": "12 × 2 panes at 0.5620899 m pitch; 6.75 × 1.12 m. The native screenshots show the left eye."
+  },
+  "method": "Start and Start wave used the real menu callbacks through the Editor selection helper. A read-only observer sampled live game state at intervals of at least 0.08 s. Meta XR Operator set the simulated stage-space head pose to the guaranteed pane for each natural timer. It then moved the head 0.06 m beyond the board during each result. No game clock, stage, board rule or rig transform was set.",
+  "roundSeed": 715427603,
+  "wavesCompleted": [
+    {
+      "wave": 1,
+      "mode": "Classic",
+      "startCell": 18,
+      "survivorCell": 6
+    },
+    {
+      "wave": 2,
+      "mode": "Memory",
+      "startCell": 6,
+      "survivorCell": 5
+    },
+    {
+      "wave": 3,
+      "mode": "Classic",
+      "startCell": 5,
+      "survivorCell": 4
+    },
+    {
+      "wave": 4,
+      "mode": "Memory",
+      "startCell": 4,
+      "survivorCell": 3
+    },
+    {
+      "wave": 5,
+      "mode": "Classic",
+      "startCell": 3,
+      "survivorCell": 2
+    },
+    {
+      "wave": 6,
+      "mode": "Memory",
+      "startCell": 2,
+      "survivorCell": 1
+    },
+    {
+      "wave": 7,
+      "mode": "Memory",
+      "startCell": 1,
+      "survivorCell": 13
+    },
+    {
+      "wave": 8,
+      "mode": "LastTile",
+      "startCell": 13,
+      "survivorCell": 12
+    }
+  ],
+  "holds": {
+    "SAFE": {
+      "survivorAtResult": {
+        "timeUnityS": 423.621,
+        "frame": 25451,
+        "stage": "BetweenWaves",
+        "level": 1,
+        "wave": 2,
+        "score": 1,
+        "intactPanes": 16,
+        "stanceCell": 6,
+        "roomLocalized": true,
+        "headTrackedByGame": true,
+        "headInsideRoom": true,
+        "activeRenderers": {
+          "glassBoard": 39,
+          "brickFloor": 1,
+          "fallChamber": 3
+        }
+      },
+      "afterNativeExit": {
+        "timeUnityS": 423.704,
+        "frame": 25454,
+        "stage": "Paused",
+        "level": 1,
+        "wave": 2,
+        "score": 1,
+        "intactPanes": 16,
+        "stanceCell": -1,
+        "roomLocalized": true,
+        "headTrackedByGame": true,
+        "headInsideRoom": true,
+        "activeRenderers": {
+          "glassBoard": 0,
+          "brickFloor": 0,
+          "fallChamber": 0
+        }
+      },
+      "nativeStagePositionM": [
+        2.28956366,
+        1.7,
+        -0.485965848
+      ],
+      "outsideBoardLocalXZM": [
+        0.28104496,
+        -0.6220899
+      ],
+      "nativeMoveRequestToObservedPauseS": 0.0622,
+      "observedResultToObservedPause": {
+        "sampledFrames": 3,
+        "gameSeconds": 0.0833
+      },
+      "waitAfterResultS": 16.0,
+      "levelWaveScoreAfterWait": [
+        1,
+        2,
+        1
+      ],
+      "showBoard": {
+        "timeUnityS": 440.065,
+        "frame": 26628,
+        "stage": "Ready",
+        "level": 1,
+        "wave": 2,
+        "score": 1,
+        "intactPanes": 16,
+        "stanceCell": -1,
+        "roomLocalized": true,
+        "headTrackedByGame": true,
+        "headInsideRoom": true,
+        "activeRenderers": {
+          "glassBoard": 36,
+          "brickFloor": 1,
+          "fallChamber": 3
+        }
+      },
+      "outsideStartRejected": true,
+      "freshSupportedStart": {
+        "stage": "Countdown",
+        "level": 1,
+        "wave": 2,
+        "score": 1,
+        "nativeLandingCell": 6,
+        "durationS": 5.0,
+        "deadlineMinusStartS": 5.0
+      }
+    },
+    "LEVEL CLEAR": {
+      "survivorAtResult": {
+        "timeUnityS": 483.454,
+        "frame": 29726,
+        "stage": "BetweenWaves",
+        "level": 1,
+        "wave": 8,
+        "score": 8,
+        "intactPanes": 1,
+        "stanceCell": 12,
+        "roomLocalized": true,
+        "headTrackedByGame": true,
+        "headInsideRoom": true,
+        "activeRenderers": {
+          "glassBoard": 9,
+          "brickFloor": 1,
+          "fallChamber": 3
+        }
+      },
+      "afterNativeExit": {
+        "timeUnityS": 483.537,
+        "frame": 29732,
+        "stage": "Paused",
+        "level": 2,
+        "wave": 1,
+        "score": 8,
+        "intactPanes": 24,
+        "stanceCell": -1,
+        "roomLocalized": true,
+        "headTrackedByGame": true,
+        "headInsideRoom": true,
+        "activeRenderers": {
+          "glassBoard": 0,
+          "brickFloor": 0,
+          "fallChamber": 0
+        }
+      },
+      "nativeStagePositionM": [
+        1.0861057,
+        1.7,
+        3.141437
+      ],
+      "outsideBoardLocalXZM": [
+        -3.43253946,
+        0.28104496
+      ],
+      "nativeMoveRequestToObservedPauseS": 0.0612,
+      "observedResultToObservedPause": {
+        "sampledFrames": 6,
+        "gameSeconds": 0.0833
+      },
+      "waitAfterResultS": 2.584,
+      "levelWaveScoreAfterWait": [
+        2,
+        1,
+        8
+      ],
+      "showBoard": {
+        "timeUnityS": 486.565,
+        "frame": 29943,
+        "stage": "Ready",
+        "level": 2,
+        "wave": 1,
+        "score": 8,
+        "intactPanes": 24,
+        "stanceCell": -1,
+        "roomLocalized": true,
+        "headTrackedByGame": true,
+        "headInsideRoom": true,
+        "activeRenderers": {
+          "glassBoard": 50,
+          "brickFloor": 1,
+          "fallChamber": 0
+        }
+      },
+      "outsideStartRejected": true,
+      "freshSupportedStart": {
+        "stage": "Countdown",
+        "level": 2,
+        "wave": 1,
+        "score": 8,
+        "nativeLandingCell": 12,
+        "durationS": 4.6,
+        "deadlineMinusStartS": 4.6
+      }
+    }
+  },
+  "trackingQualification": "The native Operator labels a commanded pose valid and clears the OpenXR located-pose tracked bits while it owns the head. Replaying both exact exit poses showed Unity Position + Rotation, OVR position tracked and valid, application input focus, user present, native camera-rig use and no desktop controller fallback. The game reported a tracked head and localized room both before and after each exit. On release the native located-pose tracked bits returned. The sampled elapsed times bound observation, not exact in-frame latency.",
+  "restored": {
+    "nativeRuntimeOwnsInput": true,
+    "native": {
+      "pose": {
+        "position": [
+          0.0,
+          1.7,
+          0.0
+        ],
+        "orientation": [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "flags": {
+        "position_valid": true,
+        "orientation_valid": true,
+        "position_tracked": true,
+        "orientation_tracked": true
+      }
+    },
+    "sceneInPlayMode": true,
+    "stage": "Welcome",
+    "originalPreferenceKeys": [
+      "ff.reduced",
+      "ff.gentle",
+      "ff.volume",
+      "ff.narration"
+    ],
+    "originalAndFinalSettings": [
+      1,
+      0,
+      4,
+      0
+    ],
+    "labels": [
+      "Settings",
+      "The sample shows your glass warning. During a fall, pinch or press A or X to skip.",
+      "Fall motion  ·  Reduced",
+      "Warning  ·  Standard",
+      "Volume  ·  100%",
+      "Narration  ·  Off",
+      "Back"
+    ],
+    "note": "The preference tuple was saved before the Editor recompile. On returning to Welcome the menu showed Full. The ordinary Settings control restored Reduced; volume, warning and narration matched."
+  },
+  "attachment": {
+    "file": "simulator.jpg",
+    "views": "Crops of left-eye viewports from three native Meta XR Simulator window captures. Full 2842 × 1898 windows were also retained in the trial output.",
+    "sha256": "b82d5896a3556c66df36cef40e2ff85f338ac4f47400353405b0ac9655042231"
+  },
+  "scope": "Simulated pose and room only. Physical room fit, body movement and wearer comfort still require Quest playtesting.",
+  "afterProductionProfileImport": {
+    "stage": "Welcome",
+    "playMode": true,
+    "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+    "isCompiling": false,
+    "gameAssembly": "eaff5e4e-cc57-4914-a67d-1044f9fbc428",
+    "collection": "FirstGlassOpening",
+    "variantCount": 3,
+    "states": 3,
+    "targetPlatform": "Android",
+    "graphics": "Vulkan",
+    "dependencies": [
+      "Assets/Settings/FirstGlassOpening.graphicsstate"
+    ],
+    "settings": [
+      1,
+      0,
+      4,
+      0
+    ],
+    "head": "(0.000, 1.700, 0.000)",
+    "editorActive": false,
+    "utc": "2026-11-20T09:51:06.061882Z",
+    "gameplayAssemblyRecompileRequired": false,
+    "productionRevision": "1da914c",
+    "sourceDifference": "The Quest build profile, its graphics state collection and its importer metadata were the only changes from game revision 599e1b6. A synchronous asset import exposed the Android Vulkan collection in the same live Mac scene. The room, native game assembly and Welcome remained active."
+  }
+}

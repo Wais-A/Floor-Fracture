@@ -1,0 +1,242 @@
+{
+  "mode": "development",
+  "sourceRevision": "f93c28de3ba194a22f37fdd66cbabd5cb1d6e353",
+  "unity": "6000.6.9f1",
+  "buildGuid": "8ea09f7453704bebaf78440d598bf8db",
+  "package": "com.wa003.floorfracture",
+  "activity": "com.unity3d.player.UnityPlayerGameActivity",
+  "apk": "Builds/Quest/Floor-entry/FloorFracture.apk",
+  "bytes": 156960148,
+  "sha256": "5000df7418dc1f5d7a87c6fd12ca919a1043edc1c553d6d07b76cadeb1dd08e7",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "processExit": 0,
+  "batchInteractionSdkShutdownConfirmed": true,
+  "sourceFilesCompared": 231,
+  "connectedDeviceReview": "A wearer has not evaluated this revision.",
+  "archive": {
+    "crcCheckedEntries": 925,
+    "arm64NativeLibraries": 23,
+    "openXRLoader": true,
+    "metaSpatialAudio": true,
+    "sdkMinimum": 32,
+    "sdkTarget": 34,
+    "scenePermission": true,
+    "sharedSpatialMapPermission": false,
+    "v2SignatureVerified": true,
+    "signatureCertificate": "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug",
+    "aligned16KiB": true,
+    "debuggable": true
+  },
+  "authoredSceneBlocks": {
+    "Room Guardian": false,
+    "Find Spawn Positions": true,
+    "Occlusion Dependencies": true,
+    "Effect Mesh - Surrounding Floor": true
+  },
+  "packedGameplayFeatures": [
+    "Glass opening edges",
+    "Practice stepping",
+    "Offline narration",
+    "At zero, the moving glass under the ring shattered.",
+    "Previous soft floor depth",
+    "Rising scanned floor",
+    "_FloorPreviousDepth",
+    "_FloorPreviousWeight"
+  ],
+  "compiledVulkanProgramsByShader": {
+    "Floor Fracture/Rising room floor": 2,
+    "Floor Fracture/Hole Mask": 2,
+    "Floor Fracture/Surface": 2,
+    "Floor Fracture/Low fog": 2,
+    "Floor Fracture/Ending view fade": 2,
+    "Floor Fracture/Shaft and falling glass": 2,
+    "Floor Fracture/Ending chamber": 2,
+    "Floor Fracture/Surrounding Brick": 6,
+    "Floor Fracture/Room Outlines": 2
+  },
+  "packedShaderResources": {
+    "Resources/Endings/FallFloor.shader": {
+      "sha256": "14972c6c9833d8a3e05765643794b7fe755cf97d50d19b1a3b7f2b0037039b9c",
+      "verifiedProperties": [
+        "_OutsideOpening",
+        "_Travel"
+      ]
+    },
+    "Resources/Endings/Chamber.shader": {
+      "sha256": "490fc45be48a226911dcbc66730e2ed5c32fd81a016dccbbaa4e7f91f7fde3fc",
+      "verifiedProperties": [
+        "_WideningPerMetre",
+        "_WaterNormal",
+        "_PortalComparison"
+      ]
+    },
+    "Resources/FloorFractureSurface.shader": {
+      "sha256": "b73994a3df2222c531dfd7a2b248dc640d149abf0d2a084b91df81688a745250",
+      "verifiedProperties": [
+        "_Sheen",
+        "_ZWrite"
+      ]
+    }
+  },
+  "packedMonoNarrationSoundBanks": {
+    "PracticeStep": {
+      "streamBytes": 24672,
+      "sha256": "835e7eb613e9b33fbaf11168b39fc9309a8440c43129245c9c753131baeb12cf"
+    },
+    "PracticeStone": {
+      "streamBytes": 23296,
+      "sha256": "cb998c9ee555824f7509a66a68d27e2fb896a78ae6cfec139947f4c2dc63142c"
+    },
+    "Results": {
+      "streamBytes": 15008,
+      "sha256": "4468648b765cc2b78a28c555d46ecf69e6db3fc4207c105ce07c506881ce0236"
+    }
+  },
+  "launcherIcon": {
+    "adaptiveReferenceResolved": true,
+    "matchedVisibleArtworkResources": 18,
+    "densitySizesPx": {
+      "ldpi": {
+        "app_icon": 36,
+        "ic_launcher_background": 81,
+        "ic_launcher_foreground": 81
+      },
+      "mdpi": {
+        "app_icon": 48,
+        "ic_launcher_background": 108,
+        "ic_launcher_foreground": 108
+      },
+      "hdpi": {
+        "app_icon": 72,
+        "ic_launcher_background": 162,
+        "ic_launcher_foreground": 162
+      },
+      "xhdpi": {
+        "app_icon": 96,
+        "ic_launcher_background": 216,
+        "ic_launcher_foreground": 216
+      },
+      "xxhdpi": {
+        "app_icon": 144,
+        "ic_launcher_background": 324,
+        "ic_launcher_foreground": 324
+      },
+      "xxxhdpi": {
+        "app_icon": 192,
+        "ic_launcher_background": 432,
+        "ic_launcher_foreground": 432
+      }
+    }
+  },
+  "completedUtc": "2026-11-20T05:24:45.2835800Z",
+  "warnings": 40,
+  "errors": 0,
+  "inferenceVersion": "2.3.0",
+  "profile": "Meta Quest",
+  "installation": {
+    "queriedUtc": "2026-11-20T05:27:55.177027+00:00",
+    "tool": "Meta CLI install with replace and launch, followed by Android Package Manager and SHA-256 on the installed base APK",
+    "reportedModel": "Quest 3",
+    "baseApkSha256": "5000df7418dc1f5d7a87c6fd12ca919a1043edc1c553d6d07b76cadeb1dd08e7",
+    "pidAtQuery": "32571",
+    "activityEvidence": [
+      "mLastPausedActivity: ActivityRecord{97ed876 u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2485}",
+      "* Hist  #0: ActivityRecord{97ed876 u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2485}",
+      "Resumed: ActivityRecord{97ed876 u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2485}",
+      "ResumedActivity: ActivityRecord{97ed876 u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2485}",
+      "mFocusedApp=ActivityRecord{97ed876 u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2485}",
+      "* ActivityRecord{97ed876 u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2485}"
+    ],
+    "spatialDataGranted": true,
+    "wearerReview": "Unattended installation. A wearer has not reviewed the new revision."
+  },
+  "deviceStartup": {
+    "raw": "Builds/Verification/Floor-entry/Quest-startup.csv",
+    "rows": 13,
+    "stages": [
+      "Room"
+    ],
+    "graphics": [
+      "Vulkan"
+    ],
+    "deviceReportedRefreshHz": [
+      "",
+      "72"
+    ],
+    "captureScope": "Unattended startup with the display asleep at follow-up. Timed play and frame pacing require a wearer."
+  },
+  "buildReport": {
+    "reportErrors": 0,
+    "reportWarnings": 40,
+    "releaseOptionsMask": 1,
+    "buildSeconds": 24.660946,
+    "platform": "Android",
+    "warningGroups": {
+      "Hidden/InferenceEngine/ConvTranspose": 11,
+      "Hidden/InferenceEngine/ScatterND": 9,
+      "Hidden/InferenceEngine/SliceSet": 4,
+      "Hidden/InferenceEngine/GridSample": 3,
+      "Shader Graphs/Water": 2,
+      "Hidden/InferenceEngine/ScatterElements": 2,
+      "Read/Write is disabled on 1 mesh(es) referenced by components in this build. In future versions of Unity, the build process will": 1,
+      "Using the Screen Space Ambient Occlusion render feature results in significant performance overhead when the application is runn": 1,
+      "[Optional] Latency Optimization is recommended to be set to <b>Prioritize Input Polling</b> when Meta Quest support is enabled.": 1,
+      "[Optional] Meta Quest supports Thin Link Time Optimization. This can optimize CPU performance and can only be done in non-develo": 1,
+      "This OpenXR Feature targets an API version with a patch version lower than 1.1.62, which is the recommended version for this pac": 1,
+      "Diagnostics Data is enabled, and it requires Debug Symbols to be either SymbolTable or Full to resolve stacktraces in crash repo": 1,
+      "Hidden/InferenceEngine/Pad": 1,
+      "EnvironmentDepth/OcclusionLit": 1,
+      "Universal Render Pipeline/Lit": 1
+    },
+    "warningExamples": {
+      "Read/Write is disabled on 1 mesh(es) referenced by components in this build. In future versions of Unity, the build process will": [
+        "Read/Write is disabled on 1 mesh(es) referenced by components in this build. In future versions of Unity, the build process will no longer automatically enable Read/"
+      ],
+      "Using the Screen Space Ambient Occlusion render feature results in significant performance overhead when the application is runn": [
+        "Using the Screen Space Ambient Occlusion render feature results in significant performance overhead when the application is running natively on device. Disabling or "
+      ],
+      "[Optional] Latency Optimization is recommended to be set to <b>Prioritize Input Polling</b> when Meta Quest support is enabled.": [
+        "[Optional] Latency Optimization is recommended to be set to <b>Prioritize Input Polling</b> when Meta Quest support is enabled."
+      ],
+      "[Optional] Meta Quest supports Thin Link Time Optimization. This can optimize CPU performance and can only be done in non-develo": [
+        "[Optional] Meta Quest supports Thin Link Time Optimization. This can optimize CPU performance and can only be done in non-development, IL2CPP enabled builds with Str"
+      ],
+      "This OpenXR Feature targets an API version with a patch version lower than 1.1.62, which is the recommended version for this pac": [
+        "This OpenXR Feature targets an API version with a patch version lower than 1.1.62, which is the recommended version for this package. The requested API version will "
+      ],
+      "Diagnostics Data is enabled, and it requires Debug Symbols to be either SymbolTable or Full to resolve stacktraces in crash repo": [
+        "Diagnostics Data is enabled, and it requires Debug Symbols to be either SymbolTable or Full to resolve stacktraces in crash reports. Consider selecting Full to recei"
+      ],
+      "Hidden/InferenceEngine/Pad": [
+        "Shader warning in 'Hidden/InferenceEngine/Pad': integer modulus may be much slower, try using uints if possible. at Packages/com.unity.ai.inference/Runtime/Core/Reso"
+      ],
+      "Hidden/InferenceEngine/ConvTranspose": [
+        "Shader warning in 'Hidden/InferenceEngine/ConvTranspose': integer modulus may be much slower, try using uints if possible. at Packages/com.unity.ai.inference/Runtime",
+        "Shader warning in 'Hidden/InferenceEngine/ConvTranspose': signed/unsigned mismatch, unsigned assumed at Packages/com.unity.ai.inference/Runtime/Core/Resources/Infere"
+      ],
+      "Hidden/InferenceEngine/ScatterND": [
+        "Shader warning in 'Hidden/InferenceEngine/ScatterND': 'j': loop control variable conflicts with a previous declaration in the outer scope; most recent declaration wi",
+        "Shader warning in 'Hidden/InferenceEngine/ScatterND': signed/unsigned mismatch, unsigned assumed at Packages/com.unity.ai.inference/Runtime/Core/Resources/InferenceE"
+      ],
+      "Hidden/InferenceEngine/GridSample": [
+        "Shader warning in 'Hidden/InferenceEngine/GridSample': signed/unsigned mismatch, unsigned assumed at Packages/com.unity.ai.inference/Runtime/Core/Resources/Inference"
+      ],
+      "Shader Graphs/Water": [
+        "Shader warning in 'Shader Graphs/Water': use of potentially uninitialized variable (LightingPhysicallyBased) at /private/tmp/floor-fracture-smoke-7dsx96pu/Library/Pa"
+      ],
+      "Hidden/InferenceEngine/ScatterElements": [
+        "Shader warning in 'Hidden/InferenceEngine/ScatterElements': signed/unsigned mismatch, unsigned assumed at Packages/com.unity.ai.inference/Runtime/Core/Resources/Infe"
+      ],
+      "Hidden/InferenceEngine/SliceSet": [
+        "Shader warning in 'Hidden/InferenceEngine/SliceSet': integer divides may be much slower, try using uints if possible. at Packages/com.unity.ai.inference/Runtime/Core",
+        "Shader warning in 'Hidden/InferenceEngine/SliceSet': signed/unsigned mismatch, unsigned assumed at Packages/com.unity.ai.inference/Runtime/Core/Resources/InferenceEn"
+      ],
+      "EnvironmentDepth/OcclusionLit": [
+        "Shader warning in 'EnvironmentDepth/OcclusionLit': use of potentially uninitialized variable (LightingPhysicallyBased) at /private/tmp/floor-fracture-smoke-7dsx96pu/"
+      ],
+      "Universal Render Pipeline/Lit": [
+        "Shader warning in 'Universal Render Pipeline/Lit': use of potentially uninitialized variable (LightingPhysicallyBased) at /private/tmp/floor-fracture-smoke-7dsx96pu/"
+      ]
+    }
+  }
+}

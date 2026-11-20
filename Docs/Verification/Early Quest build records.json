@@ -1,0 +1,60 @@
+{
+  "scope": "Historical local builds from November 19, 2026. These identify the original preflight, first wearable game and adaptive room-review packages.",
+  "setup": {
+    "unity": "6000.6.9f1",
+    "rulesByLevel": {
+      "Optional": {
+        "total": 11,
+        "passed": 11
+      },
+      "Recommended": {
+        "total": 37,
+        "passed": 35
+      },
+      "Required": {
+        "total": 52,
+        "passed": 52
+      }
+    },
+    "open": [
+      "Complete a Data Use Checkup to meet DUC policy requirements.",
+      "Set up the application ID and the package name."
+    ],
+    "rawReportSha256": "69e35b7d6a4e84674830545ca3c9cc445b7b6a130dba0015552a253af594f89c"
+  },
+  "preflightBuild": {
+    "buildId": "build_7f4adadec73a",
+    "result": "Succeeded",
+    "platform": "Android",
+    "buildStartedAt": "2026-11-19T23:07:42.3543450Z",
+    "buildEndedAt": "2026-11-19T23:07:54.0199580Z",
+    "totalWarnings": 637,
+    "totalErrors": 0,
+    "rawReportSha256": "c013d354c6e7bf16e6ca48569b2999cb215c0f0cbf0efea7f21387e84cf60b80",
+    "localApk": "Builds/Preflight/FloorFracture.apk",
+    "sha256": "71e0d119f4ff2434a0106629a66ac9f70381d241678bfc679167a6a4c409c029",
+    "apkBytes": 69669219
+  },
+  "adaptiveRoomBuild": {
+    "result": "Succeeded",
+    "buildGuid": "a0a921aecc65481e906ee5271347edee",
+    "completedUtc": "2026-11-20T01:12:33.0627540Z",
+    "unity": "6000.6.9f1",
+    "package": "com.wa003.floorfracture",
+    "profile": "Meta Quest",
+    "androidMinimum": "AndroidApiLevel32",
+    "androidTarget": "AndroidApiLevel34",
+    "errors": 0,
+    "warnings": 60,
+    "apkBytes": 156412965,
+    "gameplayScene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+    "rawReportSha256": "bffdbc9a1847becb9b04e119321699fdc386af52189863e95517bf1242ec6457",
+    "localApk": "Builds/Quest/Room-review/FloorFracture.apk",
+    "sha256": "d7f15eab8a62714c45745db358da4f6a3a4b8309c0c83f2affdc9282a4858296"
+  },
+  "firstHeadsetBuild": {
+    "localApk": "Builds/Quest/First-headset/FloorFracture.apk",
+    "sha256": "5004950a8c2094e3d56c272176bd385e49972984e35736b0373c547ce0464437",
+    "apkBytes": 108392084
+  }
+}

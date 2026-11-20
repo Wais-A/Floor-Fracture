@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="30" result="Passed" total="30" passed="30" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:27:03Z" duration="103.3869663">
+  <test-suite type="TestSuite" id="1000" name="Floor Fracture" fullname="Floor Fracture" runstate="Runnable" testcasecount="30" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:27:03Z" duration="103.386966" total="30" passed="30" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1028" name="FloorFracture.Rooms.Tests.dll" fullname="/private/tmp/floor-fracture-adaptive-editmode.LTlzed4c/Project/Library/ScriptAssemblies/FloorFracture.Rooms.Tests.dll" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.079597" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="9046" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1029" name="FloorFracture" fullname="FloorFracture" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.079114" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1030" name="Tests" fullname="FloorFracture.Tests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.078763" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1001" name="BoardFitterTests" fullname="FloorFracture.Tests.BoardFitterTests" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" testcasecount="24" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.078177" total="24" passed="24" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="ParameterizedMethod" id="1013" name="BalancesPaneWidthAndPhysicalCoverage" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.017656" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1002" name="BalancesPaneWidthAndPhysicalCoverage(1.8f,1.8f,2,2,0.5f,1.0f,1.0f)" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage(1.8f,1.8f,2,2,0.5f,1.0f,1.0f)" methodname="BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="217614084" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.011729" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1003" name="BalancesPaneWidthAndPhysicalCoverage(1.94f,1.94f,2,2,0.57f,1.14f,1.14f)" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage(1.94f,1.94f,2,2,0.57f,1.14f,1.14f)" methodname="BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="949198398" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000152" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1004" name="BalancesPaneWidthAndPhysicalCoverage(2.06f,2.06f,2,2,0.63f,1.26f,1.26f)" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage(2.06f,2.06f,2,2,0.63f,1.26f,1.26f)" methodname="BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="2027418541" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000356" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1005" name="BalancesPaneWidthAndPhysicalCoverage(2.3f,2.8f,3,4,0.5f,1.5f,2.0f)" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage(2.3f,2.8f,3,4,0.5f,1.5f,2.0f)" methodname="BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1508780154" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000165" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1006" name="BalancesPaneWidthAndPhysicalCoverage(2.8f,2.3f,4,3,0.5f,2.0f,1.5f)" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage(2.8f,2.3f,4,3,0.5f,2.0f,1.5f)" methodname="BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1745368614" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000111" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="BalancesPaneWidthAndPhysicalCoverage(3.2f,3.6f,3,4,0.67f,2.01f,2.68f)" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage(3.2f,3.6f,3,4,0.67f,2.01f,2.68f)" methodname="BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="2128212550" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000278" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1008" name="BalancesPaneWidthAndPhysicalCoverage(4.0f,4.2f,5,5,0.64f,3.2f,3.2f)" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage(4.0f,4.2f,5,5,0.64f,3.2f,3.2f)" methodname="BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="921772529" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000214" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1009" name="BalancesPaneWidthAndPhysicalCoverage(5.6f,5.6f,7,7,0.67f,4.69f,4.69f)" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage(5.6f,5.6f,7,7,0.67f,4.69f,4.69f)" methodname="BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1330812962" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000320" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1010" name="BalancesPaneWidthAndPhysicalCoverage(7.0f,7.0f,8,8,0.67f,5.36f,5.36f)" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage(7.0f,7.0f,8,8,0.67f,5.36f,5.36f)" methodname="BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="362972990" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000340" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1011" name="BalancesPaneWidthAndPhysicalCoverage(6.4f,2.0f,8,2,0.6f,4.8f,1.2f)" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage(6.4f,2.0f,8,2,0.6f,4.8f,1.2f)" methodname="BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1714862925" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000082" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1012" name="BalancesPaneWidthAndPhysicalCoverage(1.8f,6.8f,2,8,0.5f,1.0f,4.0f)" fullname="FloorFracture.Tests.BoardFitterTests.BalancesPaneWidthAndPhysicalCoverage(1.8f,6.8f,2,8,0.5f,1.0f,4.0f)" methodname="BalancesPaneWidthAndPhysicalCoverage" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1520428609" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000067" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1017" name="ConcavityBetweenFourInteriorCornersIsRejected" fullname="FloorFracture.Tests.BoardFitterTests.ConcavityBetweenFourInteriorCornersIsRejected" methodname="ConcavityBetweenFourInteriorCornersIsRejected" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="876060157" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000241" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1027" name="ExcludingADeclinedPatchProducesADisjointPreview" fullname="FloorFracture.Tests.BoardFitterTests.ExcludingADeclinedPatchProducesADisjointPreview" methodname="ExcludingADeclinedPatchProducesADisjointPreview" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1305197831" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.008258" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1025" name="FindsOffsetSlotBoundedOnlyByFurnitureAndAThinWall" fullname="FloorFracture.Tests.BoardFitterTests.FindsOffsetSlotBoundedOnlyByFurnitureAndAThinWall" methodname="FindsOffsetSlotBoundedOnlyByFurnitureAndAThinWall" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="679753108" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.001088" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1018" name="FourCornersTouchingTheOutsideOfAnExactNotchIsNotFloor" fullname="FloorFracture.Tests.BoardFitterTests.FourCornersTouchingTheOutsideOfAnExactNotchIsNotFloor" methodname="FourCornersTouchingTheOutsideOfAnExactNotchIsNotFloor" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1066860980" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000143" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1019" name="InteriorFurnitureCrossingWallsAndEnclosingVolumesAreRejected" fullname="FloorFracture.Tests.BoardFitterTests.InteriorFurnitureCrossingWallsAndEnclosingVolumesAreRejected" methodname="InteriorFurnitureCrossingWallsAndEnclosingVolumesAreRejected" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1988592409" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000160" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1024" name="KeepsFullSizedTilesWhenTheMinimumCannotFit" fullname="FloorFracture.Tests.BoardFitterTests.KeepsFullSizedTilesWhenTheMinimumCannotFit" methodname="KeepsFullSizedTilesWhenTheMinimumCannotFit" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="462745189" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000092" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1015" name="NeverSacrificesLegacyGlassAreaOnRectangularScans" fullname="FloorFracture.Tests.BoardFitterTests.NeverSacrificesLegacyGlassAreaOnRectangularScans" methodname="NeverSacrificesLegacyGlassAreaOnRectangularScans" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1635552610" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.028890" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1016" name="PreservesAnExactRotatedLegacyPatchBetweenFurniture" fullname="FloorFracture.Tests.BoardFitterTests.PreservesAnExactRotatedLegacyPatchBetweenFurniture" methodname="PreservesAnExactRotatedLegacyPatchBetweenFurniture" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="862344459" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.007405" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1014" name="RectanglesCertifyHeadFirstThenClosestSuggestedCenterAndKeepFallback" fullname="FloorFracture.Tests.BoardFitterTests.RectanglesCertifyHeadFirstThenClosestSuggestedCenterAndKeepFallback" methodname="RectanglesCertifyHeadFirstThenClosestSuggestedCenterAndKeepFallback" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1749717329" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.006348" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1026" name="RejectsCrossedOrMissingFloorGeometry" fullname="FloorFracture.Tests.BoardFitterTests.RejectsCrossedOrMissingFloorGeometry" methodname="RejectsCrossedOrMissingFloorGeometry" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="989472813" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000360" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1020" name="RejectsFurnitureOnlyInMarginAndAcceptsExactClearance" fullname="FloorFracture.Tests.BoardFitterTests.RejectsFurnitureOnlyInMarginAndAcceptsExactClearance" methodname="RejectsFurnitureOnlyInMarginAndAcceptsExactClearance" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="566136693" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000138" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1023" name="RotatedExactWidthFloorPreservesPoseAndMetricPitch" fullname="FloorFracture.Tests.BoardFitterTests.RotatedExactWidthFloorPreservesPoseAndMetricPitch" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.001615" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1021" name="RotatedExactWidthFloorPreservesPoseAndMetricPitch(23.68f)" fullname="FloorFracture.Tests.BoardFitterTests.RotatedExactWidthFloorPreservesPoseAndMetricPitch(23.68f)" methodname="RotatedExactWidthFloorPreservesPoseAndMetricPitch" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1787682610" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000658" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1022" name="RotatedExactWidthFloorPreservesPoseAndMetricPitch(0.005f)" fullname="FloorFracture.Tests.BoardFitterTests.RotatedExactWidthFloorPreservesPoseAndMetricPitch(0.005f)" methodname="RotatedExactWidthFloorPreservesPoseAndMetricPitch" classname="FloorFracture.Tests.BoardFitterTests" runstate="Runnable" seed="1556044011" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.000094" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1038" name="FloorFracture.Rules.EditorTests.dll" fullname="/private/tmp/floor-fracture-adaptive-editmode.LTlzed4c/Project/Library/ScriptAssemblies/FloorFracture.Rules.EditorTests.dll" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:27:03Z" duration="103.303428" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="9046" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1039" name="FloorFracture" fullname="FloorFracture" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:27:03Z" duration="103.303203" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1040" name="Tests" fullname="FloorFracture.Tests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:27:03Z" duration="103.302901" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1031" name="BoardRulesEditorTests" fullname="FloorFracture.Tests.BoardRulesEditorTests" classname="FloorFracture.Tests.BoardRulesEditorTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:27:03Z" duration="103.302546" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1032" name="CoordinatesAndSeams" fullname="FloorFracture.Tests.BoardRulesEditorTests.CoordinatesAndSeams" methodname="CoordinatesAndSeams" classname="FloorFracture.Tests.BoardRulesEditorTests" runstate="Runnable" seed="2126189714" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.006542" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1033" name="DeadlinesAndPause" fullname="FloorFracture.Tests.BoardRulesEditorTests.DeadlinesAndPause" methodname="DeadlinesAndPause" classname="FloorFracture.Tests.BoardRulesEditorTests" runstate="Runnable" seed="468631025" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:25:20Z" duration="0.004766" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1036" name="EverySeededSurvivalPath" fullname="FloorFracture.Tests.BoardRulesEditorTests.EverySeededSurvivalPath" methodname="EverySeededSurvivalPath" classname="FloorFracture.Tests.BoardRulesEditorTests" runstate="Runnable" seed="865895994" result="Passed" start-time="2026-11-20 00:25:20Z" end-time="2026-11-20 00:27:03Z" duration="103.034970" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Floor Fracture passed 1680855 distinct wave states, 9292932 survival choices and 68427 Last Tile clears.
+]]></output>
+            </test-case>
+            <test-case id="1037" name="LargerBoardSurvivalPaths" fullname="FloorFracture.Tests.BoardRulesEditorTests.LargerBoardSurvivalPaths" methodname="LargerBoardSurvivalPaths" classname="FloorFracture.Tests.BoardRulesEditorTests" runstate="Runnable" seed="1208773538" result="Passed" start-time="2026-11-20 00:27:03Z" end-time="2026-11-20 00:27:03Z" duration="0.253065" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Larger boards cleared 9152 seeded starting positions, tested 71049 waves and checked onward reachability for 752465 advertised choices.
+]]></output>
+            </test-case>
+            <test-case id="1034" name="ModesAndReset" fullname="FloorFracture.Tests.BoardRulesEditorTests.ModesAndReset" methodname="ModesAndReset" classname="FloorFracture.Tests.BoardRulesEditorTests" runstate="Runnable" seed="346209276" result="Passed" start-time="2026-11-20 00:27:03Z" end-time="2026-11-20 00:27:03Z" duration="0.000814" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1035" name="SlidersAndGrace" fullname="FloorFracture.Tests.BoardRulesEditorTests.SlidersAndGrace" methodname="SlidersAndGrace" classname="FloorFracture.Tests.BoardRulesEditorTests" runstate="Runnable" seed="2143033636" result="Passed" start-time="2026-11-20 00:27:03Z" end-time="2026-11-20 00:27:03Z" duration="0.000713" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: /Users/wais/Library/Application Support/DefaultCompany/Floor Fracture/TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -1,0 +1,112 @@
+{
+  "unity": "6000.6.9f1",
+  "package": "com.wa003.floorfracture",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "profile": "Meta Quest",
+  "buildGuid": "7fdcaf92922947548c00e55b14ae6090",
+  "completedUtc": "2026-11-20T03:19:17.1787600Z",
+  "apk": "Builds/Quest/Expanded-room/FloorFracture.apk",
+  "bytes": 127883764,
+  "sha256": "60d275f4096f3df342cff51dd48e317e23dd42255c8b5cd657f56ba2ab4b71e2",
+  "errors": 0,
+  "warnings": 14,
+  "android": {
+    "abis": [
+      "arm64-v8a"
+    ],
+    "minimumApi": 32,
+    "targetApi": 34,
+    "verifiedV2Signature": true,
+    "verified16KiBAlignment": true,
+    "verifiedZipEntries": 903,
+    "scenePermission": true,
+    "handTrackingPermission": true
+  },
+  "vulkanShaderPrograms": {
+    "Floor Fracture/Surrounding Brick": 6,
+    "Floor Fracture/Shaft and falling glass": 2,
+    "Floor Fracture/Ending chamber": 2
+  },
+  "cachedShaderBytecodeMatched": [
+    "Floor Fracture/Ending chamber",
+    "Floor Fracture/Shaft and falling glass",
+    "Floor Fracture/Surrounding Brick"
+  ],
+  "packedAssets": {
+    "Assets/FloorFracture/Scripts/Room/SurroundingBrick.mat": {
+      "stream": "sharedassets0.assets",
+      "bytes": 180,
+      "sha256": "ed2264c1b5a4fd5ce60a7dd9e7f7801b2ec8ab537c738ad18f5f7165ef6c33ba",
+      "offset": 13872
+    },
+    "Assets/FloorFracture/Scripts/Room/SurroundingBrick.shader": {
+      "stream": "sharedassets0.assets",
+      "bytes": 10980,
+      "sha256": "5404e19390619a1f1db28ccc92a4f58fc9aceda39dc831e130f61718da78021f",
+      "offset": 30582544
+    },
+    "Assets/FloorFracture/Resources/FloorFractureDepth.shader": {
+      "stream": "b18516750f30a4c2e8608114ec007bd5",
+      "bytes": 6048,
+      "sha256": "8626a38ad5eb9478d19d5e1bab27257e488f92463673775995778b1c433266ca",
+      "offset": 144
+    },
+    "Assets/FloorFracture/Resources/Endings/Chamber.shader": {
+      "stream": "cb37d8b8fe6f432d9ab28501a1f75978",
+      "bytes": 15044,
+      "sha256": "cef87d5ebf18a1ac0e8ca97cc3e69523c1cad089915839add44fc45a010f6ced",
+      "offset": 144
+    }
+  },
+  "nativeRoomBlocks": [
+    "[BuildingBlock] Find Spawn Positions",
+    "[BuildingBlock] Room Guardian",
+    "[BuildingBlock] Occlusion Dependencies",
+    "[BuildingBlock] Effect Mesh - Surrounding Floor"
+  ],
+  "headsetInstallation": {
+    "device": "Oculus Quest 3",
+    "updatedLocal": "2026-11-19 22:29:47",
+    "packageVersion": "0.1.0",
+    "installedApkSha256": "60d275f4096f3df342cff51dd48e317e23dd42255c8b5cd657f56ba2ab4b71e2",
+    "launchActivity": "com.unity3d.player.UnityPlayerGameActivity",
+    "scenePermissionGranted": true,
+    "runtimeBuildGuid": "7fdcaf92922947548c00e55b14ae6090",
+    "graphics": "Vulkan",
+    "startupCsv": "Builds/Quest/Expanded-room/20261120T033028101Z-09132cbf.csv",
+    "startupRows": 13,
+    "stagesObserved": {
+      "Room": 13
+    },
+    "boardSizesObserved": [],
+    "lastRecordedUnitySeconds": 13.524,
+    "wearerReview": "Wais described the play area as better. He asked to remove blue outlines around real walls and furniture and to make every open pane show the full shaft and the destination of the next loss."
+  },
+  "developmentPlayerMetadata": [
+    "Try the stone (optional)",
+    "Practice stepping",
+    "Practice stone held still"
+  ],
+  "wearerSession": {
+    "localCsv": "Builds/Quest/Expanded-room/20261120T033028101Z-09132cbf-wearer.csv",
+    "records": 110,
+    "stages": {
+      "Room": 36,
+      "Welcome": 10,
+      "Ready": 3,
+      "Countdown": 22,
+      "BetweenWaves": 6,
+      "Fall": 10,
+      "Results": 23
+    },
+    "welcomeDimensions": [
+      {
+        "columns": 5,
+        "rows": 3,
+        "pitchMetres": 0.539
+      }
+    ],
+    "sameScanConfirmed": false,
+    "normalStepComfortConfirmed": false
+  }
+}

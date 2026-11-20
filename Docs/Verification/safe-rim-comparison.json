@@ -1,0 +1,257 @@
+{
+  "date": "2026-11-20",
+  "recommendation": "Keep the split ordinary rim for the next Quest review. Its added dark inner band makes the light-floor boundary visible along more of each side at both distances. It retains a continuous near cyan rim in the dark. The narrower cyan band has fewer high-contrast dark-floor pixels and the glancing bright-floor edge still has gaps at the chosen threshold.",
+  "baselineRevision": "c3035a5a8cf02392f6bec1a1c0702c3088687e5f",
+  "sourceSha256": {
+    "Assets/FloorFracture/Scripts/Glass/GlassGeometry.cs": {
+      "currentSha256": "3f3ac95ac5a8e2f28e367fa6e0b225e1ef344e597ed117fcd5408ac5a0eb8981",
+      "scratchSha256": "de72da453474499280b1396b0896f03a095a34f9ca78acae60e1dea996d757ff"
+    },
+    "Assets/FloorFracture/Scripts/Glass/GlassTile.cs": {
+      "currentSha256": "4cba32c4b24708d98341d9dca88c0b9306ee4dcb7a4b914ec4458860989dcb58",
+      "scratchSha256": "851bd6ec51b4f27209f278501649de995a25cb3268a48562e9fc89841318eb78"
+    },
+    "Assets/FloorFracture/Resources/FloorFractureSurface.shader": {
+      "currentSha256": "f621c74e4ec869a2d2296863cdea17bd1df87520405e9439fb43e20d6b2c82ae",
+      "scratchSha256": "f621c74e4ec869a2d2296863cdea17bd1df87520405e9439fb43e20d6b2c82ae"
+    }
+  },
+  "geometry": {
+    "authoredPanePitchMetres": 0.5,
+    "totalRimWidthMetres": 0.009,
+    "brightOuterBandMetres": 0.0054,
+    "slateInnerBandMetres": 0.0036,
+    "slateVertexColor": [
+      0.024,
+      0.041,
+      0.052,
+      1
+    ],
+    "both": {
+      "vertices": 32,
+      "triangles": 16,
+      "submeshes": 1,
+      "renderers": 1,
+      "sharedMaterials": 1
+    },
+    "scope": "Both variants use the existing transparent Surface shader and identical geometric bounds. Candidate beveled rims apply to all active unmarked glass, including the moving template; marked panes use the existing warning mesh and animation. Bounds/vertices/triangles were asserted inside Unity. No additional renderer or material."
+  },
+  "capture": {
+    "unity": "6000.6.9f1",
+    "renderer": "Metal",
+    "sizePx": [
+      1200,
+      900
+    ],
+    "eyeSeparationMetres": 0.06400000303983688,
+    "parallelViewVerticalDegrees": 78.0,
+    "heightMetres": 1.6,
+    "normalGameRoute": "Seed 379, survive the first real wave, stand on the guaranteed intact glass in the second Memory reveal. Master volume set to zero through Settings.",
+    "board": [
+      6,
+      6
+    ],
+    "pitchMetres": 0.6207143068313599,
+    "occupiedCell": 16,
+    "warningCell": 15,
+    "previousHoleCell": 21,
+    "masterVolume": 0.0,
+    "combinations": 16,
+    "images": 64,
+    "sameFrameVariants": [
+      "current board",
+      "current with selected safe rim hidden",
+      "candidate board",
+      "candidate with selected safe rim hidden"
+    ],
+    "conditions": [
+      "both parallel eyes",
+      "RGB 20 and 235 underlays",
+      "Standard and Gentle",
+      "warning trough and crest"
+    ]
+  },
+  "measurement": "For the selected ordinary safe rim, compare every image pixel with its own hidden-rim control. Changed pixels have a maximum channel delta of at least 8/255. Luminance ratio uses decoded sRGB and (higher relative luminance + .05) / (lower + .05). Counts at 2:1 and 3:1 are image diagnostics. Each of the four side centerlines is sampled at 160 equally spaced points over its middle 94%, each with a 13-pixel perpendicular search restricted to the selected rim difference. If any sampled pixel meets 3:1, the sample qualifies. The four-row summaries give min/max across warning phase and intensity.",
+  "tableColumns": "After floor and eye, four current values followed by four candidate values. Each group gives changed rim pixels, median on/off luminance ratio, ≥3:1 pixels, and the number of 640 side cross-sections containing a ≥3:1 pixel. Values were identical for all four intensity and pulse combinations within each row.",
+  "near": {
+    "rows": [
+      [
+        "dark",
+        "L",
+        3902,
+        11.274,
+        3409,
+        640,
+        3922,
+        11.274,
+        2376,
+        640
+      ],
+      [
+        "dark",
+        "R",
+        3901,
+        11.274,
+        3471,
+        640,
+        3919,
+        11.274,
+        2320,
+        640
+      ],
+      [
+        "light",
+        "L",
+        3902,
+        1.231,
+        0,
+        0,
+        3922,
+        1.231,
+        1499,
+        640
+      ],
+      [
+        "light",
+        "R",
+        3901,
+        1.231,
+        0,
+        0,
+        3919,
+        1.231,
+        1547,
+        640
+      ]
+    ],
+    "guards": {
+      "occupied": {
+        "pixelsPerEyeRange": [
+          30830,
+          30831
+        ],
+        "maximumPixelsChangedBy8": 0,
+        "maximumChannelChange": 0
+      },
+      "warning": {
+        "pixelsPerEyeRange": [
+          39226,
+          39357
+        ],
+        "maximumPixelsChangedBy8": 0,
+        "maximumChannelChange": 0
+      },
+      "hole": {
+        "pixelsPerEyeRange": [
+          27032,
+          27103
+        ],
+        "maximumPixelsChangedBy8": 0,
+        "maximumChannelChange": 0
+      }
+    },
+    "manifestSHA256": "87373e613293f1ab0f3c62c24d27db43a49d977413d6ba800ac77a1a0d4b7d2c"
+  },
+  "glancing": {
+    "horizontalMetres": 2.5592706203460693,
+    "viewDegreesAboveGlass": 32.739810943603516,
+    "occupiedCell": 16,
+    "distantIntactCell": 6,
+    "adjacentWarnedCell": 0,
+    "cases": 16,
+    "images": 160,
+    "method": "Select the farthest naturally intact pane with an edge-adjacent active warning while both whole distant panes and the true near occupancy ring fit in both eyes. Each of the two variants was rendered as viewed, then with the distant rim off, the warning rim off, the near ring off, and with only the adjacent warned pane returned to ordinary intact state. Counts for warn and occupied guard cover the actual renderer pixels with delta at least 8/255 against their individual off controls. A rim pixel counts as amber when red exceeds green by at least 30 and blue by at least 75. Inside the 0.96-scaled warned cell, compare the actual warning and intact state at the same transform to measure the overall cue in both Gentle and Standard at crest and trough.",
+    "rows": [
+      [
+        "dark",
+        "L",
+        765,
+        4.073,
+        616,
+        499,
+        769,
+        3.412,
+        425,
+        560
+      ],
+      [
+        "dark",
+        "R",
+        764,
+        4.052,
+        613,
+        499,
+        766,
+        3.412,
+        425,
+        563
+      ],
+      [
+        "light",
+        "L",
+        765,
+        1.642,
+        16,
+        19,
+        769,
+        1.959,
+        305,
+        474
+      ],
+      [
+        "light",
+        "R",
+        764,
+        1.628,
+        16,
+        19,
+        766,
+        1.959,
+        302,
+        464
+      ]
+    ],
+    "guards": {
+      "warnedRimPixelsPerFrameRange": [
+        689,
+        690
+      ],
+      "warnedRimAmberPixelsRange": [
+        689,
+        690
+      ],
+      "ordinaryRimAmberPixelsRange": [
+        0,
+        0
+      ],
+      "changedWarningRimRGBPixelsRange": [
+        0,
+        0
+      ],
+      "nearOccupiedRingPixelsRange": [
+        1417,
+        1425
+      ],
+      "changedOccupiedRingRGBPixelsRange": [
+        0,
+        0
+      ],
+      "warningVersusOrdinaryChangedPixelsRange": [
+        8977,
+        8983
+      ],
+      "warningVersusOrdinaryMedianMaxChannelChangeRange": [
+        31.0,
+        38.0
+      ],
+      "interpretation": "The warning/interior comparison yielded the same changed-pixel count and median RGB delta before/after in each eye, floor and pulse condition."
+    },
+    "manifestSHA256": "5634e8b88cc54b4d6a15440766619a10c8eb771d8b665739688211015d8adbb7"
+  },
+  "limits": "A stationary simulated viewpoint and two uniform floor underlays omit physical optics, room texture, passthrough exposure, head movement and real recognition. No Quest frame time or visual acceptance is implied. No temporal head-motion or antialiasing acceptance was measured. The two synthetic angles do not sample the entire board. The near and glancing runs rendered 64 and 160 images.",
+  "image": {
+    "sha256": "e9855ce58979b4ccd188da8af83fc51097a6229ce5a8a635e863077e3158ef1f",
+    "path": "../Media/safe-rim-comparison.png"
+  },
+  "evidenceScope": "Unity Metal Editor. These fixed-eye renders are a technical comparison for open Quest tests 117 and 118. The experiment used no new wearer, physical passthrough or headset performance capture."
+}

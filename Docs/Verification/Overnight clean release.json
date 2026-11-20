@@ -1,0 +1,280 @@
+{
+  "mode": "retail",
+  "sourceRevision": "54b54ee9efb70601345121dc37e95a0373c9d5c2",
+  "unity": "6000.6.9f1",
+  "buildGuid": "ec509a9b88d64d9d92419f2f557ee18d",
+  "package": "com.wa003.floorfracture",
+  "activity": "com.unity3d.player.UnityPlayerGameActivity",
+  "apk": "Builds/CleanRelease/FloorFracture-overnight-54b54ee.apk",
+  "bytes": 108870046,
+  "sha256": "b6483788c974f61db31118fb22ba92f935dd66dd0efb47af5ae111ed277b2bef",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "processExit": 0,
+  "batchInteractionSdkShutdownConfirmed": true,
+  "sourceFilesCompared": 231,
+  "archive": {
+    "crcCheckedEntries": 921,
+    "arm64NativeLibraries": 22,
+    "openXRLoader": true,
+    "metaSpatialAudio": true,
+    "sdkMinimum": 32,
+    "sdkTarget": 34,
+    "scenePermission": true,
+    "sharedSpatialMapPermission": false,
+    "v2SignatureVerified": true,
+    "signatureCertificate": "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug",
+    "aligned16KiB": true,
+    "debuggable": false
+  },
+  "authoredSceneBlocks": {
+    "Room Guardian": false,
+    "Find Spawn Positions": true,
+    "Occlusion Dependencies": true,
+    "Effect Mesh - Surrounding Floor": true
+  },
+  "packedGameplayFeatures": [
+    "Glass opening edges",
+    "Practice stepping",
+    "Offline narration",
+    "At zero, the moving glass under the ring shattered.",
+    "Previous soft floor depth",
+    "Rising scanned floor",
+    "_FloorPreviousDepth",
+    "_FloorPreviousWeight"
+  ],
+  "compiledVulkanProgramsByShader": {
+    "Floor Fracture/Rising room floor": 2,
+    "Floor Fracture/Hole Mask": 2,
+    "Floor Fracture/Surface": 2,
+    "Floor Fracture/Low fog": 2,
+    "Floor Fracture/Ending view fade": 2,
+    "Floor Fracture/Shaft and falling glass": 2,
+    "Floor Fracture/Ending chamber": 2,
+    "Floor Fracture/Surrounding Brick": 6,
+    "Floor Fracture/Room Outlines": 2
+  },
+  "packedShaderResources": {
+    "Resources/Endings/FallFloor.shader": {
+      "sha256": "14972c6c9833d8a3e05765643794b7fe755cf97d50d19b1a3b7f2b0037039b9c",
+      "verifiedProperties": [
+        "_OutsideOpening",
+        "_Travel"
+      ]
+    },
+    "Resources/Endings/Chamber.shader": {
+      "sha256": "490fc45be48a226911dcbc66730e2ed5c32fd81a016dccbbaa4e7f91f7fde3fc",
+      "verifiedProperties": [
+        "_WideningPerMetre",
+        "_WaterNormal",
+        "_PortalComparison"
+      ]
+    },
+    "Resources/FloorFractureSurface.shader": {
+      "sha256": "b73994a3df2222c531dfd7a2b248dc640d149abf0d2a084b91df81688a745250",
+      "verifiedProperties": [
+        "_Sheen",
+        "_ZWrite"
+      ]
+    }
+  },
+  "packedMonoNarrationSoundBanks": {
+    "PracticeStep": {
+      "streamBytes": 24672,
+      "sha256": "835e7eb613e9b33fbaf11168b39fc9309a8440c43129245c9c753131baeb12cf"
+    },
+    "PracticeStone": {
+      "streamBytes": 23296,
+      "sha256": "cb998c9ee555824f7509a66a68d27e2fb896a78ae6cfec139947f4c2dc63142c"
+    },
+    "Results": {
+      "streamBytes": 15008,
+      "sha256": "4468648b765cc2b78a28c555d46ecf69e6db3fc4207c105ce07c506881ce0236"
+    }
+  },
+  "launcherIcon": {
+    "adaptiveReferenceResolved": true,
+    "matchedVisibleArtworkResources": 18,
+    "densitySizesPx": {
+      "ldpi": {
+        "app_icon": 36,
+        "ic_launcher_background": 81,
+        "ic_launcher_foreground": 81
+      },
+      "mdpi": {
+        "app_icon": 48,
+        "ic_launcher_background": 108,
+        "ic_launcher_foreground": 108
+      },
+      "hdpi": {
+        "app_icon": 72,
+        "ic_launcher_background": 162,
+        "ic_launcher_foreground": 162
+      },
+      "xhdpi": {
+        "app_icon": 96,
+        "ic_launcher_background": 216,
+        "ic_launcher_foreground": 216
+      },
+      "xxhdpi": {
+        "app_icon": 144,
+        "ic_launcher_background": 324,
+        "ic_launcher_foreground": 324
+      },
+      "xxxhdpi": {
+        "app_icon": 192,
+        "ic_launcher_background": 432,
+        "ic_launcher_foreground": 432
+      }
+    }
+  },
+  "evidence": "Clean local Git checkout without a project Library, Temp, Logs, Builds or precompiled scripts. The standalone retail player was independently inspected. The development player from the same source is installed for review.",
+  "preflight": {
+    "initiallyClean": true,
+    "gitObjectAlternates": false,
+    "checkedLfsAssets": 56,
+    "lfsIntegrity": "Git LFS fsck OK",
+    "missingAssetMetadata": [],
+    "duplicateAssetGuids": {},
+    "sourceGuidAudit": {
+      "assetsScanned": 10,
+      "distinctGuidReferences": 52,
+      "unresolvedGuids": {},
+      "danglingSceneOrPrefabLocalFileIds": {},
+      "builtinUnityReferences": [
+        "0000000000000000e000000000000000",
+        "0000000000000000f000000000000000"
+      ],
+      "resolvedPackageVersions": {
+        "com.meta.xr.mrutilitykit": "209.0.0",
+        "com.meta.xr.sdk.all": "209.0.0",
+        "com.meta.xr.sdk.core": "209.0.0",
+        "com.meta.xr.sdk.interaction": "209.0.0",
+        "com.meta.xr.sdk.interaction.ovr": "209.0.0",
+        "com.unity.render-pipelines.universal": "17.6.0",
+        "com.unity.xr.openxr": "1.19.0",
+        "com.unity.xr.meta-openxr": "2.7.0",
+        "com.unity.xr.arfoundation": "6.6.2"
+      }
+    },
+    "documentedBuildEntry": true
+  },
+  "unityBuildReport": {
+    "reportErrors": 0,
+    "reportWarnings": 54,
+    "releaseOptionsMask": 0,
+    "buildSeconds": 483.867379,
+    "platform": "Android",
+    "warningGroups": {
+      "Hidden/InferenceEngine/ScatterND": 14,
+      "Hidden/InferenceEngine/ConvTranspose": 11,
+      "Hidden/InferenceEngine/SliceSet": 6,
+      "Hidden/InferenceEngine/GridSample": 4,
+      "$PROJECT/Library/Bee/artifacts/Android/il2cppOutput/cpp: [Unity.TextMeshPro] - Sys": 3,
+      "Hidden/InferenceEngine/ScatterElements": 2,
+      "EnvironmentDepth/OcclusionLit": 2,
+      "Universal Render Pipeline/Lit": 2,
+      "The following asset(s) located in immutable packages were unexpectedly altered. Making changes to immutable packages isn't recom": 1,
+      "Using the Screen Space Ambient Occlusion render feature results in significant performance overhead when the application is runn": 1,
+      "[Optional] Latency Optimization is recommended to be set to <b>Prioritize Input Polling</b> when Meta Quest support is enabled.": 1,
+      "[Optional] Meta Quest supports Thin Link Time Optimization. This can optimize CPU performance and can only be done in non-develo": 1,
+      "This OpenXR Feature targets an API version with a patch version lower than 1.1.62, which is the recommended version for this pac": 1,
+      "Diagnostics Data is enabled, and it requires Debug Symbols to be either SymbolTable or Full to resolve stacktraces in crash repo": 1,
+      "Hidden/InferenceEngine/Pad": 1,
+      "Shader Graphs/Water": 1,
+      "Hidden/Universal Render Pipeline/ClusterDeferred": 1,
+      "Hidden/Universal Render Pipeline/StencilDeferred": 1
+    },
+    "warningExamples": {
+      "The following asset(s) located in immutable packages were unexpectedly altered. Making changes to immutable packages isn't recom": [
+        "The following asset(s) located in immutable packages were unexpectedly altered. Making changes to immutable packages isn't recommended because the changes can be los"
+      ],
+      "Using the Screen Space Ambient Occlusion render feature results in significant performance overhead when the application is runn": [
+        "Using the Screen Space Ambient Occlusion render feature results in significant performance overhead when the application is running natively on device. Disabling or "
+      ],
+      "[Optional] Latency Optimization is recommended to be set to <b>Prioritize Input Polling</b> when Meta Quest support is enabled.": [
+        "[Optional] Latency Optimization is recommended to be set to <b>Prioritize Input Polling</b> when Meta Quest support is enabled."
+      ],
+      "[Optional] Meta Quest supports Thin Link Time Optimization. This can optimize CPU performance and can only be done in non-develo": [
+        "[Optional] Meta Quest supports Thin Link Time Optimization. This can optimize CPU performance and can only be done in non-development, IL2CPP enabled builds with Str"
+      ],
+      "This OpenXR Feature targets an API version with a patch version lower than 1.1.62, which is the recommended version for this pac": [
+        "This OpenXR Feature targets an API version with a patch version lower than 1.1.62, which is the recommended version for this package. The requested API version will "
+      ],
+      "Diagnostics Data is enabled, and it requires Debug Symbols to be either SymbolTable or Full to resolve stacktraces in crash repo": [
+        "Diagnostics Data is enabled, and it requires Debug Symbols to be either SymbolTable or Full to resolve stacktraces in crash reports. Consider selecting Full to recei"
+      ],
+      "Hidden/InferenceEngine/Pad": [
+        "Shader warning in 'Hidden/InferenceEngine/Pad': integer modulus may be much slower, try using uints if possible. at Packages/com.unity.ai.inference/Runtime/Core/Reso"
+      ],
+      "Hidden/InferenceEngine/ConvTranspose": [
+        "Shader warning in 'Hidden/InferenceEngine/ConvTranspose': integer modulus may be much slower, try using uints if possible. at Packages/com.unity.ai.inference/Runtime",
+        "Shader warning in 'Hidden/InferenceEngine/ConvTranspose': signed/unsigned mismatch, unsigned assumed at Packages/com.unity.ai.inference/Runtime/Core/Resources/Infere"
+      ],
+      "Hidden/InferenceEngine/ScatterND": [
+        "Shader warning in 'Hidden/InferenceEngine/ScatterND': 'j': loop control variable conflicts with a previous declaration in the outer scope; most recent declaration wi",
+        "Shader warning in 'Hidden/InferenceEngine/ScatterND': signed/unsigned mismatch, unsigned assumed at Packages/com.unity.ai.inference/Runtime/Core/Resources/InferenceE"
+      ],
+      "Hidden/InferenceEngine/GridSample": [
+        "Shader warning in 'Hidden/InferenceEngine/GridSample': signed/unsigned mismatch, unsigned assumed at Packages/com.unity.ai.inference/Runtime/Core/Resources/Inference"
+      ],
+      "Shader Graphs/Water": [
+        "Shader warning in 'Shader Graphs/Water': use of potentially uninitialized variable (LightingPhysicallyBased) at /private/tmp/floor-fracture-breakfast.SF0VHKec/projec"
+      ],
+      "Hidden/InferenceEngine/ScatterElements": [
+        "Shader warning in 'Hidden/InferenceEngine/ScatterElements': signed/unsigned mismatch, unsigned assumed at Packages/com.unity.ai.inference/Runtime/Core/Resources/Infe"
+      ],
+      "Hidden/InferenceEngine/SliceSet": [
+        "Shader warning in 'Hidden/InferenceEngine/SliceSet': integer divides may be much slower, try using uints if possible. at Packages/com.unity.ai.inference/Runtime/Core",
+        "Shader warning in 'Hidden/InferenceEngine/SliceSet': signed/unsigned mismatch, unsigned assumed at Packages/com.unity.ai.inference/Runtime/Core/Resources/InferenceEn"
+      ],
+      "EnvironmentDepth/OcclusionLit": [
+        "Shader warning in 'EnvironmentDepth/OcclusionLit': use of potentially uninitialized variable (LightingPhysicallyBased) at /private/tmp/floor-fracture-breakfast.SF0VH"
+      ],
+      "Hidden/Universal Render Pipeline/ClusterDeferred": [
+        "Shader warning in 'Hidden/Universal Render Pipeline/ClusterDeferred': use of potentially uninitialized variable (LightingPhysicallyBased) at /private/tmp/floor-fract"
+      ],
+      "Hidden/Universal Render Pipeline/StencilDeferred": [
+        "Shader warning in 'Hidden/Universal Render Pipeline/StencilDeferred': use of potentially uninitialized variable (LightingPhysicallyBased) at /private/tmp/floor-fract"
+      ],
+      "Universal Render Pipeline/Lit": [
+        "Shader warning in 'Universal Render Pipeline/Lit': use of potentially uninitialized variable (LightingPhysicallyBased) at /private/tmp/floor-fracture-breakfast.SF0VH"
+      ],
+      "$PROJECT/Library/Bee/artifacts/Android/il2cppOutput/cpp: [Unity.TextMeshPro] - Sys": [
+        "$PROJECT/Library/Bee/artifacts/Android/il2cppOutput/cpp: [Unity.TextMeshPro] - System.Void TMPro.TMP_TextParsingUtiliti",
+        "$PROJECT/Library/Bee/artifacts/Android/il2cppOutput/cpp: [Unity.TextMeshPro] - System.Void TMPro.TextMeshPro::GenerateT",
+        "$PROJECT/Library/Bee/artifacts/Android/il2cppOutput/cpp: [Unity.TextMeshPro] - System.Void TMPro.TextMeshProUGUI::Gener"
+      ]
+    }
+  },
+  "retailChecks": {
+    "developmentMenuGated": true,
+    "developmentEndingOverrideStripped": true,
+    "developmentMetricsAttachmentStripped": true,
+    "packageDebuggable": false,
+    "toolchain": {
+      "unity": "6000.6.9f1 (8c45277fb9c5)",
+      "androidBuildTools": "36.0.0",
+      "ndk": "27.2.12479018",
+      "packageId": "com.wa003.floorfracture"
+    },
+    "primaryScene": [
+      "Assets/FloorFracture/Scenes/FloorFracture.unity"
+    ],
+    "signing": [
+      "Verifies",
+      "Verified using v1 scheme (JAR signing): false",
+      "Verified using v2 scheme (APK Signature Scheme v2): true",
+      "Verified using v3 scheme (APK Signature Scheme v3): false",
+      "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+      "Verified using v4 scheme (APK Signature Scheme v4): false",
+      "Number of signers: 1",
+      "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug",
+      "Signer #1 certificate SHA-256 digest: ec0521d8a6f2e9b4e04d28086dc771c30271e173f759a5c24d012f8e1a458ea9"
+    ],
+    "afterColdBuildTrackedPaths": [
+      "M .vscode/settings.json",
+      " M ProjectSettings/UnityConnectSettings.asset"
+    ]
+  },
+  "testedOnHeadset": "The installed development player was checked for package identity, granted room permission and start-up. This separate release file is available for sideloading."
+}

@@ -1,0 +1,65 @@
+{
+  "startedUtc": "2026-11-20T08:55:52.782+00:00",
+  "scratchSha256": "916e259d23ad0eeb94198f3d3a1bb7e4308f15485d2004f71da25fe3889650c8",
+  "buildGuid": "9165ee79af11488f835113d1de881e83",
+  "sourceMode": "No proximity override or wake key used. Each A/B opens a new process from a force-stopped disposable package.",
+  "originalRecording": false,
+  "originalVolume": {
+    "value": 15,
+    "minimum": 0,
+    "maximum": 15
+  },
+  "proximityBefore": {
+    "enabled": true,
+    "prox_override": "DISABLED",
+    "power_state": "STANDBY",
+    "autosleep_disabled": false,
+    "message": "Proximity sensor: enabled (normal behavior)"
+  },
+  "cases": [
+    {
+      "case": "cold-1",
+      "launchUtc": "2026-11-20T08:56:01.608+00:00",
+      "pid": "17523",
+      "completed": true,
+      "error": "",
+      "ordinaryBetween": true,
+      "doneUtc": "2026-11-20T08:56:15.193+00:00"
+    },
+    {
+      "case": "warm-1",
+      "launchUtc": "2026-11-20T08:56:17.028+00:00",
+      "pid": "18332",
+      "completed": true,
+      "error": "",
+      "ordinaryBetween": true,
+      "doneUtc": "2026-11-20T08:56:30.540+00:00"
+    },
+    {
+      "case": "warm-2",
+      "launchUtc": "2026-11-20T08:56:32.363+00:00",
+      "pid": "19010",
+      "completed": true,
+      "error": "",
+      "ordinaryBetween": true,
+      "doneUtc": "2026-11-20T08:56:46.125+00:00"
+    },
+    {
+      "case": "cold-2",
+      "launchUtc": "2026-11-20T08:56:47.958+00:00",
+      "pid": "19692",
+      "completed": true,
+      "error": "",
+      "ordinaryBetween": true,
+      "doneUtc": "2026-11-20T08:57:01.326+00:00"
+    }
+  ],
+  "recordingRestored": true,
+  "removedOwnScratch": true,
+  "scratchAbsent": true,
+  "ordinaryRestored": true,
+  "ordinarySha256": "c04829b157a7c1284f30a70ec8992dd768ac0200d32e7e908c82bfc9443005d9",
+  "proximityRestored": true,
+  "mediaVolumeRestored": true,
+  "endedUtc": "2026-11-20T08:57:07.928+00:00"
+}

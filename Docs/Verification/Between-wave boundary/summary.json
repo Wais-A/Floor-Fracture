@@ -1,0 +1,35 @@
+{
+  "scope": "Normal game menus, level-one seed 379, real Unity board rendering and production wave deadlines in a separate Metal Play Mode project. A scripted headset pose crossed the fitted rectangle inside the same MRUK Rec Room. No physical Quest or wearer was involved.",
+  "baselineRevision": "58eeb90f3114972f2afb1afdc233fff42b2bf4f8",
+  "fixedRevision": "599e1b6b0e68b8891cd5547514721ab8d2322d67",
+  "nativeMechanisms": "Meta’s MRUK Room Guardian visualizes physical room limits, and OVRBoundary addresses the system play area. The fitted glass is a smaller application surface. The fix reuses BoardState.Sample and the ordinary PauseRound. The pre-existing disabled blue Room Guardian overlay was not changed.",
+  "condition": "Step on the center of the freshly broken starting pane during SAFE or LEVEL CLEAR; crossing the interior opening preserves the result display. Then move the production stance 4 cm outside the board while head tracking and native room localization remain valid. Observe state after two fixture game frames.",
+  "rendersChecked": "Board descendants, preview chamber GameObject and descendant renderers, every MRUK surrounding-brick MeshRenderer, and floor effect hide state.",
+  "runs": {
+    "before": {
+      "report": "before.json",
+      "sha256": "a1cc00c69b6e4e14d0e97b62659f1793ee8abb0e94b26c01fa633c65636d8d3b",
+      "startedUtc": "2026-11-20T09:26:55.2610570Z",
+      "finishedUtc": "2026-11-20T09:27:47.9686340Z",
+      "result": "failed",
+      "completedWaves": 7,
+      "observations": [
+        "Before fix: SAFE boundary exit left stage BetweenWaves, glass True, chamber True, brick True.",
+        "Before fix: LEVEL CLEAR boundary exit left stage BetweenWaves, glass True, chamber True, brick True."
+      ]
+    },
+    "after": {
+      "report": "after.json",
+      "sha256": "51cc9a35da1281dffea4eca52f0d4f859b806444cf66de1b387cf285581c2968",
+      "startedUtc": "2026-11-20T09:28:37.9697990Z",
+      "finishedUtc": "2026-11-20T09:29:29.1151060Z",
+      "result": "passed",
+      "completedWaves": 7,
+      "observations": [
+        "SAFE paused immediately on leaving the glass inside the tracked room. Glass, brick and chamber hid; score 1 survived. The off-board menu revealed the board and rejected Start until supported. Level 1, wave 2 received a fresh 5.0 seconds.",
+        "LEVEL CLEAR paused immediately on leaving the glass inside the tracked room. Glass, brick and chamber hid; score 7 survived. The off-board menu revealed the board and rejected Start until supported. Level 2, wave 1 received a fresh 4.6 seconds."
+      ]
+    }
+  },
+  "recovery": "Both result displays hid the real game surfaces and preserved the completed score. Remaining on the other side of the boundary for longer than the prior result deadline did not advance again. Show board revealed the localized board. Start was blocked while outside. A return to supported glass received the full next countdown. Re-pausing the newly rebuilt level did not increment it again."
+}

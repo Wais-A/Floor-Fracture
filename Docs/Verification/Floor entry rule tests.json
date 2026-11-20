@@ -1,0 +1,26 @@
+{
+  "environment": "Unity 6000.6.9f1, Edit Mode, Android target, all registered gameplay rule and scanned-room tests.",
+  "total": 54,
+  "passed": 54,
+  "skipped": 0,
+  "durationSeconds": 50.686,
+  "startedUTC": "2026-11-20 05:13:15Z",
+  "coverage": [
+    "Floor Fracture passed 987777 distinct wave states, 4183111 survival choices and 64094 Last Tile clears.",
+    "Larger boards cleared 46848 seeded starting positions, tested 394905 waves and checked onward reachability for 5026105 advertised choices."
+  ],
+  "selectedTests": [
+    "CoordinatesAndSeams",
+    "DeadlinesAndPause",
+    "EverySeededSurvivalPath",
+    "ExistingShapesKeepTheirSeededPatterns(8,8,63,1312379596,55)",
+    "ExistingShapesKeepTheirSeededPatterns(7,2,13,-682530180,6)",
+    "ExistingShapesKeepTheirSeededPatterns(4,3,5,-1147934979,1)",
+    "ExistingShapesKeepTheirSeededPatterns(2,2,0,-255926220,2)",
+    "PlantedStanceAndGapEdges",
+    "ResultsExplainTheActualMemoryAndMovingPaneLoss",
+    "SlidersAndGrace"
+  ],
+  "rawXmlSha256": "4414311054cba68ca2212f5c87bac669272186a9f0391e0258101fc7b3610b9e",
+  "wearerAcceptance": "The new ring estimate and slider shape require a physical user to judge the play experience."
+}

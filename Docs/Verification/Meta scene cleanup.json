@@ -1,0 +1,63 @@
+{
+  "verifiedUtc": "2026-11-20T01:07:20.476947+00:00",
+  "unity": "6000.6.9f1",
+  "sceneBackup": "Builds/Verification/Scene-backups/SampleScene-before-cleanup-20261120-004823569.unity",
+  "backupSha256": "8675befa5d92ad1365cdfccac0e745df8882517905d48845986cd56155da2a99",
+  "savedSampleSha256": "7afbdc081b77936ee549e0726b24f4434343dbe500f9da642f2d2686035518a1",
+  "savedGameplaySha256": "92b5a53ea5c3b3102a4f4306cf32bd54d6f259df455ec34cfaacde4a2281c5d1",
+  "sampleCounts": {
+    "spawnHelpers": {
+      "before": 2,
+      "after": 1
+    },
+    "depthManagers": {
+      "before": 2,
+      "after": 1
+    },
+    "cubeBlockMarkers": {
+      "before": 3,
+      "after": 2
+    },
+    "grabInteractableBlockMarkers": {
+      "before": 2,
+      "after": 1
+    },
+    "spatialAudioSampleClip": {
+      "before": 0,
+      "after": 1
+    },
+    "liveSharedAnchorExamples": {
+      "before": 1,
+      "after": 0
+    }
+  },
+  "savedSceneChecks": [
+    "Android Meta rule False Complete a Data Use Checkup to meet DUC policy requirements.",
+    "Android Meta rule False Set up the application ID and the package name.",
+    "Android Meta rule True The audio clip should be set in the audio source of the Spatial Audio Building Block",
+    "Android Meta rule True Audio Source clips must be monophonic when using the Spatial Audio Building Block",
+    "sample roles: controller callback and ray visualizer point to PointAndLocate; GrabAndLocate has SDK grab; audio=Interaction_Object_Impact_01 48000Hz mono, spatialized, play-on-awake off",
+    "Assets/Scenes/SampleScene.unity | Meta markers 15 | one each: camera rig, passthrough, MRUK, Room Guardian, depth manager, FLOOR spawn helper | SpawnAmount=3 | marker cubes=2",
+    "Assets/FloorFracture/Scenes/FloorFracture.unity | Meta markers 9 | one each: camera rig, passthrough, MRUK, Room Guardian, depth manager, FLOOR spawn helper | SpawnAmount=8 | marker cubes=0",
+    "Android id=com.wa003.floorfracture | enabled build scenes=Assets/FloorFracture/Scenes/FloorFracture.unity",
+    "Project PlatformSettings assets="
+  ],
+  "package": "2.3.0 | Embedded | Meta dependency accepted=True",
+  "compiler": {
+    "status": "completed",
+    "failed": false,
+    "errors": [],
+    "compilationFailed": false
+  },
+  "preservedSharedAnchorExample": {
+    "asset": "Assets/Scenes/Shared Spatial Anchor Example.prefab",
+    "sha256": "38e05c70e462329d87831735f7d08b6d6bb2194afeaedef8c0ffab8b7924fdd6",
+    "blockId": "975428dc-db04-4e43-be4a-232f192cd3eb",
+    "referencedByBuildScene": false
+  },
+  "soloProjectManifest": {
+    "localRoomPermission": true,
+    "localAnchorPermission": true,
+    "sharedMapTransferPermission": false
+  }
+}

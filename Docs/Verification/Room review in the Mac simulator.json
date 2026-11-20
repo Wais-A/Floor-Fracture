@@ -1,0 +1,101 @@
+{
+  "result": "passed",
+  "environment": {
+    "editor": "Unity 6000.6.9f1",
+    "application": "Meta XR Simulator for Mac",
+    "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+    "runtime": "OpenXR Display",
+    "stereoActive": true,
+    "stereoMode": "MultiPass",
+    "simulatorDevicePreset": "Meta Quest 3",
+    "viewport": "Left eye",
+    "configuredRefreshRateHz": 72,
+    "desktopWindowOwner": "Meta XR Simulator"
+  },
+  "compiledCode": {
+    "repositoryHead": "084cf29903be142fcab8ad5736c023af38d01aec",
+    "latestGameChange": "49976f4",
+    "newestGameplaySource": {
+      "relativePath": "Assets/FloorFracture/Scripts/Glass/GlassBoardView.cs",
+      "lastWriteUtc": "2026-11-20T08:22:21+00:00"
+    },
+    "editorAssemblyFiles": {
+      "Assembly-CSharp": {
+        "moduleVersionId": "8d5b4350-e9f5-4c54-afcb-8cc2b5d18bf7",
+        "sha256": "cbe3c1caff16c62af3bf71b36ab46f6430e88e0375e05613999d352315bb8b03",
+        "lastWriteUtc": "2026-11-20T08:24:29+00:00"
+      },
+      "FloorFracture.Rooms": {
+        "moduleVersionId": "052d2235-52ed-425b-9620-a9b94896d25e",
+        "sha256": "22ec766e182041ec0191f8d873259732db3f4befb6151a6a38160907a6c18f15",
+        "lastWriteUtc": "2026-11-20T08:24:28+00:00"
+      }
+    },
+    "liveModuleIdsMatchBothFiles": true,
+    "roomSelectionMethodLoaded": true,
+    "liveOccupancyRing": {
+      "hasKeyline": true,
+      "vertices": 320,
+      "outerRadiusMetres": 0.076
+    }
+  },
+  "room": {
+    "status": "Confirmed",
+    "localized": true,
+    "simulatedMrukRooms": 1,
+    "floorAnchors": 1,
+    "scannedSpawnCount": 8,
+    "boardColumns": 12,
+    "boardRows": 2,
+    "panePitchMetres": 0.5620899
+  },
+  "menu": {
+    "input": "The game's EditorChoose menu handler selected Settings and Back in the running simulator.",
+    "initial": "Welcome",
+    "initialFrame": 22545,
+    "settings": "Settings",
+    "settingsFrame": 24497,
+    "preview": true,
+    "previewMeshRenderers": 3,
+    "fissureRendererEnabled": true,
+    "rimMaterialGreenSamples": [
+      {
+        "frame": 25646,
+        "value": 0.7077557
+      },
+      {
+        "frame": 26221,
+        "value": 0.472406864
+      }
+    ],
+    "final": "Welcome",
+    "finalFrame": 27471,
+    "welcomePanelVisible": true,
+    "previewHiddenOnReturn": true,
+    "changedSettings": []
+  },
+  "images": {
+    "welcome": {
+      "file": "final-simulator.jpg",
+      "windowCaptureUtc": "2026-11-20T08:34:34+00:00",
+      "pixels": [
+        1280,
+        855
+      ],
+      "bytes": 210850,
+      "sha256": "289389e7e035c10c45b78422ddc08cbb981abe1923ff74eaa55f47e419f2fb6d"
+    },
+    "settings": {
+      "file": "final-simulator-settings.jpg",
+      "windowCaptureUtc": "2026-11-20T08:33:43+00:00",
+      "pixels": [
+        1024,
+        684
+      ],
+      "bytes": 172740,
+      "sha256": "5643aea51f042930f0ae9ccfcba963affb9bfb2295ac557fe445b79e2f55e7f5"
+    }
+  },
+  "observation": "The separate simulator window shows its enabled runtime, two simulated controllers, the furnished wood-paneled room and the Welcome menu with the fitted board size. Settings shows an amber branching crack on the sample pane beside its title.",
+  "verificationScope": "Desktop simulator preview with a single virtual floor anchor."
+}

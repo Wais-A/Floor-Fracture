@@ -1,0 +1,123 @@
+{
+  "sourceRevision": "cfc2b8ef50c7dbb9c825d476795f599fb0b32234",
+  "apk": "Builds/CleanRelease/FloorFracture-shared-chamber-cfc2b8e.apk",
+  "bytes": 108583869,
+  "sha256": "fbef8dbcbb910e26fa8609e33fd7102c769d304a711ff3f2b457a4b6c86afa67",
+  "unity": "6000.6.9f1 (8c45277fb9c5)",
+  "package": "com.wa003.floorfracture",
+  "platform": "Android",
+  "coldCheckout": {
+    "cleanTrackedStatus": true,
+    "gitObjectAlternates": false,
+    "initialUnityCacheDirectories": [],
+    "lfsObjectsChecked": 43,
+    "lfsIntegrity": "Git LFS fsck OK",
+    "unityGuidReferences": 50,
+    "unresolvedGuids": {},
+    "danglingLocalReferences": {}
+  },
+  "coldBuild": {
+    "editorExitCode": 0,
+    "headless": true,
+    "quitTimeoutSeconds": 1200,
+    "errors": 0,
+    "warnings": 67,
+    "warningGroups": {
+      "Hidden/InferenceEngine/ScatterND": 14,
+      "Hidden/InferenceEngine/ConvTranspose": 11,
+      "UAC0009": 8,
+      "Hidden/InferenceEngine/SliceSet": 6,
+      "CS0618": 4,
+      "Hidden/InferenceEngine/GridSample": 4,
+      "Library/Bee/artifacts/Android/il2cppOutput/cpp: [Unity.Text": 3,
+      "Hidden/InferenceEngine/ScatterElements": 2,
+      "EnvironmentDepth/OcclusionLit": 2,
+      "Universal Render Pipeline/Lit": 2,
+      "Read/Write is disabled on 1 mesh(es) referenced by components in this build. In future versions of Unity, the build process will": 1,
+      "The following asset(s) located in immutable packages were unexpectedly altered. Making changes to immutable packages isn't recom": 1,
+      "Using the Screen Space Ambient Occlusion render feature results in significant performance overhead when the application is runn": 1,
+      "[Optional] Latency Optimization is recommended to be set to <b>Prioritize Input Polling</b> when Meta Quest support is enabled.": 1,
+      "[Optional] Meta Quest supports Thin Link Time Optimization. This can optimize CPU performance and can only be done in non-develo": 1,
+      "This OpenXR Feature targets an API version with a patch version lower than 1.1.62, which is the recommended version for this pac": 1,
+      "Diagnostics Data is enabled, and it requires Debug Symbols to be either SymbolTable or Full to resolve stacktraces in crash repo": 1,
+      "Hidden/InferenceEngine/Pad": 1,
+      "Shader Graphs/Water": 1,
+      "Hidden/Universal Render Pipeline/ClusterDeferred": 1,
+      "Hidden/Universal Render Pipeline/StencilDeferred": 1
+    },
+    "optionsMask": 0,
+    "buildSeconds": 375.81651
+  },
+  "manifest": {
+    "debuggable": false,
+    "minimumApi": 32,
+    "targetApi": 34,
+    "installedAbis": [
+      "arm64-v8a"
+    ],
+    "arm64NativeLibraries": 22,
+    "scenePermission": true,
+    "v2SignatureVerified": true,
+    "certificate": "Android Debug development certificate",
+    "zipEntriesWithValidCrc": 899,
+    "verified16KiBAlignment": true
+  },
+  "scene": [
+    "Assets/FloorFracture/Scenes/FloorFracture.unity"
+  ],
+  "nativeRoomBlocks": {
+    "[BuildingBlock] Find Spawn Positions": true,
+    "[BuildingBlock] Room Guardian": false,
+    "[BuildingBlock] Occlusion Dependencies": true,
+    "[BuildingBlock] Effect Mesh - Surrounding Floor": true
+  },
+  "tutorialLabelsInPlayer": [
+    "Try the stone (optional)",
+    "Practice stepping",
+    "Glass opening edges",
+    "Hazard surface"
+  ],
+  "developmentMenu": {
+    "labelsInMetadata": {
+      "Preview loss": true,
+      "Seed 379 · level 1": true
+    },
+    "compiledWelcomeAndDevelopmentMenusCheckDebugBuildOrEditor": true,
+    "compiledFallSelectionOverrideIsEmpty": true,
+    "retailGameFlowStartIncludesMetricsRecorder": false
+  },
+  "vulkanShaderPrograms": {
+    "Floor Fracture/Surrounding Brick": 6,
+    "Floor Fracture/Shaft and falling glass": 2,
+    "Floor Fracture/Ending chamber": 2
+  },
+  "packedAssets": {
+    "Assets/FloorFracture/Resources/Endings/Chamber.shader": {
+      "stream": "cb37d8b8fe6f432d9ab28501a1f75978",
+      "offset": 144,
+      "bytes": 20524,
+      "sha256": "2e70bf7f0c3926805c93493bccc20fcb161d41df1258b4bf9777ff0dc02fdee6"
+    },
+    "Assets/FloorFracture/Resources/FloorFractureDepth.shader": {
+      "stream": "b18516750f30a4c2e8608114ec007bd5",
+      "offset": 144,
+      "bytes": 6048,
+      "sha256": "8626a38ad5eb9478d19d5e1bab27257e488f92463673775995778b1c433266ca"
+    },
+    "Assets/FloorFracture/Scripts/Room/SurroundingBrick.mat": {
+      "stream": "sharedassets0.assets",
+      "offset": 13872,
+      "bytes": 180,
+      "sha256": "ed2264c1b5a4fd5ce60a7dd9e7f7801b2ec8ab537c738ad18f5f7165ef6c33ba"
+    },
+    "Assets/FloorFracture/Scripts/Room/SurroundingBrick.shader": {
+      "stream": "sharedassets0.assets",
+      "offset": 30582544,
+      "bytes": 10980,
+      "sha256": "5404e19390619a1f1db28ccc92a4f58fc9aceda39dc831e130f61718da78021f"
+    }
+  },
+  "deviceReview": "The separately signed development build is used for headset feedback. See Shared chamber Quest build.json.",
+  "buildGuid": "91ffe30759a2461c934eb3337d1a1d9e",
+  "reproduction": "Clean cold import and release build with the explicit Mac Editor-only Interaction SDK shutdown at the end of the build. Earlier exit failures are recorded in Expanded room clean release.json."
+}

@@ -1,0 +1,62 @@
+{
+  "buildGuid": "4be44192652c4aa284ed355d31c245a0",
+  "completedUtc": "2026-11-20T04:18:10.1099560Z",
+  "unity": "6000.6.9f1",
+  "profile": "Meta Quest",
+  "package": "com.wa003.floorfracture",
+  "gameplayScene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "errors": 0,
+  "warnings": 49,
+  "sourceRevision": "cfc2b8ef50c7dbb9c825d476795f599fb0b32234",
+  "apk": "Builds/Quest/Shared-chamber/FloorFracture.apk",
+  "bytes": 156983771,
+  "sha256": "e908047c4a0a8670774580cec04372d4b760dde96f096755c99c8ef339459d45",
+  "unityProcessExitCode": 0,
+  "interactionSdkBatchShutdownCalled": true,
+  "android": {
+    "abi": "arm64-v8a",
+    "minApi": 32,
+    "targetApi": 34,
+    "scenePermission": true,
+    "validArchiveEntries": 903,
+    "v2Verified": true,
+    "alignment16KiBVerified": true
+  },
+  "packedBlockActive": {
+    "Room Guardian": false,
+    "Find Spawn Positions": true,
+    "Occlusion Dependencies": true,
+    "Effect Mesh - Surrounding Floor": true
+  },
+  "vulkanUniquePrograms": {
+    "Floor Fracture/Ending chamber": 2,
+    "Floor Fracture/Shaft and falling glass": 2,
+    "Floor Fracture/Surrounding Brick": 6
+  },
+  "packedEndingChamberStreamSha256": "01351124ceb423d16056de327e525f133f647b83071c950d017e85c46a19c626",
+  "verifiedSourceSha256": {
+    "Scenes/FloorFracture.unity": "3ae73ca003b3b620555c01c9c3a7e2ed18919bfdd0c833380efb74a65e58068c",
+    "Scripts/Room/RoomBoardPlacement.cs": "8f6d577a0183f4df47ed95e1eb03be0ea0ffd30855ace20c46a8a000756d99be",
+    "Scripts/Room/RoomOutlineView.cs": "dfad39526261095e264610afcf33fe77e621ec2cc4fbca857ac3288b86939e91",
+    "Scripts/Game/GameFlow.cs": "0d0bd0c41e6ba0cd6d5ddc44cac1592933367d908307f01bbd718136f0a13781",
+    "Scripts/Glass/GlassBoardView.cs": "00dd4fb484c200f4bc76c5a60ae06aa4632c9d5570e43ee439b1eda74fb755c7",
+    "Scripts/Presentation/Endings/EndingShuffle.cs": "88660bf96c138349be12bc7931129c00b86415fde9fa31a4a78e13fa04145af2",
+    "Scripts/Presentation/Endings/FallScenery.cs": "bddb56de87636f0172576fa06e0d2b736c887fe3bfcda8c358bc2741091e6f7f",
+    "Scripts/Presentation/Endings/FallSequence.cs": "beae37e3d28f9a89fc4d3abda8010e8e7b492fd4138793aa1a572684eb32963f",
+    "Resources/Endings/Chamber.shader": "3a2a23f7b52ae16dffde0891625be5a6257b95973cf7092914f2942d8ada7e4b",
+    "Editor/GameProjectSetup.cs": "0ed5b690513ee5e8724b8da25479c53ecc94ed2512ef78cd08e1b580d585ee10"
+  },
+  "headsetInstallation": {
+    "device": "Meta Quest 3",
+    "installedLocalDateTime": "2026-11-19 23:19:39 America/New_York",
+    "installedBy": "Meta MCP replace install",
+    "launchedBy": "Meta MCP",
+    "activity": "com.unity3d.player.UnityPlayerGameActivity",
+    "packageResumed": true,
+    "observedPid": 26902,
+    "scenePermissionGranted": true,
+    "installedBaseApkSha256": "e908047c4a0a8670774580cec04372d4b760dde96f096755c99c8ef339459d45",
+    "observedRecording": "20261120T041955583Z-f34134d7.csv",
+    "physicalSessionRecord": "Docs/Verification/Shared chamber Quest session.json"
+  }
+}

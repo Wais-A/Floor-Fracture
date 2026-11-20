@@ -1,0 +1,15 @@
+{
+  "runtime": "Standalone Meta XR Simulator on macOS",
+  "environment": "High-ceiling Room",
+  "gameplayScene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "observedPage": "Welcome",
+  "mrukRooms": 1,
+  "columns": 6,
+  "rows": 9,
+  "pitchMetres": 0.5870435,
+  "frameWhenQueried": 32805,
+  "applicationRunInBackground": true,
+  "visualReview": "The separate simulator window showed the blue brick around the glass grid, the side of the couch in the foreground, lamp, dresser, and two simulated controllers.",
+  "previousFixtureResult": "5 × 8 at 56 cm in the earlier brick build",
+  "physicalQuestReview": "Wais tested this revision. The Quest recorded 5 × 3 panes at 53.9 cm. He found the board better and requested hiding blue scan outlines and sharing the same deep landing through every hole."
+}

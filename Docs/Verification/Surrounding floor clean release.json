@@ -1,0 +1,169 @@
+{
+  "sourceRevision": "2c154f7db92fd5203f764a43ec8582538aeb596f",
+  "file": "FloorFracture-water-2c154f7.apk",
+  "bytes": 108568279,
+  "sha256": "a326fe6d9020b7f1423d8dda205c2de39304d347c2b3f56c314f83066f7fcc8b",
+  "toolchain": {
+    "unity": "6000.6.9f1 (8c45277fb9c5)",
+    "androidBuildTools": "36.0.0",
+    "ndk": "27.2.12479018",
+    "packageId": "com.wa003.floorfracture"
+  },
+  "cleanCheckout": {
+    "origin": "local source checkout",
+    "sharedGitAlternates": false,
+    "initialTrackedStatus": "",
+    "initialUnityCaches": [],
+    "lfsFilesHashVerified": 39,
+    "lfsDirectories": {
+      "Assets": 17,
+      "Docs": 8,
+      "Packages": 14
+    },
+    "gitLfsFsck": "Git LFS fsck OK",
+    "assetGuidsVerified": 50,
+    "missingGuids": {},
+    "danglingSceneOrPrefabIds": {}
+  },
+  "build": {
+    "profile": "Assets/Settings/Build Profiles/Meta Quest.asset",
+    "result": "Succeeded",
+    "buildOptionsMask": 0,
+    "unityHostExit": 0,
+    "seconds": 361.527577,
+    "errors": 0,
+    "warnings": 67,
+    "warningCounts": {
+      "Hidden/InferenceEngine/ScatterND": 14,
+      "Hidden/InferenceEngine/ConvTranspose": 11,
+      "UAC0009": 8,
+      "Hidden/InferenceEngine/SliceSet": 6,
+      "CS0618": 4,
+      "Hidden/InferenceEngine/GridSample": 4,
+      "/private/tmp/floor-fracture-clean-release.1Hv6e8Q2/water-2c154f7/Floor Fracture/Library/Bee/artifacts/Android/il2cppOutput/cpp: ": 3,
+      "Hidden/InferenceEngine/ScatterElements": 2,
+      "EnvironmentDepth/OcclusionLit": 2,
+      "Universal Render Pipeline/Lit": 2,
+      "Read/Write is disabled on 1 mesh(es) referenced by components in this build. In future versions of Unity, the build process will": 1,
+      "The following asset(s) located in immutable packages were unexpectedly altered. Making changes to immutable packages isn't recom": 1,
+      "Using the Screen Space Ambient Occlusion render feature results in significant performance overhead when the application is runn": 1,
+      "[Optional] Latency Optimization is recommended to be set to <b>Prioritize Input Polling</b> when Meta Quest support is enabled.": 1,
+      "[Optional] Meta Quest supports Thin Link Time Optimization. This can optimize CPU performance and can only be done in non-develo": 1,
+      "This OpenXR Feature targets an API version with a patch version lower than 1.1.62, which is the recommended version for this pac": 1,
+      "Diagnostics Data is enabled, and it requires Debug Symbols to be either SymbolTable or Full to resolve stacktraces in crash repo": 1,
+      "Hidden/InferenceEngine/Pad": 1,
+      "Shader Graphs/Water": 1,
+      "Hidden/Universal Render Pipeline/ClusterDeferred": 1,
+      "Hidden/Universal Render Pipeline/StencilDeferred": 1
+    }
+  },
+  "package": {
+    "name": "com.wa003.floorfracture",
+    "versionName": "0.1.0",
+    "versionCode": 1,
+    "minSdk": 32,
+    "targetSdk": 34,
+    "compileSdk": 34,
+    "debuggable": false,
+    "importExportIotMapDataAbsent": true,
+    "abis": [
+      "arm64-v8a"
+    ],
+    "elf64ArmLibraries": [
+      "lib/arm64-v8a/LibRuntimeOptimizer.so",
+      "lib/arm64-v8a/libAppUITextMateLib.so",
+      "lib/arm64-v8a/libISDKEngineTelemetry.so",
+      "lib/arm64-v8a/libInteractionSdk.so",
+      "lib/arm64-v8a/libMetaXRAudioUnity.so",
+      "lib/arm64-v8a/libOVRMetricsTool.so",
+      "lib/arm64-v8a/libOVRPlugin.so",
+      "lib/arm64-v8a/libUnityARFoundationMeta.so",
+      "lib/arm64-v8a/libUnityOpenXR.so",
+      "lib/arm64-v8a/libUnityOpenXRHands.so",
+      "lib/arm64-v8a/lib_burst_generated.so",
+      "lib/arm64-v8a/libc++_shared.so",
+      "lib/arm64-v8a/libgame.so",
+      "lib/arm64-v8a/libhaptics_sdk.so",
+      "lib/arm64-v8a/libil2cpp.so",
+      "lib/arm64-v8a/libloaderimpl.so",
+      "lib/arm64-v8a/libmain.so",
+      "lib/arm64-v8a/libmrutilitykitshared.so",
+      "lib/arm64-v8a/libopenxr_loader.so",
+      "lib/arm64-v8a/libovrplatformloader.so",
+      "lib/arm64-v8a/libunity.so",
+      "lib/arm64-v8a/libunityopus.so"
+    ],
+    "metaAssetLibraryPayloadsByAbi": {
+      "arm64-v8a": 12,
+      "armeabi-v7a": 12
+    },
+    "verifiedZipEntries": 898,
+    "zipalign16KiB": true,
+    "signing": [
+      "Verifies",
+      "Verified using v1 scheme (JAR signing): false",
+      "Verified using v2 scheme (APK Signature Scheme v2): true",
+      "Verified using v3 scheme (APK Signature Scheme v3): false",
+      "Verified using v3.1 scheme (APK Signature Scheme v3.1): false",
+      "Verified using v4 scheme (APK Signature Scheme v4): false",
+      "Number of signers: 1",
+      "Signer #1 certificate DN: C=US, O=Android, CN=Android Debug",
+      "Signer #1 certificate SHA-256 digest: ec0521d8a6f2e9b4e04d28086dc771c30271e173f759a5c24d012f8e1a458ea9"
+    ],
+    "scenes": [
+      "Assets/FloorFracture/Scenes/FloorFracture.unity"
+    ]
+  },
+  "water": {
+    "sourceLinksFloorEffectToWaterMaterial": true,
+    "sourceFloorLabelMask": 1,
+    "effectBlockObjectInPackagedLevel0": "[BuildingBlock] Effect Mesh - Surrounding Floor",
+    "effectBlockIdInPackagedLevel0": "65c6e778-10b3-4490-89da-008a18aa116a"
+  },
+  "packedWaterObjects": {
+    "Assets/FloorFracture/Scripts/Room/SurroundingWater.mat": {
+      "sourceGuid": "581576f9f939a4e3eb6a8c4b1bdba09a",
+      "serializedClass": 21,
+      "packedStream": "sharedassets0.assets",
+      "packedBytes": 260,
+      "byteOffset": 13904,
+      "sha256OfPackedObject": "45971fb6cb141093513a12ca7e9342b3206e3b93c51e784dbd1ea1b9dd01e6c7",
+      "nameInApkObject": "SurroundingWater"
+    },
+    "Assets/FloorFracture/Resources/Endings/MetaFloorZone/materials/WaterSurface.png": {
+      "sourceGuid": "f69beebd2a2da6841b43f611c94b457d",
+      "serializedClass": 28,
+      "packedStream": "sharedassets0.assets",
+      "packedBytes": 158556,
+      "byteOffset": 24609856,
+      "sha256OfPackedObject": "14cd43eaef7c65faba1e1ab2d9a0820ace8e5971aeeea7528bf938a6542e007d",
+      "nameInApkObject": "WaterSurface"
+    },
+    "Assets/FloorFracture/Scripts/Room/SurroundingWater.shader": {
+      "sourceGuid": "920f68085412d4e298d2452d27c0fd6f",
+      "serializedClass": 48,
+      "packedStream": "sharedassets0.assets",
+      "packedBytes": 11920,
+      "byteOffset": 30741216,
+      "sha256OfPackedObject": "52615839e972bdad81e10c84a7648e6909d590cba6ba1e824484a4fc58ccaec5",
+      "nameInApkObject": "Floor Fracture/Surrounding Water"
+    }
+  },
+  "resolvedUnityAndMetaPackages": {
+    "com.meta.xr.mrutilitykit": "209.0.0",
+    "com.meta.xr.sdk.all": "209.0.0",
+    "com.meta.xr.sdk.core": "209.0.0",
+    "com.meta.xr.sdk.interaction": "209.0.0",
+    "com.meta.xr.sdk.interaction.ovr": "209.0.0",
+    "com.unity.render-pipelines.universal": "17.6.0",
+    "com.unity.xr.openxr": "1.19.0",
+    "com.unity.xr.meta-openxr": "2.7.0",
+    "com.unity.xr.arfoundation": "6.6.2"
+  },
+  "embeddedInferenceVersion": "2.3.0",
+  "upstream261PatchSha256": {
+    "Runtime/Core/PluginInterfaces.cs": "0bd0d146508eef53cf58ac9ff2ee50204932576b27af5b87efdccf84fb8e61e7",
+    "Editor/Visualizer/Editor/ModelAssetOpenHandler.cs": "22c32126734b11812f4a5977ed9f38eda9dfd1ecefbf470468bde20125052e7d"
+  },
+  "headsetUse": "This clean release was verified offline. The separate development build is available for wearer testing."
+}

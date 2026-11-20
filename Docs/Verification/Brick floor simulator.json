@@ -1,0 +1,22 @@
+{
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "source": "Meta XR Simulator synthetic High-ceiling Room, Unity URP overhead GPU readback",
+  "block": "[BuildingBlock] Effect Mesh - Surrounding Floor",
+  "columns": 5,
+  "rows": 8,
+  "pitchMetres": 0.560429752,
+  "roomLocalized": true,
+  "nativeAnchors": 25,
+  "floorPatches": 1,
+  "globalTriangles": 7790,
+  "furnitureTriangles": 6942,
+  "occluder": "Meta/MRUK/MixedReality/InvisibleOccluder",
+  "occluderQueue": 2979,
+  "brickQueue": 2980,
+  "foregroundPixelsHidden": 14562,
+  "visibleBrickPixels": 27201,
+  "unexpectedColoredPixels": 0,
+  "liveHardwareDepth": false,
+  "frame": 5813,
+  "renderInBackground": true
+}

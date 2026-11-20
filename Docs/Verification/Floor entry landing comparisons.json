@@ -1,0 +1,181 @@
+{
+  "scope": "Controlled Unity 6000.6.9f1 Metal camera renders of the gameplay chamber. The corrected build still needs a wearer.",
+  "projection": {
+    "renderSize": [
+      128,
+      128
+    ],
+    "eyeOffsetsMetres": [
+      -0.032,
+      0.032
+    ],
+    "waterPitchDegreesDown": [
+      21,
+      41,
+      78
+    ],
+    "spacePitchDegreesDown": [
+      0,
+      62,
+      -60
+    ]
+  },
+  "space": {
+    "method": "Render against magenta and green backgrounds. A pixel changing more than eight combined red and green intensity units exposes the underlying room surrogate.",
+    "before": {
+      "sampledViews": 54,
+      "viewsWithUnderlay": 30,
+      "maxExposedPixels": 16384,
+      "maxClearColorDifference": 489
+    },
+    "after": {
+      "sampledViews": 54,
+      "viewsWithUnderlay": 0,
+      "maxExposedPixels": 0,
+      "maxClearColorDifference": 0
+    }
+  },
+  "water": {
+    "method": "Switch off the opaque surface for a matched camera render. Among pixels it changes by over 20 combined RGB units, calculate the 90th minus 10th luminance percentile. Measure the transparent close-up layer independently.",
+    "before": [
+      {
+        "seconds": 1.1,
+        "sampledViews": 6,
+        "nativeOverlayEnabled": 6,
+        "waterPixels": [
+          653,
+          10926
+        ],
+        "waterLuminanceP90MinusP10": [
+          35,
+          60
+        ]
+      },
+      {
+        "seconds": 2.7,
+        "sampledViews": 6,
+        "nativeOverlayEnabled": 6,
+        "waterPixels": [
+          3389,
+          14894
+        ],
+        "waterLuminanceP90MinusP10": [
+          69,
+          76
+        ]
+      },
+      {
+        "seconds": 4.12,
+        "sampledViews": 6,
+        "nativeOverlayEnabled": 6,
+        "waterPixels": [
+          9624,
+          16384
+        ],
+        "waterLuminanceP90MinusP10": [
+          67,
+          81
+        ]
+      },
+      {
+        "seconds": 4.43,
+        "sampledViews": 6,
+        "nativeOverlayEnabled": 6,
+        "waterPixels": [
+          11786,
+          16384
+        ],
+        "waterLuminanceP90MinusP10": [
+          63,
+          77
+        ]
+      },
+      {
+        "seconds": 4.8,
+        "sampledViews": 6,
+        "nativeOverlayEnabled": 6,
+        "waterPixels": [
+          11883,
+          16384
+        ],
+        "waterLuminanceP90MinusP10": [
+          62,
+          77
+        ]
+      }
+    ],
+    "after": [
+      {
+        "seconds": 1.1,
+        "sampledViews": 6,
+        "nativeOverlayEnabled": 0,
+        "waterPixels": [
+          653,
+          10926
+        ],
+        "waterLuminanceP90MinusP10": [
+          15,
+          60
+        ]
+      },
+      {
+        "seconds": 2.7,
+        "sampledViews": 6,
+        "nativeOverlayEnabled": 0,
+        "waterPixels": [
+          3389,
+          14894
+        ],
+        "waterLuminanceP90MinusP10": [
+          59,
+          70
+        ]
+      },
+      {
+        "seconds": 4.12,
+        "sampledViews": 6,
+        "nativeOverlayEnabled": 0,
+        "waterPixels": [
+          9624,
+          16384
+        ],
+        "waterLuminanceP90MinusP10": [
+          69,
+          82
+        ]
+      },
+      {
+        "seconds": 4.43,
+        "sampledViews": 6,
+        "nativeOverlayEnabled": 0,
+        "waterPixels": [
+          11790,
+          16384
+        ],
+        "waterLuminanceP90MinusP10": [
+          64,
+          79
+        ]
+      },
+      {
+        "seconds": 4.8,
+        "sampledViews": 6,
+        "nativeOverlayEnabled": 6,
+        "waterPixels": [
+          11890,
+          16384
+        ],
+        "waterLuminanceP90MinusP10": [
+          63,
+          78
+        ]
+      }
+    ]
+  },
+  "rawFilesSha256": {
+    "space-after.csv": "6ce4f655940bd911df7a466c1fde45a504c852efd38f4a97142e96b89104cb66",
+    "space-before.csv": "3157f307fac30b09bb46670b41d7fa3f72af487835c5faaf7b399de630f5ccb1",
+    "water-after.csv": "0bc1fa2d3d5ff37ce6ffb8bfcbd5911e948622bb6ed1aae3ade1dc981e1c6b4c",
+    "water-before.csv": "abf53457ae234263ea577e38265b77bd96fc0688257d5f3fed689a8a658be660"
+  }
+}

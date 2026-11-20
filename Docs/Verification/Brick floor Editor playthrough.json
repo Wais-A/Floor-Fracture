@@ -1,0 +1,520 @@
+{
+    "result": "passed",
+    "startedUtc": "2026-11-20T02:17:06.7658270Z",
+    "finishedUtc": "2026-11-20T02:19:03.6479380Z",
+    "unityVersion": "6000.6.9f1",
+    "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+    "failure": "",
+    "fixture": "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode",
+    "input": "Simulated world poses, grip state, and visible menu selection. Unity physics and unscaled game time.",
+    "imagesDescribe": "Monoscopic Editor renders of the actual scene. Player-view images use the simulated center eye. Whole-room-brick looks down on the scanned floor. Room-preview, classic-glass, and neighboring-hole are elevated observer shots. Fall sequences use the same stationary eye position, looking toward the opening, slightly downward, and straight ahead as labeled.",
+    "columns": 5,
+    "rows": 6,
+    "seed": 379,
+    "sdkFloorCandidates": 8,
+    "pitch": 0.5174223184585571,
+    "depthProviderEnabledInAuthoredScene": true,
+    "depthSupportedInFixture": false,
+    "checks": [
+        "Meta Camera Rig, Passthrough, MR Utility Kit, Find Spawn Positions, Controller Tracking, and Interactions Rig supply the single tracked rig, room, floor candidates and left/right ray and grab controls.",
+        "The installed MRUK Room Guardian and EffectMesh share the stock one-metre guardian material. The saved scene enables one SDK environment depth provider and contains no example cube, occlusion root, raycast marker, or shared anchor.",
+        "The gameplay Canvas has one registered SDK ray surface and one SDK poke surface. Both SDK hand branches include a poke interactor, and the physical poke surface covers the menu row.",
+        "All ten pooled positional glass and ending-impact sources retain the actual Spatial Audio block and one enabled MetaXRAudioSource with spatialization enabled.",
+        "MRUK Rec Room supplied floor and furniture. The 5 × 6 board at 0.517 m pitch appeared at Welcome without a clearance approval prompt.",
+        "Two-eye native mask and brick GPU checks with the bin at its starting position: 11105 floor, 1544 couch, 100 chair-leg and 70 bin pixels. 228 pixels of brick remained visible between the chair legs.",
+        "Two-eye native mask and brick GPU checks with the bin moved: 11442 floor, 1544 couch, 100 chair-leg and 42 bin pixels. 228 pixels of brick remained visible between the chair legs.",
+        "GPU readbacks of the actual MRUK floor showed masonry to its scanned edges with a clear glass footprint at the fitted orientation and a further 31-degree rotation. A board one metre above the floor left the full floor covered.",
+        "The SDK display event recalled Settings, Paused, and Results to 56 cm in front of the simulated eye. The menu stayed fixed during head movement, stayed hidden during play, and waited for tracking after suspension. The glass, floor anchor, and camera rig kept their poses.",
+        "The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.",
+        "Welcome and Settings routed through their visible menu choices. The development menu selected seed 379.",
+        "The actual tutorial stone kept the stock Meta occlusion material and its individual visible _Color tint at runtime.",
+        "The left grip picked up and released a real Rigidbody. A miss reset it and a hit advanced the tutorial.",
+        "Two distinct headset projections completed practice and left the first countdown waiting for readiness.",
+        "Walked each guaranteed stationary step through Last Tile. Level 2 rebuilt and waited for readiness.",
+        "Six natural endings played before a repeat. The next bag changed ending. Full playback, skip, results, and restart used the normal production controller.",
+        "Water traversed five metres under gravity. The rim passed the stationary eye before the impact sound and hazard effect.",
+        "Lava traversed five metres under gravity. The rim passed the stationary eye before the impact sound and hazard effect.",
+        "Water reduced motion kept the chamber geometry stationary before contact and reached results.",
+        "Level 3 seed 379 showed fog, then a moving pane over hole 29. A deliberate miss recovered on permanent tile 6. Catching the moving glass locked its position and survived the deadline.",
+        "A simulated significant MRUK floor-anchor event withdrew the board. Reloading the real fixture produced a new verified fit and returned directly to Welcome.",
+        "Injected MRUK NoScenePermission. The blocked board showed App permissions and Try again. Retry loaded the fixture and restored Welcome.",
+        "Injected MRUK NoRoomsFound. The blocked board showed Space Setup and Check again. Retry loaded the fixture and restored Welcome."
+    ],
+    "images": [
+        "room-preview.png",
+        "whole-room-brick.png",
+        "brick-player-height.png",
+        "classic-glass.png",
+        "classic-player-view.png",
+        "neighboring-hole.png",
+        "neighboring-hole-player-view.png",
+        "ending-space.png",
+        "ending-water.png",
+        "ending-snow.png",
+        "ending-sand.png",
+        "ending-lava.png",
+        "ending-crystal.png",
+        "fall-water-full-rim-opening.png",
+        "fall-water-full-mid-shaft-down.png",
+        "fall-water-full-mid-shaft-forward.png",
+        "fall-water-full-late-shaft-down.png",
+        "fall-water-full-contact-down.png",
+        "fall-water-full-contact-steep.png",
+        "fall-water-full-immersion-down.png",
+        "fall-lava-full-rim-opening.png",
+        "fall-lava-full-mid-shaft-down.png",
+        "fall-lava-full-mid-shaft-forward.png",
+        "fall-lava-full-late-shaft-down.png",
+        "fall-lava-full-contact-down.png",
+        "fall-lava-full-contact-steep.png",
+        "fall-lava-full-immersion-down.png",
+        "fall-water-reduced-rim-opening.png",
+        "fall-water-reduced-mid-shaft-down.png",
+        "fall-water-reduced-mid-shaft-forward.png",
+        "fall-water-reduced-late-shaft-down.png",
+        "fall-water-reduced-contact-down.png",
+        "fall-water-reduced-contact-steep.png",
+        "fall-water-reduced-immersion-down.png",
+        "level3-fog-player-view.png",
+        "level3-moving-pane-player-view.png",
+        "level3-locked-pane-player-view.png"
+    ],
+    "captureNotes": [],
+    "endingOrder": [
+        "Space",
+        "Water",
+        "Snow",
+        "Sand",
+        "Lava",
+        "Crystal",
+        "Snow"
+    ],
+    "waves": [
+        {
+            "mode": "Classic",
+            "start": 16,
+            "guaranteed": 11,
+            "score": 1,
+            "survived": true,
+            "plannedDeadline": 13.559420500283446,
+            "observedAfterResolution": 13.55959658446712
+        },
+        {
+            "mode": "Memory",
+            "start": 11,
+            "guaranteed": 6,
+            "score": 2,
+            "survived": true,
+            "plannedDeadline": 19.839897045068028,
+            "observedAfterResolution": 19.840075751133785
+        },
+        {
+            "mode": "Memory",
+            "start": 6,
+            "guaranteed": 7,
+            "score": 3,
+            "survived": true,
+            "plannedDeadline": 26.120218835034013,
+            "observedAfterResolution": 26.12032554563492
+        },
+        {
+            "mode": "Classic",
+            "start": 7,
+            "guaranteed": 2,
+            "score": 4,
+            "survived": true,
+            "plannedDeadline": 32.400398540249434,
+            "observedAfterResolution": 32.40044400510204
+        },
+        {
+            "mode": "Classic",
+            "start": 2,
+            "guaranteed": 1,
+            "score": 5,
+            "survived": true,
+            "plannedDeadline": 38.68063604024943,
+            "observedAfterResolution": 38.68069129109977
+        },
+        {
+            "mode": "Memory",
+            "start": 1,
+            "guaranteed": 0,
+            "score": 6,
+            "survived": true,
+            "plannedDeadline": 44.96075879393424,
+            "observedAfterResolution": 44.960880839002265
+        },
+        {
+            "mode": "Memory",
+            "start": 0,
+            "guaranteed": 5,
+            "score": 7,
+            "survived": true,
+            "plannedDeadline": 51.24103433248299,
+            "observedAfterResolution": 51.241044210600904
+        },
+        {
+            "mode": "LastTile",
+            "start": 5,
+            "guaranteed": 10,
+            "score": 8,
+            "survived": true,
+            "plannedDeadline": 57.521144749149656,
+            "observedAfterResolution": 57.521345500283445
+        },
+        {
+            "mode": "Classic",
+            "start": 17,
+            "guaranteed": 12,
+            "score": 0,
+            "survived": false,
+            "plannedDeadline": 64.32153558673468,
+            "observedAfterResolution": 64.3217606717687
+        },
+        {
+            "mode": "Classic",
+            "start": 0,
+            "guaranteed": 1,
+            "score": 1,
+            "survived": true,
+            "plannedDeadline": 109.38641929563492,
+            "observedAfterResolution": 109.38649487670068
+        },
+        {
+            "mode": "Memory",
+            "start": 1,
+            "guaranteed": 6,
+            "score": 2,
+            "survived": true,
+            "plannedDeadline": 114.86658800311791,
+            "observedAfterResolution": 114.86662867063491
+        }
+    ],
+    "falls": [
+        {
+            "ending": "Water",
+            "motion": "full",
+            "plannedContact": 1.01015,
+            "finishedAt": 4.580460083616785,
+            "chamberEnteredAt": 0.571759289965982,
+            "surfaceReachedAt": 1.0103410856009134,
+            "impactSoundAt": 1.0103410856009134,
+            "firstSecondaryEffectAt": 1.0103410856009134,
+            "landmarkSpan": 5.5,
+            "floorOpeningY": 0.009690221399068832,
+            "startingHazardY": -4.990309715270996,
+            "contactHazardY": 0.009690221399068832,
+            "immersionTintAlpha": 0.47999998927116394,
+            "maxPreContactOffsetError": 2.384185791015625e-7,
+            "maxTrackedHeadDisplacement": 0.0,
+            "maxTrackedHeadRotation": 0.0,
+            "maxRigDisplacement": 0.0,
+            "maxRigRotation": 0.0,
+            "peakAirborneSpeed": 9.568625450134277,
+            "windAtImpact": 0.3999999463558197,
+            "samples": [
+                {
+                    "phase": "rim",
+                    "seconds": 0.1001332908163306,
+                    "landmarkY": 0.0588209368288517,
+                    "wallY": 0.0588209368288517,
+                    "floorY": -4.941178798675537,
+                    "landmarkTravel": 0.04913071542978287,
+                    "windVolume": 0.03965076059103012,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "early-shaft",
+                    "seconds": 0.25032074829931616,
+                    "landmarkY": 0.31672659516334534,
+                    "wallY": 0.31672659516334534,
+                    "floorY": -4.6832733154296875,
+                    "landmarkTravel": 0.3070363700389862,
+                    "windVolume": 0.09912196546792984,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "mid-shaft",
+                    "seconds": 0.6702492063492116,
+                    "landmarkY": 2.210937023162842,
+                    "wallY": 2.210937023162842,
+                    "floorY": -2.789062976837158,
+                    "landmarkTravel": 2.201246738433838,
+                    "windVolume": 0.26540514826774597,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "late-shaft",
+                    "seconds": 0.9702182964852568,
+                    "landmarkY": 4.622175693511963,
+                    "wallY": 4.622175693511963,
+                    "floorY": -0.3778243660926819,
+                    "landmarkTravel": 4.612485408782959,
+                    "windVolume": 0.38418683409690857,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "contact",
+                    "seconds": 1.1301868339002255,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 5.0,
+                    "windVolume": 0.3714735805988312,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                },
+                {
+                    "phase": "immersion",
+                    "seconds": 3.6602605442176923,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 1.9845468997955322,
+                    "landmarkTravel": 5.0,
+                    "windVolume": 0.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                }
+            ],
+            "gravityChecks": [
+                {
+                    "seconds": 0.25,
+                    "expectedMetres": 0.3062500059604645,
+                    "measuredMetres": 0.30625012516975403
+                },
+                {
+                    "seconds": 0.5,
+                    "expectedMetres": 1.225000023841858,
+                    "measuredMetres": 1.2250001430511475
+                },
+                {
+                    "seconds": 0.75,
+                    "expectedMetres": 2.7562499046325684,
+                    "measuredMetres": 2.7562501430511475
+                },
+                {
+                    "seconds": 0.9,
+                    "expectedMetres": 3.9690001010894775,
+                    "measuredMetres": 3.9690003395080566
+                },
+                {
+                    "seconds": 0.96,
+                    "expectedMetres": 4.51584005355835,
+                    "measuredMetres": 4.51584005355835
+                }
+            ]
+        },
+        {
+            "ending": "Lava",
+            "motion": "full",
+            "plannedContact": 1.01015,
+            "finishedAt": 4.58075591695011,
+            "chamberEnteredAt": 0.5716361252834474,
+            "surfaceReachedAt": 1.010199751984132,
+            "impactSoundAt": 1.010199751984132,
+            "firstSecondaryEffectAt": 1.018086040249429,
+            "landmarkSpan": 5.5,
+            "floorOpeningY": 0.009690221399068832,
+            "startingHazardY": -4.990309715270996,
+            "contactHazardY": 0.009690221399068832,
+            "immersionTintAlpha": 0.0,
+            "maxPreContactOffsetError": 2.384185791015625e-7,
+            "maxTrackedHeadDisplacement": 0.0,
+            "maxTrackedHeadRotation": 0.0,
+            "maxRigDisplacement": 0.0,
+            "maxRigRotation": 0.0,
+            "peakAirborneSpeed": 9.622783660888672,
+            "windAtImpact": 0.4000000059604645,
+            "samples": [
+                {
+                    "phase": "rim",
+                    "seconds": 0.10004229024943356,
+                    "landmarkY": 0.058731675148010254,
+                    "wallY": 0.058731675148010254,
+                    "floorY": -4.941268444061279,
+                    "landmarkTravel": 0.04904145374894142,
+                    "windVolume": 0.0396147258579731,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "early-shaft",
+                    "seconds": 0.2500224985827657,
+                    "landmarkY": 0.31599536538124084,
+                    "wallY": 0.31599536538124084,
+                    "floorY": -4.684004783630371,
+                    "landmarkTravel": 0.3063051402568817,
+                    "windVolume": 0.0990038588643074,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "mid-shaft",
+                    "seconds": 0.6700042091836735,
+                    "landmarkY": 2.2093279361724854,
+                    "wallY": 2.2093279361724854,
+                    "floorY": -2.7906720638275146,
+                    "landmarkTravel": 2.1996376514434814,
+                    "windVolume": 0.26530811190605164,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "late-shaft",
+                    "seconds": 0.9703839569160948,
+                    "landmarkY": 4.623750686645508,
+                    "wallY": 4.623750686645508,
+                    "floorY": -0.37624937295913696,
+                    "landmarkTravel": 4.614060401916504,
+                    "windVolume": 0.3842524290084839,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "contact",
+                    "seconds": 1.130340036848068,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 5.0,
+                    "windVolume": 0.36981382966041565,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                },
+                {
+                    "phase": "immersion",
+                    "seconds": 3.310257291666659,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.8504191040992737,
+                    "landmarkTravel": 5.0,
+                    "windVolume": 0.0,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                }
+            ],
+            "gravityChecks": [
+                {
+                    "seconds": 0.25,
+                    "expectedMetres": 0.3062500059604645,
+                    "measuredMetres": 0.30625006556510925
+                },
+                {
+                    "seconds": 0.5,
+                    "expectedMetres": 1.225000023841858,
+                    "measuredMetres": 1.2250001430511475
+                },
+                {
+                    "seconds": 0.75,
+                    "expectedMetres": 2.7562499046325684,
+                    "measuredMetres": 2.7562503814697266
+                },
+                {
+                    "seconds": 0.9,
+                    "expectedMetres": 3.9690001010894775,
+                    "measuredMetres": 3.9690003395080566
+                },
+                {
+                    "seconds": 0.96,
+                    "expectedMetres": 4.51584005355835,
+                    "measuredMetres": 4.51584005355835
+                }
+            ]
+        },
+        {
+            "ending": "Water",
+            "motion": "reduced",
+            "plannedContact": 0.82,
+            "finishedAt": 3.9305571286848107,
+            "chamberEnteredAt": 0.32021129535146997,
+            "surfaceReachedAt": -1.0,
+            "impactSoundAt": 0.8200518353174573,
+            "firstSecondaryEffectAt": 0.8200518353174573,
+            "landmarkSpan": 5.5,
+            "floorOpeningY": 0.009690221399068832,
+            "startingHazardY": 0.009690221399068832,
+            "contactHazardY": 0.009690221399068832,
+            "immersionTintAlpha": 0.4319118857383728,
+            "maxPreContactOffsetError": 0.0,
+            "maxTrackedHeadDisplacement": 0.0,
+            "maxTrackedHeadRotation": 0.0,
+            "maxRigDisplacement": 0.0,
+            "maxRigRotation": 0.0,
+            "peakAirborneSpeed": 0.0,
+            "windAtImpact": 0.033000003546476364,
+            "samples": [
+                {
+                    "phase": "rim",
+                    "seconds": 0.10021279053287913,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "windVolume": 0.033000003546476364,
+                    "landmarksVisible": false,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "early-shaft",
+                    "seconds": 0.40011162840136194,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "windVolume": 0.033000003546476364,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "mid-shaft",
+                    "seconds": 0.7000685445011356,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "windVolume": 0.033000003546476364,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "late-shaft",
+                    "seconds": 0.7602606292517038,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "windVolume": 0.033000003546476364,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": false
+                },
+                {
+                    "phase": "contact",
+                    "seconds": 0.9400245039682602,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "windVolume": 0.029969004914164543,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                },
+                {
+                    "phase": "immersion",
+                    "seconds": 2.950105165816325,
+                    "landmarkY": 5.009690284729004,
+                    "wallY": 5.009690284729004,
+                    "floorY": 0.009690221399068832,
+                    "landmarkTravel": 0.0,
+                    "windVolume": 0.0033060573041439056,
+                    "landmarksVisible": true,
+                    "secondaryEffectActive": true
+                }
+            ],
+            "gravityChecks": []
+        }
+    ]
+}

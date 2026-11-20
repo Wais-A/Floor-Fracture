@@ -1,0 +1,166 @@
+{
+  "scope": "Unity Editor Play Mode using the production game scene. The six endings ran in both motion settings, with natural completion and with the existing Skip action invoked at 0.18 seconds. The physical Quest controls and wearer observations are separate checks.",
+  "sourceRuntimeRevision": "621ef15fedb137207eb06d243799f734337f981c",
+  "result": "passed",
+  "editorProcessExitCode": 0,
+  "unity": "6000.6.9f1",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "fixture": "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode",
+  "startedUtc": "2026-11-20T03:39:57.5021090Z",
+  "finishedUtc": "2026-11-20T03:44:01.8104850Z",
+  "integratedChecks": 26,
+  "renders": 42,
+  "rawReport": "Builds/Verification/PlayMode-20261120-033957-501/report.json",
+  "assertionsPerTrial": [
+    "Selected ending is active and matches the menu setting.",
+    "The eye veil reaches black before Results.",
+    "Results appears, the chamber hides, the veil disables and the three ending audio sources stop and release their clips.",
+    "Restart returns to level 1, wave 1, with zero waves survived, no pending wave, intact panes, the board active and the scanned floor visible."
+  ],
+  "trials": [
+    {
+      "ending": "Water",
+      "motion": "Full",
+      "exit": "natural",
+      "seconds": 9.4412
+    },
+    {
+      "ending": "Water",
+      "motion": "Full",
+      "exit": "Skip",
+      "seconds": 0.1808
+    },
+    {
+      "ending": "Lava",
+      "motion": "Full",
+      "exit": "natural",
+      "seconds": 9.4413
+    },
+    {
+      "ending": "Lava",
+      "motion": "Full",
+      "exit": "Skip",
+      "seconds": 0.1804
+    },
+    {
+      "ending": "Crystal",
+      "motion": "Full",
+      "exit": "natural",
+      "seconds": 9.4414
+    },
+    {
+      "ending": "Crystal",
+      "motion": "Full",
+      "exit": "Skip",
+      "seconds": 0.1805
+    },
+    {
+      "ending": "Space",
+      "motion": "Full",
+      "exit": "natural",
+      "seconds": 9.4409
+    },
+    {
+      "ending": "Space",
+      "motion": "Full",
+      "exit": "Skip",
+      "seconds": 0.1806
+    },
+    {
+      "ending": "Sand",
+      "motion": "Full",
+      "exit": "natural",
+      "seconds": 9.4408
+    },
+    {
+      "ending": "Sand",
+      "motion": "Full",
+      "exit": "Skip",
+      "seconds": 0.1803
+    },
+    {
+      "ending": "Snow",
+      "motion": "Full",
+      "exit": "natural",
+      "seconds": 9.4409
+    },
+    {
+      "ending": "Snow",
+      "motion": "Full",
+      "exit": "Skip",
+      "seconds": 0.1804
+    },
+    {
+      "ending": "Water",
+      "motion": "Reduced",
+      "exit": "natural",
+      "seconds": 3.9304
+    },
+    {
+      "ending": "Water",
+      "motion": "Reduced",
+      "exit": "Skip",
+      "seconds": 0.1803
+    },
+    {
+      "ending": "Lava",
+      "motion": "Reduced",
+      "exit": "natural",
+      "seconds": 3.9303
+    },
+    {
+      "ending": "Lava",
+      "motion": "Reduced",
+      "exit": "Skip",
+      "seconds": 0.1805
+    },
+    {
+      "ending": "Crystal",
+      "motion": "Reduced",
+      "exit": "natural",
+      "seconds": 3.9304
+    },
+    {
+      "ending": "Crystal",
+      "motion": "Reduced",
+      "exit": "Skip",
+      "seconds": 0.1805
+    },
+    {
+      "ending": "Space",
+      "motion": "Reduced",
+      "exit": "natural",
+      "seconds": 3.9303
+    },
+    {
+      "ending": "Space",
+      "motion": "Reduced",
+      "exit": "Skip",
+      "seconds": 0.1804
+    },
+    {
+      "ending": "Sand",
+      "motion": "Reduced",
+      "exit": "natural",
+      "seconds": 3.9307
+    },
+    {
+      "ending": "Sand",
+      "motion": "Reduced",
+      "exit": "Skip",
+      "seconds": 0.1803
+    },
+    {
+      "ending": "Snow",
+      "motion": "Reduced",
+      "exit": "natural",
+      "seconds": 3.9304
+    },
+    {
+      "ending": "Snow",
+      "motion": "Reduced",
+      "exit": "Skip",
+      "seconds": 0.1805
+    }
+  ]
+}

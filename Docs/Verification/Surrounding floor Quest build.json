@@ -1,0 +1,72 @@
+{
+  "sourceCommit": "2c154f7db92fd5203f764a43ec8582538aeb596f",
+  "unity": "6000.6.9f1",
+  "profile": "Meta Quest",
+  "package": "com.wa003.floorfracture",
+  "gameplayScene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "buildGuid": "4f2fa774cd3c4bddbd9b3ca0b9dfd362",
+  "completedUtc": "2026-11-20T01:26:57.2277240Z",
+  "buildResult": "Succeeded",
+  "buildErrors": 0,
+  "buildWarnings": 54,
+  "apk": "Builds/Quest/Water-floor/FloorFracture.apk",
+  "apkBytes": 156425877,
+  "apkSha256": "453d74ba3182fdffee5af1f7176f96a0e06fa5caae64faaf9454a846c428c296",
+  "android": {
+    "abis": [
+      "arm64-v8a"
+    ],
+    "minimumApi": 32,
+    "targetApi": 34,
+    "v2SignatureVerified": true,
+    "nativeLibraries16KiBAligned": true,
+    "zipCRCVerified": true,
+    "scenePermission": true,
+    "handTrackingPermission": true,
+    "sharedSpatialMapTransferPermission": false
+  },
+  "floorWater": {
+    "nativeBuildingBlock": "Meta MRUK Effect Mesh",
+    "label": "FLOOR",
+    "compiledVulkanShaderPrograms": 6,
+    "editorReport": "Surrounding floor Editor playthrough.json"
+  },
+  "device": {
+    "model": "Quest 3",
+    "installedLocalTime": "2026-11-19 20:29:21 America/New_York",
+    "installedApkSha256": "453d74ba3182fdffee5af1f7176f96a0e06fa5caae64faaf9454a846c428c296",
+    "launch": "Android reported a successful cold launch of UnityPlayerGameActivity. The game process was running and produced a metrics CSV with the matching Unity build GUID.",
+    "graphics": "Vulkan",
+    "startupMetrics": "Builds/Quest/Water-floor/20261120T012933871Z-bff3e50b.csv",
+    "startupSampleCount": 13,
+    "depthDiagnostics": [
+      "xrAcquireEnvironmentDepthImageMETA returned XR_ERROR_CALL_ORDER_INVALID at startup.",
+      "XR_ERROR_LIMIT_REACHED appeared later around OpenXR session activity. Physical occlusion is a separate review."
+    ],
+    "liveSessionObservation": {
+      "source": "Queried the same development CSV on the headset again during play. The local startup extract contains the first 13 windows.",
+      "recordsObserved": 82,
+      "stageRecordCounts": {
+        "Room": 25,
+        "Welcome": 22,
+        "PracticeStep": 12,
+        "PracticeStone": 11,
+        "Ready": 6,
+        "PlayArea": 4,
+        "Settings": 2
+      },
+      "columns": 7,
+      "rows": 2,
+      "panePitchMetres": 0.67,
+      "glassWidthMetres": 4.69,
+      "glassLengthMetres": 1.34
+    }
+  },
+  "wearerReview": {
+    "surround": "Flickering blue color did not resemble water. Wais chose dry shaft-style brick for the surrounding floor.",
+    "board": "The playable area felt too small. Wais saw room for more rows along its long side.",
+    "fall": "The descent felt slow. Wais requested 9.8 m/s².",
+    "menu": "The open menu stayed in its earlier location after a system recenter.",
+    "furnitureAndOpenShaftReview": "Pending on the brick build."
+  }
+}

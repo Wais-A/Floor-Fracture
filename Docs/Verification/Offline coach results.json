@@ -1,0 +1,450 @@
+{
+  "measuredDateLocal": "2026-11-20",
+  "host": {
+    "chip": "Apple M4 Max",
+    "cpuCores": 14,
+    "unifiedMemoryGB": 36,
+    "graphicsAPI": "Metal",
+    "unity": "6000.6.9f1",
+    "metaCore": "209.0.0",
+    "unityInference": "2.3.0 (project's Unity 6.6 compatibility fixes)"
+  },
+  "nativeModel": {
+    "name": "SmolLM2-135M-Instruct",
+    "inputFp32OnnxRepository": "onnx-community/SmolLM2-135M-Instruct-ONNX",
+    "revision": "b8a5c0f183b78c55955a5364f610c36668b5e681",
+    "inputFp32OnnxBytes": 538868107,
+    "inputFp32OnnxSha256": "7a3eafc5fb6caed38b8a7176186791cd4424f2bdff6be2edbb485572d38d2f2b",
+    "unityUint8Bytes": 163397684,
+    "unityUint8Sha256": "526c88effe3e002efeddcdbf255bdc85a18ee41ee637534b1104ef5d73cf42e3",
+    "tokenizerFilesBytes": {
+      "vocab.json": 800662,
+      "merges.txt": 466391,
+      "tokenizer_config.json": 3552
+    },
+    "totalRuntimeInputBytes": 164668289,
+    "inputs": 63,
+    "outputs": 61
+  },
+  "config": {
+    "provider": "Meta.XR.BuildingBlocks.AIBlocks.UnityInferenceEngineProvider (Chat)",
+    "mode": "NonBlocking",
+    "stepsPerFrame": 150,
+    "maxPromptTokens": 256,
+    "maxGeneratedTokens": 48,
+    "sampling": "greedy",
+    "layers": 30,
+    "kvHeads": 3,
+    "headDim": 64,
+    "eos": 2,
+    "filePlacement": "isolated StreamingAssets",
+    "chatWrap": "<|im_start|>system\n{system}<|im_end|>\n<|im_start|>user\n{event}<|im_end|>\n<|im_start|>assistant\n"
+  },
+  "systemPrompt": "You coach Floor Fracture, a game of stepping between glass panes. Use only the supplied event. Explain why the player fell and give one short next step in one sentence. Do not invent events.",
+  "cases": [
+    {
+      "id": "cracked_at_zero",
+      "eventText": "Mode: Classic. At countdown zero you were still on your marked starting pane. It shattered. The adjacent clear pane was intact.",
+      "referenceCoaching": "A marked starting pane shatters at zero; move to the intact neighbor before zero.",
+      "rulesResultText": "At zero, the glass under the ring shattered.",
+      "nativeTextAllFourSessions": "At countdown zero, the player was still on their marked starting pane. The adjacent clear pane was intact.",
+      "grader": {
+        "completeCause": false,
+        "explicitCorrectNextAction": false,
+        "assessment": "Identifies the marked starting position at zero, omits its break, and describes the neighboring clear glass without directing the player to it."
+      }
+    },
+    {
+      "id": "hidden_memory_warning",
+      "eventText": "Mode: Memory. A tile showed cracks during the reveal. The warning was hidden during recall. At countdown zero you stood on that same tile and it broke. An unmarked pane remained intact.",
+      "referenceCoaching": "A pane marked during the reveal breaks at zero after its warning disappears; remember it and choose unmarked glass before zero.",
+      "rulesResultText": "At zero, the ring was on glass that cracked during the Memory reveal.",
+      "nativeTextAllFourSessions": "Mode: Memory. A tile showed cracks during the reveal. The warning was hidden during recall. At countdown zero you stood on that same tile and it broke. An unmarked pane remained intact.",
+      "grader": {
+        "completeCause": true,
+        "explicitCorrectNextAction": false,
+        "assessment": "Repeats the event, including the earlier warning, its disappearance and the same pane breaking at zero. Gives no explicit next move."
+      }
+    },
+    {
+      "id": "gap_grace_expired",
+      "eventText": "Mode: Classic. Two seconds remained on the countdown. You stayed over an existing gap for 0.31 seconds. The unsupported grace limit was 0.30 seconds. An intact pane was beside the gap.",
+      "referenceCoaching": "The player stayed over an already open gap longer than 0.30 s while the countdown was running; regain intact glass before the grace expires.",
+      "rulesResultText": "The ring was over an open hole for 0.3 seconds.",
+      "nativeTextAllFourSessions": "The player fell and stayed over an existing gap for 0.31 seconds.",
+      "grader": {
+        "completeCause": false,
+        "explicitCorrectNextAction": false,
+        "assessment": "Identifies an existing gap and 0.31 seconds. Omits the exceeded grace limit and a recovery action."
+      }
+    }
+  ],
+  "nativeSessions": [
+    {
+      "backend": "CPU",
+      "processRun": 1,
+      "providerWarmupMs": 246.155,
+      "resultsIdleFrameIntervalsMs": {
+        "samples": 90,
+        "medianMs": 0.289,
+        "p95Ms": 0.387,
+        "maximumMs": 0.681
+      },
+      "warmupFrameIntervalsMs": {
+        "samples": 1,
+        "medianMs": 247.608,
+        "p95Ms": 247.608,
+        "maximumMs": 247.608
+      },
+      "rulesControl": [
+        {
+          "id": "cracked_at_zero",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 2.334
+        },
+        {
+          "id": "hidden_memory_warning",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 1.867
+        },
+        {
+          "id": "gap_grace_expired",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 2.037
+        }
+      ],
+      "generation": [
+        {
+          "id": "cracked_at_zero",
+          "firstNonemptyFragmentMs": 170.304,
+          "completeMs": 1001.567,
+          "streamedFragments": 22,
+          "gameFrameIntervalsMs": {
+            "samples": 446,
+            "medianMs": 1.941,
+            "p95Ms": 4.051,
+            "maximumMs": 113.12
+          }
+        },
+        {
+          "id": "hidden_memory_warning",
+          "firstNonemptyFragmentMs": 159.111,
+          "completeMs": 1848.306,
+          "streamedFragments": 40,
+          "gameFrameIntervalsMs": {
+            "samples": 759,
+            "medianMs": 2.204,
+            "p95Ms": 4.133,
+            "maximumMs": 113.91
+          }
+        },
+        {
+          "id": "gap_grace_expired",
+          "firstNonemptyFragmentMs": 176.844,
+          "completeMs": 932.57,
+          "streamedFragments": 17,
+          "gameFrameIntervalsMs": {
+            "samples": 345,
+            "medianMs": 2.219,
+            "p95Ms": 4.204,
+            "maximumMs": 122.482
+          }
+        }
+      ],
+      "restartWhileGenerating": {
+        "accepted": true,
+        "msFromRequestToRestart": 2.097,
+        "msFromRequestToCancellationSettled": 6.105
+      }
+    },
+    {
+      "backend": "CPU",
+      "processRun": 2,
+      "providerWarmupMs": 434.757,
+      "resultsIdleFrameIntervalsMs": {
+        "samples": 90,
+        "medianMs": 0.365,
+        "p95Ms": 0.554,
+        "maximumMs": 0.861
+      },
+      "warmupFrameIntervalsMs": {
+        "samples": 1,
+        "medianMs": 440.058,
+        "p95Ms": 440.058,
+        "maximumMs": 440.058
+      },
+      "rulesControl": [
+        {
+          "id": "cracked_at_zero",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 3.326
+        },
+        {
+          "id": "hidden_memory_warning",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 2.064
+        },
+        {
+          "id": "gap_grace_expired",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 2.05
+        }
+      ],
+      "generation": [
+        {
+          "id": "cracked_at_zero",
+          "firstNonemptyFragmentMs": 210.431,
+          "completeMs": 1259.563,
+          "streamedFragments": 22,
+          "gameFrameIntervalsMs": {
+            "samples": 447,
+            "medianMs": 2.351,
+            "p95Ms": 4.896,
+            "maximumMs": 134.484
+          }
+        },
+        {
+          "id": "hidden_memory_warning",
+          "firstNonemptyFragmentMs": 230.373,
+          "completeMs": 1981.917,
+          "streamedFragments": 40,
+          "gameFrameIntervalsMs": {
+            "samples": 758,
+            "medianMs": 2.244,
+            "p95Ms": 4.43,
+            "maximumMs": 163.109
+          }
+        },
+        {
+          "id": "gap_grace_expired",
+          "firstNonemptyFragmentMs": 204.755,
+          "completeMs": 978.997,
+          "streamedFragments": 17,
+          "gameFrameIntervalsMs": {
+            "samples": 345,
+            "medianMs": 2.321,
+            "p95Ms": 4.571,
+            "maximumMs": 143.661
+          }
+        }
+      ],
+      "restartWhileGenerating": {
+        "accepted": true,
+        "msFromRequestToRestart": 10.504,
+        "msFromRequestToCancellationSettled": 16.846
+      }
+    },
+    {
+      "backend": "GPUCompute",
+      "processRun": 1,
+      "providerWarmupMs": 3033.367,
+      "resultsIdleFrameIntervalsMs": {
+        "samples": 90,
+        "medianMs": 0.306,
+        "p95Ms": 0.594,
+        "maximumMs": 0.737
+      },
+      "warmupFrameIntervalsMs": {
+        "samples": 1,
+        "medianMs": 3038.44,
+        "p95Ms": 3038.44,
+        "maximumMs": 3038.44
+      },
+      "rulesControl": [
+        {
+          "id": "cracked_at_zero",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 2.972
+        },
+        {
+          "id": "hidden_memory_warning",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 2.028
+        },
+        {
+          "id": "gap_grace_expired",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 2.102
+        }
+      ],
+      "generation": [
+        {
+          "id": "cracked_at_zero",
+          "firstNonemptyFragmentMs": 62.201,
+          "completeMs": 959.198,
+          "streamedFragments": 22,
+          "gameFrameIntervalsMs": {
+            "samples": 1592,
+            "medianMs": 0.32,
+            "p95Ms": 1.693,
+            "maximumMs": 16.866
+          }
+        },
+        {
+          "id": "hidden_memory_warning",
+          "firstNonemptyFragmentMs": 36.132,
+          "completeMs": 1659.389,
+          "streamedFragments": 40,
+          "gameFrameIntervalsMs": {
+            "samples": 2878,
+            "medianMs": 0.317,
+            "p95Ms": 1.703,
+            "maximumMs": 12.358
+          }
+        },
+        {
+          "id": "gap_grace_expired",
+          "firstNonemptyFragmentMs": 36.341,
+          "completeMs": 737.394,
+          "streamedFragments": 17,
+          "gameFrameIntervalsMs": {
+            "samples": 1235,
+            "medianMs": 0.322,
+            "p95Ms": 1.723,
+            "maximumMs": 12.32
+          }
+        }
+      ],
+      "restartWhileGenerating": {
+        "accepted": true,
+        "msFromRequestToRestart": 1.985,
+        "msFromRequestToCancellationSettled": 5.279
+      }
+    },
+    {
+      "backend": "GPUCompute",
+      "processRun": 2,
+      "providerWarmupMs": 432.083,
+      "resultsIdleFrameIntervalsMs": {
+        "samples": 90,
+        "medianMs": 0.339,
+        "p95Ms": 0.681,
+        "maximumMs": 0.882
+      },
+      "warmupFrameIntervalsMs": {
+        "samples": 1,
+        "medianMs": 437.22,
+        "p95Ms": 437.22,
+        "maximumMs": 437.22
+      },
+      "rulesControl": [
+        {
+          "id": "cracked_at_zero",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 2.926
+        },
+        {
+          "id": "hidden_memory_warning",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 2.37
+        },
+        {
+          "id": "gap_grace_expired",
+          "framesFromSkipToResults": 1,
+          "skipToVisibleMs": 2.206
+        }
+      ],
+      "generation": [
+        {
+          "id": "cracked_at_zero",
+          "firstNonemptyFragmentMs": 88.602,
+          "completeMs": 1112.857,
+          "streamedFragments": 22,
+          "gameFrameIntervalsMs": {
+            "samples": 1615,
+            "medianMs": 0.389,
+            "p95Ms": 1.886,
+            "maximumMs": 37.46
+          }
+        },
+        {
+          "id": "hidden_memory_warning",
+          "firstNonemptyFragmentMs": 47.535,
+          "completeMs": 2094.83,
+          "streamedFragments": 40,
+          "gameFrameIntervalsMs": {
+            "samples": 2988,
+            "medianMs": 0.401,
+            "p95Ms": 1.985,
+            "maximumMs": 17.12
+          }
+        },
+        {
+          "id": "gap_grace_expired",
+          "firstNonemptyFragmentMs": 47.626,
+          "completeMs": 897.047,
+          "streamedFragments": 17,
+          "gameFrameIntervalsMs": {
+            "samples": 1254,
+            "medianMs": 0.417,
+            "p95Ms": 1.971,
+            "maximumMs": 14.979
+          }
+        }
+      ],
+      "restartWhileGenerating": {
+        "accepted": true,
+        "msFromRequestToRestart": 2.486,
+        "msFromRequestToCancellationSettled": 6.927
+      }
+    }
+  ],
+  "rejectedUnityExport": {
+    "repository": "dtaddis/SmolLM2-135M-Instruct-Unity",
+    "revision": "d3c7f779fe470e3260026764b7a34b1f377f4060",
+    "bytes": 163523112,
+    "sha256": "cb5d1fa0e192fe311a56fdde0a6f3a8d0e2b8d88c6cb5a984dabc67ec441056e",
+    "inputs": [
+      "input_ids",
+      "attention_mask",
+      "position_ids"
+    ],
+    "outputs": [
+      "logits"
+    ],
+    "nativeError": "Cannot set input tensor past_key_values.0.key as model does not contain an input with that name",
+    "cpuMsToFailure": 213.879,
+    "gpuMsToFailure": 240.325
+  },
+  "supplementalStandaloneOnnx": {
+    "repository": "HuggingFaceTB/SmolLM2-135M-Instruct",
+    "revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+    "model": "onnx/model_int8.onnx",
+    "modelBytes": 137147867,
+    "sha256": "a7c33f9ef85d06734cc9d1f943f7e2ba57c77e769df727f4d3e217d9f672b0cc",
+    "runtime": "ONNX Runtime 1.23.2",
+    "provider": "CPUExecutionProvider",
+    "threads": 4,
+    "sessionStartupMs": 101.219,
+    "tokenizerLoadMs": 29.745,
+    "answers": [
+      {
+        "id": "cracked_at_zero",
+        "text": "You coach Floor Fracture, a game of stepping between glass panes. Use only the supplied event. Explain why the player fell and give one short next step in one sentence. Do not invent events.",
+        "firstTokenMs": 47.103,
+        "completeMs": 381.722,
+        "promptTokens": 82,
+        "generatedTokens": 41,
+        "eosWithinCap": true
+      },
+      {
+        "id": "hidden_memory_warning",
+        "text": "I'm sorry for the misunderstanding. I'm not a game-changer. I'm just a game-changer. I'm not a game-changer. I'm just a game-changer. I'm not a game",
+        "firstTokenMs": 39.763,
+        "completeMs": 393.93,
+        "promptTokens": 95,
+        "generatedTokens": 48,
+        "eosWithinCap": false
+      },
+      {
+        "id": "gap_grace_expired",
+        "text": "The player fell and gave one short next step in one sentence.",
+        "firstTokenMs": 41.29,
+        "completeMs": 138.869,
+        "promptTokens": 102,
+        "generatedTokens": 13,
+        "eosWithinCap": true
+      }
+    ]
+  }
+}

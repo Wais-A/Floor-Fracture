@@ -1,0 +1,388 @@
+{
+    "hardware": "Oculus Quest 3",
+    "graphics": "Vulkan",
+    "build": "9165ee79af11488f835113d1de881e83",
+    "error": "",
+    "width": 8,
+    "height": 8,
+    "seed": 4,
+    "volumeSteps": 3,
+    "audioHz": 24000,
+    "countdownPlaying": 40,
+    "impactPlaying": 10,
+    "fragmentsPlaying": 11,
+    "echoPlaying": 17,
+    "focused": true,
+    "xr": true,
+    "listenerPaused": false,
+    "passed": true,
+    "lifecycleArmed": false,
+    "lifecyclePaused": false,
+    "lifecycleFresh": false,
+    "listenerVolume": 1.0,
+    "countdownSourceVolume": 0.75,
+    "abMode": "primed",
+    "primingVoicesAdvanced": 3,
+    "scheduledDsp": 7.2733333333333325,
+    "scheduleObservedDsp": 7.253333333333333,
+    "renders": [
+        {
+            "frame": 420,
+            "start": 7.083022633669129,
+            "end": 7.084035289670096
+        },
+        {
+            "frame": 421,
+            "start": 7.097020134671579,
+            "end": 7.098185447670216
+        },
+        {
+            "frame": 422,
+            "start": 7.110825344672589,
+            "end": 7.111984823670168
+        },
+        {
+            "frame": 423,
+            "start": 7.124804877668607,
+            "end": 7.125667429674463
+        },
+        {
+            "frame": 424,
+            "start": 7.137812326669332,
+            "end": 7.1386839416734755
+        },
+        {
+            "frame": 425,
+            "start": 7.1509015466724986,
+            "end": 7.151863629674876
+        },
+        {
+            "frame": 426,
+            "start": 7.165377589670056,
+            "end": 7.1665304026681
+        },
+        {
+            "frame": 427,
+            "start": 7.178850455667812,
+            "end": 7.179715351674345
+        },
+        {
+            "frame": 428,
+            "start": 7.192721863669972,
+            "end": 7.193913634669839
+        },
+        {
+            "frame": 429,
+            "start": 7.206920875672763,
+            "end": 7.208044208673341
+        },
+        {
+            "frame": 430,
+            "start": 7.220907022674323,
+            "end": 7.221732439669536
+        },
+        {
+            "frame": 431,
+            "start": 7.234815409668768,
+            "end": 7.235818534674577
+        },
+        {
+            "frame": 432,
+            "start": 7.248748014673579,
+            "end": 7.249587910671648
+        },
+        {
+            "frame": 433,
+            "start": 7.262883380673697,
+            "end": 7.263951661668939
+        },
+        {
+            "frame": 434,
+            "start": 7.276501350672147,
+            "end": 7.277480829674273
+        },
+        {
+            "frame": 435,
+            "start": 7.289655674670753,
+            "end": 7.290574008671497
+        },
+        {
+            "frame": 436,
+            "start": 7.304191040668043,
+            "end": 7.305164738674462
+        },
+        {
+            "frame": 437,
+            "start": 7.31795916767423,
+            "end": 7.318771094672952
+        },
+        {
+            "frame": 438,
+            "start": 7.331833595671737,
+            "end": 7.33263849167251
+        },
+        {
+            "frame": 439,
+            "start": 7.346037399671145,
+            "end": 7.346862451667944
+        },
+        {
+            "frame": 440,
+            "start": 7.3600775566736,
+            "end": 7.361714067672251
+        },
+        {
+            "frame": 441,
+            "start": 7.373675370668748,
+            "end": 7.374537558672996
+        },
+        {
+            "frame": 442,
+            "start": 7.385941257671034,
+            "end": 7.386810945674183
+        },
+        {
+            "frame": 443,
+            "start": 7.401322456673183,
+            "end": 7.402127873668901
+        },
+        {
+            "frame": 444,
+            "start": 7.414973135673604,
+            "end": 7.415876572667726
+        }
+    ],
+    "events": [
+        {
+            "kind": "welcome-ab-start",
+            "stage": "Welcome",
+            "mode": "",
+            "run": 0,
+            "wave": 1,
+            "seed": 0,
+            "breaks": 0,
+            "score": 0,
+            "tile": -1,
+            "other": -1,
+            "frame": 3,
+            "clock": 0.8314105513038549,
+            "real": 0.9392846776679966,
+            "waveStart": 0.0,
+            "deadline": 0.0,
+            "locked": false,
+            "supported": false,
+            "nativeHeadTracked": false,
+            "travel": 0.0
+        },
+        {
+            "kind": "welcome-ab-end",
+            "stage": "Welcome",
+            "mode": "",
+            "run": 0,
+            "wave": 1,
+            "seed": 0,
+            "breaks": 0,
+            "score": 0,
+            "tile": -1,
+            "other": -1,
+            "frame": 51,
+            "clock": 1.9604997307256236,
+            "real": 1.9479752466720988,
+            "waveStart": 0.0,
+            "deadline": 0.0,
+            "locked": false,
+            "supported": false,
+            "nativeHeadTracked": false,
+            "travel": 0.0
+        },
+        {
+            "kind": "start",
+            "stage": "Countdown",
+            "mode": "Classic",
+            "run": 1,
+            "wave": 1,
+            "seed": -910919443,
+            "breaks": 32,
+            "score": 0,
+            "tile": -1,
+            "other": -1,
+            "frame": 117,
+            "clock": 2.8675081490929704,
+            "real": 2.86912539067252,
+            "waveStart": 2.8675081490929704,
+            "deadline": 7.067508149092971,
+            "locked": false,
+            "supported": false,
+            "nativeHeadTracked": false,
+            "travel": 0.0
+        },
+        {
+            "kind": "before-shatter-loop",
+            "stage": "Countdown",
+            "mode": "Classic",
+            "run": 1,
+            "wave": 1,
+            "seed": -910919443,
+            "breaks": 32,
+            "score": 1,
+            "tile": -1,
+            "other": -1,
+            "frame": 420,
+            "clock": 7.075811890589569,
+            "real": 7.072958882672351,
+            "waveStart": 2.8675081490929704,
+            "deadline": 7.067508149092971,
+            "locked": false,
+            "supported": false,
+            "nativeHeadTracked": false,
+            "travel": 0.0
+        },
+        {
+            "kind": "after-shatter-loop",
+            "stage": "Countdown",
+            "mode": "Classic",
+            "run": 1,
+            "wave": 1,
+            "seed": -910919443,
+            "breaks": 32,
+            "score": 1,
+            "tile": -1,
+            "other": -1,
+            "frame": 420,
+            "clock": 7.075811890589569,
+            "real": 7.073060965674626,
+            "waveStart": 2.8675081490929704,
+            "deadline": 7.067508149092971,
+            "locked": false,
+            "supported": false,
+            "nativeHeadTracked": false,
+            "travel": 0.0
+        },
+        {
+            "kind": "after-visual-update",
+            "stage": "Countdown",
+            "mode": "Classic",
+            "run": 1,
+            "wave": 1,
+            "seed": -910919443,
+            "breaks": 32,
+            "score": 1,
+            "tile": -1,
+            "other": -1,
+            "frame": 420,
+            "clock": 7.075811890589569,
+            "real": 7.075121747671615,
+            "waveStart": 2.8675081490929704,
+            "deadline": 7.067508149092971,
+            "locked": false,
+            "supported": false,
+            "nativeHeadTracked": false,
+            "travel": 0.0
+        },
+        {
+            "kind": "deadline-result",
+            "stage": "BetweenWaves",
+            "mode": "Classic",
+            "run": 1,
+            "wave": 1,
+            "seed": -910919443,
+            "breaks": 32,
+            "score": 1,
+            "tile": -1,
+            "other": -1,
+            "frame": 420,
+            "clock": 7.075811890589569,
+            "real": 7.075967580669198,
+            "waveStart": 2.8675081490929704,
+            "deadline": 7.067508149092971,
+            "locked": false,
+            "supported": false,
+            "nativeHeadTracked": false,
+            "travel": 0.0
+        },
+        {
+            "kind": "sound-queued",
+            "stage": "BetweenWaves",
+            "mode": "Classic",
+            "run": 1,
+            "wave": 1,
+            "seed": -910919443,
+            "breaks": 32,
+            "score": 1,
+            "tile": -1,
+            "other": -1,
+            "frame": 420,
+            "clock": 7.075811890589569,
+            "real": 7.077221643674234,
+            "waveStart": 2.8675081490929704,
+            "deadline": 7.067508149092971,
+            "locked": false,
+            "supported": false,
+            "nativeHeadTracked": false,
+            "travel": 0.0
+        },
+        {
+            "kind": "impact-samples-advanced",
+            "stage": "BetweenWaves",
+            "mode": "Classic",
+            "run": 1,
+            "wave": 1,
+            "seed": -910919443,
+            "breaks": 32,
+            "score": 1,
+            "tile": -1,
+            "other": -1,
+            "frame": 422,
+            "clock": 7.103589725056689,
+            "real": 7.100750135672383,
+            "waveStart": 2.8675081490929704,
+            "deadline": 7.067508149092971,
+            "locked": false,
+            "supported": false,
+            "nativeHeadTracked": false,
+            "travel": 0.0
+        },
+        {
+            "kind": "fragments-samples-advanced",
+            "stage": "BetweenWaves",
+            "mode": "Classic",
+            "run": 1,
+            "wave": 1,
+            "seed": -910919443,
+            "breaks": 32,
+            "score": 1,
+            "tile": -1,
+            "other": -1,
+            "frame": 428,
+            "clock": 7.186923072562358,
+            "real": 7.18204097667312,
+            "waveStart": 2.8675081490929704,
+            "deadline": 7.067508149092971,
+            "locked": false,
+            "supported": false,
+            "nativeHeadTracked": false,
+            "travel": 0.0
+        },
+        {
+            "kind": "echo-samples-advanced",
+            "stage": "BetweenWaves",
+            "mode": "Classic",
+            "run": 1,
+            "wave": 1,
+            "seed": -910919443,
+            "breaks": 32,
+            "score": 1,
+            "tile": -1,
+            "other": -1,
+            "frame": 443,
+            "clock": 7.394419550736961,
+            "real": 7.389810268672404,
+            "waveStart": 2.8675081490929704,
+            "deadline": 7.067508149092971,
+            "locked": false,
+            "supported": false,
+            "nativeHeadTracked": false,
+            "travel": 0.0
+        }
+    ]
+}

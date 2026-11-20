@@ -1,0 +1,65 @@
+{
+  "verifiedOn": "2026-11-20",
+  "unity": "6000.6.9f1",
+  "original": {
+    "apk": "Builds/Quest/Shared-chamber/FloorFracture.apk",
+    "sha256": "e908047c4a0a8670774580cec04372d4b760dde96f096755c99c8ef339459d45",
+    "finding": "The Quest APK resolves @mipmap/app_icon. Its decoded fallback matches Unity’s 96 px cube pixel for pixel. Its adaptive slot also contained the stock Unity mark."
+  },
+  "art": "Original angled blue glass plates, an amber fracture and a suspended fragment above dark space.",
+  "configuration": {
+    "adaptive": "Six Android Player Settings slots. Unity reports Background then Foreground on its Android Adaptive kind. Both source images are 512 px square. The background is opaque and the foreground is transparent around the plates.",
+    "bitmap": "Unity 6.6 keeps the stock unversioned mipmap after adaptive layers and even a global default icon are supplied. The editor-only Android callback fills the exported launcher resources from the six authored bitmaps.",
+    "densities": [
+      "ldpi",
+      "mdpi",
+      "hdpi",
+      "xhdpi",
+      "xxhdpi",
+      "xxxhdpi"
+    ],
+    "adaptivePx": [
+      81,
+      108,
+      162,
+      216,
+      324,
+      432
+    ],
+    "bitmapPx": [
+      36,
+      48,
+      72,
+      96,
+      144,
+      192
+    ]
+  },
+  "verification": {
+    "scope": "Isolated one-scene Unity Android ARM64 release APK with the project PlayerSettings and shipping icon assets. The APK was never installed.",
+    "fixtureApkSha256": "95f83d48a6c5f1a99cd171c633ad3c593c530890a14dc235545af5f3bdb6bb08",
+    "manifest": "Android aapt resolves the application icon to the adaptive XML, whose two drawable references resolve to the custom texture sets.",
+    "decodedResources": 18,
+    "maxVisibleRgbChannelDifferenceFromUnityExport": 0,
+    "bitmaps": "All six bitmap resources decode to the exact authored RGBA pixels.",
+    "mask": "The adaptive layers use the 108 dp Android canvas. The farthest nontransparent foreground pixel across six densities was 32.11 dp from center, inside the 33 dp safe radius.",
+    "visualReview": "Inspected the extracted custom bitmap and circular and squircle adaptive masks at 24–192 px. The split and amber line remain visible at small launcher sizes.",
+    "headset": "Physical Horizon launcher appearance has not been inspected for this revision."
+  },
+  "guidance": [
+    "https://developers.meta.com/vr/resources/asset-guidelines/",
+    "https://docs.unity.com/en-us/engine/6000.6/manual/platform-specific/android/getting-started/class-player-settings",
+    "https://developer.android.com/develop/ui/compose/system/icon_design_adaptive"
+  ],
+  "metaSizing": "Meta specifies a square 512 px, 24-bit PNG for its separate store listing. Android launcher layers and density resources are packaged locally.",
+  "production": {
+    "initialFinding": "The Meta Quest build profile held six empty adaptive texture slots. In the first full game APK the six fallback bitmaps were custom while Android resolved the adaptive references to one stock mdpi layer pair.",
+    "fix": "Assigned the same two original textures in every adaptive slot of the actual Quest build profile.",
+    "testedBuildGuid": "8ea09f7453704bebaf78440d598bf8db",
+    "checked": "Android aapt resolved the production manifest and adaptive XML. All six foregrounds, six backgrounds and six fallback bitmaps matched the approved source or Unity export in decoded visible RGBA.",
+    "packageEvidence": "Floor entry Quest build.json",
+    "headset": "Unattended installation confirmed. A wearer has not reviewed the icon on the launcher.",
+    "retailBuildGuid": "d69a04fe9a3e46f380aff646c33df931",
+    "retailResourcesVerified": 18
+  }
+}

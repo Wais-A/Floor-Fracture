@@ -1,0 +1,263 @@
+{
+  "sourceRevision": "084cf29903be142fcab8ad5736c023af38d01aec",
+  "unity": "6000.6.9f1",
+  "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "scope": "Source and package inspection, Unity tests, real Mac simulator and unattended Quest device measurements. No new wearer or outside playtester was present.",
+  "packages": {
+    "development": {
+      "mode": "development",
+      "sourceRevision": "084cf29903be142fcab8ad5736c023af38d01aec",
+      "apk": "Builds/Quest/Room-and-pause-review/FloorFracture.apk",
+      "bytes": 156996523,
+      "sha256": "c04829b157a7c1284f30a70ec8992dd768ac0200d32e7e908c82bfc9443005d9",
+      "buildGuid": "1d4b2d2ff6fb4423b09ede647d5b2216",
+      "unity": "6000.6.9f1",
+      "package": "com.wa003.floorfracture",
+      "activity": "com.unity3d.player.UnityPlayerGameActivity",
+      "buildErrors": 0,
+      "buildWarnings": 42,
+      "comparedAuthoredPaths": 237,
+      "crcVerifiedArchiveEntries": 925,
+      "arm64Libraries": 23,
+      "minimumApi": 32,
+      "targetApi": 34,
+      "debuggable": true,
+      "apkV2Verified": true,
+      "aligned16KiB": true,
+      "permissions": [
+        "android.permission.VIBRATE",
+        "com.oculus.permission.USE_ANCHOR_API",
+        "com.oculus.permission.USE_SCENE",
+        "com.oculus.permission.HAND_TRACKING",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.BLUETOOTH",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION",
+        "com.wa003.floorfracture.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+      ],
+      "editorSettingsResourcePresent": true,
+      "editorPairingCredentialFound": false,
+      "scratchProbeFound": false,
+      "openXRAndMetaAudioPresent": true,
+      "assistantSettingsCheck": {
+        "sourceTokenFoundInPlayer": false,
+        "injectedAddressFoundInPlayer": true,
+        "foundDevAgentResourceObject": true,
+        "sourceTokenFoundInDevAgentResource": false,
+        "injectedAddressFoundInDevAgentResource": false,
+        "serializedAddressIsEmpty": true,
+        "serializedTokenIsEmpty": true,
+        "serializedDevAgentIsDisabled": true
+      },
+      "matchingAddressElsewhere": [
+        "boot.config: player-connection-ip"
+      ],
+      "credentialCheckScope": "Checked the original editor credential across decompressed package contents and inspected serialized assistant settings. The development player's Unity debugging connection may include a host address.",
+      "compilerLogNotes": {
+        "shaderWarningMessages": 34,
+        "warningsOnAuthoredShaders": 0,
+        "CS8785generatorWarningPresent": true,
+        "scope": "The Editor build log includes upstream shader, generator and setup warnings; the packaged game and the tested gameplay paths completed their respective checks."
+      }
+    },
+    "retail": {
+      "mode": "retail",
+      "sourceRevision": "084cf29903be142fcab8ad5736c023af38d01aec",
+      "apk": "Builds/CleanRelease/FloorFracture-084cf29.apk",
+      "bytes": 108929722,
+      "sha256": "b09cd3197f16af431013338e9b7b36d25ced1d33038252fc136acd267a39c898",
+      "buildGuid": "a291f7ce7d0f462dbdc290f8ada5a3e7",
+      "unity": "6000.6.9f1",
+      "package": "com.wa003.floorfracture",
+      "activity": "com.unity3d.player.UnityPlayerGameActivity",
+      "buildErrors": 0,
+      "buildWarnings": 43,
+      "comparedAuthoredPaths": 237,
+      "crcVerifiedArchiveEntries": 921,
+      "arm64Libraries": 22,
+      "minimumApi": 32,
+      "targetApi": 34,
+      "debuggable": false,
+      "apkV2Verified": true,
+      "aligned16KiB": true,
+      "permissions": [
+        "android.permission.VIBRATE",
+        "com.oculus.permission.USE_ANCHOR_API",
+        "com.oculus.permission.USE_SCENE",
+        "com.oculus.permission.HAND_TRACKING",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.BLUETOOTH",
+        "com.wa003.floorfracture.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+      ],
+      "editorSettingsResourcePresent": true,
+      "editorPairingCredentialFound": false,
+      "scratchProbeFound": false,
+      "openXRAndMetaAudioPresent": true,
+      "assistantSettingsCheck": {
+        "sourceTokenFoundInPlayer": false,
+        "injectedAddressFoundInPlayer": false,
+        "foundDevAgentResourceObject": true,
+        "sourceTokenFoundInDevAgentResource": false,
+        "injectedAddressFoundInDevAgentResource": false,
+        "serializedAddressIsEmpty": true,
+        "serializedTokenIsEmpty": true,
+        "serializedDevAgentIsDisabled": true
+      },
+      "matchingAddressElsewhere": [],
+      "credentialCheckScope": "Checked the original editor credential across decompressed package contents and inspected serialized assistant settings. The development player's Unity debugging connection may include a host address.",
+      "compilerLogNotes": {
+        "shaderWarningMessages": 33,
+        "warningsOnAuthoredShaders": 0,
+        "CS8785generatorWarningPresent": true,
+        "scope": "The Editor build log includes upstream shader, generator and setup warnings; the packaged game and the tested gameplay paths completed their respective checks."
+      }
+    }
+  },
+  "ordinaryQuestInstallation": {
+    "verifiedUtc": "2026-11-20T08:31:50.924679+00:00",
+    "device": "Quest 3",
+    "package": "com.wa003.floorfracture",
+    "installedApkSha256": "c04829b157a7c1284f30a70ec8992dd768ac0200d32e7e908c82bfc9443005d9",
+    "matchesBuiltApk": true,
+    "lastUpdateAndroidTime": "2026-11-20 03:31:19",
+    "resumedActivity": "ResumedActivity: ActivityRecord{d93817c u0 com.wa003.floorfracture/com.unity3d.player.UnityPlayerGameActivity t2579}",
+    "pid": "26374",
+    "spatialDataGranted": true,
+    "microphonePermissionDeclared": false,
+    "scratchPackageAbsent": true,
+    "userDataPreservedByReplace": true,
+    "testScope": "Installed and launched unattended. The earlier wearer trial and the synthetic hardware room tests are separate.",
+    "gameTelemetry": {
+      "rows": 13,
+      "graphics": [
+        "Vulkan"
+      ],
+      "stages": [
+        "Room"
+      ],
+      "matchesPackagedBuildGuid": true
+    }
+  },
+  "cleanRetailBuild": "Checked out the game revision in a separate local clone, materialized its Git LFS assets, imported the project and built with the saved Meta Quest profile.",
+  "regression": {
+    "editMode": {
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "elapsedSeconds": 51.1111457,
+      "localReport": {
+        "path": "Builds/Verification/Room-and-pause-review/EditMode.xml",
+        "sha256": "6171da6a5ed49eddc1af33c24acf19d78f5022bf8f2f1b460bb4ef3b5a660520"
+      }
+    },
+    "playMode": {
+      "passed": true,
+      "checks": [
+        "Meta Camera Rig, Passthrough, MR Utility Kit, Find Spawn Positions, Controller Tracking, and Interactions Rig supply the single tracked rig, room, floor candidates and left/right ray and grab controls.",
+        "The gameplay scene keeps the app’s wall and furniture overlay inactive. MRUK fits the board and the brick samples the live stereo environment depth. The saved scene enables one SDK environment depth provider and contains no example cube, occlusion root, raycast marker, or shared anchor.",
+        "The gameplay Canvas has one registered SDK ray surface and one SDK poke surface. Both SDK hand branches include a poke interactor, and the physical poke surface covers the menu row.",
+        "All ten pooled positional glass and ending-impact sources retain the actual Spatial Audio block and one enabled MetaXRAudioSource with spatialization enabled.",
+        "MRUK Rec Room supplied floor and furniture. The 6 × 6 board at 0.621 m pitch appeared at Welcome without a clearance approval prompt.",
+        "The exterior floor, neighboring hole and falling shaft rendered matching blue brick faces and mortar at the same physical scale.",
+        "Native soft GPU readback, eye 0, bin in place: 1624 couch, 100 chair-leg and 84 bin pixels in passthrough; 228 visible brick pixels between the legs, 0 at the vacated bin center.",
+        "Native soft GPU readback, eye 1, bin in place: 1624 couch, 100 chair-leg and 84 bin pixels in passthrough; 228 visible brick pixels between the legs, 0 at the vacated bin center.",
+        "Overlapping floor soft edge, eye 0, offset 0.0 m: 1951 double-blended pixels, 0 pixels unique to the second patch; maximum error 50/255 to 0/255.",
+        "Overlapping floor soft edge, eye 1, offset 0.0 m: 1953 double-blended pixels, 0 pixels unique to the second patch; maximum error 50/255 to 0/255.",
+        "Overlapping floor soft edge, eye 0, offset 0.3 m: 1894 double-blended pixels, 1272 pixels unique to the second patch; maximum error 50/255 to 1/255.",
+        "Overlapping floor soft edge, eye 1, offset 0.3 m: 1896 double-blended pixels, 1272 pixels unique to the second patch; maximum error 50/255 to 1/255.",
+        "Native soft GPU readback, eye 0, bin moved: 1624 couch, 100 chair-leg and 49 bin pixels in passthrough; 228 visible brick pixels between the legs, 56 at the vacated bin center.",
+        "Native soft GPU readback, eye 1, bin moved: 1624 couch, 100 chair-leg and 49 bin pixels in passthrough; 228 visible brick pixels between the legs, 56 at the vacated bin center.",
+        "Furniture contact, lateral motion, 12852 matched floor-pixel pairs across both eyes: mean contrast change 0.0986 to 0.0254, peak 0.3611 to 0.1299, mean half-contrast edge travel 29.1 to 7.0 mm.",
+        "Furniture contact, alternating range error, 12852 matched floor-pixel pairs across both eyes: mean contrast change 0.2156 to 0.1006, peak 0.9796 to 0.3371, mean half-contrast edge travel 54.6 to 9.0 mm.",
+        "Furniture contact, irregular range error, 12852 matched floor-pixel pairs across both eyes: mean contrast change 0.1291 to 0.0929, peak 0.8249 to 0.4000, mean half-contrast edge travel 37.7 to 26.1 mm.",
+        "GPU readbacks of the actual MRUK floor showed masonry to its scanned edges with a clear glass footprint at the fitted orientation and a further 31-degree rotation. A board one metre above the floor left the full floor covered.",
+        "The native rig's provisional floor-height pose did not strand the menu below the eye. A page that began below the viewport appeared at eye height. The SDK display event recalled Settings, Paused, and Results at 56 cm. The menu stayed fixed during ordinary head movement, stayed hidden during play and waited for tracking after suspension. The glass, floor anchor and camera rig kept their poses.",
+        "The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.",
+        "The Settings sample remained visible on and outside the board. It displayed the same pane, rim and fissures at both warning intensities. Each of the five volume selections played a single click at the newly chosen gain, including silent mute.",
+        "Welcome and Settings routed through their visible menu choices. The development menu selected seed 379.",
+        "Tutorial marked and cracked the starting pane. An untimed step to adjacent clear glass shattered the pane behind the player, then restored it and reached Ready without creating a stone.",
+        "The actual tutorial stone kept the stock Meta occlusion material and its individual visible _Color tint at runtime.",
+        "A carried stone held still for 0.4 s dropped at 0.000 m/s. The SDK supplied 0.552 m/s before the stationary-drop check.",
+        "In optional stone practice, a cancelled SDK grab returned without a throw, a miss returned to reach, a distant drop broke its actual pane, and a moving release carried native throw velocity into another pane.",
+        "Walked each guaranteed stationary step through Last Tile. Level 2 rebuilt and waited for readiness.",
+        "The landing visible on the first surviving wave remained selected through later waves and matched the subsequent natural loss.",
+        "Six natural endings played before a repeat. The next bag changed ending. Full playback, skip, results, and restart used the normal production controller.",
+        "All six endings reached a black frame and Results in Full and Reduced. An early Skip also worked in both modes. Every Restart restored the board, score, room floor and audio.",
+        "Water showed the moving walls for 3.49 s after entry at 1.50 m eye height, before impact.",
+        "An off-grid preview opened the scanned brick at the exact tracked position during the hold and rise. Skip and Restart removed the temporary opening.",
+        "Lava showed the moving walls for 3.37 s after entry at 2.20 m eye height, before impact.",
+        "Water reduced motion kept the chamber geometry stationary before contact and reached results.",
+        "Suspending a wave withdrew its moving pane and clock. Show board waited for room localization and reopened the existing holes. Starting from the same glass restored the safe moving pane with a full countdown.",
+        "Level 3 seed 379 moved ordinary full-sized glass between holes 21 and 27. A miss recovered, a catch held through zero, and the warned pane broke into 16 fitted shards at (0.310, 0.481) m with measured width 0.601 m.",
+        "A simulated significant MRUK floor-anchor event withdrew the board. Reloading the real fixture produced a new verified fit and returned directly to Welcome.",
+        "Injected MRUK NoScenePermission. The blocked board showed App permissions and Try again. Retry loaded the fixture and restored Welcome.",
+        "Injected MRUK NoRoomsFound. The blocked board showed Space Setup and Check again. Retry loaded the fixture and restored Welcome.",
+        "Three non-silent local narration clips matched the tutorial and Results captions. Fresh settings, master mute, and skipped Results were silent. Stepping away, disabling narration, entering gameplay, and restarting stopped playback."
+      ],
+      "totalChecks": 40,
+      "endingRoutes": 24,
+      "capturedEyeAndSceneImages": 52,
+      "startedUtc": "2026-11-20T08:23:37.6449480Z",
+      "finishedUtc": "2026-11-20T08:28:06.7043830Z",
+      "localReport": {
+        "path": "Builds/Verification/Room-and-pause-review/PlayMode.json",
+        "sha256": "a95e5cc3e75c7a50bf58a67bb4baf87354a1c7086e0d01f7a00bb84d106eee1d"
+      }
+    },
+    "editorLogObservation": "The isolated Mac Editor logged a startup exception in UnityEditor.Search.SearchDatabase while indexing. The completed suite reported no failed gameplay checks."
+  },
+  "macSimulator": {
+    "record": {
+      "path": "Docs/Verification/Room review in the Mac simulator.json",
+      "sha256": "b12943008da1d185a5882a8e848c3230f13ab077e8cf68df15540002f1e3aba2"
+    },
+    "welcome": {
+      "path": "Docs/Media/Room review in the Mac simulator.jpg",
+      "sha256": "289389e7e035c10c45b78422ddc08cbb981abe1923ff74eaa55f47e419f2fb6d"
+    },
+    "settings": {
+      "path": "Docs/Media/Settings in the Mac simulator.jpg",
+      "sha256": "5643aea51f042930f0ae9ccfcba963affb9bfb2295ac557fe445b79e2f55e7f5"
+    }
+  },
+  "supportingEvidence": [
+    {
+      "path": "Docs/Verification/Native room selection on Quest.json",
+      "sha256": "75c09f56360b279f13bde4c06ef49f6bbeadaee6783534ec7ab21ce65d238aad"
+    },
+    {
+      "path": "Docs/Verification/Joined floors and canceled wave on Quest.json",
+      "sha256": "b92df1dd9aa14f6a4f78fec9ef393d22d2b5d0f2e1f83edf621a68aa9cf04615"
+    },
+    {
+      "path": "Docs/Verification/Split room gameplay and furniture.json",
+      "sha256": "4e4b6308fc0bd90d1c1bbfeec8c908565423f5ee2c25215f3fab3dd4c3948106"
+    },
+    {
+      "path": "Docs/Verification/Editor pairing build checks.json",
+      "sha256": "1172021360823161c2466fcf258bc9a48abd9b2787cb0c0d20ae8bae70714cf3"
+    },
+    {
+      "path": "Docs/Verification/occupancy-ring-comparison.json",
+      "sha256": "befbcadeecf653038ceab7b7a1958fa576d5d9dd0306856818786fea3d3987d8"
+    },
+    {
+      "path": "Docs/Verification/board-readability.json",
+      "sha256": "32562c1afa8f484960f29ac2a54c30ad450658aabb917932e8c607e34069ae0e"
+    },
+    {
+      "path": "Docs/Verification/Muted shatter comparison.json",
+      "sha256": "a0e4a16a0ae09ef7894651ad27b389ba85eb5a0eeee131cb22e78261b366e830"
+    }
+  ],
+  "limits": [
+    "The separate 64-pane Quest frame-time capture used a previous fixture build. The 72.04 FPS average is not a new real-room frame-time measurement of this release.",
+    "The older Git history and earlier APKs contain a local Meta editor pairing credential. The current release omits that credential. Use the history-free source snapshot for sharing.",
+    "Current open items include real-room movement and comfort, two outside testers, final physical headset video, class submission and owner voice selection."
+  ],
+  "scratchGameCopies": "Editor-only instruments live in separate test projects. The two ordinary APKs exclude them."
+}

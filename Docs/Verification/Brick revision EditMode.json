@@ -1,0 +1,146 @@
+{
+  "unity": "6000.6.9f1",
+  "testRunUtc": "2026-11-20 01:55:36Z",
+  "durationSeconds": 106.9673266,
+  "filter": "FloorFracture.Tests",
+  "passed": 34,
+  "failed": 0,
+  "tests": [
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.AddsARowWhenClearFloorExtendsAlongTheLongSide",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.ConcavityBetweenFourInteriorCornersIsRejected",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.EqualTravelAreaFavorsMoreSidewaysMovement",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.ExcludingADeclinedPatchProducesADisjointPreview",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FindsOffsetSlotBoundedOnlyByFurnitureAndAThinWall",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FitsPlayableTravelInBothDirections(1.8f,1.8f,2,2,0.5f,1.0f,1.0f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FitsPlayableTravelInBothDirections(1.94f,1.94f,2,2,0.57f,1.14f,1.14f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FitsPlayableTravelInBothDirections(2.06f,2.06f,2,2,0.63f,1.26f,1.26f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FitsPlayableTravelInBothDirections(2.3f,2.8f,3,4,0.5f,1.5f,2.0f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FitsPlayableTravelInBothDirections(2.8f,2.3f,4,3,0.5f,2.0f,1.5f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FitsPlayableTravelInBothDirections(3.2f,3.6f,4,5,0.56f,2.24f,2.8f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FitsPlayableTravelInBothDirections(4.0f,4.2f,6,6,0.5333334f,3.2f,3.2f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FitsPlayableTravelInBothDirections(5.6f,5.6f,8,8,0.6f,4.8f,4.8f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FitsPlayableTravelInBothDirections(7.0f,7.0f,8,8,0.67f,5.36f,5.36f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FitsPlayableTravelInBothDirections(6.4f,2.0f,8,2,0.6f,4.8f,1.2f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FitsPlayableTravelInBothDirections(1.8f,6.8f,2,8,0.5f,1.0f,4.0f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.FourCornersTouchingTheOutsideOfAnExactNotchIsNotFloor",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.InteriorFurnitureCrossingWallsAndEnclosingVolumesAreRejected",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.KeepsFullSizedTilesWhenTheMinimumCannotFit",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.KeepsTwoRowsWhenTheLongSideMeetsAWallOrFurniture(False)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.KeepsTwoRowsWhenTheLongSideMeetsAWallOrFurniture(True)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.NeverSacrificesLegacyGlassAreaOnRectangularScans",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.PreservesAnExactRotatedLegacyPatchBetweenFurniture",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.RectanglesCertifyHeadFirstThenClosestSuggestedCenterAndKeepFallback",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.RejectsCrossedOrMissingFloorGeometry",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.RejectsFurnitureOnlyInMarginAndAcceptsExactClearance",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.RotatedExactWidthFloorPreservesPoseAndMetricPitch(23.68f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardFitterTests.RotatedExactWidthFloorPreservesPoseAndMetricPitch(0.005f)",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.CoordinatesAndSeams",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.DeadlinesAndPause",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.EverySeededSurvivalPath",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.LargerBoardSurvivalPaths",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.ModesAndReset",
+      "result": "Passed"
+    },
+    {
+      "name": "FloorFracture.Tests.BoardRulesEditorTests.SlidersAndGrace",
+      "result": "Passed"
+    }
+  ]
+}

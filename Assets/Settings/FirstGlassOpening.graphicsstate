@@ -1,0 +1,2503 @@
+{
+    "m_Name": "",
+    "serializedVersion": "2",
+    "m_Version": 0,
+    "m_DeviceRenderer": 21,
+    "m_RuntimePlatform": 11,
+    "m_QualityLevelName": "Mobile",
+    "m_VariantInfoMap": [
+        {
+            "first": {
+                "serializedVersion": "2",
+                "Hash": "f2acddb6ed2da5b0de1e1aac22c253dc"
+            },
+            "second": {
+                "shaderName": "Floor Fracture/Shaft and falling glass",
+                "shaderAssetGUID": "b18516750f30a4c2e8608114ec007bd5",
+                "shaderAssetLocalIdentifierInFile": 4800000,
+                "keywordNames": "STEREO_MULTIVIEW_ON",
+                "subShaderIndex": 0,
+                "passIndex": 0,
+                "graphicsStateInfoSet": [
+                    {
+                        "vertexLayout": 1178411232534206369,
+                        "renderPass": 17272992524042385764,
+                        "renderState": 4315076618428247049,
+                        "subPassIndex": 0,
+                        "topology": 0,
+                        "forceCullMode": -1,
+                        "shadingRateCombinerPrimitive": 0,
+                        "shadingRateCombinerFragment": 1,
+                        "baseShadingRate": 0,
+                        "depthBias": 0.0,
+                        "slopeDepthBias": 0.0,
+                        "userBackface": false,
+                        "appBackface": false,
+                        "wireframe": false,
+                        "invertProjectionMatrix": false,
+                        "unfilterableTextureBindings": 0,
+                        "nonfilteringSamplerBindings": 0
+                    }
+                ]
+            }
+        },
+        {
+            "first": {
+                "serializedVersion": "2",
+                "Hash": "08013e7cc76159793c54206bfe0d55c6"
+            },
+            "second": {
+                "shaderName": "Floor Fracture/Ending chamber",
+                "shaderAssetGUID": "cb37d8b8fe6f432d9ab28501a1f75978",
+                "shaderAssetLocalIdentifierInFile": 4800000,
+                "keywordNames": "STEREO_MULTIVIEW_ON",
+                "subShaderIndex": 0,
+                "passIndex": 0,
+                "graphicsStateInfoSet": [
+                    {
+                        "vertexLayout": 18282987898259120904,
+                        "renderPass": 17272992524042385764,
+                        "renderState": 12924385417920115822,
+                        "subPassIndex": 0,
+                        "topology": 0,
+                        "forceCullMode": -1,
+                        "shadingRateCombinerPrimitive": 0,
+                        "shadingRateCombinerFragment": 1,
+                        "baseShadingRate": 0,
+                        "depthBias": 0.0,
+                        "slopeDepthBias": 0.0,
+                        "userBackface": false,
+                        "appBackface": false,
+                        "wireframe": false,
+                        "invertProjectionMatrix": false,
+                        "unfilterableTextureBindings": 0,
+                        "nonfilteringSamplerBindings": 0
+                    }
+                ]
+            }
+        },
+        {
+            "first": {
+                "serializedVersion": "2",
+                "Hash": "f8dd39813651206c8ec1db819802ca34"
+            },
+            "second": {
+                "shaderName": "Floor Fracture/Hole Mask",
+                "shaderAssetGUID": "2325a55ccddd640f39a9988b6b353adc",
+                "shaderAssetLocalIdentifierInFile": 4800000,
+                "keywordNames": "STEREO_MULTIVIEW_ON",
+                "subShaderIndex": 0,
+                "passIndex": 0,
+                "graphicsStateInfoSet": [
+                    {
+                        "vertexLayout": 1178411232534206369,
+                        "renderPass": 17272992524042385764,
+                        "renderState": 15596032736007789093,
+                        "subPassIndex": 0,
+                        "topology": 0,
+                        "forceCullMode": -1,
+                        "shadingRateCombinerPrimitive": 0,
+                        "shadingRateCombinerFragment": 1,
+                        "baseShadingRate": 0,
+                        "depthBias": 0.0,
+                        "slopeDepthBias": 0.0,
+                        "userBackface": false,
+                        "appBackface": false,
+                        "wireframe": false,
+                        "invertProjectionMatrix": false,
+                        "unfilterableTextureBindings": 0,
+                        "nonfilteringSamplerBindings": 0
+                    }
+                ]
+            }
+        }
+    ],
+    "m_VertexLayoutInfoMap": [
+        {
+            "first": 14464719835752807428,
+            "second": {
+                "vertexChannelsInfo": [
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 3
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 12,
+                        "format": 2,
+                        "dimension": 4
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 16,
+                        "format": 0,
+                        "dimension": 2
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 24,
+                        "format": 0,
+                        "dimension": 2
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    }
+                ],
+                "vertexStrides": [
+                    32,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "vertexStreamCount": 1
+            }
+        },
+        {
+            "first": 12942693649073953960,
+            "second": {
+                "vertexChannelsInfo": [
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 3
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 12,
+                        "format": 2,
+                        "dimension": 4
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 16,
+                        "format": 0,
+                        "dimension": 2
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    }
+                ],
+                "vertexStrides": [
+                    24,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "vertexStreamCount": 1
+            }
+        },
+        {
+            "first": 1178411232534206369,
+            "second": {
+                "vertexChannelsInfo": [
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 3
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 12,
+                        "format": 0,
+                        "dimension": 4
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 28,
+                        "format": 0,
+                        "dimension": 2
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    }
+                ],
+                "vertexStrides": [
+                    36,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "vertexStreamCount": 1
+            }
+        },
+        {
+            "first": 18282987898259120904,
+            "second": {
+                "vertexChannelsInfo": [
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 3
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 12,
+                        "format": 0,
+                        "dimension": 3
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 24,
+                        "format": 0,
+                        "dimension": 4
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 40,
+                        "format": 0,
+                        "dimension": 2
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 48,
+                        "format": 0,
+                        "dimension": 2
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    }
+                ],
+                "vertexStrides": [
+                    56,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "vertexStreamCount": 1
+            }
+        },
+        {
+            "first": 3460807511446102843,
+            "second": {
+                "vertexChannelsInfo": [
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 3
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 12,
+                        "format": 0,
+                        "dimension": 3
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 24,
+                        "format": 0,
+                        "dimension": 4
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 40,
+                        "format": 2,
+                        "dimension": 4
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 44,
+                        "format": 0,
+                        "dimension": 2
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    },
+                    {
+                        "stream": 0,
+                        "offset": 0,
+                        "format": 0,
+                        "dimension": 0
+                    }
+                ],
+                "vertexStrides": [
+                    52,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                ],
+                "vertexStreamCount": 1
+            }
+        }
+    ],
+    "m_RenderPassInfoMap": [
+        {
+            "first": 17272992524042385764,
+            "second": {
+                "attachments": [
+                    {
+                        "format": 92,
+                        "needsResolve": true,
+                        "canMultiview": true,
+                        "loadAction": 1,
+                        "storeAction": 1,
+                        "sampleCount": 4
+                    },
+                    {
+                        "format": 4,
+                        "needsResolve": true,
+                        "canMultiview": true,
+                        "loadAction": 1,
+                        "storeAction": 1,
+                        "sampleCount": 4
+                    },
+                    {
+                        "format": 6,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 1
+                    },
+                    {
+                        "format": 4,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 0
+                    },
+                    {
+                        "format": 0,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 0
+                    },
+                    {
+                        "format": 0,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 0
+                    },
+                    {
+                        "format": 0,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 0
+                    },
+                    {
+                        "format": 0,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 0
+                    }
+                ],
+                "attachmentCount": 3,
+                "subPasses": [
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                1,
+                                -1,
+                                -1,
+                                -1,
+                                -1,
+                                -1,
+                                -1,
+                                -1
+                            ],
+                            "activeAttachments": 1
+                        },
+                        "flags": 40
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    }
+                ],
+                "subPassCount": 1,
+                "depthAttachmentIndex": 0,
+                "shadingRateIndex": 2,
+                "foveationImageIndex": 2,
+                "multiviewCount": 2,
+                "sampleCount": 4
+            }
+        },
+        {
+            "first": 12744539502807141212,
+            "second": {
+                "attachments": [
+                    {
+                        "format": 4,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 1
+                    },
+                    {
+                        "format": 92,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 1
+                    },
+                    {
+                        "format": 0,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 0
+                    },
+                    {
+                        "format": 0,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 0
+                    },
+                    {
+                        "format": 0,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 0
+                    },
+                    {
+                        "format": 0,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 0
+                    },
+                    {
+                        "format": 0,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 0
+                    },
+                    {
+                        "format": 0,
+                        "needsResolve": false,
+                        "canMultiview": false,
+                        "loadAction": 0,
+                        "storeAction": 0,
+                        "sampleCount": 0
+                    }
+                ],
+                "attachmentCount": 2,
+                "subPasses": [
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                -1,
+                                -1,
+                                -1,
+                                -1,
+                                -1,
+                                -1,
+                                -1
+                            ],
+                            "activeAttachments": 1
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    },
+                    {
+                        "inputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "colorOutputs": {
+                            "attachments": [
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
+                            "activeAttachments": 0
+                        },
+                        "flags": 0
+                    }
+                ],
+                "subPassCount": 1,
+                "depthAttachmentIndex": 1,
+                "shadingRateIndex": -1,
+                "foveationImageIndex": -1,
+                "multiviewCount": 0,
+                "sampleCount": 1
+            }
+        }
+    ],
+    "m_RenderStateMap": [
+        {
+            "first": 13576802146252363573,
+            "second": {
+                "renderState": {
+                    "blendState": {
+                        "rt": [
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 10,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 10,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            }
+                        ],
+                        "separateMRTBlend": 0,
+                        "alphaToMask": 0
+                    },
+                    "rasterState": {
+                        "cullMode": 0,
+                        "depthBias": 0,
+                        "slopeScaledDepthBias": 0.0,
+                        "depthClip": 1,
+                        "conservative": 0
+                    },
+                    "depthState": {
+                        "depthWrite": 0,
+                        "depthFunc": 8
+                    },
+                    "stencilState": {
+                        "stencilEnable": 0,
+                        "readMask": 255,
+                        "writeMask": 255,
+                        "padding": 0,
+                        "stencilFuncFront": 8,
+                        "stencilPassOpFront": 0,
+                        "stencilFailOpFront": 0,
+                        "stencilZFailOpFront": 0,
+                        "stencilFuncBack": 8,
+                        "stencilPassOpBack": 0,
+                        "stencilFailOpBack": 0,
+                        "stencilZFailOpBack": 0
+                    },
+                    "stencilRef": 0,
+                    "mask": 15
+                }
+            }
+        },
+        {
+            "first": 4315076618428247049,
+            "second": {
+                "renderState": {
+                    "blendState": {
+                        "rt": [
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            }
+                        ],
+                        "separateMRTBlend": 0,
+                        "alphaToMask": 0
+                    },
+                    "rasterState": {
+                        "cullMode": 0,
+                        "depthBias": 0,
+                        "slopeScaledDepthBias": 0.0,
+                        "depthClip": 1,
+                        "conservative": 0
+                    },
+                    "depthState": {
+                        "depthWrite": 1,
+                        "depthFunc": 4
+                    },
+                    "stencilState": {
+                        "stencilEnable": 1,
+                        "readMask": 4,
+                        "writeMask": 0,
+                        "padding": 0,
+                        "stencilFuncFront": 3,
+                        "stencilPassOpFront": 0,
+                        "stencilFailOpFront": 0,
+                        "stencilZFailOpFront": 0,
+                        "stencilFuncBack": 3,
+                        "stencilPassOpBack": 0,
+                        "stencilFailOpBack": 0,
+                        "stencilZFailOpBack": 0
+                    },
+                    "stencilRef": 4,
+                    "mask": 15
+                }
+            }
+        },
+        {
+            "first": 17905316057205185287,
+            "second": {
+                "renderState": {
+                    "blendState": {
+                        "rt": [
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 5,
+                                "dstBlend": 10,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 1,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            }
+                        ],
+                        "separateMRTBlend": 0,
+                        "alphaToMask": 0
+                    },
+                    "rasterState": {
+                        "cullMode": 0,
+                        "depthBias": 0,
+                        "slopeScaledDepthBias": 0.0,
+                        "depthClip": 1,
+                        "conservative": 0
+                    },
+                    "depthState": {
+                        "depthWrite": 0,
+                        "depthFunc": 8
+                    },
+                    "stencilState": {
+                        "stencilEnable": 0,
+                        "readMask": 255,
+                        "writeMask": 255,
+                        "padding": 0,
+                        "stencilFuncFront": 8,
+                        "stencilPassOpFront": 0,
+                        "stencilFailOpFront": 0,
+                        "stencilZFailOpFront": 0,
+                        "stencilFuncBack": 8,
+                        "stencilPassOpBack": 0,
+                        "stencilFailOpBack": 0,
+                        "stencilZFailOpBack": 0
+                    },
+                    "stencilRef": 0,
+                    "mask": 15
+                }
+            }
+        },
+        {
+            "first": 12924385417920115822,
+            "second": {
+                "renderState": {
+                    "blendState": {
+                        "rt": [
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 5,
+                                "dstBlend": 10,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 10,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            }
+                        ],
+                        "separateMRTBlend": 0,
+                        "alphaToMask": 0
+                    },
+                    "rasterState": {
+                        "cullMode": 0,
+                        "depthBias": 0,
+                        "slopeScaledDepthBias": 0.0,
+                        "depthClip": 1,
+                        "conservative": 0
+                    },
+                    "depthState": {
+                        "depthWrite": 1,
+                        "depthFunc": 4
+                    },
+                    "stencilState": {
+                        "stencilEnable": 1,
+                        "readMask": 4,
+                        "writeMask": 0,
+                        "padding": 0,
+                        "stencilFuncFront": 3,
+                        "stencilPassOpFront": 0,
+                        "stencilFailOpFront": 0,
+                        "stencilZFailOpFront": 0,
+                        "stencilFuncBack": 3,
+                        "stencilPassOpBack": 0,
+                        "stencilFailOpBack": 0,
+                        "stencilZFailOpBack": 0
+                    },
+                    "stencilRef": 4,
+                    "mask": 15
+                }
+            }
+        },
+        {
+            "first": 15596032736007789093,
+            "second": {
+                "renderState": {
+                    "blendState": {
+                        "rt": [
+                            {
+                                "writeMask": 0,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            }
+                        ],
+                        "separateMRTBlend": 0,
+                        "alphaToMask": 0
+                    },
+                    "rasterState": {
+                        "cullMode": 0,
+                        "depthBias": 0,
+                        "slopeScaledDepthBias": 0.0,
+                        "depthClip": 1,
+                        "conservative": 0
+                    },
+                    "depthState": {
+                        "depthWrite": 0,
+                        "depthFunc": 4
+                    },
+                    "stencilState": {
+                        "stencilEnable": 1,
+                        "readMask": 4,
+                        "writeMask": 4,
+                        "padding": 0,
+                        "stencilFuncFront": 8,
+                        "stencilPassOpFront": 2,
+                        "stencilFailOpFront": 0,
+                        "stencilZFailOpFront": 0,
+                        "stencilFuncBack": 8,
+                        "stencilPassOpBack": 2,
+                        "stencilFailOpBack": 0,
+                        "stencilZFailOpBack": 0
+                    },
+                    "stencilRef": 4,
+                    "mask": 15
+                }
+            }
+        },
+        {
+            "first": 1155665819826038440,
+            "second": {
+                "renderState": {
+                    "blendState": {
+                        "rt": [
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 10,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 10,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            }
+                        ],
+                        "separateMRTBlend": 0,
+                        "alphaToMask": 0
+                    },
+                    "rasterState": {
+                        "cullMode": 0,
+                        "depthBias": 0,
+                        "slopeScaledDepthBias": 0.0,
+                        "depthClip": 1,
+                        "conservative": 0
+                    },
+                    "depthState": {
+                        "depthWrite": 0,
+                        "depthFunc": 4
+                    },
+                    "stencilState": {
+                        "stencilEnable": 1,
+                        "readMask": 4,
+                        "writeMask": 0,
+                        "padding": 0,
+                        "stencilFuncFront": 8,
+                        "stencilPassOpFront": 0,
+                        "stencilFailOpFront": 0,
+                        "stencilZFailOpFront": 0,
+                        "stencilFuncBack": 8,
+                        "stencilPassOpBack": 0,
+                        "stencilFailOpBack": 0,
+                        "stencilZFailOpBack": 0
+                    },
+                    "stencilRef": 4,
+                    "mask": 15
+                }
+            }
+        },
+        {
+            "first": 1698731472292646774,
+            "second": {
+                "renderState": {
+                    "blendState": {
+                        "rt": [
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 5,
+                                "dstBlend": 10,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 10,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            },
+                            {
+                                "writeMask": 15,
+                                "srcBlend": 1,
+                                "dstBlend": 0,
+                                "srcBlendAlpha": 1,
+                                "dstBlendAlpha": 0,
+                                "blendOp": 0,
+                                "blendOpAlpha": 0
+                            }
+                        ],
+                        "separateMRTBlend": 0,
+                        "alphaToMask": 0
+                    },
+                    "rasterState": {
+                        "cullMode": 0,
+                        "depthBias": 0,
+                        "slopeScaledDepthBias": 0.0,
+                        "depthClip": 1,
+                        "conservative": 0
+                    },
+                    "depthState": {
+                        "depthWrite": 0,
+                        "depthFunc": 4
+                    },
+                    "stencilState": {
+                        "stencilEnable": 0,
+                        "readMask": 255,
+                        "writeMask": 255,
+                        "padding": 0,
+                        "stencilFuncFront": 8,
+                        "stencilPassOpFront": 0,
+                        "stencilFailOpFront": 0,
+                        "stencilZFailOpFront": 0,
+                        "stencilFuncBack": 8,
+                        "stencilPassOpBack": 0,
+                        "stencilFailOpBack": 0,
+                        "stencilZFailOpBack": 0
+                    },
+                    "stencilRef": 0,
+                    "mask": 15
+                }
+            }
+        }
+    ]
+}

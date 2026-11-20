@@ -1,0 +1,37 @@
+{
+  "unity": "6000.6.9f1",
+  "package": "com.wa003.floorfracture",
+  "gameplayScene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
+  "buildGuid": "bae2f62f74fa4694bb6299a855672efd",
+  "buildFinishedUtc": "2026-11-20T00:58:29.4372190Z",
+  "buildResult": "Succeeded",
+  "buildErrors": 0,
+  "buildWarnings": 53,
+  "apkBytes": 127327002,
+  "apkSha256": "f94a731b0a18106a5e0dc88f8e6117a7023e30b4d6ef6f0934940dc3192e84ff",
+  "apk": "Builds/Quest/Adaptive-review/FloorFracture.apk",
+  "signatureVerified": "Android apksigner, v2",
+  "architectures": [
+    "arm64-v8a"
+  ],
+  "minimumAndroidApi": 32,
+  "targetAndroidApi": 34,
+  "model": "Quest 3",
+  "installedLocalTime": "2026-11-19 19:59:37 America/New_York",
+  "launch": "Meta MCP launch succeeded; the Android package was running after launch. Wearer review is pending.",
+  "inference": "2.3.0 Embedded",
+  "cpuInferenceEditorTest": {
+    "calculation": "2*x+1",
+    "input": [
+      -1,
+      0,
+      3
+    ],
+    "expectedAndObserved": [
+      -1,
+      1,
+      7
+    ]
+  },
+  "warning": "Inference Engine 2.3.0 reports CS8785 for assemblies containing no annotated inference layers. The game compiled and the CPU graph produced the expected outputs."
+}

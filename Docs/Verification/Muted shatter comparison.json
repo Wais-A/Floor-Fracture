@@ -1,0 +1,178 @@
+{
+  "gameSource": "084cf29903be142fcab8ad5736c023af38d01aec",
+  "method": "Actual first wave, survived on the guaranteed safe cell with master volume zero and warning intensity Gentle. Timed captures before zero, in the first BetweenWaves frame and one second after the deadline. Fixed 64 mm two-eye separation. Each instant is rendered over 20/255 and 235/255 neutral floor colors using the game renderer. Projected polygons cover the inner 92% of pane width. A changed pixel has at least one RGB channel differ by 16/255 between images.",
+  "renderer": "Metal",
+  "unity": "6000.6.9f1",
+  "cells": {
+    "warning": 21,
+    "occupiedSafe": 15
+  },
+  "panes": [
+    6,
+    6
+  ],
+  "pitch": 0.6207143068313599,
+  "volume": 0,
+  "gentle": 1,
+  "scoreAfter": 1,
+  "betweenWavesSeconds": 1.28,
+  "frameCount": 12,
+  "stageAfter": "BetweenWaves",
+  "measurements": [
+    {
+      "underlay": "light",
+      "eye": "L",
+      "after": "break",
+      "shards": 192,
+      "timeAfterDeadlineS": 0.00020512330229394138,
+      "warningFootprint": {
+        "pixels": 22564,
+        "changedBy16Of255": 22564,
+        "percentChanged": 100.0,
+        "medianMaximumChannelDifference": 47.0
+      },
+      "safeFootprint": {
+        "pixels": 27711,
+        "changedBy16Of255": 0,
+        "percentChanged": 0.0,
+        "medianMaximumChannelDifference": 0.0
+      }
+    },
+    {
+      "underlay": "light",
+      "eye": "L",
+      "after": "opening",
+      "shards": 192,
+      "timeAfterDeadlineS": 1.0001521110534668,
+      "warningFootprint": {
+        "pixels": 22564,
+        "changedBy16Of255": 22564,
+        "percentChanged": 100.0,
+        "medianMaximumChannelDifference": 98.0
+      },
+      "safeFootprint": {
+        "pixels": 27711,
+        "changedBy16Of255": 0,
+        "percentChanged": 0.0,
+        "medianMaximumChannelDifference": 0.0
+      }
+    },
+    {
+      "underlay": "light",
+      "eye": "R",
+      "after": "break",
+      "shards": 192,
+      "timeAfterDeadlineS": 0.00020512330229394138,
+      "warningFootprint": {
+        "pixels": 22564,
+        "changedBy16Of255": 22564,
+        "percentChanged": 100.0,
+        "medianMaximumChannelDifference": 47.0
+      },
+      "safeFootprint": {
+        "pixels": 27711,
+        "changedBy16Of255": 0,
+        "percentChanged": 0.0,
+        "medianMaximumChannelDifference": 0.0
+      }
+    },
+    {
+      "underlay": "light",
+      "eye": "R",
+      "after": "opening",
+      "shards": 192,
+      "timeAfterDeadlineS": 1.0001521110534668,
+      "warningFootprint": {
+        "pixels": 22564,
+        "changedBy16Of255": 22564,
+        "percentChanged": 100.0,
+        "medianMaximumChannelDifference": 98.0
+      },
+      "safeFootprint": {
+        "pixels": 27711,
+        "changedBy16Of255": 0,
+        "percentChanged": 0.0,
+        "medianMaximumChannelDifference": 0.0
+      }
+    },
+    {
+      "underlay": "dark",
+      "eye": "L",
+      "after": "break",
+      "shards": 192,
+      "timeAfterDeadlineS": 0.00020512330229394138,
+      "warningFootprint": {
+        "pixels": 22564,
+        "changedBy16Of255": 22564,
+        "percentChanged": 100.0,
+        "medianMaximumChannelDifference": 82.0
+      },
+      "safeFootprint": {
+        "pixels": 27711,
+        "changedBy16Of255": 0,
+        "percentChanged": 0.0,
+        "medianMaximumChannelDifference": 0.0
+      }
+    },
+    {
+      "underlay": "dark",
+      "eye": "L",
+      "after": "opening",
+      "shards": 192,
+      "timeAfterDeadlineS": 1.0001521110534668,
+      "warningFootprint": {
+        "pixels": 22564,
+        "changedBy16Of255": 21704,
+        "percentChanged": 96.19,
+        "medianMaximumChannelDifference": 56.0
+      },
+      "safeFootprint": {
+        "pixels": 27711,
+        "changedBy16Of255": 0,
+        "percentChanged": 0.0,
+        "medianMaximumChannelDifference": 0.0
+      }
+    },
+    {
+      "underlay": "dark",
+      "eye": "R",
+      "after": "break",
+      "shards": 192,
+      "timeAfterDeadlineS": 0.00020512330229394138,
+      "warningFootprint": {
+        "pixels": 22564,
+        "changedBy16Of255": 22564,
+        "percentChanged": 100.0,
+        "medianMaximumChannelDifference": 83.0
+      },
+      "safeFootprint": {
+        "pixels": 27711,
+        "changedBy16Of255": 0,
+        "percentChanged": 0.0,
+        "medianMaximumChannelDifference": 0.0
+      }
+    },
+    {
+      "underlay": "dark",
+      "eye": "R",
+      "after": "opening",
+      "shards": 192,
+      "timeAfterDeadlineS": 1.0001521110534668,
+      "warningFootprint": {
+        "pixels": 22564,
+        "changedBy16Of255": 21816,
+        "percentChanged": 96.68,
+        "medianMaximumChannelDifference": 55.0
+      },
+      "safeFootprint": {
+        "pixels": 27711,
+        "changedBy16Of255": 0,
+        "percentChanged": 0.0,
+        "medianMaximumChannelDifference": 0.0
+      }
+    }
+  ],
+  "imageSha256": "14536b769d42601fe5f7ab8211775f74bb2075182112f4254a6f099858973481",
+  "scope": "Virtual scene renders on Mac confirm a visible transition and the game verdict. Wearer recognition, actual room lighting and Quest optics remain for checklist 118.",
+  "controlAndPose": "The same camera pose and lens are used for all three instants in each eye and each underlay. The safe pane stays intact with a visible occupant ring. The rendering retains the native game shatter and its procedural shards."
+}

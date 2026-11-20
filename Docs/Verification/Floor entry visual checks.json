@@ -1,0 +1,107 @@
+{
+  "platform": "Unity 6000.6.9f1 on Metal, using gameplay assets, SDK components and controlled simulated poses.",
+  "floorAtLoss": {
+    "tests": [
+      "Water showed the moving walls for 3.49 s after entry at 1.50 m eye height, before impact.",
+      "An off-grid preview opened the scanned brick at the exact tracked position during the hold and rise. Skip and Restart removed the temporary opening.",
+      "Lava showed the moving walls for 3.37 s after entry at 2.20 m eye height, before impact.",
+      "Water reduced motion kept the chamber geometry stationary before contact and reached results."
+    ],
+    "trials": [
+      {
+        "ending": "Water",
+        "motion": "full",
+        "eyeHeight": 1.5,
+        "offCenterMetres": 0.26567739248275757,
+        "maxArenaRegistrationError": 1.9073486328125e-06,
+        "maxRoomAnchorDisplacement": 0.0,
+        "maxTrackedHeadDisplacement": 0.0,
+        "maxRigDisplacement": 0.0,
+        "visibleWallSeconds": 3.4869539115646244,
+        "overheadGlassPixels": 18855,
+        "overheadBrickPixels": 5145,
+        "impactSoundAt": 4.440711330782314
+      },
+      {
+        "ending": "Lava",
+        "motion": "full",
+        "eyeHeight": 2.200000047683716,
+        "offCenterMetres": 0.26567739248275757,
+        "maxArenaRegistrationError": 1.9073486328125e-06,
+        "maxRoomAnchorDisplacement": 0.0,
+        "maxTrackedHeadDisplacement": 0.0,
+        "maxRigDisplacement": 0.0,
+        "visibleWallSeconds": 3.3703017077664406,
+        "overheadGlassPixels": 18858,
+        "overheadBrickPixels": 5195,
+        "impactSoundAt": 4.440701417233559
+      },
+      {
+        "ending": "Water",
+        "motion": "reduced",
+        "eyeHeight": 1.600000023841858,
+        "offCenterMetres": 0.0,
+        "maxArenaRegistrationError": 0.0,
+        "maxRoomAnchorDisplacement": 0.0,
+        "maxTrackedHeadDisplacement": 0.0,
+        "maxRigDisplacement": 0.0,
+        "visibleWallSeconds": 0.0,
+        "overheadGlassPixels": 0,
+        "overheadBrickPixels": 0,
+        "impactSoundAt": 0.8201891652494311
+      }
+    ]
+  },
+  "furnitureEdges": {
+    "tests": [
+      "Native soft GPU readback, eye 0, bin in place: 1624 couch, 100 chair-leg and 84 bin pixels in passthrough; 228 visible brick pixels between the legs, 0 at the vacated bin center.",
+      "Native soft GPU readback, eye 1, bin in place: 1624 couch, 100 chair-leg and 84 bin pixels in passthrough; 228 visible brick pixels between the legs, 0 at the vacated bin center.",
+      "Native soft GPU readback, eye 0, bin moved: 1624 couch, 100 chair-leg and 49 bin pixels in passthrough; 228 visible brick pixels between the legs, 56 at the vacated bin center.",
+      "Native soft GPU readback, eye 1, bin moved: 1624 couch, 100 chair-leg and 49 bin pixels in passthrough; 228 visible brick pixels between the legs, 56 at the vacated bin center.",
+      "Furniture contact, lateral motion, 12852 matched floor-pixel pairs across both eyes: mean contrast change 0.0986 to 0.0254, peak 0.3611 to 0.1299, mean half-contrast edge travel 29.1 to 7.0 mm.",
+      "Furniture contact, alternating range error, 12852 matched floor-pixel pairs across both eyes: mean contrast change 0.2156 to 0.1006, peak 0.9796 to 0.3371, mean half-contrast edge travel 54.6 to 9.0 mm.",
+      "Furniture contact, irregular range error, 12852 matched floor-pixel pairs across both eyes: mean contrast change 0.1291 to 0.0929, peak 0.8249 to 0.4000, mean half-contrast edge travel 37.7 to 26.1 mm."
+    ]
+  },
+  "offlineNarration": "Three non-silent local narration clips matched the tutorial and Results captions. Fresh settings, master mute, and skipped Results were silent. Stepping away, disabling narration, entering gameplay, and restarting stopped playback.",
+  "countdownAndGlass": {
+    "setup": "Same 6 \u00d7 4 board, 60 cm panes, lens, pose, Classic warning, colors and 768 \u00d7 576 capture. The timer and its dark backing use ordered draws after the brick. Compare exactly the same frame twice with the backing enabled and disabled. Darkening is the RGB sum. An already dark background is an expected zero for this measurement.",
+    "comparison": {
+      "look-before": [
+        {
+          "floor": "light",
+          "plateChangedPixels": "3371",
+          "plateLargestDarkening": "407"
+        },
+        {
+          "floor": "dark",
+          "plateChangedPixels": "0",
+          "plateLargestDarkening": "0"
+        },
+        {
+          "floor": "brick",
+          "plateChangedPixels": "0",
+          "plateLargestDarkening": "0"
+        }
+      ],
+      "look-final": [
+        {
+          "floor": "light",
+          "plateChangedPixels": "4877",
+          "plateLargestDarkening": "441"
+        },
+        {
+          "floor": "dark",
+          "plateChangedPixels": "0",
+          "plateLargestDarkening": "0"
+        },
+        {
+          "floor": "brick",
+          "plateChangedPixels": "4866",
+          "plateLargestDarkening": "326"
+        }
+      ]
+    }
+  },
+  "open": "Physical furniture edges, in-headset water appearance, full and reduced Space, loss origin, movement accuracy, countdown legibility on real surfaces, and the narrator\u2019s voice require wearer review."
+}
