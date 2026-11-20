@@ -11,30 +11,34 @@ namespace FloorFracture
         private const MRUKAnchor.SceneLabels NonObstacles = MRUKAnchor.SceneLabels.FLOOR |
             MRUKAnchor.SceneLabels.CEILING | MRUKAnchor.SceneLabels.GLOBAL_MESH;
 
+        internal static float TrackingFloorHeight(Vector3 origin, Vector3 up, Vector3 eye)
+        {
+            if (up.y < .99f) return float.NaN;
+            var delta = eye - origin;
+            return origin.y - (up.x * delta.x + up.z * delta.z) / up.y;
+        }
+
         internal static MRUKRoom FindContainingRoom(IReadOnlyList<MRUKRoom> rooms, MRUKRoom hint,
             Vector3 eye, float trackingFloorY, bool editorFixture)
         {
-            if (hint && (hint.IsLocal || editorFixture))
-            {
-                bool inside = hint.FloorAnchors.Count <= 1
-                    ? hint.IsPositionInRoom(eye, false)
-                    : ContainsFloorPoint(hint, eye, trackingFloorY);
-                if (inside) return hint;
-            }
-            // SDK 209 can test only one floor anchor when finding the current room.
-            // Recover a missing or stale hint only when exactly one local multi-floor room contains the eye.
+            if (!FloorGeometry.Finite(trackingFloorY) || !FloorGeometry.Finite(eye.x) ||
+                !FloorGeometry.Finite(eye.y) || !FloorGeometry.Finite(eye.z)) return null;
+            if (hint && (hint.IsLocal || editorFixture) && ContainsFloorPoint(hint, eye, trackingFloorY))
+                return hint;
+            // MRUK's current-room hint can lag a rescan. A single-floor room also
+            // qualifies when its own localized boundary contains the tracked player.
             MRUKRoom found = null;
             foreach (var candidate in rooms)
             {
                 if (!candidate || candidate == hint || (!candidate.IsLocal && !editorFixture) ||
-                    candidate.FloorAnchors.Count < 2 || !ContainsFloorPoint(candidate, eye, trackingFloorY)) continue;
+                    !ContainsFloorPoint(candidate, eye, trackingFloorY)) continue;
                 if (found) return null;
                 found = candidate;
             }
             return found;
         }
 
-        private static bool ContainsFloorPoint(MRUKRoom room, Vector3 eye, float trackingFloorY)
+        internal static bool ContainsFloorPoint(MRUKRoom room, Vector3 eye, float? trackingFloorY)
         {
             foreach (var anchor in room.FloorAnchors)
             {
@@ -44,7 +48,7 @@ namespace FloorFracture
                 if (Mathf.Abs(normal.y) < .999f) continue;
                 var offset = eye - plane.position;
                 float y = plane.position.y - (normal.x * offset.x + normal.z * offset.z) / normal.y;
-                if (Mathf.Abs(y - trackingFloorY) > .25f) continue;
+                if (trackingFloorY.HasValue && Mathf.Abs(y - trackingFloorY.Value) > .25f) continue;
                 Vector2 point = plane.InverseTransformPoint(new Vector3(eye.x, y, eye.z));
                 if (anchor.IsPositionInBoundary(point)) return true;
                 // Include exact perimeter contact when both native point-in-polygon tests
@@ -58,12 +62,20 @@ namespace FloorFracture
         }
 
         public static bool TryRead(MRUKRoom room, float trackingFloorY, float eyeHeight, out List<RoomFloor> floors)
+            => TryRead(room, trackingFloorY, eyeHeight, out floors, out _);
+
+        internal static bool TryRead(MRUKRoom room, float trackingFloorY, float eyeHeight, out List<RoomFloor> floors,
+            out string issue)
         {
             floors = new List<RoomFloor>();
+            issue = "Waiting for a tracked floor-level pose.";
+            if (!FloorGeometry.Finite(trackingFloorY) || !FloorGeometry.Finite(eyeHeight)) return false;
+            issue = "Waiting for the outline of the scanned floor.";
             if (!room || room.FloorAnchors == null || room.Anchors == null) return false;
             foreach (var anchor in room.FloorAnchors)
             {
                 if (!anchor || anchor.PlaneBoundary2D == null || anchor.PlaneBoundary2D.Count < 3) continue;
+                issue = "The scanned floor and the headset's floor level do not line up.";
                 if (Mathf.Abs(anchor.transform.forward.y) < 0.999f) continue;
                 var floorVertices = new List<Vector2>();
                 float low = float.PositiveInfinity, high = float.NegativeInfinity;
@@ -83,6 +95,7 @@ namespace FloorFracture
                 // A single horizontal board cannot span a slope or a different storey.
                 if (high - low > 0.06f || Mathf.Abs(floorY - trackingFloorY) > 0.25f) continue;
 
+                issue = "The scan is missing an outline for a wall or piece of furniture.";
                 var obstacles = new List<Vector2[]>();
                 foreach (var obj in room.Anchors)
                 {
@@ -91,10 +104,12 @@ namespace FloorFracture
                     if (!TryProjectObstacle(obj, floorY, Mathf.Max(eyeHeight + 0.3f, 2.2f), out var footprint)) return false;
                     if (footprint != null) obstacles.Add(footprint);
                 }
+                issue = "The scanned floor outline does not form a usable surface.";
                 var floor = new RoomFloor(floorVertices.ToArray(), obstacles, low, high);
                 if (BoardFitter.IsUsable(floor)) floors.Add(floor);
             }
             if (floors.Count > 1) floors = FloorPatchUnion.Join(floors);
+            if (floors.Count > 0) issue = null;
             return floors.Count > 0;
         }
 

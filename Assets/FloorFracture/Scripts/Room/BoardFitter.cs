@@ -282,6 +282,75 @@ namespace FloorFracture
             }
         }
 
+        // A clear rectangle must contain a clear rectangular set of lattice points.
+        // This cheap upper bound eliminates impossible sizes. All accepted placements
+        // still go through the exact floor and obstacle tests.
+        private sealed class ClearanceGrid
+        {
+            private readonly float spacing;
+            private readonly float roundingMargin;
+            private readonly int[] maxColumnsForHeight;
+
+            public ClearanceGrid(Shape floor, List<Shape> obstacles)
+            {
+                var span = floor.Max - floor.Min;
+                spacing = Mathf.Max(.12f, Mathf.Max(span.x, span.y) / 64f);
+                float coordinateScale = Mathf.Max(Mathf.Max(Mathf.Abs(floor.Min.x), Mathf.Abs(floor.Max.x)),
+                    Mathf.Max(Mathf.Abs(floor.Min.y), Mathf.Abs(floor.Max.y)));
+                roundingMargin = .001f + coordinateScale * .000002f;
+                int columns = Mathf.CeilToInt(span.x / spacing) + 1;
+                int rows = Mathf.CeilToInt(span.y / spacing) + 1;
+                maxColumnsForHeight = new int[rows + 1];
+                var heights = new int[columns];
+                var stack = new int[columns];
+                for (int y = 0; y < rows; y++)
+                {
+                    for (int x = 0; x < columns; x++)
+                    {
+                        var point = floor.Min + new Vector2(x * spacing, y * spacing);
+                        heights[x] = IsClear(point) ? heights[x] + 1 : 0;
+                    }
+                    // For every run of clear rows, record the widest set of
+                    // neighboring columns reaching at least that height.
+                    int count = 0;
+                    for (int x = 0; x <= columns; x++)
+                    {
+                        int height = x < columns ? heights[x] : 0;
+                        while (count > 0 && heights[stack[count - 1]] > height)
+                        {
+                            int runHeight = heights[stack[--count]];
+                            int left = count == 0 ? 0 : stack[count - 1] + 1;
+                            maxColumnsForHeight[runHeight] = Math.Max(maxColumnsForHeight[runHeight], x - left);
+                        }
+                        if (x < columns) stack[count++] = x;
+                    }
+                }
+                for (int h = rows - 1; h >= 1; h--)
+                    maxColumnsForHeight[h] = Math.Max(maxColumnsForHeight[h], maxColumnsForHeight[h + 1]);
+
+                bool IsClear(Vector2 point)
+                {
+                    if (!FloorGeometry.Contains(floor.Points, point)) return false;
+                    foreach (var shape in obstacles)
+                    {
+                        if (shape.Points.Length < 3 || point.x < shape.Min.x || point.x > shape.Max.x ||
+                            point.y < shape.Min.y || point.y > shape.Max.y) continue;
+                        if (FloorGeometry.Contains(shape.Points, point)) return false;
+                    }
+                    return true;
+                }
+            }
+
+            public bool MayFit(Vector2 half)
+            {
+                // Round down and leave a margin on the rectangle edges so an exact
+                // fit, a thin aisle or floating-point edge contact cannot be discarded.
+                int columns = Mathf.FloorToInt((2f * half.x - roundingMargin) / spacing);
+                int rows = Mathf.FloorToInt((2f * half.y - roundingMargin) / spacing);
+                return columns <= 0 || rows <= 0 || (rows < maxColumnsForHeight.Length && maxColumnsForHeight[rows] >= columns);
+            }
+        }
+
         private sealed class Frame
         {
             public readonly float Height, Angle;
@@ -293,6 +362,7 @@ namespace FloorFracture
             private readonly List<Vector2> suggestions = new List<Vector2>();
             private readonly List<Vector3> spanLimits = new List<Vector3>();
             private Vector2 preferred;
+            private ClearanceGrid clearanceGrid;
 
             public Frame(RoomFloor source, float angle)
             {
@@ -320,6 +390,8 @@ namespace FloorFracture
                 // the floor's extreme points. In particular, a diagonal frame cannot
                 // inflate the apparent width of a long, narrow room.
                 var span = floor.Max - floor.Min;
+                if ((floor.Points.Length > 6 || obstacles.Count >= 3) && FloorGeometry.Finite(span))
+                    clearanceGrid = new ClearanceGrid(floor, obstacles);
                 spanLimits.Add(new Vector3(1f, 0f, span.x));
                 spanLimits.Add(new Vector3(0f, 1f, span.y));
                 for (int i = 0; i < floor.Points.Length; ++i)
@@ -377,6 +449,11 @@ namespace FloorFracture
 
             public bool TryFindCenter(Vector2 half, CancellationToken cancellation, out Vector2 center)
             {
+                if (clearanceGrid != null && !clearanceGrid.MayFit(half))
+                {
+                    center = default;
+                    return false;
+                }
                 foreach (var failed in failedHalfSizes)
                     if (half.x >= failed.x && half.y >= failed.y) { center = default; return false; }
                 if (Search(half, cancellation, out center)) return true;

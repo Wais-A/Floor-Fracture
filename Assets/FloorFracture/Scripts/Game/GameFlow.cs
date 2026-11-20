@@ -81,7 +81,7 @@ namespace FloorFracture
                 case RoomPlacementStatus.NoRoom:
                 case RoomPlacementStatus.UnsafeRoom:
                 case RoomPlacementStatus.NoFit:
-                    Panel.Show("Find a clear floor",Room.Message,Choice("Space Setup",Room.RequestSpaceSetup),Choice("Check again",Room.Retry)); break;
+                    Panel.ShowRoomRecovery(Room.Message, Room.Retry, Room.RequestSpaceSetup); break;
                 default: Panel.Show("Reading your room",Room.Message); break;
             }
         }

@@ -13,7 +13,13 @@ Wais tested the first playable development APK in his room. Unity build `build_a
 
 ## Current Quest build · November 20
 
-The Quest has game source `1da914c`, development player `a9bb5ead80484b569273e17428beae54`. Unattended runs confirmed both boundary exits in the native Mac simulator and measured a shorter first large shatter on the physical Quest. For the wearer review, take an ordinary step near a seam, then let a different pane give way under you. [Current installation](<./Latest Quest release.json>) · [Both boundary exits](<./Between-wave boundary/simulator.jpg>)
+The installed ordinary game uses source `9be95e1` and build `7078b4e5e13c485facefc3c00fceb121`. Android resumed it on the physical Quest and its SHA-256 matched the signed local package. The separate device test checked 24 room selections using two synthetic single-floor rooms. During the unattended launch, the headset reported zero saved rooms and inactive world lock. The game kept the board hidden. Left and right hand pinches were exercised in the Mac simulator. In the same furnished test room on Quest, fitting glass took 0.315–0.318 seconds across two runs. [Matched room timings](<./Room fitting time on Quest.json>) [Test results](<./Room recovery and hand aim.json>) · [Recovery menu](<./Room recovery hand menu.jpg>)
+
+- [ ] Launch in the same physical room that repeatedly asked for a rescan. Record whether the saved room opens Welcome, the displayed grid size and whether it sits on the floor. If a message persists, record its exact text.
+- [ ] Point to Settings with a relaxed left hand and pinch once. Select Back with the right, then reverse hands. If Check again is shown, record which row highlights and which opens. Record either hand that needs to bend upward.
+- [ ] Continue to the ordinary step near a seam, an off-center loss, Water and Space, and the chair-edge check below.
+
+The preceding boundary and shatter build used game source `1da914c`, development player `a9bb5ead80484b569273e17428beae54`. Unattended runs confirmed both boundary exits in the native Mac simulator and measured a shorter first large shatter on the physical Quest. For the wearer review, take an ordinary step near a seam, then let a different pane give way under you. [Boundary and shatter installation](<./Latest Quest release.json>) · [Both boundary exits](<./Between-wave boundary/simulator.jpg>)
 
 The earlier intact-rim revision was `72faf40`, development player `3e6180eec5cf43c9b401100062714d93`. The pale-floor comparison adds one more check for the next wearer. Look from your occupied pane to a distant intact pane, then shift your head and watch whether the intact edge stays readable and the warning still stands apart. [Earlier glass build](<./Glass rim Quest release.json>) · [Rendered intact edges](<../Media/safe-rim-comparison.png>)
 

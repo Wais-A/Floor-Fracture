@@ -175,7 +175,7 @@ namespace FloorFracture.Editor
                 SetHead(initialHead);
                 game.Panel.Recenter();
             }
-            Record("The native rig's provisional floor-height pose did not strand the menu below the eye. A page that began below the viewport appeared at eye height. The SDK display event recalled Settings, Paused, and Results at 56 cm. The menu stayed fixed during ordinary head movement, stayed hidden during play and waited for tracking after suspension. The glass, floor anchor and camera rig kept their poses.");
+            Record("The menu recovered from a provisional eye pose and an offscreen position. The SDK display event recalled Settings, Paused and Results 56 cm forward and 24 cm below the tracked eye. Ordinary head turns, hidden gameplay, suspended tracking and the anchored glass passed their checks.");
         }
 
         private static IEnumerator VerifyRecenterOnPage(FixtureDisplay display, Transform canvas, GameStage page,
@@ -219,7 +219,7 @@ namespace FloorFracture.Editor
         private static void RequireCenteredMenu(Transform canvas, float yaw)
         {
             Vector3 forward = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
-            Vector3 offset = forward * .56f + Vector3.down * .07f;
+            Vector3 offset = forward * .56f + Vector3.down * .24f;
             var expected = new Pose(head.position + offset, Quaternion.LookRotation(offset, Vector3.up));
             Require(game.Panel.Visible && HasPose(canvas, expected), "The open page did not face the eye at the reachable menu distance.");
         }

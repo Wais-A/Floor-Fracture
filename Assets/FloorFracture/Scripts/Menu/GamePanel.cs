@@ -19,7 +19,7 @@ namespace FloorFracture
     public sealed class GamePanel : MonoBehaviour
     {
         public const string CanvasName = "Floor Fracture Menu";
-        private const float Width = 672, Margin = 32, RowHeight = 57, RowGap = 8;
+        private const float Width = 672, Margin = 32, RowHeight = 72, RowGap = 14;
         private const float WarningPreviewSize = 144;
         private static readonly Color Paper = new Color32(13, 32, 41, 249);
         private static readonly Color Idle = new Color32(35, 66, 76, 255);
@@ -33,7 +33,7 @@ namespace FloorFracture
             internal RectTransform Rect;
             internal UnityEngine.UI.Image Fill;
             internal UnityEngine.UI.Text Text;
-            internal UnityEngine.UI.Button Button;
+            internal MenuPageButton Button;
         }
 
         private readonly List<Row> rows = new List<Row>();
@@ -51,6 +51,7 @@ namespace FloorFracture
         private UnityEngine.UI.Text title, body;
         private GlassTile warningPreview;
         private bool previewGentle;
+        private bool roomRecovery;
         private Font font;
         private Camera eye;
         private OVRDisplay recenterDisplay;
@@ -119,7 +120,7 @@ namespace FloorFracture
 #endif
             if (!go) throw new InvalidOperationException("Install the Meta ray canvas with MenuSceneSetup before building this scene.");
             panel = (RectTransform)go.transform;
-            // A 39 cm panel at 56 cm keeps the original angular size and puts buttons within reach.
+            // The physical row is 4.2 cm tall, with 8 mm between adjacent actions.
             panel.localScale = Vector3.one * 0.00058f;
             menuCanvas = go.GetComponent<Canvas>();
             menuCanvas.renderMode = RenderMode.WorldSpace;
@@ -141,15 +142,35 @@ namespace FloorFracture
 
         public void Show(string heading, string message, params MenuChoice[] options)
         {
+            ShowPage(heading, message, options, false);
+        }
+
+        public void ShowRoomRecovery(string message, Action checkAgain, Action openSpaceSetup)
+        {
+            var options = new[] { new MenuChoice("Check again", checkAgain), new MenuChoice("Space Setup", openSpaceSetup) };
+            ShowPage("Find a clear floor", message, options, true);
+        }
+
+        private void ShowPage(string heading, string message, MenuChoice[] options, bool isRoomRecovery)
+        {
             bool position = !Visible;
-            if (warningPreview) warningPreview.gameObject.SetActive(false);
+            bool updatingRecovery = isRoomRecovery && roomRecovery && Visible;
+            roomRecovery = isRoomRecovery;
             choices = options ?? Array.Empty<MenuChoice>();
+            if (updatingRecovery)
+            {
+                // Tracking can change the explanation while a hand is hovering or pressing the same action.
+                SetBody(message);
+                return;
+            }
+            if (warningPreview) warningPreview.gameObject.SetActive(false);
             panel.gameObject.SetActive(true);
-            if (position) ClearPointers();
+            ClearPointers();
             title.text = heading ?? "";
             for (int i = rows.Count; i < choices.Length; ++i) BuildRow(i);
             for (int i = 0; i < rows.Count; ++i)
             {
+                rows[i].Button.ClearPendingPresses();
                 bool use = i < choices.Length;
                 rows[i].Rect.gameObject.SetActive(use);
                 if (use) rows[i].Text.text = choices[i].Label;
@@ -198,6 +219,9 @@ namespace FloorFracture
             for (int i = 0; i < choices.Length; ++i)
                 Place(rows[i].Rect, Margin, top + i * (RowHeight + RowGap), Width - 2 * Margin, RowHeight);
             float height = top + choices.Length * (RowHeight + RowGap) - (choices.Length > 0 ? RowGap : 0) + Margin;
+            // On the recovery page the first button's top edge stays at the panel origin.
+            // Additional lines of tracking status expand the panel above a resting hand.
+            panel.pivot = new Vector2(.5f, roomRecovery ? (height - top) / height : .5f);
             panel.sizeDelta = new Vector2(Width, height);
         }
 
@@ -220,7 +244,8 @@ namespace FloorFracture
             }
             Vector3 forward = Vector3.ProjectOnPlane(Head.forward, Vector3.up);
             if (forward.sqrMagnitude < 0.01f) forward = Vector3.Cross(Head.right, Vector3.up);
-            Vector3 pos = Head.position + forward.normalized * .56f + Vector3.down * .07f;
+            // Keep the panel in poke range, low enough to aim from chest height with a relaxed wrist.
+            Vector3 pos = Head.position + forward.normalized * .56f + Vector3.down * .24f;
             panel.SetPositionAndRotation(pos, Quaternion.LookRotation(pos - Head.position, Vector3.up));
         }
 
@@ -281,13 +306,13 @@ namespace FloorFracture
 
         private void BuildRow(int index)
         {
-            var go = new GameObject("Choice " + (index + 1), typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+            var go = new GameObject("Choice " + (index + 1), typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(MenuPageButton));
             go.transform.SetParent(panel, false);
             var row = new Row
             {
                 Rect = (RectTransform)go.transform,
                 Fill = go.GetComponent<UnityEngine.UI.Image>(),
-                Button = go.GetComponent<UnityEngine.UI.Button>()
+                Button = go.GetComponent<MenuPageButton>()
             };
             row.Fill.raycastTarget = true;
             row.Button.targetGraphic = row.Fill;
@@ -383,7 +408,9 @@ namespace FloorFracture
             {
                 if (!UniqueIdentifier.TryGetInstanceFromIdentifier<Component>(Context.Global.GetInstance(), id, out var source)
                     || (!(source is RayInteractor) && !(source is PokeInteractor))) return;
-                var controller = source.GetComponentInParent<IController>();
+                // Meta's comprehensive rig exposes controller and hand data on the same branch.
+                // Its interactor decoration identifies which pointers can deliver haptics.
+                InteractorControllerDecorator.TryGetControllerForInteractorId(id, out var controller);
                 var hand = controller == null ? source.GetComponentInParent<IHand>() : null;
                 if (controller == null && hand == null) return;
                 side = (controller?.Handedness ?? hand.Handedness) == Handedness.Left ? 0 : 1;

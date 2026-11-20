@@ -88,8 +88,9 @@ namespace FloorFracture.Tests
             Assert.That(BoardFitter.Fits(Floor(Rectangle(-3,-3,3,3),hole,obstacle), fit), Is.True);
         }
 
-        [Test]
-        public void LocalizesEitherFloorAnchorAndRejectsOutsideWrongStoreyAndAmbiguousRooms()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void LocalizesFloorWithAbsentOrStaleHintAndRejectsOutsideWrongStoreyAndAmbiguousRooms(bool split)
         {
             var root = new GameObject("MRUK localization fixture");
             root.SetActive(false);
@@ -101,12 +102,12 @@ namespace FloorFracture.Tests
                     host.transform.SetParent(root.transform, false);
                     host.transform.position = Vector3.right * x;
                     var room = host.AddComponent<MRUKRoom>();
-                    foreach (float start in new[] { -2f, 0f })
+                    foreach (float start in split ? new[] { -2f, 0f } : new[] { -2f })
                     {
                         var floor = new GameObject("FLOOR").AddComponent<MRUKAnchor>();
                         floor.transform.SetParent(host.transform,false);
                         floor.transform.localRotation = Quaternion.Euler(-90,0,0);
-                        floor.PlaneBoundary2D.AddRange(Rectangle(start,-1,start+2,1));
+                        floor.PlaneBoundary2D.AddRange(Rectangle(start,-1,split ? start+2 : 2f,1));
                         room.FloorAnchors.Add(floor);
                     }
                     return room;
@@ -125,12 +126,26 @@ namespace FloorFracture.Tests
                 Assert.That(At(10,active), Is.SameAs(other));
                 Assert.That(At(4,active), Is.Null);
                 Assert.That(At(0,active,2), Is.Null);
+                Assert.That(At(0,active,float.NaN), Is.Null);
                 Assert.That(MrukFloorReader.FindContainingRoom(rooms,active,new Vector3(0,1.6f,0),0,false), Is.Null,
                     "An Editor room without a local device anchor cannot supply runtime tracking.");
                 other.transform.position = Vector3.zero;
                 Assert.That(At(0), Is.Null, "Two competing floor regions with no current room hint.");
             }
             finally { Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void MeasuresTheCalibratedFloorUnderTheEyeInWorldLockedSpace()
+        {
+            var origin = new Vector3(5, -.8f, -4);
+            var rotation = Quaternion.Euler(1.5f, 37, -.75f);
+            var floorPoint = origin + rotation * new Vector3(1.6f, 0, 2.1f);
+            var eye = floorPoint + Vector3.up * 1.45f;
+            Assert.That(MrukFloorReader.TrackingFloorHeight(origin, rotation * Vector3.up, eye),
+                Is.EqualTo(floorPoint.y).Within(.0001f));
+            Assert.That(float.IsNaN(MrukFloorReader.TrackingFloorHeight(origin, Vector3.right, eye)), Is.True);
+            Assert.That(float.IsNaN(MrukFloorReader.TrackingFloorHeight(origin, Vector3.down, eye)), Is.True);
         }
 
         [Test]
@@ -496,6 +511,25 @@ namespace FloorFracture.Tests
             Assert.That(BoardFitter.TryFind(new[] { floor }, P(-3,0), out var found), Is.True);
             Assert.That(found.Columns * found.Rows, Is.EqualTo(4));
             Assert.That(found.Center.x, Is.InRange(0.6229f,0.6233f));
+        }
+
+        [TestCase(17.3f)]
+        [TestCase(89.8f)]
+        public void PreservesAnExactRotatedAisleBetweenFourFurnitureFootprints(float angle)
+        {
+            var aisle = new BoardPlacement(P(-3.37f, 5.21f), 0f, angle, 8, 2);
+            Vector2[] Box(float left, float bottom, float right, float top) =>
+                Rectangle(left, bottom, right, top).Select(v => aisle.ToWorldXZ(v.x, v.y)).ToArray();
+            RoomFloor FurnishedRoom(float topOfAisle) => Floor(Box(-2, -2, 2, 2),
+                Box(-2, -2, 0, -.5f), Box(0, -2, 2, -.5f),
+                Box(-2, topOfAisle, 0, 2), Box(0, topOfAisle, 2, 2));
+
+            var room = FurnishedRoom(.5f);
+            Assert.That(BoardFitter.TryFind(new[] { room }, aisle.Center, out var fit), Is.True);
+            Assert.That(BoardFitter.Fits(room, fit), Is.True);
+            Assert.That(fit.Columns * fit.Rows, Is.EqualTo(16));
+            Assert.That((fit.Center - aisle.Center).magnitude, Is.LessThan(.001f));
+            Assert.That(BoardFitter.TryFind(new[] { FurnishedRoom(.498f) }, aisle.Center, out _), Is.False);
         }
 
         [Test]

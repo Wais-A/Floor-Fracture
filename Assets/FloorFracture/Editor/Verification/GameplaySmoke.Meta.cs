@@ -1,10 +1,12 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Meta.XR.BuildingBlocks;
 using Meta.XR.EnvironmentDepth;
 using Meta.XR.MRUtilityKit;
 using Oculus.Interaction;
+using Oculus.Interaction.Input;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -123,6 +125,98 @@ namespace FloorFracture.Editor
 
             bool HasPokeHand(string side) => hands.Any(poke => poke.GetComponentsInParent<Transform>(true)
                 .Any(parent => parent.name == "ComprehensiveInteractors" + side));
+        }
+
+        private sealed class MenuHandSample : IDataSource<HandDataAsset>
+        {
+            internal readonly HandDataAsset Data = new();
+            public int CurrentDataVersion { get; private set; }
+            public event Action InputDataAvailable;
+            public HandDataAsset GetData() => Data;
+            public void MarkInputDataRequiresUpdate() { CurrentDataVersion++; InputDataAvailable?.Invoke(); }
+        }
+
+        private static IEnumerator VerifyHandRecoveryMenu()
+        {
+            var canvas = game.Panel.transform.Find(GamePanel.CanvasName);
+            var rays = game.Rig.GetComponentsInChildren<RayInteractor>(true).Where(r => r.name == "HandRayInteractor").ToArray();
+            Require(rays.Length == 2, "The game needs the two hand rays from the Meta Interactions Rig.");
+            int retry = 0, rescan = 0;
+            void ShowChoices(string message) => game.Panel.ShowRoomRecovery(message, () => retry++, () => rescan++);
+            ShowChoices("Looking for your saved floor.");
+            game.Panel.Recenter();
+            foreach (var authored in rays)
+            {
+                ShowChoices("Looking for your saved floor.");
+                var pose = authored.GetComponentInChildren<HandPointerPose>(true);
+                var selector = authored.GetComponentInChildren<IndexPinchSelector>(true);
+                Require(pose && selector && new SerializedObject(authored).FindProperty("_rayOrigin").objectReferenceValue == pose.transform &&
+                    new SerializedObject(authored).FindProperty("_selector").objectReferenceValue == selector &&
+                    new SerializedObject(pose).FindProperty("_hand").objectReferenceValue == new SerializedObject(selector).FindProperty("_hand").objectReferenceValue,
+                    "A hand ray did not use the SDK system aim pose and index pinch from the same hand.");
+                bool isLeft = authored.GetComponentsInParent<Transform>(true).Any(t => t.name == "ComprehensiveInteractorsLeft");
+                var host = new GameObject("Synthetic input for Meta hand ray");
+                host.SetActive(false);
+                try
+                {
+                    var sample = new MenuHandSample();
+                    var data = sample.Data;
+                    data.Config.Handedness = isLeft ? Handedness.Left : Handedness.Right;
+                    data.IsDataValid = data.IsConnected = data.IsTracked = data.IsHighConfidence = true;
+                    data.HandScale = 1;
+                    data.PointerPoseOrigin = data.RootPoseOrigin = PoseOrigin.RawTrackedPose;
+                    var hand = host.AddComponent<Hand>();
+                    hand.InjectAllDataModifier(DataSource<HandDataAsset>.UpdateModeFlags.AfterPreviousStep, sample, sample, false);
+                    var copy = UnityEngine.Object.Instantiate(authored.gameObject, host.transform);
+                    copy.GetComponent<HandRef>().InjectHand(hand);
+                    var ray = copy.GetComponent<RayInteractor>();
+                    var row = (RectTransform)canvas.Find(isLeft ? "Choice 1" : "Choice 2");
+                    var target = row.TransformPoint(row.rect.center);
+                    var eye = game.Panel.Head;
+                    var wrist = eye.position + eye.right * (isLeft ? -.16f : .16f) + eye.forward * .27f + Vector3.down * .40f;
+                    var direction = (target - wrist).normalized;
+                    Require(Vector3.Angle(direction, Vector3.ProjectOnPlane(direction, Vector3.up)) < 30,
+                        "The recovery action required a steep upward ray from the chest-height hand fixture.");
+                    data.Root = new Pose(wrist, Quaternion.LookRotation(Vector3.up, Vector3.back));
+                    data.PointerPose = new Pose(wrist, Quaternion.LookRotation(direction));
+                    host.SetActive(true);
+                    yield return Frames(3);
+                    sample.MarkInputDataRequiresUpdate();
+                    yield return Frames(4);
+                    Require(ray.CollisionInfo.HasValue && Vector3.Distance(ray.CollisionInfo.Value.Point, target) < .003f &&
+                        Vector3.Angle(ray.Forward, direction) < .2f, "The SDK hand ray followed the palm axis or missed the recovery row.");
+                    var fill = row.GetComponent<UnityEngine.UI.Image>();
+                    var idleRow = canvas.Find(isLeft ? "Choice 2" : "Choice 1").GetComponent<UnityEngine.UI.Image>();
+                    Require(fill.color != idleRow.color, "A hand hovering the recovery row did not highlight it.");
+                    var highlight = fill.color;
+                    ShowChoices("The floor in your scan is at a different height from the headset's floor level. Check the floor height in Space Setup, then return here.");
+                    yield return Frames(2);
+                    Require(fill.color == highlight && Vector3.Distance(target, row.TransformPoint(row.rect.center)) < .0005f,
+                        "A tracking update cleared the hand highlight or moved the action under it.");
+                    int priorRetry = retry, priorRescan = rescan;
+                    void Pinch(bool down)
+                    {
+                        data.IsFingerPinching[(int)HandFinger.Index] = down;
+                        data.FingerPinchStrength[(int)HandFinger.Index] = down ? 1 : 0;
+                        sample.MarkInputDataRequiresUpdate();
+                    }
+                    Pinch(true); yield return Frames(3);
+                    Pinch(false); yield return Frames(3);
+                    Require(retry == priorRetry + (isLeft ? 1 : 0) && rescan == priorRescan + (isLeft ? 0 : 1),
+                        "The SDK index pinch did not activate its own hovered row exactly once.");
+                    Pinch(true); yield return Frames(3);
+                    game.Panel.Show("Play area", "Choose where to play.",
+                        new MenuChoice("Back", () => retry++), new MenuChoice("Try another spot", () => rescan++));
+                    Pinch(false); yield return Frames(3);
+                    Require(retry + rescan == priorRetry + priorRescan + 1, "A held pinch activated an action on its replacement page.");
+                }
+                finally { UnityEngine.Object.Destroy(host); }
+                yield return Frames(2);
+            }
+            Require(retry == 1 && rescan == 1, "Both left and right recovery actions must be exercised.");
+            game.Room.Retry();
+            yield return Wait(() => game.Stage == GameStage.Welcome, "Welcome after hand input checks", 55);
+            Record("Both authored Meta hand-ray prefabs selected their intended recovery row once using synthetic system aim and index pinch with the palm pointing upward. Both targets were under 30 degrees above a chest-height hand. A pinch held across a page change triggered no new action.");
         }
     }
 }

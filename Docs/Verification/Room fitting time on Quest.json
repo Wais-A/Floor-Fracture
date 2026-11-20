@@ -1,0 +1,427 @@
+{
+  "gameSource": "9be95e1d21355f483b13debeb5df91553b23365e",
+  "previousFitterSource": "f680b879b1470b246216970bcdf52b6e7b0e2161",
+  "dateUtc": "2026-11-20T14:08:30.495895+00:00",
+  "fixture": {
+    "source": "Public synthetic furnished room from the Meta XR Simulator. The room reader exported one ten-vertex floor and 24 wall and furniture outlines. The device timing used the same projected positions for both fitters.",
+    "projectedLayoutSha256": "0bf3e6f058f0442bedba80412ec028de4963ebf8bc2fe9e15ad3ac5494c24522",
+    "floorVertices": 10,
+    "obstructionFootprints": 24,
+    "realUserRoomDataIncluded": false
+  },
+  "change": "Before the exact placement search, sample the projected floor and filled obstacles and bound which rectangle sizes can fit. The bound rounds down and includes an edge tolerance. Thin walls, tight fits, furniture and every accepted board still pass the original exact geometry tests. The gameplay board dimensions, angles, pane range and ranking are unchanged.",
+  "physicalQuest": {
+    "device": "Oculus Quest 3",
+    "temporaryApp": "com.wa003.floorfracture.renderbench",
+    "temporaryBuildGuid": "0db646322c424714be3b9fba0e08c98d",
+    "temporaryApkSha256": "b720d3648653a1ea8f139a8f023ba37cccbe22e98f290ce55cb156238a54b9aa",
+    "method": "Run the previous and revised managed fitters on a worker thread in the same ARM64 IL2CPP player and process, alternating in the order below. Validate every result with the previous exact checker. Durations cover placement computation after the room is loaded.",
+    "runs": [
+      {
+        "method": "revised",
+        "seconds": 0.3145729,
+        "found": true,
+        "fits": true,
+        "columns": 12,
+        "rows": 2,
+        "pitch": 0.5620899200439453,
+        "x": 1.6465954780578613,
+        "z": 0.17667436599731445,
+        "angle": 85.31462860107422
+      },
+      {
+        "method": "previous",
+        "seconds": 11.0144135,
+        "found": true,
+        "fits": true,
+        "columns": 12,
+        "rows": 2,
+        "pitch": 0.5620899200439453,
+        "x": 1.6465954780578613,
+        "z": 0.17667436599731445,
+        "angle": 85.31462860107422
+      },
+      {
+        "method": "previous",
+        "seconds": 10.8535573,
+        "found": true,
+        "fits": true,
+        "columns": 12,
+        "rows": 2,
+        "pitch": 0.5620899200439453,
+        "x": 1.6465954780578613,
+        "z": 0.17667436599731445,
+        "angle": 85.31462860107422
+      },
+      {
+        "method": "revised",
+        "seconds": 0.3175923,
+        "found": true,
+        "fits": true,
+        "columns": 12,
+        "rows": 2,
+        "pitch": 0.5620899200439453,
+        "x": 1.6465954780578613,
+        "z": 0.17667436599731445,
+        "angle": 85.31462860107422
+      }
+    ],
+    "medianPreviousSeconds": 10.933985400000001,
+    "medianRevisedSeconds": 0.3160826,
+    "identicalPlacementInAllFourRuns": true,
+    "temporaryAppRemoved": true,
+    "wearDetectionRestored": true,
+    "testHostBuild": "The temporary APK passed Unity’s build and ZIP checks. Its batch Editor timed out during post-build shutdown. The signed game used a separate cleanly exiting build and was verified on the headset."
+  },
+  "nativeMacSimulator": {
+    "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity in the separate Meta XR Simulator window",
+    "method": "Timestamp game state changes from a fresh saved-room retry to Welcome in the same furnished scene and head pose. Times include the SDK query and fitting.",
+    "previous": [
+      {
+        "seconds": 0.001,
+        "stage": "Loading",
+        "message": "Loading your room…"
+      },
+      {
+        "seconds": 0.058,
+        "stage": "Loading",
+        "message": "Look around your scanned room while the headset finds its floor."
+      },
+      {
+        "seconds": 0.058,
+        "stage": "Loading",
+        "message": "Floor found. Fitting the glass between the walls and furniture…"
+      },
+      {
+        "seconds": 38.065,
+        "stage": "Confirmed",
+        "message": "Your room scan fits 12 × 2 panes at 56 cm each, covering 6.75 × 1.12 m."
+      }
+    ],
+    "revised": [
+      [
+        {
+          "seconds": 0.001,
+          "stage": "Loading",
+          "message": "Loading your room…"
+        },
+        {
+          "seconds": 0.059,
+          "stage": "Loading",
+          "message": "Look around your scanned room while the headset finds its floor."
+        },
+        {
+          "seconds": 0.06,
+          "stage": "Loading",
+          "message": "Floor found. Fitting the glass between the walls and furniture…"
+        },
+        {
+          "seconds": 1.098,
+          "stage": "Confirmed",
+          "message": "Your room scan fits 12 × 2 panes at 56 cm each, covering 6.75 × 1.12 m."
+        }
+      ],
+      [
+        {
+          "seconds": 0.001,
+          "stage": "Loading",
+          "message": "Loading your room…"
+        },
+        {
+          "seconds": 0.07,
+          "stage": "Loading",
+          "message": "Look around your scanned room while the headset finds its floor."
+        },
+        {
+          "seconds": 0.07,
+          "stage": "Loading",
+          "message": "Floor found. Fitting the glass between the walls and furniture…"
+        },
+        {
+          "seconds": 0.779,
+          "stage": "Confirmed",
+          "message": "Your room scan fits 12 × 2 panes at 56 cm each, covering 6.75 × 1.12 m."
+        }
+      ]
+    ],
+    "screenshot": "Fitted room Welcome in the simulator.jpg",
+    "screenshotSha256": "2a13555bc87b82d25b23ab24931f10665230258748fb7bab3afa4274e3922d8c",
+    "screenshotCaption": "The Unity Editor shows its Development button in the synthetic room. The installed ordinary Quest build has the four player-facing choices."
+  },
+  "desktopDifferential": {
+    "runner": ".NET 10 Release with the installed Unity CoreModule, fixed input to both fitters",
+    "seed": 379,
+    "layouts": 33,
+    "layoutsWithNoFit": 4,
+    "identicalResultsIncludingCenterAngleAndPaneWidth": 33,
+    "changedDecisions": [],
+    "results": [
+      {
+        "name": "blocked-filled.json",
+        "valid": true,
+        "found": false,
+        "columns": 0,
+        "rows": 0,
+        "pitch": 0
+      },
+      {
+        "name": "blocked-narrow-aisle.json",
+        "valid": true,
+        "found": false,
+        "columns": 0,
+        "rows": 0,
+        "pitch": 0
+      },
+      {
+        "name": "blocked-narrow.json",
+        "valid": true,
+        "found": false,
+        "columns": 0,
+        "rows": 0,
+        "pitch": 0
+      },
+      {
+        "name": "blocked-rotated-narrow.json",
+        "valid": true,
+        "found": false,
+        "columns": 0,
+        "rows": 0,
+        "pitch": 0
+      },
+      {
+        "name": "cabinet.json",
+        "valid": true,
+        "found": true,
+        "columns": 2,
+        "rows": 3,
+        "pitch": 0.6486667
+      },
+      {
+        "name": "native-furnished.json",
+        "valid": true,
+        "found": true,
+        "columns": 12,
+        "rows": 2,
+        "pitch": 0.5620899
+      },
+      {
+        "name": "recroom.json",
+        "valid": true,
+        "found": true,
+        "columns": 6,
+        "rows": 6,
+        "pitch": 0.6207143
+      },
+      {
+        "name": "room-00.json",
+        "valid": true,
+        "found": true,
+        "columns": 3,
+        "rows": 7,
+        "pitch": 0.56223667
+      },
+      {
+        "name": "room-01.json",
+        "valid": true,
+        "found": true,
+        "columns": 3,
+        "rows": 8,
+        "pitch": 0.6113505
+      },
+      {
+        "name": "room-02.json",
+        "valid": true,
+        "found": true,
+        "columns": 5,
+        "rows": 6,
+        "pitch": 0.65129524
+      },
+      {
+        "name": "room-03.json",
+        "valid": true,
+        "found": true,
+        "columns": 7,
+        "rows": 4,
+        "pitch": 0.5055899
+      },
+      {
+        "name": "room-04.json",
+        "valid": true,
+        "found": true,
+        "columns": 4,
+        "rows": 8,
+        "pitch": 0.55361784
+      },
+      {
+        "name": "room-05.json",
+        "valid": true,
+        "found": true,
+        "columns": 2,
+        "rows": 8,
+        "pitch": 0.63965994
+      },
+      {
+        "name": "room-06.json",
+        "valid": true,
+        "found": true,
+        "columns": 3,
+        "rows": 5,
+        "pitch": 0.623125
+      },
+      {
+        "name": "room-07.json",
+        "valid": true,
+        "found": true,
+        "columns": 4,
+        "rows": 6,
+        "pitch": 0.5209904
+      },
+      {
+        "name": "room-08.json",
+        "valid": true,
+        "found": true,
+        "columns": 4,
+        "rows": 10,
+        "pitch": 0.50760245
+      },
+      {
+        "name": "room-09.json",
+        "valid": true,
+        "found": true,
+        "columns": 2,
+        "rows": 2,
+        "pitch": 0.59861326
+      },
+      {
+        "name": "room-10.json",
+        "valid": true,
+        "found": true,
+        "columns": 2,
+        "rows": 6,
+        "pitch": 0.629136
+      },
+      {
+        "name": "room-11.json",
+        "valid": true,
+        "found": true,
+        "columns": 4,
+        "rows": 5,
+        "pitch": 0.57076836
+      },
+      {
+        "name": "room-12.json",
+        "valid": true,
+        "found": true,
+        "columns": 5,
+        "rows": 5,
+        "pitch": 0.50365233
+      },
+      {
+        "name": "room-13.json",
+        "valid": true,
+        "found": true,
+        "columns": 5,
+        "rows": 3,
+        "pitch": 0.6596459
+      },
+      {
+        "name": "room-14.json",
+        "valid": true,
+        "found": true,
+        "columns": 4,
+        "rows": 6,
+        "pitch": 0.5841801
+      },
+      {
+        "name": "room-15.json",
+        "valid": true,
+        "found": true,
+        "columns": 9,
+        "rows": 2,
+        "pitch": 0.6318742
+      },
+      {
+        "name": "room-16.json",
+        "valid": true,
+        "found": true,
+        "columns": 3,
+        "rows": 5,
+        "pitch": 0.5501368
+      },
+      {
+        "name": "room-17.json",
+        "valid": true,
+        "found": true,
+        "columns": 3,
+        "rows": 8,
+        "pitch": 0.6248936
+      },
+      {
+        "name": "room-18.json",
+        "valid": true,
+        "found": true,
+        "columns": 3,
+        "rows": 4,
+        "pitch": 0.67
+      },
+      {
+        "name": "room-19.json",
+        "valid": true,
+        "found": true,
+        "columns": 3,
+        "rows": 5,
+        "pitch": 0.6462629
+      },
+      {
+        "name": "room-20.json",
+        "valid": true,
+        "found": true,
+        "columns": 3,
+        "rows": 8,
+        "pitch": 0.5109552
+      },
+      {
+        "name": "room-21.json",
+        "valid": true,
+        "found": true,
+        "columns": 5,
+        "rows": 9,
+        "pitch": 0.5362289
+      },
+      {
+        "name": "room-22.json",
+        "valid": true,
+        "found": true,
+        "columns": 5,
+        "rows": 7,
+        "pitch": 0.5029882
+      },
+      {
+        "name": "room-23.json",
+        "valid": true,
+        "found": true,
+        "columns": 6,
+        "rows": 3,
+        "pitch": 0.6636914
+      },
+      {
+        "name": "sdk_sample.json",
+        "valid": true,
+        "found": true,
+        "columns": 3,
+        "rows": 2,
+        "pitch": 0.67
+      },
+      {
+        "name": "square.json",
+        "valid": true,
+        "found": true,
+        "columns": 3,
+        "rows": 3,
+        "pitch": 0.6486667
+      }
+    ]
+  },
+  "edgeRegression": "Rotated, exactly 1 m wide aisles between four objects still admit 8 × 2 panes at 50 cm. Moving the upper row of obstacles in by 2 mm rejects the layout. Both tested orientations passed.",
+  "remaining": "Record the actual saved demo room, fit and comfort with a wearer. The separate 72 FPS target during simultaneous shatters is tracked at checklist item 122."
+}
