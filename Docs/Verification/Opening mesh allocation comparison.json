@@ -1,0 +1,142 @@
+{
+  "result": "Keep the released player. The candidate removes measurable application allocations, but these unattended trials do not demonstrate a reduction in presented frame time.",
+  "timeUTC": "2026-11-20T10:30:11.969+00:00",
+  "currentGameSHA256": "4edd1ac8c3636cb173ebee2c714f43d84dc6eef07cdb68c077e5bbb098823512",
+  "appliedOrCommitted": false,
+  "scratchSignedAPK": "3e111a27c8808e1d1009af13a96673887609a78adb3e16940b56f086147af69a",
+  "candidate": {
+    "patch": "Opening mesh buffer candidate.patch",
+    "patchSHA256": "fbb68a16609a89e8e00cdfdbb5948c87919a5d1e1e8d824f9dfb397106d672d9",
+    "verifiedWith": "git apply --check --whitespace=error",
+    "referenceSource": {
+      "GlassBoardView.cs": "367c3457c28a6478a645e531e873acb4702223dbd42c69502524b31fb80b009c",
+      "GlassGeometry.cs": "de72da453474499280b1396b0896f03a095a34f9ca78acae60e1dea996d757ff"
+    },
+    "description": "Keep the existing project mesh builder and Meta Floor Zone-derived aperture stencil. Allocate two builder buffers at board creation, clear them before each rebuild, and reuse two four-slot arrays in the existing cell loop. All mesh arithmetic and shader code are preserved.",
+    "persistentBackingStorage": "For 8 × 8, the planned vector/color/UV/index list payload is 131,880 bytes at setup. The 65 mask quads and up to 720 shaft quads reserve 168 bytes per quad. Object headers and the two cell-work arrays are additional. The candidate’s measured Quest setup took 0.020 ms."
+  },
+  "editor": {
+    "source": "Editor mesh equivalence.json",
+    "sha256": "6c461a023a862244fd7db14b58819d22f596b6ba78d0beff358d37403007b76e",
+    "supportedBoardDimensionsCompared": 153,
+    "comparedMeshPairs": 29920,
+    "testedMasks": 14654,
+    "all3x3Masks": 512,
+    "offBoardSequences": 153,
+    "levelResetsWithRetainedBuffers": 153,
+    "checkerboardFirst32AllocationEvents": [
+      143,
+      0
+    ],
+    "64AlternatingRebuildAllocationEvents": [
+      9152,
+      0
+    ],
+    "notes": "Compared bytes in every vertex stream and index buffer, all vertex descriptors, submesh index ordering/winding, bounds and renderer flags. Exhaustive 3 × 3 masks exercise local touching-edge combinations. Larger boards include full/empty, single/all-but-one panes and fixed pseudorandom masks."
+  },
+  "physicalSetup": "Physical Quest 3, Unity 6000.6.9f1, Meta SDK 209, Android IL2CPP/Vulkan. Fresh installs of one binary selected either implementation with a scratch-only flag. The linked release warmup completed 3/3 states. The synthetic MRUK 8 × 8 room used 0.60 m panes and seed 4. All completed runs opened the identical 32-pane bitmask and advanced all three normal glass sound streams. The final matched pair used normal proximity behavior, ordinary Android Wake keys and the same Welcome-triggered Perfetto capture. The candidate ran first, the control second.",
+  "seededFirstOpeningMaskHex": "FF1F1F070F070701",
+  "comparisons": {
+    "matchedControl": {
+      "mode": "control",
+      "meshManagedAllocations": 135,
+      "meshMs": 0.659,
+      "meshStopwatchMs": 0.659,
+      "totalScriptAllocations": 284,
+      "totalScriptMs": 3.59,
+      "meshGCCollectMs": [],
+      "actualOpeningStageMs": 1.356,
+      "shatterLateUpdateMs": 15.766,
+      "maxLocalLateUpdateMs": 15.766,
+      "preallocatedAtSetupMs": 0.0,
+      "psoWarmed": 3,
+      "shatterCount": 32,
+      "score": 1,
+      "normalGlassSoundStreamsAdvanced": true,
+      "xrRenderedSamples": 0,
+      "timedCameraCallbacks": 0,
+      "displayEvidenceQualified": false,
+      "traceSHA": "b1b049144d25417755c262f4271b81967844f2deba70826b350d95afff9f38f9"
+    },
+    "matchedCandidate": {
+      "mode": "reuse",
+      "meshManagedAllocations": 0,
+      "meshMs": 0.236,
+      "meshStopwatchMs": 0.237,
+      "totalScriptAllocations": 149,
+      "totalScriptMs": 3.395,
+      "meshGCCollectMs": [],
+      "actualOpeningStageMs": 1.016,
+      "shatterLateUpdateMs": 16.016,
+      "maxLocalLateUpdateMs": 16.565,
+      "preallocatedAtSetupMs": 0.02,
+      "psoWarmed": 3,
+      "shatterCount": 32,
+      "score": 1,
+      "normalGlassSoundStreamsAdvanced": true,
+      "xrRenderedSamples": 0,
+      "timedCameraCallbacks": 0,
+      "displayEvidenceQualified": false,
+      "traceSHA": "73af2b70da43cf2708ab4235627daa418573d32c88fa9ff1f2c514ebd93e1d37"
+    },
+    "earlierControlWithFixedCaptureStart": {
+      "mode": "control",
+      "meshManagedAllocations": 135,
+      "meshMs": 0.768,
+      "meshStopwatchMs": 0.769,
+      "totalScriptAllocations": 284,
+      "totalScriptMs": 4.123,
+      "meshGCCollectMs": [],
+      "actualOpeningStageMs": 1.521,
+      "shatterLateUpdateMs": 17.26,
+      "maxLocalLateUpdateMs": 17.26,
+      "preallocatedAtSetupMs": 0.0,
+      "psoWarmed": 3,
+      "shatterCount": 32,
+      "score": 1,
+      "normalGlassSoundStreamsAdvanced": true,
+      "xrRenderedSamples": 0,
+      "timedCameraCallbacks": 0,
+      "displayEvidenceQualified": false,
+      "traceSHA": "2216e185c1a4f6cd3fe55ffa589d8a40e60cc2ad2aa6d0d8e9a71cac6ee546c1"
+    }
+  },
+  "interpretation": "The same-binary pair reduced the named geometry slice from 0.659 to 0.236 ms and reduced allocations from 135 to 0. The entire script Update fell from 284 to 149 allocation events. The C# LateUpdate interval containing shatter measured 15.766 and 16.016 ms, respectively. All completed runs had zero submitted eye-buffer samples and zero game-camera callbacks. No display timing is attributed to the candidate.",
+  "excluded": [
+    {
+      "case": "reuse-first",
+      "scope": "No completed game fixture or eye-submission evidence.",
+      "scratchAbsent": true,
+      "temporaryProximityOverride": false,
+      "settingRestored": true
+    },
+    {
+      "case": "hold-control-a",
+      "scope": "No completed game fixture or eye-submission evidence.",
+      "scratchAbsent": true,
+      "temporaryProximityOverride": true,
+      "settingRestored": true
+    }
+  ],
+  "cleanup": {
+    "ordinaryForeground": true,
+    "ordinaryBefore": "4edd1ac8c3636cb173ebee2c714f43d84dc6eef07cdb68c077e5bbb098823512",
+    "ordinaryAfter": "4edd1ac8c3636cb173ebee2c714f43d84dc6eef07cdb68c077e5bbb098823512",
+    "scratchAbsent": true,
+    "csvRestored": true,
+    "mediaRestored": true,
+    "proximityRestored": true
+  },
+  "forWornComparison": "Use the patch in a disposable checkout where both recorded source blobs match, keep the warmed Vulkan profile and ordinary audio both sides, then compare the same 32-pane opening while the headset is worn. Require submitted eye buffers, game-camera callbacks, genuine first-opening render graphs and compositor frame indices.",
+  "rawEvidence": {
+    "archive": "Native traces and private prototype.zip",
+    "bytes": 35892535,
+    "sha256": "be85c6a63b17af33e12348746e50c52a97c1cca2cedd1eb079778e762b615fab"
+  },
+  "localVerificationDirectory": "Builds/Verification/First opening warmup on Quest/Mesh buffer experiment",
+  "localCandidatePatch": {
+    "file": "Builds/Verification/First opening warmup on Quest/Mesh buffer experiment/Opening mesh buffer candidate.patch",
+    "sha256": "fbb68a16609a89e8e00cdfdbb5948c87919a5d1e1e8d824f9dfb397106d672d9"
+  },
+  "releaseDecision": "The installed game and class APK retain game revision 1da914c. The experimental mesh reuse patch is kept for a comparison with a wearer. The compared unattended Unity intervals remained above target and neither matched case submitted an eye buffer."
+}
