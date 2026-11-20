@@ -279,5 +279,6 @@
     ]
   },
   "scope": "The Editor backdrop has no camera passthrough. The physical Quest shot list covers the real room, wearer input and headset appearance.",
-  "localMovie": "Builds/Verification/Floor-entry/Floor Fracture gameplay rehearsal.mp4"
+  "localMovie": "Builds/Verification/Floor-entry/Floor Fracture gameplay rehearsal.mp4",
+  "repositoryMovie": "Docs/Media/Floor Fracture gameplay rehearsal.mp4"
 }

@@ -2,7 +2,7 @@
 
 A solo mixed-reality survival game for Meta Quest 3. Step off cracking glass before the countdown reaches zero. Staggered shaft-style brick covers the scanned floor around the glass. Live Quest depth keeps real furniture in front of the masonry. Real walls and furniture stay in view as neighboring panes open into shafts.
 
-[Main project document](./FLOOR_FRACTURE.md) · [Implementation checklist](<./Floor Fracture — Master Project Checklist.md>) · [Course working PDF](<./Docs/Floor Fracture Final Design Working Draft.pdf>) · [Watch the 3:08 Editor rehearsal](<./Builds/Verification/Floor-entry/Floor Fracture gameplay rehearsal.mp4>)
+[Main project document](./FLOOR_FRACTURE.md) · [Implementation checklist](<./Floor Fracture — Master Project Checklist.md>) · [Course working PDF](<./Docs/Floor Fracture Final Design Working Draft.pdf>) · [Watch the 3:08 Editor rehearsal](<./Docs/Media/Floor Fracture gameplay rehearsal.mp4>)
 
 ## Open the project
 
@@ -61,7 +61,7 @@ The physical Quest also rendered a controlled 64-pane run with 32 panes breaking
 |---|---|
 | ![The ring, timer and cracked glass on the brick arena](./Docs/Media/floor-entry-classic.png) | ![Surviving glass panes and the blue brick floor above the player's original opening](./Docs/Media/floor-entry-overhead.png) |
 
-Both views come from a Unity Play Mode run in Meta’s Rec Room fixture. The local rehearsal opens with a safe shatter, shows the shared chamber, and includes game sound and captions. The actual Quest recording is a separate class deliverable. [Watch the 3:08 rehearsal](<./Builds/Verification/Floor-entry/Floor Fracture gameplay rehearsal.mp4>) · [Quest development APK](<./Builds/Quest/Overnight/FloorFracture.apk>) · [Headset shot list](<./Docs/Verification/Quest demo shot list.md>)
+Both views come from a Unity Play Mode run in Meta’s Rec Room fixture. The local rehearsal opens with a safe shatter, shows the shared chamber, and includes game sound and captions. The actual Quest recording is a separate class deliverable. [Watch the 3:08 rehearsal](<./Docs/Media/Floor Fracture gameplay rehearsal.mp4>) · [Quest development build details](<./Docs/Verification/Overnight Quest build.json>) · [Headset shot list](<./Docs/Verification/Quest demo shot list.md>)
 
 ## Credits and AI usage
 

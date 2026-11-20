@@ -13,7 +13,7 @@ Wais tested the first playable development APK in his room. Unity build `build_a
 
 ## Current Quest build · November 20
 
-Game source `54b54ee`, development player `647a23a789194ab3b06517a0b3f5628b`. Android resumed the app, its installed SHA-256 matched the signed APK and the headset recorded 13 Vulkan setup samples while unattended. The most recent wearer observations below came from an earlier build. The first test is an ordinary step near a seam followed by one off-center loss. [Package and device](<./Overnight Quest build.json>) · [Watch the Editor rehearsal](<../../Builds/Verification/Floor-entry/Floor Fracture gameplay rehearsal.mp4>)
+Game source `54b54ee`, development player `647a23a789194ab3b06517a0b3f5628b`. Android resumed the app, its installed SHA-256 matched the signed APK and the headset recorded 13 Vulkan setup samples while unattended. The most recent wearer observations below came from an earlier build. The first test is an ordinary step near a seam followed by one off-center loss. [Package and device](<./Overnight Quest build.json>) · [Watch the Editor rehearsal](<../Media/Floor Fracture gameplay rehearsal.mp4>)
 
 The same Quest separately rendered an 8 × 8 synthetic board with 60 cm panes. In fog, 32 panes shattered and the next wave introduced moving glass. All six Full landings reached Results. Individual frames exceeded the class target. The separate Mac simulator also registered controls from the left and right Touch Plus rays and both fingertip Poke interactors. Actual room clearance, physical controller input and the feeling of the fall remain on the wearer sheet below. [Quest timings](<../Quest performance.md>) · [Simulator input results](<./Overnight simulator.json>)
 
