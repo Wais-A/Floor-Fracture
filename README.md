@@ -33,7 +33,7 @@ The default output is `Builds/Quest/FloorFracture.apk`. Use a separate checkout 
 
 To sideload, enable developer mode on the Quest, authorize USB debugging, and use Android Platform Tools. With one authorized headset connected, run `adb install -r Builds/Quest/FloorFracture.apk`, then open Floor Fracture from Unknown Sources.
 
-For sharing, use the clean release and the source archive described in the latest build record. Earlier local commits and older APKs contain a Meta editor pairing credential. The current build keeps the local editor configuration on this Mac and packages an empty, disabled assistant configuration. Rotate the earlier credential before sharing any historical copy. [Packaging check](<./Docs/Verification/Editor pairing build checks.json>)
+On the project Mac, the class build is `Builds/CleanRelease/FloorFracture-72faf40.apk`. Its history-free source ZIP and verification record are in `Builds/Handoff/` with filenames beginning `FloorFracture-Source-72faf40-`. Earlier local commits and older APKs contain a Meta editor pairing credential. The current build keeps the local editor configuration on this Mac and packages an empty, disabled assistant configuration. Rotate the earlier credential before sharing any historical copy. [Packaging check](<./Docs/Verification/Editor pairing build checks.json>)
 
 ## Reproduce and verify
 
