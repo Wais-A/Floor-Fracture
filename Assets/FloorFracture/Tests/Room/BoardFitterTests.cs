@@ -513,6 +513,25 @@ namespace FloorFracture.Tests
             Assert.That(found.Center.x, Is.InRange(0.6229f,0.6233f));
         }
 
+        [TestCase(17.3f)]
+        [TestCase(89.8f)]
+        public void PreservesAnExactRotatedAisleBetweenFourFurnitureFootprints(float angle)
+        {
+            var aisle = new BoardPlacement(P(-3.37f, 5.21f), 0f, angle, 8, 2);
+            Vector2[] Box(float left, float bottom, float right, float top) =>
+                Rectangle(left, bottom, right, top).Select(v => aisle.ToWorldXZ(v.x, v.y)).ToArray();
+            RoomFloor FurnishedRoom(float topOfAisle) => Floor(Box(-2, -2, 2, 2),
+                Box(-2, -2, 0, -.5f), Box(0, -2, 2, -.5f),
+                Box(-2, topOfAisle, 0, 2), Box(0, topOfAisle, 2, 2));
+
+            var room = FurnishedRoom(.5f);
+            Assert.That(BoardFitter.TryFind(new[] { room }, aisle.Center, out var fit), Is.True);
+            Assert.That(BoardFitter.Fits(room, fit), Is.True);
+            Assert.That(fit.Columns * fit.Rows, Is.EqualTo(16));
+            Assert.That((fit.Center - aisle.Center).magnitude, Is.LessThan(.001f));
+            Assert.That(BoardFitter.TryFind(new[] { FurnishedRoom(.498f) }, aisle.Center, out _), Is.False);
+        }
+
         [Test]
         public void RejectsCrossedOrMissingFloorGeometry()
         {
