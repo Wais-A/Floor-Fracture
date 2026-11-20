@@ -1,6 +1,6 @@
 {
-  "dateUtc": "2026-11-20T13:35:56.647295+00:00",
-  "gameSource": "a190c7b73f8277ed59c080be01383c575c189942",
+  "dateUtc": "2026-11-20T14:08:30.495895+00:00",
+  "gameSource": "9be95e1d21355f483b13debeb5df91553b23365e",
   "scene": "Assets/FloorFracture/Scenes/FloorFracture.unity",
   "reportsFromWearer": [
     "After another scan, the floor-level warning persisted.",
@@ -18,32 +18,36 @@
     "Wait for app focus on return from Space Setup. Retry temporary discovery failures. Keep checking late geometry while recovery controls are available and fit only after the geometry validates.",
     "Release the old MRUK floor meshes before replacing anchors, so reloading a room can rebuild the exterior brick.",
     "Put Check again before Space Setup for an existing scan. Place the world-space panel 56 cm forward and 24 cm below the eyes, with 42 mm choices and 8 mm between them.",
-    "Use the tracked Meta HandPointerPose, native index pinch, controller and poke interactors. Discard a held press if its pooled row starts representing a different menu page."
+    "Use the tracked Meta HandPointerPose, native index pinch, controller and poke interactors. Discard a held press if its pooled row starts representing a different menu page.",
+    "After an empty scene query, retry when the headset is put on or tracking returns. Inspect a room published later by MRUK on the next update.",
+    "Discard impossible pane layouts before running exact clearance checks. See the matched furnished-room timings on Quest."
   ],
   "editMode": {
     "before": {
       "LocalizesFloorWithAbsentOrStaleHintAndRejectsOutsideWrongStoreyAndAmbiguousRooms(False)": "Failed",
       "LocalizesFloorWithAbsentOrStaleHintAndRejectsOutsideWrongStoreyAndAmbiguousRooms(True)": "Passed"
     },
-    "finalPassed": 69,
+    "finalPassed": 71,
     "finalSkipped": 0,
     "finalFailed": 0,
     "newOrExpandedCases": [
       "LocalizesFloorWithAbsentOrStaleHintAndRejectsOutsideWrongStoreyAndAmbiguousRooms(False)",
       "LocalizesFloorWithAbsentOrStaleHintAndRejectsOutsideWrongStoreyAndAmbiguousRooms(True)",
-      "MeasuresTheCalibratedFloorUnderTheEyeInWorldLockedSpace"
+      "MeasuresTheCalibratedFloorUnderTheEyeInWorldLockedSpace",
+      "PreservesAnExactRotatedAisleBetweenFourFurnitureFootprints(17.3f)",
+      "PreservesAnExactRotatedAisleBetweenFourFurnitureFootprints(89.8f)"
     ],
-    "durationSeconds": 52.39
+    "durationSeconds": 53.18
   },
   "playMode": {
-    "utc": "2026-11-20T13:28:26.3134970Z",
+    "utc": "2026-11-20T14:05:52.8722870Z",
     "fixture": "Installed MRUK OtherRoom02_RecRoom, Editor Play Mode",
     "grid": [
       6,
       6
     ],
     "paneWidthMetres": 0.6207143068313599,
-    "checksPassed": 44,
+    "checksPassed": 45,
     "endingRoutes": 24,
     "imagesVerifiedPresent": 52,
     "relevantChecks": [
@@ -54,7 +58,8 @@
       "Lava showed the moving walls for 3.37 s after entry at 2.20 m eye height, before impact.",
       "Injected MRUK NoScenePermission. The blocked board showed App permissions and Try again. Retry loaded the fixture and restored Welcome.",
       "Injected MRUK NoRoomsFound. The blocked board showed Space Setup and Check again. Retry loaded the fixture and restored Welcome.",
-      "Withheld the real MRUK fixture's floor outline beyond the localization timeout. The game kept the board hidden, then fitted the restored scan and opened Welcome without a rescan or button press."
+      "Withheld the real MRUK fixture's floor outline beyond the localization timeout. The game kept the board hidden, then fitted the restored scan and opened Welcome without a rescan or button press.",
+      "After an empty room query, a late MRUK RoomCreated event, putting on the headset, and positional tracking acquisition each restored Welcome independently. No menu press or rescan was used."
     ]
   },
   "nativeMacSimulator": {
@@ -91,7 +96,9 @@
     "sdkAimSourceBothHands": "HandPointerPose",
     "inputAfterReview": "Left and right controllers, point and click enabled; normal Welcome page.",
     "recoveryScreenshot": "Room recovery hand menu.jpg",
-    "screenshotSha256": "07c9d170078459122604fb490a88e8d545a955fe43a3ec7a97d9de11b43c928f"
+    "screenshotSha256": "07c9d170078459122604fb490a88e8d545a955fe43a3ec7a97d9de11b43c928f",
+    "gameSourceForRecordedHandGestures": "a190c7b73f8277ed59c080be01383c575c189942",
+    "finalWelcomeScreenshot": "Fitted room Welcome in the simulator.jpg"
   },
   "questFixture": {
     "description": "A separate temporary Android application loaded two synthetic, single-floor MRUK rooms on the Quest and called the revised room reader. Positions inside both rooms and outside them were tested with correct, missing and stale hints.",
@@ -187,15 +194,16 @@
         }
       ]
     },
-    "removedAfterReview": true
+    "removedAfterReview": true,
+    "sourceForDeviceRun": "a190c7b73f8277ed59c080be01383c575c189942"
   },
   "ordinaryQuestBuild": {
     "mode": "retail",
-    "sourceRevision": "a190c7b73f8277ed59c080be01383c575c189942",
-    "apk": "Builds/Quest/Room-recovery-and-hand-aim/FloorFracture.apk",
-    "bytes": 108932428,
-    "sha256": "08584c5185c677d318a77bb8b416b549c7ad9da251a6f2a6eb4568026e2d2be9",
-    "buildGuid": "b7a1b6367cc94cf79f4aa5efb29198a7",
+    "sourceRevision": "9be95e1d21355f483b13debeb5df91553b23365e",
+    "apk": "Builds/Quest/Room-fit-review/FloorFracture.apk",
+    "bytes": 108933460,
+    "sha256": "bc168d6dc623075c4f76f407ea17dc4d4a10c5f45a43590455340dd405042eb0",
+    "buildGuid": "7078b4e5e13c485facefc3c00fceb121",
     "unity": "6000.6.9f1",
     "package": "com.wa003.floorfracture",
     "activity": "com.unity3d.player.UnityPlayerGameActivity",
@@ -225,33 +233,51 @@
     "scratchProbeFound": false,
     "openXRAndMetaAudioPresent": true,
     "packageContainsNewRoomAndMenuCode": true,
-    "singleFloorFixtureOrTestEntrypointInPlayerMetadata": false
+    "packageContainsPlacementBound": true,
+    "separateFixtureInPlayerMetadata": false
   },
   "installedOnQuest": {
-    "utc": "2026-11-20T13:35:56.647295+00:00",
+    "utc": "2026-11-20T14:08:29.760277+00:00",
     "device": "Quest 3",
     "package": "com.wa003.floorfracture",
-    "installedApkSha256": "08584c5185c677d318a77bb8b416b549c7ad9da251a6f2a6eb4568026e2d2be9",
-    "buildGuid": "b7a1b6367cc94cf79f4aa5efb29198a7",
+    "installedApkSha256": "bc168d6dc623075c4f76f407ea17dc4d4a10c5f45a43590455340dd405042eb0",
+    "buildGuid": "7078b4e5e13c485facefc3c00fceb121",
     "ordinaryNonDebuggablePlayer": true,
     "sameProcessRemainedInForegroundForAtLeastSeconds": 12,
     "spatialDataGranted": true,
     "fatalOrGameShaderErrorSeenInProcessLog": false,
-    "processLogLinesInWindow": 1806,
+    "processLogLinesInWindow": 4145,
     "scope": "Normal standalone APK launched on the physical headset unattended. No result is claimed about room appearance, menu selection or comfort.",
-    "unwornSavedRoomQuery": {
-      "savedRooms": 0,
-      "worldLock": false,
-      "gameStatus": "NoRoom",
-      "visibleMessage": "The headset hasn't found a saved room here yet. Look around and check again, or scan the floor and furniture in Space Setup."
-    }
+    "unattendedRoomMessages": [
+      "[Floor Fracture room] NoRoom: The headset hasn't found a saved room here yet. Look around and check again, or scan the floor and furniture in Space Setup. Saved rooms=0, world lock=False."
+    ]
   },
   "restored": {
     "ordinaryGameForeground": true,
-    "headsetWearDetectionEnabled": true
+    "headsetWearDetectionEnabled": true,
+    "temporaryTestAppAbsent": true
   },
   "remainingWearerChecks": [
     "Open in the same saved physical room, wait for the fitted board and compare its height and edges with the floor. If recovery appears, record its exact message.",
     "With relaxed hands, point at Settings or Check again with each hand, pinch once and confirm the highlighted row opens once. Check near poke independently."
-  ]
+  ],
+  "wakeRegression": {
+    "sourceUnderTest": "f680b879b1470b246216970bcdf52b6e7b0e2161",
+    "before": "In the native Mac simulator, a published saved room with one valid floor left the older game on NoRoom. The recovery screen persisted until another action.",
+    "afterRoomPublished": {
+      "action": "After publishing the room without a menu input",
+      "elapsedSeconds": 44.89,
+      "stage": "Welcome",
+      "status": "Confirmed",
+      "message": "Your room scan fits 12 × 2 panes at 56 cm each, covering 6.75 × 1.12 m.",
+      "boardVisible": true,
+      "ready": true,
+      "present": true,
+      "focused": true,
+      "rooms": 1
+    },
+    "editorVerification": "After an empty room query, a late MRUK RoomCreated event, putting on the headset, and positional tracking acquisition each restored Welcome independently. No menu press or rescan was used.",
+    "simulatedHeadInputToggle": "Disabling and enabling the simulator head input still reported positional tracking and user presence throughout. The recorded mount and tracking-acquired checks exercised the actual registered application callbacks in the Unity Play Mode fixture. A wearer is needed for the physical transition."
+  },
+  "floorFitTimingReceipt": "Room fitting time on Quest.json"
 }
