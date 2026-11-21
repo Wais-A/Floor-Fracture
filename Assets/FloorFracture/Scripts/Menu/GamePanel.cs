@@ -211,7 +211,12 @@ namespace FloorFracture
                 rows[i].Button.ClearPendingPresses();
                 bool use = i < choices.Length;
                 rows[i].Rect.gameObject.SetActive(use);
-                if (use) rows[i].Text.text = choices[i].Label;
+                if (use)
+                {
+                    rows[i].Text.text = choices[i].Label;
+                    rows[i].Button.interactable = choices[i].OnSelect != null;
+                    rows[i].Fill.raycastTarget = rows[i].Button.interactable;
+                }
             }
             SetBody(message);
             Paint();
@@ -367,7 +372,7 @@ namespace FloorFracture
             row.Button.navigation = new Navigation { mode = Navigation.Mode.None };
             row.Button.onClick.AddListener(() =>
             {
-                if (!Visible || index >= choices.Length) return;
+                if (!Visible || index >= choices.Length || !row.Button.interactable) return;
                 if (!Tracked) return;
 #if UNITY_EDITOR
                 if (!editorDirectChoice && lastSelectionFrame == Time.frameCount) return;
@@ -483,13 +488,13 @@ namespace FloorFracture
             Vector3 point = ray.GetPoint(t);
             if (!panel.rect.Contains(panel.InverseTransformPoint(point))) return -1;
             for (int i = 0; i < choices.Length; ++i)
-                if (rows[i].Rect.rect.Contains(rows[i].Rect.InverseTransformPoint(point))) return i;
+                if (rows[i].Button.interactable && rows[i].Rect.rect.Contains(rows[i].Rect.InverseTransformPoint(point))) return i;
             return -1;
         }
 
         private bool Select(int index)
         {
-            if (!Visible || index < 0 || index >= choices.Length) return false;
+            if (!Visible || index < 0 || index >= choices.Length || !rows[index].Button.interactable) return false;
             rows[index].Button.onClick.Invoke();
             return true;
         }
@@ -499,6 +504,12 @@ namespace FloorFracture
         {
             for (int i = 0; i < choices.Length; ++i)
             {
+                if (!rows[i].Button.interactable)
+                {
+                    rows[i].Fill.color = Paper;
+                    rows[i].Text.color = Secondary;
+                    continue;
+                }
                 bool down = mousePress == i || pointers[0].Pressed == i || pointers[1].Pressed == i;
                 bool over = mouseHover == i || pointers[0].Hover == i || pointers[1].Hover == i;
                 rows[i].Fill.color = down ? Pressed : over ? Hovered : Idle;

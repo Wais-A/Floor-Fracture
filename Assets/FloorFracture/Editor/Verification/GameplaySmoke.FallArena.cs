@@ -35,7 +35,7 @@ namespace FloorFracture.Editor
             Choose("Show board"); yield return Stage(GameStage.Fall);
             Require(game.State==stateAtEntry && game.Ending.IsPlaying,"Tracking recovery abandoned the running ending.");
             game.Ending.Skip(); yield return Stage(GameStage.Results);
-            Choose("Restart"); yield return Stage(GameStage.Ready);
+            Choose("Retry Level"); yield return Stage(GameStage.Ready);
             Require(!game.BoardView.Board.Find("Opening stencil").GetComponent<Renderer>().enabled,"The preview opening survived Restart.");
             Record("The off-board preview opened the nearest fitted tile and cleared on Restart.");
         }

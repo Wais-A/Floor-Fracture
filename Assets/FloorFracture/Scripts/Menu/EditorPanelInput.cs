@@ -14,7 +14,7 @@ namespace FloorFracture
         private readonly Transform parent;
         private readonly Transform[] grips = new Transform[2];
         private readonly List<XRDisplaySubsystem> displays = new List<XRDisplaySubsystem>();
-        private static readonly Key[] Digits = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5 };
+        private static readonly Key[] Digits = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5, Key.Digit6 };
         private bool sawXr, rigWasEnabled, heldLeft, heldRight, triggerLeft, triggerRight;
         private Vector3 originalHeadPosition;
         private Quaternion originalHeadRotation;

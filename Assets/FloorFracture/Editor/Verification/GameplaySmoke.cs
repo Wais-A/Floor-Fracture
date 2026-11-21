@@ -19,7 +19,8 @@ namespace FloorFracture.Editor
     {
         private const string Key = "FloorFracture.GameplaySmoke.";
         private const string ScenePath = "Assets/FloorFracture/Scenes/FloorFracture.unity";
-        private static readonly string[] Preferences = { "ff.reduced", "ff.gentle", "ff.volume", "ff.narration", "ff.entireFloor" };
+        private const string ProgressKey = "ff.highestLevel";
+        private static readonly string[] Preferences = { "ff.reduced", "ff.gentle", "ff.volume", "ff.narration", "ff.entireFloor", ProgressKey };
         private static readonly Stack<IEnumerator> Steps = new Stack<IEnumerator>();
         private static GameFlow game;
         private static Pose head, left, right;
@@ -56,6 +57,7 @@ namespace FloorFracture.Editor
             PlayerPrefs.DeleteKey("ff.volume");
             PlayerPrefs.DeleteKey("ff.narration");
             PlayerPrefs.DeleteKey("ff.entireFloor");
+            PlayerPrefs.DeleteKey(ProgressKey);
             report = new SmokeReport { startedUtc = DateTime.UtcNow.ToString("O"), unityVersion = Application.unityVersion, scene = ScenePath };
             report.depthProviderReadyInAuthoredScene = AuthoredDepthReady();
             Save();
@@ -182,13 +184,14 @@ namespace FloorFracture.Editor
             Require(!diagnostics.gameObject.activeSelf, "Placement diagnostics must disappear when switched off.");
             Record("The recorded room displayed accepted panes, furniture and mesh obstacles in their diagnostic colors. Switching it off restored the normal view.");
             VerifyGlassAndPassthrough();
+            yield return VerifyLevelPicker();
             yield return VerifyStartCount();
             yield return VerifyMenuRecenter();
             yield return VerifyMenuPauseAndQuit();
             yield return VerifyTrapRotation();
             yield return VerifyTileCracks();
             yield return VerifyStagedPressure();
-            yield return RayChoose(3, false); yield return Stage(GameStage.Settings);
+            yield return RayChoose(4, false); yield return Stage(GameStage.Settings);
             Require(!outlines.gameObject.activeSelf, "The Welcome board perimeter stayed visible inside Settings.");
             yield return RayChoose(5, true); yield return Stage(GameStage.Welcome);
             Record("The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.");
@@ -296,7 +299,7 @@ namespace FloorFracture.Editor
             yield return Stage(GameStage.Results);
             string reason=game.Panel.transform.Find("Floor Fracture Menu/Instructions").GetComponent<UnityEngine.UI.Text>().text;
             Require(reason.Contains("glass under the ring shattered"),"Results did not identify the natural deadline loss.");
-            Choose("Restart");
+            Choose("Retry Level");
             yield return Stage(GameStage.Ready);
             Require(game.State.WavesSurvived==0 && game.State.ActiveWave==null &&
                 PlayablePanes.All(game.State.IsIntact),"Restart did not restore playable glass.");

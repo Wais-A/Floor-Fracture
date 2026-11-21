@@ -23,6 +23,69 @@ namespace FloorFracture.Editor
             finally { OVRInput.controllers=devices; }
         }
 
+        private static IEnumerator VerifyLevelPicker()
+        {
+            var fit = game.Room.Placement;
+            yield return RayChoose(2, false);
+            Require(game.Stage == GameStage.LevelSelect && !game.Panel.EditorChoose("Level 2"),
+                "A fresh player could start a locked level.");
+            var locked = game.Panel.transform.Find(GamePanel.CanvasName + "/Choice 2").GetComponent<Button>();
+            Require(!locked.IsInteractable() && locked.GetComponentInChildren<Text>().text == "Level 2 · Locked",
+                "The next level must be visible and disabled.");
+            Choose("Back");
+            Choose("Development"); Choose("Later levels"); Choose("Level 12"); Choose("Main menu");
+            Require(!PlayerPrefs.HasKey(ProgressKey), "A development shortcut unlocked levels.");
+
+            Choose("Start"); StandOn(MiddlePane); Choose("Start wave");
+            yield return Stage(GameStage.Countdown);
+            while (game.Level == 1)
+            {
+                if (game.Stage == GameStage.Paused)
+                {
+                    Choose("Show board");
+                    if (game.Level != 1) break;
+                    Choose("Start wave");
+                    yield return Stage(GameStage.Countdown);
+                }
+                Require(game.Stage == GameStage.Countdown && game.State.ActiveWave != null,
+                    "Expected an active wave on the way to the first unlock, got " + game.Stage);
+                StandOn(game.State.ActiveWave.GuaranteedTile);
+                yield return Stage(GameStage.BetweenWaves, 10);
+                yield return Wait(() => game.Stage != GameStage.BetweenWaves, "next wave or Ready", 5);
+            }
+            Require(game.Level == 2 && game.Stage == GameStage.Ready && PlayerPrefs.GetInt(ProgressKey) == 2,
+                "Level 2 was not saved on reaching Ready before its first wave.");
+            Choose("Main menu"); Choose("Choose level"); Choose("Level 2");
+            StandOn(MiddlePane); Choose("Start wave");
+            yield return Stage(GameStage.Fall, 12);
+            game.Ending.Skip(); yield return Stage(GameStage.Results);
+            Choose("Choose level");
+            Require(!game.Panel.EditorChoose("Level 3"), "Losing unlocked the next level.");
+            MenuInput(new OVRInput.OVRControllerTouch());
+            yield return Stage(GameStage.Results);
+            Choose("Retry Level 2");
+            Require(game.Stage == GameStage.Ready && game.Level == 2 && game.WaveNumber == 1 &&
+                game.State.WavesSurvived == 0 && game.State.ActiveWave == null && PlayablePanes.All(game.State.IsIntact) &&
+                game.Room.Placement.Equals(fit), "Retry did not start the lost level on fresh glass in the same room.");
+            Choose("Main menu"); Choose("Choose level"); Choose("Level 1");
+            Require(game.Level == 1 && PlayerPrefs.GetInt(ProgressKey) == 2, "Replaying lowered the saved unlock.");
+            Choose("Main menu");
+
+            PlayerPrefs.SetInt(ProgressKey, 13);
+            try
+            {
+                Choose("Choose level");
+                Require(!game.Panel.EditorChoose("Level 14") && !game.Panel.EditorChoose("Level 10"),
+                    "The picker failed to open on the highest unlocked page.");
+                Choose("Earlier levels"); Choose("Later levels"); Choose("Level 13");
+                Require(game.Level == 13 && game.Stage == GameStage.Ready && game.WaveNumber == 1,
+                    "Level selection was capped at 12.");
+                Choose("Main menu");
+            }
+            finally { PlayerPrefs.SetInt(ProgressKey, 2); PlayerPrefs.Save(); }
+            Record("Reached Level 2, left before its first wave, selected it, lost it, and retried on fresh glass. Earlier levels, disabled locks, development shortcuts and paging to Level 13 passed.");
+        }
+
         private static IEnumerator VerifyMenuPauseAndQuit()
         {
             var touch=new OVRInput.OVRControllerTouch();
@@ -70,7 +133,7 @@ namespace FloorFracture.Editor
             Require(walls.gameObject.activeInHierarchy && walls.position.y>=paused.y && walls.position.y-paused.y<1.5f,
                 "Resuming from the panel jumped ahead in the fall.");
             game.Ending.Skip(); yield return Stage(GameStage.Results);
-            yield return RayChoose(2,false);
+            yield return RayChoose(3,false);
             yield return Stage(GameStage.Welcome);
             Require(game.Panel.Visible && !game.Ending.IsPlaying && game.BoardView.gameObject.activeInHierarchy &&
                 game.State.ActiveWave==null && game.State.WavesSurvived==0 && game.Level==1 &&
@@ -286,7 +349,7 @@ namespace FloorFracture.Editor
                 game.Ending.Skip();
                 yield return Stage(GameStage.Results);
                 yield return VerifyRecenterOnPage(display, canvas, GameStage.Results, -112f, 90f);
-                Choose("Restart");
+                Choose("Retry Level");
                 Choose("Main menu");
                 yield return Stage(GameStage.Welcome);
             }

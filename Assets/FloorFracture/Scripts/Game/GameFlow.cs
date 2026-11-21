@@ -1,9 +1,10 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace FloorFracture
 {
-    public enum GameStage { Room, Welcome, Settings, PracticeStone, PracticeStep, Ready, Countdown, BetweenWaves, Paused, Fall, Results, Development, PlayArea, CountIn }
+    public enum GameStage { Room, Welcome, Settings, PracticeStone, PracticeStep, Ready, Countdown, BetweenWaves, Paused, Fall, Results, Development, PlayArea, CountIn, LevelSelect }
 
     public sealed class GameFlow : MonoBehaviour
     {
@@ -33,6 +34,10 @@ namespace FloorFracture
             }
         }
         public int Level { get; private set; } = 1;
+        const string HighestLevelKey = "ff.highestLevel";
+        const int LevelsPerPage = 3;
+        static int HighestLevel => Math.Max(1, PlayerPrefs.GetInt(HighestLevelKey, 1));
+        bool developmentRun, pickerFromResults;
         public int WaveNumber { get; private set; } = 1;
         public BoardState State { get; private set; }
         public GlassBoardView BoardView { get; private set; }
@@ -129,6 +134,7 @@ namespace FloorFracture
             var board=new GameObject("Confirmed glass board"); BoardView=board.AddComponent<GlassBoardView>(); BoardView.Build(State,fit.Pose,sound);
             Ending.SetBoard(BoardView);
             Level=WaveNumber=1; levelFinished=false;
+            developmentRun=false;
             return true;
         }
         void Home()
@@ -137,9 +143,41 @@ namespace FloorFracture
             Room.ShowClearance(true);
             var choices=new System.Collections.Generic.List<MenuChoice>{
                 Choice("Start",()=>Ready("Step onto intact glass, then start the wave.")),
-                Choice("Tutorial",StartPractice),Choice("Settings",Settings),Choice("Play area",PlayArea)};
+                Choice("Choose level",OpenLevelPicker),Choice("Tutorial",StartPractice),
+                Choice("Settings",Settings),Choice("Play area",PlayArea)};
             if(Debug.isDebugBuild||Application.isEditor) choices.Add(Choice("Development",Development));
             Panel.Show("Floor Fracture",Room.Message+"\nWatch which panes flash. Step onto one that stayed clear before the glass breaks.",choices.ToArray());
+        }
+        void OpenLevelPicker()
+        {
+            pickerFromResults = Stage == GameStage.Results;
+            Room.ShowClearance(false);
+            ShowLevelPage(1 + (HighestLevel - 1) / LevelsPerPage * LevelsPerPage);
+        }
+
+        void ShowLevelPage(int first)
+        {
+            Stage = GameStage.LevelSelect;
+            int highest = HighestLevel;
+            var choices = new List<MenuChoice>();
+            for (int offset = 0; offset < LevelsPerPage && offset <= highest - first; ++offset)
+            {
+                int level = first + offset;
+                choices.Add(Choice($"Level {level}", () => RestartAt(level)));
+            }
+            bool hasNext = highest - first >= LevelsPerPage;
+            if (!hasNext && highest < int.MaxValue)
+                choices.Add(Choice($"Level {highest + 1} · Locked", null));
+            if (first > 1) choices.Add(Choice("Earlier levels", () => ShowLevelPage(first - LevelsPerPage)));
+            if (hasNext) choices.Add(Choice("Later levels", () => ShowLevelPage(first + LevelsPerPage)));
+            choices.Add(Choice("Back", LeaveLevelPicker));
+            Panel.Show("Choose level", "Reach a level to unlock it. Each attempt starts at wave 1.", choices.ToArray());
+        }
+
+        void LeaveLevelPicker()
+        {
+            if (pickerFromResults) ResultsPage();
+            else Home();
         }
         void PlayArea()
         {
@@ -215,6 +253,11 @@ namespace FloorFracture
         }
         void Ready(string text,bool offerStone=false)
         {
+            if (!developmentRun && Level > HighestLevel)
+            {
+                PlayerPrefs.SetInt(HighestLevelKey, Level);
+                PlayerPrefs.Save();
+            }
             Room.ShowClearance(false);
             Stage=GameStage.Ready; BoardView.gameObject.SetActive(true);
             var start=Choice("Start wave",StartCountIn);
@@ -385,6 +428,7 @@ namespace FloorFracture
             {
                 case GameStage.Paused: ShowBoardAfterPause(); break;
                 case GameStage.Results: ReturnToMainMenu(); break;
+                case GameStage.LevelSelect: LeaveLevelPicker(); break;
                 case GameStage.Settings:
                 case GameStage.Development:
                 case GameStage.PlayArea: Home(); break;
@@ -533,7 +577,13 @@ namespace FloorFracture
         void ShowResults()
         {
             if(Stage!=GameStage.Fall) return;
-            Stage=GameStage.Results; BoardView.gameObject.SetActive(false); Panel.Recenter();
+            BoardView.gameObject.SetActive(false); Panel.Recenter();
+            ResultsPage();
+            if (!Ending.LastWasSkipped) narration.Speak(Stage,Panel.Head);
+        }
+        void ResultsPage()
+        {
+            Stage=GameStage.Results;
             string score = State.WavesSurvived == 1 ? "1 wave survived" : $"{State.WavesSurvived} waves survived";
             string result = State.LastLoss switch
             {
@@ -545,13 +595,17 @@ namespace FloorFracture
                 _ => "Ending preview"
             };
             Panel.Show("Run complete",$"Level {Level}   ·   {score}   ·   {Ending.LastEndingName}\n{result}\n{OfflineNarration.ResultsCaption}",
-                Choice("Restart",Restart),Choice("Quit to main menu",ReturnToMainMenu));
-            if (!Ending.LastWasSkipped) narration.Speak(Stage,Panel.Head);
+                Choice($"Retry Level {Level}",()=>RestartAt(Level, developmentRun)),
+                Choice("Choose level",OpenLevelPicker),Choice("Main menu",ReturnToMainMenu));
         }
-        void Restart()
+        void RestartAt(int level, bool fromDevelopment=false)
         {
+            if (level < 1 || (!fromDevelopment && level > HighestLevel)) return;
             SelectedSeed=Environment.TickCount&int.MaxValue;
-            if (ResetRun()) Ready("The glass is back. Return to the board and start when ready.");
+            if (!ResetRun()) return;
+            Level=level;
+            developmentRun=fromDevelopment;
+            Ready("The glass is back. Return to the board and start when ready.");
         }
         void ReturnToMainMenu()
         {
@@ -584,6 +638,7 @@ namespace FloorFracture
         void DevelopmentRun(int level)
         {
             SelectedSeed=379; if (!StartBoard()) return;
+            developmentRun=true;
             Level=level; Ready("Fixed seed 379. Stand on an intact pane to reproduce this run.");
         }
         void OnApplicationPause(bool pause) { appPaused=pause; if(pause) InterruptRound(); }
