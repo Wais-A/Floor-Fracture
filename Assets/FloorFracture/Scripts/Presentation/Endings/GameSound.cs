@@ -158,6 +158,12 @@ public sealed class GameSound : MonoBehaviour
         accent.Play();
     }
 
+    internal void SetFallPaused(bool paused)
+    {
+        if (paused) { falling.Pause(); ambience.Pause(); accent.Pause(); }
+        else { falling.UnPause(); ambience.UnPause(); accent.UnPause(); }
+    }
+
     internal void StopFall()
     {
         if (!falling) return;

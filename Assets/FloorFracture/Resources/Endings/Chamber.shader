@@ -11,7 +11,8 @@ Shader "Floor Fracture/Ending chamber"
         _Motion("Motion", Float) = 1
         _Opacity("Opacity", Float) = 1
         [Enum(UnityEngine.Rendering.CompareFunction)] _PortalComparison("Floor aperture test", Float) = 8
-        _WideningPerMetre("Shaft widening per metre", Float) = .72
+        _WideningPerMetre("Lower shaft widening per metre", Float) = .72
+        _ThroatDepth("Upper shaft depth", Float) = 18
         [Normal] _WaterNormal("Meta Floor Zone water ripples", 2D) = "bump" {}
         _Mouth("World opening center and half width", Vector) = (0,0,0,1)
         _MouthRight("Opening right and clipping flag", Vector) = (1,0,0,0)
@@ -37,7 +38,7 @@ Shader "Floor Fracture/Ending chamber"
             SAMPLER(sampler_WaterNormal);
             CBUFFER_START(UnityPerMaterial)
                 half4 _Tint;
-                float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity, _WideningPerMetre;
+                float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity, _WideningPerMetre, _ThroatDepth;
                 float4 _Mouth, _MouthRight;
             CBUFFER_END
             struct Attributes
@@ -67,7 +68,16 @@ Shader "Floor Fracture/Ending chamber"
                 if (_Role == 1 || _Role == 9)
                 {
                     float topRadius = length(TransformObjectToWorldDir(float3(1,0,0), false));
-                    p.xz *= 1 + max(0,-p.y) * _WideningPerMetre / max(.01,topRadius);
+                    float depth = max(0,-p.y);
+                    float radius = topRadius + .08 * min(depth,_ThroatDepth) + _WideningPerMetre * max(0,depth-_ThroatDepth);
+                    if (_Role == 9)
+                    {
+                        // Preserve the authored ledge depth in metres as the shaft flares.
+                        float ring = max(abs(p.x),abs(p.z));
+                        radius -= 1 - ring;
+                        p.xz /= ring;
+                    }
+                    p.xz *= radius / max(.01,topRadius);
                 }
                 if (_Role == 6 && _Theme != 3)
                 {
@@ -121,11 +131,21 @@ Shader "Floor Fracture/Ending chamber"
                         clip(_Mouth.w*1.76 - local.x - local.y);
                     }
                 }
+                float belowEye = GetCameraPositionWS().y - i.world.y;
+                float depth = max(0, _Mouth.y - i.world.y);
+                // Room light softens into shadow down the shaft. Fine relief resolves
+                // as the viewer approaches it, including during the fall.
+                half relief = smoothstep(0,4,_Mouth.y - GetCameraPositionWS().y)
+                            * smoothstep(3,9,depth) * (1 - smoothstep(6,22,belowEye));
                 if (_Role == 1)
                 {
                     half3 masonry = ShaftBrickwork(i.uv);
                     half3 themeLight = color;
-                    color = masonry * i.color.rgb;
+                    // The finish belongs to the wall. Looking down from a pane and
+                    // passing the same point during descent show the same surface.
+                    half skylight = 1 - smoothstep(0, 5, depth);
+                    half3 lining = lerp(half3(.048,.079,.089), half3(.17,.24,.25), skylight);
+                    color = lerp(lining, masonry, relief) * i.color.rgb;
                     float landing = 1 - smoothstep(.5, 4, i.world.y - _Level);
                     color = lerp(color, masonry * .65 + themeLight * .35, landing * _Reveal);
                     if (_Theme == 1)
@@ -161,6 +181,8 @@ Shader "Floor Fracture/Ending chamber"
                     half reflection = saturate(.2+.42*(1-dot(view,normal))+.32*normal.z);
                     color = lerp(half3(.014,.08,.13),half3(.065,.38,.46),reflection)
                           + half3(.035,.095,.11)*saturate(.50+.95*swell.y) + half3(.22,.34,.36)*glint*glint;
+                    // Broad swells carry the reflection when only a slice of distant water is visible.
+                    color *= 1 + smoothstep(8,35,belowEye) * clamp(4*swell.y,-.5,.5);
                 }
                 else if (_Role == 3)
                 {
@@ -195,7 +217,10 @@ Shader "Floor Fracture/Ending chamber"
                     color += half3(.065,.086,.16)*band*band*reveal;
                 }
                 else if (_Role == 9)
-                    color *= .88 + .12 * sin(i.seed*1.9);
+                {
+                    half3 bevel = lerp(half3(.17,.24,.25), half3(.06,.09,.10), smoothstep(0,5,depth));
+                    color = lerp(bevel * i.color.rgb, color * (.88 + .12 * sin(i.seed*1.9)), relief);
+                }
                 else if (_Role == 10)
                 {
                     float2 facet = abs(frac(float2(xz.x*.32+xz.y*.17,xz.y*.24-xz.x*.12))-.5);
@@ -216,6 +241,10 @@ Shader "Floor Fracture/Ending chamber"
                 {
                     float drift = .5+.5*sin(xz.x*1.2+sin(xz.y*.41+_Time.y*.12));
                     color = lerp(half3(.36,.59,.78),half3(.84,.93,.99),smoothstep(.1,.93,drift));
+                }
+                if (_Role == 1 || _Role == 9)
+                {
+                    color *= lerp(1.0, .28, smoothstep(3, 35, belowEye));
                 }
                 return half4(color, _Opacity);
             }

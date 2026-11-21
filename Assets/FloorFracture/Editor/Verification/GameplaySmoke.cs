@@ -172,11 +172,11 @@ namespace FloorFracture.Editor
                 colors.Any(c => c.r == 255 && c.g == 72) &&
                 colors.Any(c => c.r == 255 && c.g == 156),
                 "Placement diagnostics must show accepted panes, detected furniture and mesh obstacles. Observed colors: " + string.Join(", ", colors.Distinct()));
-            Capture("floor-placement-debug", SmokeView.RoomOverview, FloorSurface.EffectMeshObjects.Values.First().effectMeshGO.GetComponent<Renderer>().bounds);
+            Capture("floor-placement-debug", SmokeView.RoomOverview, diagnostics.GetComponent<Renderer>().bounds);
             game.Room.TogglePlacementDebug();
             Require(!diagnostics.gameObject.activeSelf, "Placement diagnostics must disappear when switched off.");
             Record("The recorded room displayed accepted panes, furniture and mesh obstacles in their diagnostic colors. Switching it off restored the normal view.");
-            VerifySurroundingBrick(placement);
+            VerifyGlassAndPassthrough();
             yield return VerifyMenuRecenter();
             yield return RayChoose(3, false); yield return Stage(GameStage.Settings);
             Require(!outlines.gameObject.activeSelf, "The Welcome board perimeter stayed visible inside Settings.");
@@ -196,6 +196,7 @@ namespace FloorFracture.Editor
             int first = MiddlePane;
             yield return VerifyTutorial(first);
             Choose("Start wave"); yield return Stage(GameStage.Countdown);
+            VerifyBoardLock();
 
             bool sawMemory = false, sawLastTile = false;
             int initialCount = game.State.Layout.PaneCount;
@@ -258,6 +259,7 @@ namespace FloorFracture.Editor
                 }
                 if (index == 0 || plan.Mode == WaveMode.LastTile)
                     yield return VerifyExitDuringWaveResult(plan);
+                VerifyBoardLock();
                 yield return Wait(() => game.Stage != GameStage.BetweenWaves, "next wave or level", 8);
                 if (game.Stage == GameStage.Ready) break;
                 Require(game.Stage == GameStage.Countdown, "A safe stationary route did not advance the level.");
@@ -317,21 +319,16 @@ namespace FloorFracture.Editor
 
             yield return VerifyEveryEndingExit();
             yield return ObserveSelectedFall("Water", false, 1);
-            yield return VerifyOutsideBrickPreview();
+            yield return VerifyOutsideBoardPreview();
             yield return ObserveSelectedFall("Lava", false, 1);
             yield return ObserveSelectedFall("Water", true, 5);
             yield return LevelThree();
 
-            var scannedRoom = MRUK.Instance.Rooms.Single();
-            scannedRoom.AnchorUpdatedEvent.Invoke(scannedRoom.FloorAnchors.First());
-            Require(game.Room.Status == RoomPlacementStatus.UnsafeRoom && game.Stage == GameStage.Room && !game.BoardView.gameObject.activeSelf,
-                "A significant floor-anchor update left the previously confirmed board playable.");
-            VerifyFloorVisibility(false);
-            Choose("Check again");
-            yield return Wait(() => game.Room.Status == RoomPlacementStatus.Confirmed && game.Stage == GameStage.Welcome, "fresh verified fit after floor update", 55);
-            VerifyFloorVisibility(false);
-            VerifySpawnMarkersCleared();
-            Record("A simulated significant MRUK floor-anchor event withdrew the board. Reloading the real fixture produced a new verified fit and returned directly to Welcome.");
+            VerifyBoardLock();
+            yield return VerifyLockedRoomRecovery();
+            game.Room.Retry();
+            yield return Wait(() => game.Stage==GameStage.Welcome && game.Room.Status==RoomPlacementStatus.Confirmed,
+                "explicit refit after locked play",55);
 
             yield return VerifyRoomRecovery(MRUK.LoadDeviceResult.NoScenePermission,
                 RoomPlacementStatus.PermissionDenied, "App permissions", "Try again");
@@ -344,6 +341,52 @@ namespace FloorFracture.Editor
             // Audition uses the optional stone. Check it after the first-time stepping
             // lesson has established that a fresh run does not instantiate the stone.
             yield return VerifyOfflineNarration();
+        }
+
+        private static void VerifyBoardLock()
+        {
+            var scannedRoom=MRUK.Instance.Rooms.Single();
+            var view=game.BoardView;
+            var state=game.State;
+            var fit=game.Room.Placement;
+            var stage=game.Stage;
+            var wave=state.ActiveWave;
+            var score=state.WavesSurvived;
+            scannedRoom.AnchorUpdatedEvent.Invoke(scannedRoom.FloorAnchors.First());
+            scannedRoom.AnchorUpdatedEvent.Invoke(scannedRoom.GlobalMeshAnchor);
+            MRUK.Instance.RoomUpdatedEvent.Invoke(scannedRoom);
+            Require(game.Room.Status==RoomPlacementStatus.Confirmed && game.Stage==stage &&
+                game.BoardView==view && game.State==state && state.ActiveWave==wave && state.WavesSurvived==score &&
+                game.Room.Placement.Equals(fit),"A scene update replaced the session board or interrupted its wave.");
+        }
+
+        private static IEnumerator VerifyLockedRoomRecovery()
+        {
+            // Only withdraw the recorded room from MRUK's localized room list.
+            // Its anchors and the game-owned board remain alive throughout.
+            var rooms=MRUK.Instance.Rooms;
+            var original=rooms.Single();
+            var board=game.BoardView;
+            var state=game.State;
+            var fit=game.Room.Placement;
+            int score=state.WavesSurvived;
+            var panes=PlayablePanes.Where(state.IsIntact).ToArray();
+            rooms.Remove(original);
+            try
+            {
+                yield return Stage(GameStage.Paused);
+                Choose("Show board");
+                Require(game.Stage==GameStage.Paused && !board.gameObject.activeSelf,"An unlocalized board resumed.");
+            }
+            finally { rooms.Add(original); }
+            yield return Frames(2);
+            Require(game.Stage==GameStage.Paused,"Tracking recovery resumed play without the player's tap.");
+            Choose("Show board");
+            Require(game.Stage==GameStage.Ready && board==game.BoardView && state==game.State &&
+                fit.Equals(game.Room.Placement) && score==state.WavesSurvived &&
+                panes.SequenceEqual(PlayablePanes.Where(state.IsIntact)),
+                "Tracking recovery changed the locked board or run progress.");
+            Record("Room updates during play kept the board and wave. Losing and restoring the tracked room required Show board and preserved surviving glass and score.");
         }
 
         private static IEnumerator VerifyRoomChangeDuringSurvey()
@@ -579,20 +622,18 @@ namespace FloorFracture.Editor
                 !game.transform.Find("Menu and countdown").GetComponent<AudioSource>().isPlaying,
                 "Pausing did not withdraw the current slider offer or stop its countdown cue.");
             game.gameObject.SendMessage("OnApplicationPause", false);
-            var roomField = typeof(RoomBoardPlacement).GetField("room",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            Require(roomField != null, "The localized room fixture binding is missing.");
-            var localizedRoom = roomField.GetValue(game.Room);
+            var rooms=MRUK.Instance.Rooms;
+            var localizedRoom=rooms.Single();
+            rooms.Remove(localizedRoom);
             try
             {
-                roomField.SetValue(game.Room, null);
                 Require(game.Panel.Tracked && !game.Room.IsRoomLocalized, "The retry fixture needs a tracked headset in an unlocalized room.");
                 Choose("Show board");
                 Require(game.Stage == GameStage.Paused && !game.BoardView.gameObject.activeInHierarchy,
                     "Show board revealed the previous placement before the room was localized.");
                 VerifyFloorVisibility(false);
             }
-            finally { roomField.SetValue(game.Room, localizedRoom); }
+            finally { rooms.Add(localizedRoom); }
             Choose("Show board");
             Require(game.Room.IsRoomLocalized && game.Stage == GameStage.Ready && game.BoardView.gameObject.activeInHierarchy &&
                 !moving.gameObject.activeSelf && !ring.enabled && !fog.enabled && timer.text.Length == 0,

@@ -18,7 +18,6 @@ public sealed class FallSequence : MonoBehaviour
 #endif
     EndingShuffle shuffle = new EndingShuffle(Environment.TickCount);
     FloorFracture.GlassBoardView board;
-    FloorFracture.RoomBoardPlacement room;
     FloorFracture.FallingArena arena;
     FallScenery scenery;
     GameSound sound;
@@ -30,6 +29,7 @@ public sealed class FallSequence : MonoBehaviour
     Vector3 opening;
     float width, yaw;
     double startedAt;
+    double? pausedAt;
     int blackFrame = -1, generation;
 
     public bool IsPlaying { get; private set; }
@@ -45,12 +45,11 @@ public sealed class FallSequence : MonoBehaviour
 
     public void SetShuffleSeed(int seed) => shuffle = new EndingShuffle(seed);
 
-    internal void SetBoard(FloorFracture.GlassBoardView nextBoard, FloorFracture.RoomBoardPlacement room)
+    internal void SetBoard(FloorFracture.GlassBoardView nextBoard)
     {
         if (visiblePreview >= 0) scenery.Hide();
         visiblePreview = -1;
         board = nextBoard;
-        this.room = room;
         // First use loads the sample water and builds the shaft meshes. Do it while the
         // board is being set up so the first timed shatter can show its destination immediately.
         if (board) PrepareChamber();
@@ -128,16 +127,31 @@ public sealed class FallSequence : MonoBehaviour
             nextOpening = this.head.position - Vector3.up*1.55f;
             nextWidth = .5f; nextYaw = 0;
         }
-        if (!emptyBag && board) arena = new FloorFracture.FallingArena(board,room,reduced,nextOpening);
+        if (!emptyBag && board) arena = new FloorFracture.FallingArena(board,reduced);
         OpenChamber(this.head,kind,nextOpening,nextWidth,nextYaw);
         if (emptyBag) { Blackout(); return; }
         sound.BeginFall(kind);
         Draw(0f);
     }
 
+    internal void SetTrackingPaused(bool paused)
+    {
+        if (!IsPlaying || paused == pausedAt.HasValue) return;
+        double now = Time.unscaledTimeAsDouble;
+        if (paused) pausedAt = now;
+        else
+        {
+            startedAt += now - pausedAt.Value;
+            pausedAt = null;
+        }
+        scenery.SetTrackingPaused(paused);
+        sound.SetFallPaused(paused);
+        if (!paused && blackFrame >= 0) blackFrame = Time.frameCount;
+    }
+
     void Update()
     {
-        if (!IsPlaying) return;
+        if (!IsPlaying || pausedAt.HasValue) return;
         if (!head) { Finish(); return; }
         if (blackFrame >= 0)
         {
@@ -157,13 +171,6 @@ public sealed class FallSequence : MonoBehaviour
         float travel = age >= contact ? FallScenery.ShaftDepth : .5f * Gravity * fallingTime * fallingTime;
         float immersion = scenery.Draw(age, p, reduced, travel, out bool entered);
         arena?.Draw(travel,entered);
-        if (!entryReported && entered)
-        {
-            entryReported = true;
-            int currentGeneration = generation;
-            ChamberEntered?.Invoke();
-            if (generation != currentGeneration || !IsPlaying) return;
-        }
         float fade = FallScenery.Ease(reduced ? .80f : .60f, 1f, p);
         // At constant acceleration, speed as a fraction of impact speed is t / tImpact.
         float air = reduced ? .25f : fallingTime / FreeFallTime;
@@ -223,6 +230,15 @@ public sealed class FallSequence : MonoBehaviour
             float colorWeight = alpha > .001f ? tint*(1-fade)/alpha : 0;
             scenery.SetVeil(tintColor*colorWeight,alpha);
         }
+        if (!entryReported && entered)
+        {
+            // Even a late frame that skips the fade plateau must cover the tableau swap.
+            if (reduced) scenery.SetVeil(Color.black,1);
+            entryReported = true;
+            int currentGeneration = generation;
+            ChamberEntered?.Invoke();
+            if (generation != currentGeneration || !IsPlaying) return;
+        }
         if (p >= 1) Blackout();
     }
 
@@ -251,6 +267,7 @@ public sealed class FallSequence : MonoBehaviour
 
     public void ResetSequence()
     {
+        pausedAt = null;
         generation++; IsPlaying = false; visiblePreview = -1; finished = null; head = null;
         blackFrame = -1; hasOpening = impactPlayed = chimePlayed = entryReported = false;
         arena?.Restore(); arena = null;

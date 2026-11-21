@@ -19,7 +19,7 @@ namespace FloorFracture
             new(-.019f,.012f)
         };
         public static readonly int[][] Pieces = MakePieces();
-        private static Mesh face, rim, safeRim, cracks, ring;
+        private static Mesh blockSides, face, rim, safeRim, cracks, ring;
         public static Mesh Face => face ? face : face = Sheet(false);
         public static Mesh Rim => rim ? rim : rim = Sheet(true);
         public static Mesh SafeRim => safeRim ? safeRim : safeRim = BeveledRim();
@@ -77,6 +77,27 @@ namespace FloorFracture
             }
             else b.Quad(Ground(Points[0]),Ground(Points[2]),Ground(Points[4]),Ground(Points[6]),Color.white,Color.white);
             return b.Create(border?"Glass rim":"Glass surface");
+        }
+
+        internal static Mesh BlockSides
+        {
+            get
+            {
+                if (blockSides) return blockSides;
+                var b = new Builder();
+                Vector3 down = Vector3.down * (2 * Half);
+                for (int k = 0; k < 4; k++)
+                {
+                    var a = Ground(Points[k*2]);
+                    var z = Ground(Points[((k+1)%4)*2]);
+                    b.Quad(z,a,a+down,z+down,Color.white,Color.white);
+                }
+                b.Quad(Ground(Points[6])+down,Ground(Points[4])+down,
+                    Ground(Points[2])+down,Ground(Points[0])+down,Color.white,Color.white);
+                blockSides = b.Create("Glass block sides and bottom");
+                blockSides.RecalculateNormals();
+                return blockSides;
+            }
         }
 
         static Mesh BeveledRim()

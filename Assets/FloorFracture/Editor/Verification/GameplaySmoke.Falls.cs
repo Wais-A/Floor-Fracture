@@ -39,7 +39,8 @@ namespace FloorFracture.Editor
         private static IEnumerator VerifyEndingExit(string ending, bool reduced, bool skip)
         {
             MeshRenderer previewSurface = null;
-            if (!skip && !reduced)
+            Color32[][] previewWalls = null;
+            if (!skip)
             {
                 StandOn(CornerPane);
                 game.BoardView.PracticeBreak(AdjacentPane(CornerPane));
@@ -48,8 +49,8 @@ namespace FloorFracture.Editor
                 var previewChamber = GameObject.Find("Fall chamber");
                 Require(previewChamber && !game.Ending.IsPlaying, "A safe pane did not reveal the shared chamber before loss.");
                 previewSurface = previewChamber.transform.Find("Hazard surface").GetComponent<MeshRenderer>();
-                VerifyOpenLanding(ending, previewSurface);
-                Capture("open-shaft-"+ending.ToLowerInvariant(), SmokeView.CenterEye);
+                previewWalls = VerifyOpenLanding(ending, reduced, previewSurface);
+                if (!reduced) Capture("open-shaft-"+ending.ToLowerInvariant(), SmokeView.CenterEye);
             }
             Choose("Preview loss");
             yield return Stage(GameStage.Fall);
@@ -64,6 +65,7 @@ namespace FloorFracture.Editor
                     (int)properties.GetFloat("_Theme") == Array.IndexOf(EndingNames,ending) &&
                     Mathf.Abs(game.BoardView.transform.position.y - previewSurface.transform.position.y - 80f) < .015f,
                     ending + " switched the landing between the broken pane and the start of the fall.");
+                VerifyOpenLanding(ending, reduced, previewSurface, previewWalls);
             }
             var veil = game.Rig.centerEyeAnchor.Find("View fade").GetComponent<MeshRenderer>();
             var material = new MaterialPropertyBlock();
@@ -116,7 +118,7 @@ namespace FloorFracture.Editor
             Save();
         }
 
-        private static void VerifyOpenLanding(string ending, MeshRenderer surface)
+        private static Color32[][] VerifyOpenLanding(string ending, bool reduced, MeshRenderer surface, Color32[][] preview = null)
         {
             var block = new MaterialPropertyBlock();
             surface.GetPropertyBlock(block);
@@ -133,7 +135,11 @@ namespace FloorFracture.Editor
                     "The pre-loss water did not use the approved Meta Floor Zone ripple map.");
             }
             Transform room = surface.transform.parent;
-            var objects = new[] { board.Find("Opening stencil"), board.Find("Glass opening edges"),
+            var walls = room.Find("Shaft walls").GetComponent<Renderer>();
+            var ledges = room.Find("Shaft landmarks").GetComponent<Renderer>();
+            Require(walls.enabled && ledges.enabled, "The opening lost its view of the shared shaft.");
+            var wallViews = new Color32[2][];
+            var objects = new[] { board.Find("Opening stencil"),
                 room.Find("Shaft walls"), room.Find("Shaft landmarks"), surface.transform };
             var oldLayers = Array.ConvertAll(objects, t => t.gameObject.layer);
             const int layer = 30, size = 96;
@@ -161,24 +167,41 @@ namespace FloorFracture.Editor
                     probe.transform.SetPositionAndRotation(standing+rotation*Vector3.right*offset,rotation);
                     surface.enabled=false; var without=Read();
                     surface.enabled=true; var with=Read();
-                    int destinationPixels=0, escaped=0;
+                    walls.enabled = ledges.enabled = false;
+                    var landingAlone = Read();
+                    walls.enabled = ledges.enabled = true;
+                    int eye = offset < 0 ? 0 : 1;
+                    wallViews[eye] = without;
+                    int destinationPixels=0, wallPixels=0, changedWallPixels=0, escaped=0;
                     for (int y=0;y<size;y++)
                     for (int x=0;x<size;x++)
                     {
                         int i=y*size+x;
-                        int change=Math.Abs(with[i].r-without[i].r)+Math.Abs(with[i].g-without[i].g)+Math.Abs(with[i].b-without[i].b);
-                        if (change<12) continue;
+                        bool landing = Difference(with[i], without[i]) >= 12;
+                        bool wall = Difference(with[i], landingAlone[i]) >= 12;
+                        if (!landing && !wall && preview == null) continue;
                         Ray ray=camera.ViewportPointToRay(new Vector3((x+.5f)/size,(y+.5f)/size));
                         Vector3 hit=board.InverseTransformVector(ray.GetPoint((center.y-ray.origin.y)/ray.direction.y)-center);
                         float edge=Mathf.Max(Mathf.Abs(hit.x),Mathf.Abs(hit.z))-game.State.Pitch*.5f;
-                        if (edge<-.015f) destinationPixels++;
-                        if (edge>.025f) escaped++;
+                        if (edge<-.015f)
+                        {
+                            if (landing) destinationPixels++;
+                            if (wall) wallPixels++;
+                            if (preview != null && Difference(without[i],preview[eye][i]) >= 12) changedWallPixels++;
+                        }
+                        if (edge>.025f && (landing || wall)) escaped++;
                     }
-                    Require(destinationPixels>35 && escaped==0, ending + " adjacent-eye landing pixels " + destinationPixels + ", outside its pane " + escaped);
-                    report.openLandings.Add(new LandingReadback { ending=ending, eye=offset<0 ? "left" : "right",
-                        destinationPixels=destinationPixels, outsideAperturePixels=escaped,
-                        depthMetres=board.position.y-surface.transform.position.y });
+                    Require(destinationPixels>35 && wallPixels>35 && (preview != null || escaped==0),
+                        $"{ending} eye {eye} saw {wallPixels} wall pixels and {destinationPixels} landing pixels, {escaped} outside the first hole.");
+                    if (preview != null)
+                        Require(changedWallPixels <= 3, $"{ending} eye {eye} changed {changedWallPixels} wall pixels at fall entry.");
+                    else
+                        report.openLandings.Add(new LandingReadback { ending=ending, reduced=reduced, eye=eye==0 ? "left" : "right",
+                            wallPixels=wallPixels, destinationPixels=destinationPixels, outsideAperturePixels=escaped,
+                            depthMetres=board.position.y-surface.transform.position.y });
                 }
+                return wallViews;
+                int Difference(Color32 a, Color32 b) => Math.Abs(a.r-b.r)+Math.Abs(a.g-b.g)+Math.Abs(a.b-b.b);
                 Color32[] Read()
                 {
                     camera.Render(); RenderTexture.active=target;
@@ -188,7 +211,7 @@ namespace FloorFracture.Editor
             }
             finally
             {
-                surface.enabled=true;
+                walls.enabled=ledges.enabled=surface.enabled=true;
                 for (int i=0;i<objects.Length;i++) objects[i].gameObject.layer=oldLayers[i];
                 camera.targetTexture=null; RenderTexture.active=oldTarget;
                 RenderTexture.ReleaseTemporary(target);
@@ -200,7 +223,8 @@ namespace FloorFracture.Editor
         private sealed class LandingReadback
         {
             public string ending, eye;
-            public int destinationPixels, outsideAperturePixels;
+            public int wallPixels, destinationPixels, outsideAperturePixels;
+            public bool reduced;
             public float depthMetres;
         }
 
@@ -302,6 +326,7 @@ namespace FloorFracture.Editor
             private readonly AudioSource wind, impact;
             private readonly float firstMarks, firstWalls, firstFloor, firstSpan;
             private int lastFrame = -1;
+            private bool reducedEntryCovered;
             private float lastTravel, speedSampleTravel;
             private double lastAge, speedSampleAge;
 
@@ -316,18 +341,19 @@ namespace FloorFracture.Editor
                 chamber = chamberObject.transform;
                 marks = Renderer("Shaft landmarks"); walls = Renderer("Shaft walls"); floor = Renderer("Hazard surface"); flames = Renderer("Flames or crystals");
                 sky = Renderer("Chamber darkness"); veil = eye.Find("View fade").GetComponent<MeshRenderer>();
-                firstMarks = reduced ? marks.transform.position.y : chamber.position.y;
+                firstMarks = chamber.position.y;
                 firstWalls = walls.transform.position.y; firstFloor = floor.transform.position.y;
                 wind = game.transform.Find("Shaft air").GetComponent<AudioSource>();
                 impact = game.transform.Find("Ending impact").GetComponent<AudioSource>();
                 Require(wind.clip && !impact.clip, "The fall did not start with shaft air and a silent impact source.");
                 firstSpan = marks.bounds.size.y;
                 float openingY = game.BoardView.Board.position.y;
-                Require(Mathf.Abs(firstFloor - (openingY - (reduced ? 0f : 80f))) < 0.10f,
+                Require(Mathf.Abs(firstFloor - (openingY - 80f)) < 0.10f,
                     $"The hazard began at {firstFloor:F2} m for an opening at {openingY:F2} m.");
                 evidence = new FallEvidence { ending = ending, motion = reduced ? "reduced" : "full", plannedContact = contact,
                     eyeHeight = eye.position.y - openingY, landmarkSpan = firstSpan, floorOpeningY = openingY, startingHazardY = firstFloor };
                 arena.VerifyEntry(walls);
+                if (reduced) game.Ending.ChamberEntered += CheckReducedCut;
                 if (!reduced)
                 {
                     Require(walls.enabled && marks.enabled && !veil.enabled, "The recognition beat did not expose the shaft lip and its walls.");
@@ -336,6 +362,13 @@ namespace FloorFracture.Editor
                     CheckShaftMeshes();
                 }
                 Observe();
+            }
+
+            private void CheckReducedCut()
+            {
+                game.Ending.ChamberEntered -= CheckReducedCut;
+                veil.GetPropertyBlock(material);
+                reducedEntryCovered = veil.enabled && material.GetColor("_Tint").a >= .999f;
             }
 
             private MeshRenderer Renderer(string name)
@@ -443,13 +476,16 @@ namespace FloorFracture.Editor
                 }
                 if (reduced ? age < contact - 0.025 : evidence.surfaceReachedAt < 0)
                 {
-                    float floorError = Mathf.Abs((floor.transform.position.y - firstFloor) - travel);
-                    float wallError = Mathf.Abs((walls.transform.position.y - firstWalls) - travel);
+                    // Reduced motion holds each tableau stationary and swaps under the black veil.
+                    float expectedFloor = reduced ? (entered ? evidence.floorOpeningY : firstFloor) : firstFloor + travel;
+                    float expectedWalls = firstWalls + (reduced ? (entered ? 5f : 0f) : travel);
+                    float floorError = Mathf.Abs(floor.transform.position.y - expectedFloor);
+                    float wallError = Mathf.Abs(walls.transform.position.y - expectedWalls);
                     float spacingError = Mathf.Abs(marks.bounds.size.y - firstSpan);
                     evidence.maxPreContactOffsetError = Mathf.Max(evidence.maxPreContactOffsetError, Mathf.Max(floorError, Mathf.Max(wallError, spacingError)));
                     Require(evidence.maxPreContactOffsetError < 0.035f, $"Shaft, bands, or floor diverged by {evidence.maxPreContactOffsetError:F3} m before contact at {age:F3} s.");
                     Require(!effect && !impact.clip, $"A secondary hazard or impact sound started early at {age:F3} s.");
-                    if (reduced) Require(Mathf.Abs(travel) < 0.04f, "The reduced tableau made a sustained vertical movement before contact.");
+                    if (reduced && entered) Require(reducedEntryCovered, "The reduced chamber moved in view.");
                 }
                 lastTravel = travel; lastAge = age;
             }

@@ -60,17 +60,19 @@ namespace FloorFracture
             }
         }
 
+        public Vector2 Corner(int column, int row, float pitch) =>
+            new((column - Columns * .5f) * pitch, (row - Rows * .5f) * pitch);
+
         public IEnumerable<(Vector2 a, Vector2 b)> Perimeter(float pitch)
         {
-            float left = -Columns * pitch * .5f, bottom = -Rows * pitch * .5f;
             for (int row = 0; row < Rows; row++)
                 for (int col = 0; col < Columns; col++)
                 {
                     if (!HasPane(col, row)) continue;
-                    var lower = new Vector2(left + col * pitch, bottom + row * pitch);
-                    var right = lower + Vector2.right * pitch;
-                    var upper = lower + Vector2.one * pitch;
-                    var top = lower + Vector2.up * pitch;
+                    var lower = Corner(col, row, pitch);
+                    var right = Corner(col + 1, row, pitch);
+                    var upper = Corner(col + 1, row + 1, pitch);
+                    var top = Corner(col, row + 1, pitch);
                     if (!HasPane(col, row - 1)) yield return (lower, right);
                     if (!HasPane(col + 1, row)) yield return (right, upper);
                     if (!HasPane(col, row + 1)) yield return (upper, top);
