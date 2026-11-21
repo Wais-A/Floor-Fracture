@@ -34,6 +34,9 @@ namespace FloorFracture
         public BoardPlacement Placement { get; private set; }
         public int ScannedSpawnCount { get; private set; }
         public EffectMesh FloorEffect => floorEffect;
+        public MRUKRoom ConfirmedRoom => Status == RoomPlacementStatus.Confirmed ? room : null;
+        private const string EntireFloorKey = "ff.entireFloor";
+        public bool EntireFloor { get; private set; }
         public event Action Changed;
 
         private const string DeniedMessage = "Allow spatial data for Floor Fracture in app permissions, then retry.";
@@ -46,6 +49,7 @@ namespace FloorFracture
         private Guid confirmedRoomId;
         private bool scenePermissionAvailable = true;
         private bool busy;
+        private bool refitRequested;
         private bool awaitingSavedFloor;
         private double nextFloorCheck;
         private string floorReadIssue;
@@ -102,6 +106,7 @@ namespace FloorFracture
 
         private void Awake()
         {
+            EntireFloor = PlayerPrefs.GetInt(EntireFloorKey, 0) != 0;
             mruk = GetComponent<MRUK>();
             if (!rig) rig = FindAnyObjectByType<OVRCameraRig>();
             outlines = new RoomOutlineView(transform, outlineShader);
@@ -210,6 +215,34 @@ namespace FloorFracture
             LoadRoom(false, false, Status == RoomPlacementStatus.Confirmed || Status == RoomPlacementStatus.NoFit);
         }
 
+        public void SetEntireFloor(bool value)
+        {
+            if (EntireFloor == value) return;
+            EntireFloor = value;
+            PlayerPrefs.SetInt(EntireFloorKey, value ? 1 : 0);
+            PlayerPrefs.Save();
+            if (!isActiveAndEnabled) return;
+            if (busy)
+            {
+                revision++;
+                refitRequested = true;
+                return;
+            }
+            LoadRoom(false, room != null);
+        }
+
+        public bool IsClearStandFootprint(Vector3 center, float radius)
+        {
+            if (Status != RoomPlacementStatus.Confirmed || acceptedSurvey == null || !IsRoomLocalized ||
+                !FloorGeometry.Finite(center.x) || !FloorGeometry.Finite(center.z) ||
+                !FloorGeometry.Finite(radius) || radius <= 0f) return false;
+            float half = radius + FloorSurvey.FootMargin;
+            return acceptedSurvey.Check(new[] {
+                new Vector2(center.x - half, center.z - half), new Vector2(center.x + half, center.z - half),
+                new Vector2(center.x + half, center.z + half), new Vector2(center.x - half, center.z + half)
+            }) == TileClearance.Clear;
+        }
+
         public void RequestSpaceSetup()
         {
             if (busy) return;
@@ -262,6 +295,7 @@ namespace FloorFracture
 #endif
             awaitingSavedFloor = false;
             ScannedSpawnCount = 0;
+            acceptedSurvey = null;
             surveys = null;
             meshSnapshot = null;
             CancellationToken lifetime = destroyCancellationToken;
@@ -385,7 +419,15 @@ namespace FloorFracture
                 Debug.LogWarning($"Room placement: {error}", this);
                 SetState(RoomPlacementStatus.UnsafeRoom, "The room scan could not be read. Look around and retry, or run Space Setup.");
             }
-            finally { busy = false; }
+            finally
+            {
+                busy = false;
+                if (refitRequested && !lifetime.IsCancellationRequested && isActiveAndEnabled)
+                {
+                    refitRequested = false;
+                    LoadRoom(false, room != null);
+                }
+            }
         }
 
         private bool AcceptLoad(MRUK.LoadDeviceResult result)
@@ -453,7 +495,7 @@ namespace FloorFracture
         }
 
         // Floor Zone uses this same Meta block to locate open floor. The SDK markers are
-        // transient search points. Only a fitted rectangle is presented to the player.
+        // transient search points used to align trial grids to open floor.
         private List<Vector2> ReadSpawnCenters(Vector2 preferred)
         {
             if (!floorSpawns) throw new InvalidOperationException("The room needs Meta's Find Spawn Positions block.");

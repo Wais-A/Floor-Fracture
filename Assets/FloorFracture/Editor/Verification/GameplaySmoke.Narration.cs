@@ -24,7 +24,7 @@ namespace FloorFracture.Editor
                     "The local voice recording contains no audible waveform for " + page);
             }
             int volume = PlayerPrefs.GetInt("ff.volume",3), motion = PlayerPrefs.GetInt("ff.reduced",0);
-            int tile = game.State.Width * (game.State.Height/2) + game.State.Width/2;
+            int tile = MiddlePane;
             StandOn(tile);
             Choose("Tutorial");
             Require(!speaker.clip && body.text.Contains(OfflineNarration.StepCaption), "Fresh settings should show captions with narration off.");

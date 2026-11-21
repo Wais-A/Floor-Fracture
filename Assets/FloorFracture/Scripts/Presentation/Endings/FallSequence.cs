@@ -13,7 +13,7 @@ public sealed class FallSequence : MonoBehaviour
     [SerializeField] GameObject splashPrefabOverride = null;
     [SerializeField] GameObject lavaFlamesOverride = null;
 #if UNITY_EDITOR || DEBUG
-    enum PreviewEnding { Shuffle = -1, Water, Lava, Crystal, Space, Sand, Snow }
+    enum PreviewEnding { Shuffle = -1, Water, Lava, TarPit, Space, Sand, Snow }
     [SerializeField] PreviewEnding developmentEnding = PreviewEnding.Shuffle;
 #endif
     EndingShuffle shuffle = new EndingShuffle(Environment.TickCount);
@@ -25,7 +25,8 @@ public sealed class FallSequence : MonoBehaviour
     Action finished;
     FloorEnding kind;
     int visiblePreview = -1;
-    bool reduced, hasOpening, impactPlayed, chimePlayed, entryReported;
+    bool reduced, hasOpening, impactPlayed, entryReported;
+    int tarPulls;
     Vector3 opening;
     float width, yaw;
     double startedAt;
@@ -72,7 +73,7 @@ public sealed class FallSequence : MonoBehaviour
         visiblePreview = selected;
         if (selected < 0) { scenery?.Hide(); return; }
         OpenChamber(viewer, (FloorEnding)selected, board.transform.position, board.PaneWidth, board.transform.eulerAngles.y);
-        scenery.Draw(0,0,false,0,out _);
+        scenery.Draw(0,0,0,false,0,out _,preview:true);
     }
 
     void OpenChamber(Transform viewer, FloorEnding destination, Vector3 entry, float tileWidth, float yawDegrees)
@@ -117,7 +118,7 @@ public sealed class FallSequence : MonoBehaviour
         int selected = SelectEnding(true);
         bool emptyBag = selected < 0;
         kind = emptyBag ? FloorEnding.Water : (FloorEnding)selected;
-        LastEndingName = emptyBag ? string.Empty : kind.ToString();
+        LastEndingName = emptyBag ? string.Empty : kind == FloorEnding.TarPit ? "Tar Pit" : kind.ToString();
         this.finished = finished;
         reduced = reducedMotion;
         IsPlaying = true;
@@ -165,13 +166,17 @@ public sealed class FallSequence : MonoBehaviour
     void Draw(float age)
     {
         float contact = reduced ? .82f : RimHold + FreeFallTime;
-        float p = Mathf.Clamp01((age - contact) / (reduced ? 3.11f : 5f));
+        float duration = kind == FloorEnding.Space ? 8f : kind == FloorEnding.Snow ? 5.2f : 5f;
+        float p = Mathf.Clamp01((age - contact) / (reduced ? 3.11f : duration));
+        float seconds = p * duration;
         // Let the player register the broken rim, then accelerate the scenery past the tracked eye.
         float fallingTime = Mathf.Clamp(age - RimHold, 0f, FreeFallTime);
         float travel = age >= contact ? FallScenery.ShaftDepth : .5f * Gravity * fallingTime * fallingTime;
-        float immersion = scenery.Draw(age, p, reduced, travel, out bool entered);
+        if (!reduced && age >= contact)
+            travel += kind == FloorEnding.Space ? Gravity * FreeFallTime * seconds : scenery.EyeHeight * Burial(kind,seconds);
+        float immersion = scenery.Draw(age, p, seconds, reduced, travel, out bool entered);
         arena?.Draw(travel,entered);
-        float fade = FallScenery.Ease(reduced ? .80f : .60f, 1f, p);
+        float fade = FallScenery.Ease(3f,5f,seconds);
         // At constant acceleration, speed as a fraction of impact speed is t / tImpact.
         float air = reduced ? .25f : fallingTime / FreeFallTime;
         float ambiance = 0;
@@ -187,7 +192,6 @@ public sealed class FallSequence : MonoBehaviour
                 }
                 air *= 1-Mathf.Max(immersion,.70f*FallScenery.Ease(0,.17f,p));
                 ambiance = Mathf.Max(immersion,.18f*FallScenery.Ease(0,.20f,p));
-                tintColor = new Color(.015f,.19f,.24f); tint = .48f*immersion;
                 break;
             case FloorEnding.Lava:
                 if (!impactPlayed && age >= contact)
@@ -195,29 +199,46 @@ public sealed class FallSequence : MonoBehaviour
                     sound.LavaImpact(scenery.SplashPosition());
                     impactPlayed = true;
                 }
-                ambiance = FallScenery.Ease(0,.42f,p); air *= 1-FallScenery.Ease(0,.20f,p);
+                ambiance = FallScenery.Ease(0,.45f,seconds); air *= 1-ambiance;
                 break;
-            case FloorEnding.Crystal:
-                air *= 1-FallScenery.Ease(.03f,.45f,p);
-                if (!chimePlayed && p >= .71f)
+            case FloorEnding.TarPit:
+                air *= 1-FallScenery.Ease(0,.35f,seconds);
+                if (age >= contact)
                 {
-                    sound.CrystalChime(head.position + Vector3.down*.6f); chimePlayed = true;
+                    if (!impactPlayed)
+                    {
+                        sound.TarImpact(scenery.SplashPosition());
+                        impactPlayed = true;
+                    }
+                    int due = seconds >= SecondPull ? 2 : seconds >= FirstPull ? 1 : 0;
+                    if (due > tarPulls)
+                    {
+                        tarPulls = due;
+                        sound.TarSuction(scenery.SplashPosition(),due);
+                    }
+                    ambiance = .75f + .25f*immersion;
+                    sound.MuffleTar(immersion);
                 }
+                fade = FallScenery.Ease(3.3f,4.2f,seconds);
                 break;
             case FloorEnding.Space:
-                air *= 1-FallScenery.Ease(.08f,.35f,p);
+                air *= 1-FallScenery.Ease(.25f,6.8f,seconds);
+                fade = FallScenery.Ease(4.8f,7f,seconds);
                 break;
             case FloorEnding.Sand:
-                ambiance = FallScenery.Ease(.05f,.38f,p)*(1-FallScenery.Ease(.72f,.90f,p));
-                air *= 1-FallScenery.Ease(.12f,.40f,p);
+                ambiance = FallScenery.Ease(0,.55f,seconds)*(1-FallScenery.Ease(3.8f,5f,seconds));
+                air *= 1-FallScenery.Ease(0,.45f,seconds);
                 break;
             case FloorEnding.Snow:
-                ambiance = FallScenery.Ease(.04f,.75f,p); air *= 1-ambiance;
-                tintColor = new Color(.87f,.94f,.98f); tint = FallScenery.Ease(.50f,.78f,p);
+                ambiance = age >= contact ? .32f + .68f*FallScenery.Ease(0,.8f,seconds) : 0;
+                air *= 1-ambiance;
+                tintColor = Color.white; tint = FallScenery.Ease(0,2.8f,seconds);
+                fade = FallScenery.Ease(3.2f,5.2f,seconds);
                 break;
         }
-        if (reduced) air *= .33f;
-        sound.MixFall(air*(1-fade),ambiance*(1-fade));
+        if (reduced) air *= .275f;
+        float ambienceFade = kind == FloorEnding.TarPit ? FallScenery.Ease(4.2f,5f,seconds) : fade;
+        sound.MixFall(air*(1-fade),ambiance*(1-ambienceFade));
         if (reduced && age < .70f)
         {
             float cover = FallScenery.Ease(0,.31f,age)*(1-FallScenery.Ease(.40f,.70f,age));
@@ -225,7 +246,7 @@ public sealed class FallSequence : MonoBehaviour
         }
         else
         {
-            // Compose the colored water / snow wash with black in one stereo draw.
+            // The final fade also covers underwater bubbles and the snow whiteout.
             float alpha = fade + tint*(1-fade);
             float colorWeight = alpha > .001f ? tint*(1-fade)/alpha : 0;
             scenery.SetVeil(tintColor*colorWeight,alpha);
@@ -240,6 +261,28 @@ public sealed class FallSequence : MonoBehaviour
             if (generation != currentGeneration || !IsPlaying) return;
         }
         if (p >= 1) Blackout();
+    }
+
+    internal const float FirstPull = .47f, SecondPull = 1.57f;
+
+    // Surface displacement in standing eye heights. A short initial compression gives
+    // way to a positive sinking speed, including after the surface passes the eye.
+    internal static float Burial(FloorEnding ending, float t)
+    {
+        float plunge = .13f * (1-Mathf.Exp(-t/.075f));
+        switch (ending)
+        {
+            case FloorEnding.Water: return plunge + .87f*t/1.2f;
+            case FloorEnding.Lava: return plunge + .87f*t/1.8f;
+            case FloorEnding.Sand: return plunge + .87f*t/2.3f;
+            case FloorEnding.TarPit:
+                return plunge + .53f*t/2.5f + .17f*FallScenery.Ease(FirstPull,FirstPull+.42f,t)
+                    + .17f*FallScenery.Ease(SecondPull,SecondPull+.48f,t);
+            case FloorEnding.Snow:
+                float remaining = 1-Mathf.Clamp01(t/.7f);
+                return .5f*(1-remaining*remaining);
+            default: return 0;
+        }
     }
 
     public void Skip()
@@ -269,7 +312,7 @@ public sealed class FallSequence : MonoBehaviour
     {
         pausedAt = null;
         generation++; IsPlaying = false; visiblePreview = -1; finished = null; head = null;
-        blackFrame = -1; hasOpening = impactPlayed = chimePlayed = entryReported = false;
+        blackFrame = -1; tarPulls = 0; hasOpening = impactPlayed = entryReported = false;
         arena?.Restore(); arena = null;
         if (sound) sound.StopFall();
         scenery?.Hide();

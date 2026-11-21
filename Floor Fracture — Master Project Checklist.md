@@ -339,9 +339,9 @@ The level-three playthrough caught the moving glass, tolerated a recoverable mis
 - [x] **099 — Water submersion.** Raise the waterline slowly past eye level. Introduce bubbles, underwater tint, and muffled audio before fading completely to black.
 - [x] **100 — Lava arrival.** Cast orange light onto the lower shaft walls before the glowing lava surface appears. Use the rising glow to foreshadow the ending.
 - [x] **101 — Lava engulfment.** Raise flames around the edges of the player’s view, add drifting embers and heat sound, then fade fully to black.
-- [x] **102 — Crystal cavern.** End the shaft in a ring of tall crystal shapes. Light them in sequence around the player, play a final resonant chime, and extinguish the lights.
+- [x] **102 — Tar Pit.** Preview a bubbling pool through the open glass. Sink through the glossy surface with two suction pulls and a muffled gurgle.
 - [x] **103 — Space.** Let the shaft walls fall away into a deep starfield. Drop the falling sound into silence, hold the reveal briefly, then fade the stars.
-- [x] **104 — Sand.** Reveal a buried chamber, send sand down its walls, raise the accumulated sand, and let the opening overhead become the last visible light.
+- [x] **104 — Sand.** Raise the sand past the eyes, then fill the view with the surface color and darken it as the player sinks.
 - [x] **105 — Snow.** Reveal cold blue light, sweep snow across the space, build the wind, briefly white out the scene, then fade to black.
 - [x] **106** After every ending, show level reached, waves survived, Restart, and Quit. Keep the panel readable regardless of which direction the player turned during the fall.
 - [x] **107** Restart clears hazard visuals, audio, shards, holes, slider state, timers, and score. Restore passthrough before asking the player to move back onto the rebuilt board.
@@ -387,7 +387,7 @@ The level-three playthrough caught the moving glass, tolerated a recoverable mis
 ## L. Finish the class deliverables and maintain the handoff
 
 - [x] **129** The December 2 interaction milestone was demonstrated on Quest 3 on November 19. Use the headset feedback and exact original APK for comparison while revising placement, board scale and the loss sequence.
-- [x] **130** If time tightens after water and lava work, protect Memory, Last Tile, fog, and sliding tiles before polishing crystal, space, sand, and snow. Record the status of every ending individually.
+- [x] **130** If time tightens after water and lava work, protect Memory, Last Tile, fog, and sliding tiles before polishing tar, space, sand, and snow. Record the status of every ending individually.
 - [x] **131 — [DOC]** Complete the README with gameplay description, screenshots, hardware and software requirements, setup, build and installation instructions, known issues, roadmap, credits, and AI usage.
 - [x] **132 — [BUILD]** Built the shipping player from a clean checkout of `54b54ee`. All 56 LFS files and 52 Unity references resolved. Unity exited normally with zero errors and 54 warnings. The signed 108,870,046-byte ARM64 release passed archive, 16 KiB alignment, scene, icon, Vulkan shader, narration and stripped development-menu checks. Its development build was installed for the earlier review. [Clean release audit](<./Docs/Verification/Overnight clean release.json>)
 - [x] **[BUILD] Verify and install the combined boundary and first-shatter fixes.** The ordinary game at `1da914c` passed 67 Edit Mode tests and 42 Play Mode checks. Both signed, 16 KiB-aligned ARM64 Android packages built with zero errors, preserved the three offline clips, and embedded the complete Meta sample notice. The installed development APK matched the file on disk. [Signed builds and deployment](<./Docs/Verification/Latest Quest release.json>)

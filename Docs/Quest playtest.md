@@ -22,23 +22,27 @@ Use one copy per APK and test room. Record observations from the headset and lea
 | 033–034 | Insufficient room. Record the message, passthrough visibility, and result of rescanning. | |
 | 037–044, 120 | Use each ray from seated and standing menu positions. Finish the untimed stepping tutorial. Enter optional stone practice, try both grips, miss, hit any pane, and leave for the game. Describe any coaching. | |
 
+Compare **Up to 16 tiles** and **Entire connected floor** on the same saved scan. Record playable tile count, pitch, and FPS during the countdown and first shatter for each mode. From opposite sides of the board, check that the scoreboard is legible in both eyes and stays attached when you turn, pause or restart. Check stand placement in a scan without a clear wall.
+
 ### Movement, visibility, and endings
 
 | Check | What to try | Observed result and clip timestamp |
 | --- | --- | --- |
 | 049–056 | Step across a seam and near a corner. Lean and optionally hop in place. Compare the ring and the resolved tile. Cross a gap quickly and slowly, then step off the board. | |
-| 058–070 | Move early onto the guaranteed neighbor. Record the timer at the break. Start another run and stay on the starting tile until zero. | |
+| 058–070 | Play the first level without coaching. Watch the single amber pulse, wait for the cracks to clear, then move onto a pane that stayed clear. Pause once during reveal and once during recall. Record the timer at the break. Start another run and stay on the starting tile until zero. | |
 | 071–082 | Play Classic, Memory and Last Tile. Test fog alone, sliding alone, and combinations. Approach the slider from both sides, miss, recover, and lose. Record shortest comfortable countdown. | |
 | 083–094, 117–118 | From intact glass, examine a neighboring opening from above and at a shallow angle. Identify its destination and compare it with a loss in the same run. Try light and dark real floors, muted audio and reduced warning intensity. | |
 | 055, 107, 119–120 | Leave the board, remove and replace the headset, regain tracking, then resume from a valid tile. Compare head movement, passthrough, countdown, and walking distance. | |
 
-For each ending, note the motion comfort, sound, skip response, restored room view, score reset, and any visuals left behind. Exercise Quit on the standalone APK.
+Start in Full motion with **Sand** and look straight up through eye crossing. Next look straight down underwater, then turn toward the overhead light and bubbles. Try **Lava** for the red cover and **Tar Pit** for complete darkness at eye level. Look through a neighboring hole before each fall. Listen for the tar impact, two pulls, and muffled bubbles. Check for continuous movement through the splash and shaft exit. Compare the countdown at four and at three, then repeat with mute enabled.
+
+For each ending, note the motion comfort, sound, skip response, restored room view, score reset, and any visuals left behind. Press the left controller Menu button during a countdown and resume with the hand menu gesture. Pause a fall, use Resume, and select Quit to main menu from Results. Start another wave on the same floor.
 
 | Ending | Full fall | Reduced motion | Skip, results, restart | Evidence |
 | --- | --- | --- | --- | --- |
 | Water | | | | |
 | Lava | | | | |
-| Crystal | | | | |
+| Tar Pit | | | | |
 | Space | | | | |
 | Sand | | | | |
 | Snow | | | | |

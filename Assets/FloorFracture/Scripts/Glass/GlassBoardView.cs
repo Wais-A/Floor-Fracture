@@ -9,17 +9,12 @@ namespace FloorFracture
         GlassTile moving;
         MeshRenderer occupancy, fog, holes;
         ShardPool shards;
-        Mesh cutouts, fogPlane, boundary, labelBackground;
+        Mesh cutouts, fogPlane, boundary;
         Material bodyMaterial, paneMaterial, maskMaterial, fogMaterial, shardMaterial;
-        TextMesh readout;
-        Transform labelPlate;
-        bool clockPositionSet;
-        float readoutWidth=.68f, readoutHeight=.23f;
-        ulong holeBits;
+        bool[] openPanes;
         int practiceHole=-1;
-        string lastText;
         public Transform Board => transform;
-        internal bool HasOpenPanes => isActiveAndEnabled && holeBits != 0;
+        internal bool HasOpenPanes => isActiveAndEnabled && holes && holes.enabled;
         internal float ChamberRadius
         {
             get
@@ -46,6 +41,7 @@ namespace FloorFracture
             foreach (var material in new[] {paneMaterial, bodyMaterial, maskMaterial, fogMaterial})
                 material.SetFloat("_MappedFloorY", pose.position.y);
             tiles=new GlassTile[board.Count];
+            openPanes=new bool[board.Count];
             float paneScale=board.Pitch/GlassGeometry.AuthoredPitch;
             var fittedScale=new Vector3(paneScale,1,paneScale);
             for(int i=0;i<tiles.Length;i++)
@@ -81,96 +77,35 @@ namespace FloorFracture
                     b.Uv[v]=new Vector2((i%board.Width+b.Uv[v].x)/board.Width,(i/board.Width+b.Uv[v].y)/board.Height);
             }
             fogPlane=b.Create("Fog bank"); fog=GlassTile.Part(transform,"Low fog",fogPlane,fogMaterial); fog.enabled=false;
-            readout=CreateReadout(); ClearTransient(); RebuildHoles(0);
+            holes.enabled=false;
         }
-        TextMesh CreateReadout()
-        {
-            var go=new GameObject("Countdown and score"); go.transform.SetParent(transform,false);
-            var text=go.AddComponent<TextMesh>(); text.font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            var letters=text.GetComponent<MeshRenderer>();
-            letters.sharedMaterial=text.font.material;
-            letters.sortingOrder=2;
-            text.fontSize=96; text.characterSize=.026f; text.anchor=TextAnchor.LowerCenter; text.alignment=TextAlignment.Center;
-            var b=new GlassGeometry.Builder();
-            b.Quad(new(-.5f,-.5f,0),new(.5f,-.5f,0),new(.5f,.5f,0),new(-.5f,.5f,0),Color.white,Color.white);
-            labelBackground=b.Create("Readout backing");
-            var plate=GlassTile.Part(go.transform,"Contrast backing",labelBackground,GlassTile.Surface);
-            // Both draws follow the transparent room floor. Drawing the backing first in
-            // the scene lets the bricks paint over it and leaves white numbers on mortar.
-            plate.sortingOrder=1; GlassTile.Tint(plate,new Color(.017f,.055f,.067f,.94f)); labelPlate=plate.transform;
-            text.color=new Color(.91f,1,.94f); return text;
-        }
-        public void AnchorReadout(Transform head)
-        {
-            if(!head||!readout) return;
-            var local=transform.InverseTransformPoint(head.position);
-            Vector3 bearing=local.x*local.x+local.z*local.z<.04f?transform.InverseTransformDirection(head.forward):new Vector3(-local.x,0,-local.z);
-            float x=model.Width*model.Pitch*.5f, z=model.Height*model.Pitch*.5f;
-            var p=Mathf.Abs(bearing.x)/x>Mathf.Abs(bearing.z)/z?
-                new Vector3(Mathf.Sign(bearing.x)*(x+.08f),.11f,0):new Vector3(0,.11f,Mathf.Sign(bearing.z)*(z+.08f));
-            // On a long strip put the sign on the side ahead of the player. The far end
-            // can be many metres away, even though the guaranteed move is a single step.
-            var onFloor = new Vector2(local.x,local.z);
-            if (Vector2.Distance(onFloor,new Vector2(p.x,p.z))>3.1f)
-            {
-                var gaze=transform.InverseTransformDirection(head.forward);
-                if (x>=z)
-                    p=new Vector3(Mathf.Clamp(local.x+Mathf.Sign(bearing.x)*1.15f,-x,x),.11f,
-                        Mathf.Sign(Mathf.Abs(gaze.z)>.25f?gaze.z:local.z)*(z+.08f));
-                else
-                    p=new Vector3(Mathf.Sign(Mathf.Abs(gaze.x)>.25f?gaze.x:local.x)*(x+.08f),.11f,
-                        Mathf.Clamp(local.z+Mathf.Sign(bearing.z)*1.15f,-z,z));
-            }
-            readout.transform.localPosition=p; clockPositionSet=true;
-            float distance=Vector3.Distance(p,local);
-            readoutWidth=Mathf.Clamp(distance*.30f,.63f,1.05f);
-            readoutHeight=Mathf.Clamp(distance*.11f,.22f,.36f);
-            lastText=null;
-        }
-        public void SetReadout(string text,Transform head)
-        {
-            if(!readout) return;
-            if(!clockPositionSet && head && text.Length>0) AnchorReadout(head);
-            if(text!=lastText)
-            {
-                readout.text=text; lastText=text;
-                labelPlate.gameObject.SetActive(text.Length>0);
-                if(text.Length>0)
-                {
-                    var bounds=readout.GetComponent<MeshRenderer>().localBounds;
-                    if(bounds.size.x>.001f&&bounds.size.y>.001f)
-                    {
-                        float scale=Mathf.Min(readoutWidth/bounds.size.x,readoutHeight/bounds.size.y);
-                        readout.transform.localScale=Vector3.one*scale;
-                        labelPlate.localPosition=bounds.center+Vector3.forward*(.003f/scale);
-                        labelPlate.localScale=new Vector3(bounds.size.x+.048f/scale,bounds.size.y+.025f/scale,1);
-                    }
-                }
-            }
-            if(!head||text.Length==0) return;
-            Vector3 away=readout.transform.position-head.position;
-            if(away.sqrMagnitude>.001f) readout.transform.rotation=Quaternion.LookRotation(away,Vector3.up);
-        }
+
         public void Draw(WavePlan wave,TileSample sample,double now,bool gentle,int practiceWarning=-1)
         {
             if(tiles==null) return;
-            ulong bits=practiceHole>=0?1UL<<practiceHole:0UL;
+            bool openingsChanged=false;
             bool shown=wave!=null&&wave.ShowsWarnings(now);
+            double revealAge=wave!=null ? now-wave.StartsAt : 0;
             for(int i=0;i<tiles.Length;i++)
             {
                 if (!tiles[i]) continue;
-                if(!model.IsIntact(i)) bits|=1UL<<i;
-                bool visible=(bits&(1UL<<i))==0;
+                bool open=!model.IsIntact(i) || i==practiceHole;
+                if (openPanes[i]!=open)
+                {
+                    openPanes[i]=open;
+                    openingsChanged=true;
+                }
+                bool visible=!open;
                 if(tiles[i].gameObject.activeSelf!=visible) tiles[i].gameObject.SetActive(visible);
-                if(visible) tiles[i].ShowWarning((shown&&wave.IsBreaking(i))||i==practiceWarning,now,gentle);
+                if(visible) tiles[i].ShowWarning((shown&&wave.IsBreaking(i))||i==practiceWarning,revealAge,gentle);
             }
-            if(bits!=holeBits) RebuildHoles(bits);
+            if(openingsChanged) RebuildHoles();
             var slide=model.Slider;
             moving.gameObject.SetActive(slide!=null);
             if(slide!=null)
             {
                 moving.transform.localPosition=GlassGeometry.Ground(slide.CenterAt(now));
-                moving.ShowWarning(shown&&wave.IsBreaking(slide.Tile),now,gentle);
+                moving.ShowWarning(shown&&wave.IsBreaking(slide.Tile),revealAge,gentle);
             }
             occupancy.enabled=sample.Kind==SupportKind.Glass && sample.Index>=0 && sample.Index!=practiceHole &&
                 (sample.IsSlider ? slide!=null && slide.Tile==sample.Index : model.IsIntact(sample.Index));
@@ -204,7 +139,8 @@ namespace FloorFracture
             occupancy.enabled=false;
             if (!model.Layout.Contains(cell)) return;
             tiles[cell].gameObject.SetActive(false);
-            RebuildHoles(holeBits | (1UL << cell));
+            openPanes[cell]=true;
+            RebuildHoles();
         }
 
         internal void ShowLiftedBlocks(bool lifted, bool belowRim = false)
@@ -216,34 +152,34 @@ namespace FloorFracture
             bodyMaterial.SetInt("_PortalComparison", (int)(lifted ?
                 UnityEngine.Rendering.CompareFunction.Always : UnityEngine.Rendering.CompareFunction.Equal));
         }
+        internal void SetFullFall(bool falling) => shards.FullFall = falling;
+
         internal void ShowShardsBelowRim(bool belowRim)
         {
             var comparison = belowRim ? UnityEngine.Rendering.CompareFunction.Always : UnityEngine.Rendering.CompareFunction.Equal;
             // Shards are visible through the aperture until the viewer passes below the rim.
             shardMaterial.SetInt("_PortalComparison", (int)comparison);
         }
-        void RebuildHoles(ulong bits)
+        void RebuildHoles()
         {
-            holeBits = bits;
             var maskGeometry = new GlassGeometry.Builder();
-            var openings = new BoardLayout(model.Width, model.Height, bits);
-            float pitch = model.Pitch;
-            for (int row = 0; row < openings.Rows; row++)
-            for (int col = 0; col < openings.Columns; col++)
+            var layout=model.Layout;
+            float pitch=model.Pitch;
+            for (int i=0;i<openPanes.Length;i++)
             {
-                if (!openings.HasPane(col, row)) continue;
-                maskGeometry.Quad(GlassGeometry.Ground(openings.Corner(col, row, pitch)),
-                    GlassGeometry.Ground(openings.Corner(col + 1, row, pitch)),
-                    GlassGeometry.Ground(openings.Corner(col + 1, row + 1, pitch)),
-                    GlassGeometry.Ground(openings.Corner(col, row + 1, pitch)), Color.white, Color.white);
+                if (!openPanes[i]) continue;
+                int col=i%layout.Columns, row=i/layout.Columns;
+                maskGeometry.Quad(GlassGeometry.Ground(layout.Corner(col,row,pitch)),
+                    GlassGeometry.Ground(layout.Corner(col+1,row,pitch)),
+                    GlassGeometry.Ground(layout.Corner(col+1,row+1,pitch)),
+                    GlassGeometry.Ground(layout.Corner(col,row+1,pitch)), Color.white, Color.white);
             }
-
             maskGeometry.Write(cutouts);
-            holes.enabled = bits!=0;
+            holes.enabled=maskGeometry.Vertices.Count>0;
         }
         void OnDestroy()
         {
-            foreach(Object asset in new Object[]{cutouts,fogPlane,boundary,labelBackground,bodyMaterial,paneMaterial,maskMaterial,shardMaterial,fogMaterial})
+            foreach(Object asset in new Object[]{cutouts,fogPlane,boundary,bodyMaterial,paneMaterial,maskMaterial,shardMaterial,fogMaterial})
                 if(asset) Destroy(asset);
         }
     }

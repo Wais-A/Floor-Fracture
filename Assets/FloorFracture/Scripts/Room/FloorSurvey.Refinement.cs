@@ -7,58 +7,67 @@ namespace FloorFracture
 {
     internal sealed partial class FloorSurvey
     {
-        // An open aisle can be diagonal to the longest wall. Refine the measured surface
-        // only after ordinary placement fails, then use the same fitter and padded tile proof.
+        // Keep the coarse, verified result in contention as we examine finer headings. Aisles
+        // between furniture may be diagonal to the longest wall. Full-floor mode also compares
+        // these headings when the coarse result already fits a normal board.
         internal static (BoardPlacement? fit, List<FloorSurvey> surveys) Refine(
             List<FloorSurvey> initial, FloorMeshScan scan, float headroom, IReadOnlyList<Vector2[]> excluded,
-            Vector2 preferred, IReadOnlyList<Vector2> suggestions, CancellationToken cancel)
+            Vector2 preferred, IReadOnlyList<Vector2> suggestions, CancellationToken cancel, bool entireFloor = false)
         {
             var displayed = new List<FloorSurvey>(initial);
-            var rectangles = new List<RoomFloor>();
-            var candidates = new List<FloorSurvey>();
-            var orientations = new List<FloorSurvey>(initial);
-            for (int i = 0; i < initial.Count; i++)
+            var search = new ConnectedSearch(preferred, entireFloor, suggestions, cancel);
+            foreach (var survey in initial) search.Examine(survey);
+            bool filledDefault = search.Best is BoardPlacement coarse && coarse.Layout.PaneCount == DefaultPaneLimit &&
+                coarse.Pitch >= PreferredMinPitch;
+            if (scan != null && (entireFloor || !filledDefault))
             {
-                var original = initial[i];
-                if (scan == null) continue;
-                float bestWidth = original.AddClearRectangles(null);
-                foreach (float angle in original.RefinementHeadings())
+                for (int i = 0; i < initial.Count; i++)
                 {
-                    cancel.ThrowIfCancellationRequested();
-                    var survey = new FloorSurvey(original.Floor, scan, headroom, excluded, cancel, original.liveObstacles, original.liveSurface, angle);
-                    orientations.Add(survey);
-                    int before = rectangles.Count;
-                    float width = survey.AddClearRectangles(rectangles);
-                    if (width > bestWidth)
+                    var original = initial[i];
+                    float bestWidth = original.AddClearRectangles(null);
+                    foreach (float angle in original.RefinementHeadings())
                     {
-                        bestWidth = width;
-                        displayed[i] = survey;
+                        cancel.ThrowIfCancellationRequested();
+                        var survey = new FloorSurvey(original.Floor, scan, headroom, excluded, cancel,
+                            original.liveObstacles, original.liveSurface, angle);
+                        search.Examine(survey);
+                        float width = survey.AddClearRectangles(null);
+                        if (width > bestWidth)
+                        {
+                            bestWidth = width;
+                            displayed[i] = survey;
+                        }
                     }
-                    if (rectangles.Count > before) candidates.Add(survey);
                 }
             }
-
-            BoardPlacement? best = null;
-            FloorSurvey owner = null;
-            if (BoardFitter.TryFindOnSurfaces(rectangles, preferred, out var fit, cancel, suggestions, FootMargin, true))
+            if (!search.HasFourPreferred && scan != null)
             {
-                owner = candidates.Find(s => s.ChecksEveryTile(fit));
-                if (owner != null) best = fit;
+                // Recover continuous rectangle fits that fall between trial grid phases or
+                // headings, including the original fitter's exact furniture contacts.
+                for (int i = 0; i < initial.Count; i++)
+                {
+                    var original = initial[i];
+                    var floor = original.Floor;
+                    var obstacles = new List<Vector2[]>(floor.Obstacles);
+                    if (excluded != null) obstacles.AddRange(excluded);
+                    var semantic = new RoomFloor(floor.Boundary, obstacles, floor.Height);
+                    if (BoardFitter.TryFindOnSurfaces(new[] { semantic }, preferred, out var exact,
+                        cancel, suggestions, FootMargin))
+                    {
+                        search.ExamineRectangle(original, exact);
+                        if (displayed[i] != original) search.ExamineRectangle(displayed[i], exact);
+                    }
+                    var rectangles = new List<RoomFloor>();
+                    displayed[i].AddClearRectangles(rectangles);
+                    if (BoardFitter.TryFindOnSurfaces(rectangles, preferred, out var measured,
+                        cancel, suggestions, FootMargin, true))
+                        search.ExamineRectangle(displayed[i], measured);
+                }
             }
-            var connected = FindConnected(orientations, preferred, cancel, out var measured);
-            if (CoversMore(connected, best))
-            {
-                best = connected;
-                owner = measured;
-            }
-            if (owner != null)
-                displayed[initial.FindIndex(original => ReferenceEquals(original.Floor, owner.Floor))] = owner;
-            return (best, displayed);
+            if (search.Owner != null)
+                displayed[initial.FindIndex(original => ReferenceEquals(original.Floor, search.Owner.Floor))] = search.Owner;
+            return (search.Best, displayed);
         }
-
-        internal static bool CoversMore(BoardPlacement? candidate, BoardPlacement? other) =>
-            candidate is BoardPlacement a && (!(other is BoardPlacement b) ||
-                a.Layout.PaneCount * a.Pitch * a.Pitch > b.Layout.PaneCount * b.Pitch * b.Pitch + .0001f);
 
         private List<float> RefinementHeadings()
         {

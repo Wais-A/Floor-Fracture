@@ -85,37 +85,36 @@ internal static class FallMeshes
         return m.Build("View enclosure");
     }
 
-    internal static Mesh Spires(bool flames)
+    internal static Mesh Flames()
     {
         var m = new Builder();
-        var random = new System.Random(flames ? 417 : 562);
-        int count = flames ? 25 : 14;
+        var random = new System.Random(417);
+        const int count = 25;
         for (int i = 0; i < count; i++)
         {
             float phase = i / (float)count;
             float angle = (phase + .012f * Rand(random)) * Mathf.PI * 2;
             Vector3 center = Ring(angle) * (1.32f + .35f * Rand(random));
-            float height = (flames ? .65f : 1.8f) + (flames ? 1.05f : 1.35f) * Rand(random);
-            float width = (flames ? .13f : .18f) + Rand(random) * .15f;
+            float height = .65f + 1.05f * Rand(random);
+            float width = .13f + Rand(random) * .15f;
             Vector3 tip = center + Vector3.up * height + Ring(angle + .65f) * width;
-            int sides = flames ? 4 : 6;
-            Color baseColor = flames ? new Color(.9f,.19f,.015f) :
-                Color.Lerp(new Color(.1f,.67f,.88f), new Color(.65f,.28f,.91f), Rand(random));
+            const int sides = 4;
+            Color baseColor = new Color(.9f,.19f,.015f);
             for (int j=0; j<sides; j++)
             {
                 Vector3 p = center + Ring(angle + j * 2 * Mathf.PI/sides)*width;
                 Vector3 q = center + Ring(angle + (j+1) * 2 * Mathf.PI/sides)*width;
-                Vector3 shoulder = Vector3.up * height * (flames ? .25f : .70f);
+                Vector3 shoulder = Vector3.up * height * .25f;
                 Color facet = baseColor * (.53f + .43f * Rand(random)); facet.a = 1;
                 m.Quad(p, q, q+shoulder, p+shoulder, facet, phase);
                 int a = m.Vertex(p+shoulder, facet, new Vector2(0,.7f), phase);
                 int b = m.Vertex(q+shoulder, facet, new Vector2(1,.7f), phase);
-                Color tipColor = flames ? new Color(1,.68f,.09f) : Color.Lerp(facet, Color.white, .52f);
+                Color tipColor = new Color(1,.68f,.09f);
                 int c = m.Vertex(tip, tipColor, Vector2.up, phase);
                 m.Triangle(a,b,c);
             }
         }
-        return m.Build(flames ? "Flame tongues" : "Crystal ring");
+        return m.Build("Flame tongues");
     }
 
     internal static Mesh Motes(FloorEnding ending)
@@ -133,13 +132,12 @@ internal static class FallMeshes
             float elongation = 1;
             if (ending == FloorEnding.Space)
             {
-                float z = 2f*Rand(random)-1, distance = 4.3f + Rand(random)*3.5f;
-                radius = distance * Mathf.Sqrt(1-z*z); y = z*distance + 1.5f;
-                // Angular sizing preserves distant stars through the headset's pixel grid.
-                // A few brighter stars provide points of reference as the player looks around.
-                float angularRadius = .0030f + .0042f * Rand(random);
-                if (i % 11 == 0) angularRadius *= 1.7f;
-                size = distance * angularRadius;
+                // Place stars throughout a vertical volume. Near stars subtend more angle
+                // per metre of descent than the distant field.
+                radius = 3f + 34f * Rand(random);
+                y = (phase - .5f)*72f;
+                size = radius * (.003f + .004f*Rand(random));
+                if (i % 11 == 0) size *= 1.7f;
                 color = Color.Lerp(new Color(.59f,.74f,1), new Color(1,.91f,.68f), Rand(random));
             }
             else if (ending == FloorEnding.Lava)
@@ -167,7 +165,7 @@ internal static class FallMeshes
         }
         Mesh result = m.Build(ending + " particles");
         Bounds bounds = result.bounds;
-        bounds.Expand(new Vector3(5, 9, 5)); // Motion happens in the vertex shader.
+        bounds.Expand(ending == FloorEnding.Space ? new Vector3(0,144,0) : new Vector3(9,9,5)); // Motion happens in the vertex shader.
         result.bounds = bounds;
         return result;
     }

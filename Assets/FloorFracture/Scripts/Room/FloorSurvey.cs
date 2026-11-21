@@ -28,7 +28,7 @@ namespace FloorFracture
         private const int MaxCellsPerAxis = 128;
         private readonly float? refinementHeading;
         private readonly FloorMeshScan liveSurface;
-        private readonly IReadOnlyList<Vector2[]> liveObstacles;
+        private readonly List<Vector2[]> liveObstacles;
         internal readonly RoomFloor Floor;
         internal readonly int Width, Height;
         internal readonly TileClearance[] Cells;
@@ -56,7 +56,7 @@ namespace FloorFracture
             Floor = floor;
             this.liveSurface = liveSurface;
             refinementHeading = refinedHeading;
-            this.liveObstacles = liveObstacles;
+            this.liveObstacles = liveObstacles == null ? new List<Vector2[]>() : new List<Vector2[]>(liveObstacles);
             origin = floor.Boundary[0];
             Vector2 longest = Vector2.right * FloorGeometry.Epsilon;
             for (int i = 0; i < floor.Boundary.Length; i++)
@@ -161,6 +161,13 @@ namespace FloorFracture
         internal FloorSurvey Refresh(RoomFloor floor, FloorMeshScan scan, float headroom,
             IReadOnlyList<Vector2[]> excluded, CancellationToken cancel) =>
             new FloorSurvey(floor, scan, headroom, excluded, cancel, liveObstacles, liveSurface, refinementHeading);
+
+        internal void RecordLiveObstacle(Vector2 point)
+        {
+            var obstacle = new[] { point };
+            liveObstacles.Add(obstacle);
+            MarkWorld(obstacle, TileClearance.LiveObstacle);
+        }
 
         private Vector2 Project(Vector3 point) => Local(new Vector2(point.x, point.z));
 

@@ -12,6 +12,9 @@ namespace FloorFracture
         GameStage stage = GameStage.Room;
         GameStage pausedStage;
         bool pausedBoardVisible;
+        Action restorePausedPage;
+        double? menuPausedAt;
+        double menuPauseSeconds;
         public GameStage Stage
         {
             get => stage;
@@ -23,6 +26,8 @@ namespace FloorFracture
         public GlassBoardView BoardView { get; private set; }
         public GamePanel Panel { get; private set; }
         public FallSequence Ending { get; private set; }
+        WallScoreboard scoreboard;
+        public TextMesh ScoreDisplay => scoreboard ? scoreboard.Display : null;
         GameSound sound;
         OfflineNarration narration;
         QuestRunMetrics metrics;
@@ -34,10 +39,11 @@ namespace FloorFracture
         double waitUntil;
         string roundText,clockText;
         bool lastReveal;
-        static readonly string[] EndingNames={"Water","Lava","Crystal","Space","Sand","Snow"};
+        static readonly string[] EndingNames={"Water","Lava","Tar Pit","Space","Sand","Snow"};
         const string StoneInstructions="Grab the stone with your hand or controller. " + OfflineNarration.StoneCaption;
         static MenuChoice Choice(string text,Action action) => new(text,action);
-        static double Now => Time.unscaledTimeAsDouble;
+        // Waves, sliding panes and between-wave delays all consume this gameplay clock.
+        public double GameplayTime => (menuPausedAt ?? Time.unscaledTimeAsDouble) - menuPauseSeconds;
         bool Tracked => !appPaused&&Panel&&Panel.Tracked&&Room&&Room.IsRoomLocalized;
         float eyeDepth = .08f;
         Vector2 HeadXZ => PlayerTileTracker.ProjectStance(BoardView.Board.worldToLocalMatrix, Panel.Head.position, Panel.Head.rotation, eyeDepth);
@@ -73,6 +79,12 @@ namespace FloorFracture
                 if (StartBoard()) Home();
                 return;
             }
+            if (scoreboard)
+            {
+                scoreboard.gameObject.SetActive(false);
+                Destroy(scoreboard.gameObject);
+                scoreboard=null;
+            }
             if(Ending&&Ending.IsPlaying) Ending.ResetSequence();
             if(State!=null) { State.Pause(); if(BoardView) BoardView.gameObject.SetActive(false); }
             if(tutorial) tutorial.End();
@@ -98,6 +110,9 @@ namespace FloorFracture
         bool StartBoard()
         {
             if (Room.Status != RoomPlacementStatus.Confirmed) return false;
+            menuPausedAt=null;
+            restorePausedPage=null;
+            menuPauseSeconds=0;
             if(BoardView) { BoardView.gameObject.SetActive(false); Destroy(BoardView.gameObject); }
             var fit=Room.Placement; State=new BoardState(fit.Layout,SelectedSeed,fit.Pitch);
             var board=new GameObject("Confirmed glass board"); BoardView=board.AddComponent<GlassBoardView>(); BoardView.Build(State,fit.Pose);
@@ -105,15 +120,29 @@ namespace FloorFracture
             Level=WaveNumber=1; levelFinished=false;
             return true;
         }
+        void MountScoreboard()
+        {
+            if (scoreboard || !Tracked) return;
+            var clock=new GameObject("Wall scoreboard");
+            clock.transform.SetParent(transform,false);
+            scoreboard=clock.AddComponent<WallScoreboard>();
+            scoreboard.Mount(Room.ConfirmedRoom,Room.Placement,Panel.Head,Room.IsClearStandFootprint);
+        }
+        void SetReadout(string text)
+        {
+            if (scoreboard) scoreboard.SetReadout(text);
+        }
+
         void Home()
         {
+            SetReadout("");
             Stage=GameStage.Welcome; tutorial.End(); BoardView.ClearTransient(); BoardView.gameObject.SetActive(true);
             Room.ShowClearance(true);
             var choices=new System.Collections.Generic.List<MenuChoice>{
                 Choice("Start",()=>Ready("Step onto intact glass, then start the wave.")),
                 Choice("Tutorial",StartPractice),Choice("Settings",Settings),Choice("Play area",PlayArea)};
             if(Debug.isDebugBuild||Application.isEditor) choices.Add(Choice("Development",Development));
-            Panel.Show("Floor Fracture",Room.Message+"\nMove to glass that will hold before zero.",choices.ToArray());
+            Panel.Show("Floor Fracture",Room.Message+"\nWatch which panes flash. Step onto one that stayed clear before zero.",choices.ToArray());
         }
         void PlayArea()
         {
@@ -121,15 +150,16 @@ namespace FloorFracture
             Room.ShowClearance(true);
             var choices=new System.Collections.Generic.List<MenuChoice>{
                 Choice("Back",Home),Choice("Refit saved floor",Room.Retry),Choice("Try another spot",Room.Decline),Choice("Space Setup",Room.RequestSpaceSetup)};
+            choices.Add(Choice("Board size  ·  "+(Room.EntireFloor?"Entire connected floor":"Up to 16 tiles"),()=>Room.SetEntireFloor(!Room.EntireFloor)));
             if (Application.isEditor||Debug.isDebugBuild)
                 choices.Add(Choice("Placement debug  ·  "+(Room.PlacementDebug?"On":"Off"),()=>{Room.TogglePlacementDebug();PlayArea();}));
             Panel.Show("Play area",Room.Message+"\n"+(Room.PlacementDebug ? RoomBoardPlacement.DebugLegend :
-                "Check that the outlined panes are clear. Space Setup opens the Quest scanner. You can use a Touch controller there."),choices.ToArray());
+                "Changing board size refits your saved floor. Space Setup opens the Quest scanner."),choices.ToArray());
         }
         void Settings()
         {
             Room.ShowClearance(false);
-            Stage=GameStage.Settings; Panel.Show("Settings","The sample shows your glass warning. During a fall, pinch or press A or X to skip.",
+            Stage=GameStage.Settings; Panel.Show("Settings","Use the controller Menu button or hand menu gesture to pause. During a fall, pinch or press A or X to skip.",
                 Choice("Fall motion  ·  "+(reduced?"Reduced":"Full"),()=>{reduced=!reduced; SaveSettings(); Settings();}),
                 Choice("Warning  ·  "+(gentle?"Gentle":"Standard"),()=>{gentle=!gentle; SaveSettings(); Settings();}),
                 Choice("Volume  ·  "+volume*25+"%",()=>{volume=(volume+1)%5; SaveSettings(); sound.SetVolume(volume/4f); Settings();}),
@@ -148,6 +178,7 @@ namespace FloorFracture
             Room.ShowClearance(false);
             tutorial.End();
             BoardView.ClearTransient();
+            MountScoreboard();
             Stage=GameStage.PracticeStep;
             waitUntil=0;
             practiceStart=-1;
@@ -178,7 +209,7 @@ namespace FloorFracture
             BoardView.PracticeBreak(tile);
             sound.Break(BoardView.Board.TransformPoint(GlassGeometry.Ground(State.Center(tile))),1);
             Panel.SetBody("That pane shattered. The glass and stone will return for another try.");
-            waitUntil=Now+1.1;
+            waitUntil=GameplayTime+1.1;
         }
         void LeavePractice()
         {
@@ -189,18 +220,19 @@ namespace FloorFracture
         void Ready(string text,bool offerStone=false)
         {
             Room.ShowClearance(false);
+            MountScoreboard();
             Stage=GameStage.Ready; BoardView.gameObject.SetActive(true);
             var start=Choice("Start wave",TryStart);
-            var menu=Choice("Main menu",()=>{if (StartBoard()) Home();});
+            var menu=Choice("Main menu",ReturnToMainMenu);
             Panel.Show("Level "+Level,text,offerStone ? new[]{start,Choice("Try the stone (optional)",StartStonePractice),menu} : new[]{start,menu});
         }
         void TryStart()
         {
             if(!Tracked) { Panel.SetBody("Look around until the headset recognizes the room and tracks its position."); return; }
-            var sample=State.Sample(HeadXZ,true,Now);
+            var sample=State.Sample(HeadXZ,true,GameplayTime);
             if(sample.Kind!=SupportKind.Glass) { Panel.SetBody("Step onto intact glass. Your ring appears on the pane beneath you."); return; }
-            var plan=State.BeginWave(sample.Index,Level,WaveNumber,Now);
-            BoardView.AnchorReadout(Panel.Head);
+            MountScoreboard();
+            var plan=State.BeginWave(sample.Index,Level,WaveNumber,GameplayTime);
             Stage=GameStage.Countdown; lastBeat=-1; clockText=null; Panel.Hide();
             roundText=plan.Mode switch {WaveMode.Memory=>"MEMORY",WaveMode.LastTile=>"LAST TILE",_=>"CLASSIC"};
             // The first warning, occupancy ring and countdown tone belong to the
@@ -210,10 +242,17 @@ namespace FloorFracture
         }
         void Update()
         {
-            if(!BoardView||!Panel||!Panel.Head||Stage==GameStage.Room) return;
+            if (!Panel || !Panel.Head) return;
+            // The SDK supplies Start for both Touch Menu and HandStatus.MenuPressed.
+            if (!appPaused && OVRInput.GetDown(OVRInput.RawButton.Start,OVRInput.Controller.Touch | OVRInput.Controller.Hands))
+            {
+                HandleMenuButton();
+                return;
+            }
+            if(!BoardView||Stage==GameStage.Room) return;
             if ((Stage==GameStage.Ready || Stage==GameStage.PracticeStep || Stage==GameStage.PracticeStone ||
                 Stage==GameStage.Fall) && !Tracked) { PauseRound(); return; }
-            double now=Now;
+            double now=GameplayTime;
             if(Stage==GameStage.Countdown) { UpdateWave(now); return; }
             if(Stage==GameStage.Fall||Stage==GameStage.Results||Stage==GameStage.Paused) return;
             var sample=State.Sample(HeadXZ,Tracked,now);
@@ -243,7 +282,7 @@ namespace FloorFracture
                 if(waitUntil>0&&now>=waitUntil)
                 {
                     BoardView.RestorePracticePane();
-                    Ready("You reached clear glass. In a wave, leave cracked glass before zero.",true);
+                    Ready("You reached clear glass. In a wave, remember which panes flashed. Step onto glass that stayed clear.",true);
                 }
                 else if(waitUntil==0&&sample.Kind==SupportKind.Glass&&practiceStart<0)
                 {
@@ -264,7 +303,7 @@ namespace FloorFracture
             BoardView.Draw(null,sample,now,gentle,warning);
             string message=Stage==GameStage.BetweenWaves?(levelFinished?"LEVEL CLEAR":"SAFE"):Stage==GameStage.PracticeStone?"TRY ANY GLASS PANE":
                 Stage==GameStage.PracticeStep?(waitUntil>0?"SAFE":practiceStart<0?"STAND ON GLASS":"STEP TO CLEAR GLASS"):"";
-            BoardView.SetReadout(message,Panel.Head);
+            SetReadout(message);
         }
         void UpdateWave(double now)
         {
@@ -280,12 +319,13 @@ namespace FloorFracture
                 {
                     if(beat!=lastBeat) sound.Tick(beat);
                     lastBeat=beat; lastReveal=reveal;
-                    string cue=plan.Mode==WaveMode.Memory?(reveal?"MEMORY  ·  LOOK":"MEMORY  ·  RECALL"):roundText;
+                    string cue=roundText+(reveal?"  ·  LOOK":"  ·  RECALL");
                     clockText=$"<size=180>{beat}</size>\n{cue}   ·   L{Level}   W{WaveNumber}";
                 }
                 BoardView.Draw(plan,State.CurrentSample,now,gentle);
-                BoardView.SetReadout(clockText,Panel.Head); return;
+                SetReadout(clockText); return;
             }
+            sound.StopCountdown();
             if(State.BreaksApplied)
             {
                 metrics?.Mark("shatter",plan.BreakingTiles.Count);
@@ -301,7 +341,7 @@ namespace FloorFracture
                 sound.Break(near,plan.BreakingTiles.Count);
             }
             BoardView.Draw(null,State.CurrentSample,now,gentle);
-            BoardView.SetReadout("",Panel.Head);
+            SetReadout("");
             var support = State.CurrentSample;
             Debug.Log($"[Floor Fracture] result={result} tile={support.Index} support={support.Kind} slider={support.IsSlider} stanceCell={State.IndexAt(support.Stance)} scheduledSafe={plan.IsSafe(support.Index)} waves={State.WavesSurvived}");
             if(result==WaveResult.Lost) { BeginFall(); return; }
@@ -309,29 +349,88 @@ namespace FloorFracture
             if(levelFinished) sound.Completion(); else ++WaveNumber;
             Stage=GameStage.BetweenWaves; waitUntil=now+(levelFinished?1.8:1.28);
         }
-        void PauseRound()
+        void HandleMenuButton()
         {
+            switch (Stage)
+            {
+                case GameStage.Paused: ShowBoardAfterPause(); break;
+                case GameStage.Results: ReturnToMainMenu(); break;
+                case GameStage.Settings:
+                case GameStage.Development:
+                case GameStage.PlayArea: Home(); break;
+                case GameStage.Welcome:
+                case GameStage.Room: Panel.Recenter(); break;
+                default: PauseRound(true); break;
+            }
+        }
+
+        void PauseRound(bool fromMenu=false)
+        {
+            sound.StopCountdown();
+            if (fromMenu)
+            {
+                menuPausedAt=Time.unscaledTimeAsDouble;
+                restorePausedPage=Panel.Visible ? Panel.RememberPage() : null;
+            }
             pausedStage=Stage;
             pausedBoardVisible=BoardView.gameObject.activeSelf;
             if (pausedStage==GameStage.Fall) Ending.SetTrackingPaused(true);
             else
             {
-                State.Pause();
-                if (pausedStage==GameStage.PracticeStone) tutorial.End();
-                BoardView.ClearTransient();
-                BoardView.Draw(null,State.CurrentSample,Now,gentle);
-                BoardView.SetReadout("",Panel.Head);
+                if (!fromMenu) State.Pause();
+                if (pausedStage==GameStage.PracticeStone)
+                {
+                    if (fromMenu) tutorial.SetMenuPaused(true);
+                    else tutorial.End();
+                }
+                if (!fromMenu)
+                {
+                    BoardView.ClearTransient();
+                    BoardView.Draw(null,State.CurrentSample,GameplayTime,gentle);
+                }
                 sound.ResetSounds();
             }
+            SetReadout("");
             Stage=GameStage.Paused;
             BoardView.gameObject.SetActive(false);
-            Panel.Show("Paused","Return to the cleared room, then choose Show board.",
-                Choice("Show board",ShowBoardAfterPause),Choice("End run · Play area",()=>{Ending.ResetSequence(); tutorial.End(); if (StartBoard()) PlayArea();}));
+            Panel.Recenter();
+            if (fromMenu)
+                Panel.Show("Paused","Resume this run or return to the main menu.",
+                    Choice("Resume",ShowBoardAfterPause),Choice("Main menu",ReturnToMainMenu));
+            else
+                Panel.Show("Paused","Return to the cleared room, then choose Show board.",
+                    Choice("Show board",ShowBoardAfterPause),Choice("End run · Play area",()=>{Ending.ResetSequence(); tutorial.End(); if (StartBoard()) PlayArea();}),
+                    Choice("Main menu",ReturnToMainMenu));
         }
         void ShowBoardAfterPause()
         {
-            if(!Tracked) { Panel.SetBody("Return to the cleared room and look around. When tracking returns, choose Show board."); return; }
+            if(!Tracked) { Panel.SetBody("Return to the cleared room and look around, then resume."); return; }
+            bool manual=menuPausedAt.HasValue;
             BoardView.gameObject.SetActive(pausedBoardVisible);
+            if (manual)
+            {
+                if ((pausedStage==GameStage.Countdown || pausedStage==GameStage.BetweenWaves) && State.IndexAt(HeadXZ)<0)
+                {
+                    Panel.SetBody("Step back onto the board, then resume.");
+                    return;
+                }
+                menuPauseSeconds += Time.unscaledTimeAsDouble-menuPausedAt.Value;
+                menuPausedAt=null;
+                if (pausedStage==GameStage.Countdown || pausedStage==GameStage.BetweenWaves)
+                {
+                    Stage=pausedStage;
+                    Panel.Hide();
+                    return;
+                }
+                if (restorePausedPage!=null)
+                {
+                    Stage=pausedStage;
+                    if (Stage==GameStage.PracticeStone) tutorial.SetMenuPaused(false);
+                    restorePausedPage();
+                    restorePausedPage=null;
+                    return;
+                }
+            }
             if (pausedStage==GameStage.Fall)
             {
                 Stage=GameStage.Fall;
@@ -371,7 +470,7 @@ namespace FloorFracture
             Ending.SetOpening(board.TransformPoint(GlassGeometry.Ground(hit)),State.Pitch,board.eulerAngles.y);
             Panel.Hide(); Ending.Begin(Panel.Head,reduced,ShowResults);
             skipPinchHeld = HasSkipPinch();
-            BoardView.SetReadout("Pinch or A / X  ·  Skip",Panel.Head);
+            SetReadout("");
         }
 
         bool HasSkipPinch()
@@ -407,18 +506,29 @@ namespace FloorFracture
                 WaveLossReason.GapGraceExpired => $"You stayed over an open hole for {PlayerTileTracker.GapGrace:0.0} seconds.",
                 WaveLossReason.GapAtZero => "You were over an open hole at zero.",
                 WaveLossReason.MovingPane => "At zero, the moving glass under the ring shattered.",
-                WaveLossReason.MemoryPane => "At zero, the ring was on glass that cracked during the Memory reveal.",
-                WaveLossReason.CrackedPane => "At zero, the glass under the ring shattered.",
+                WaveLossReason.MemoryPane => "At zero, the ring was on a pane that flashed during the Memory reveal.",
+                WaveLossReason.CrackedPane => "At zero, the glass under the ring shattered after flashing amber.",
                 _ => "Ending preview"
             };
             Panel.Show("Run complete",$"Level {Level}   ·   {score}   ·   {Ending.LastEndingName}\n{result}\n{OfflineNarration.ResultsCaption}",
-                Choice("Restart",Restart),Choice("Quit",Quit));
+                Choice("Restart",Restart),Choice("Quit to main menu",ReturnToMainMenu));
             if (!Ending.LastWasSkipped) narration.Speak(Stage,Panel.Head);
         }
         void Restart()
         {
-            Ending.ResetSequence(); sound.ResetSounds(); tutorial.End(); SelectedSeed=Environment.TickCount&int.MaxValue;
-            if (StartBoard()) Ready("The glass is back. Return to the board and start when ready.");
+            SelectedSeed=Environment.TickCount&int.MaxValue;
+            if (ResetRun()) Ready("The glass is back. Return to the board and start when ready.");
+        }
+        void ReturnToMainMenu()
+        {
+            if (ResetRun()) Home();
+        }
+        bool ResetRun()
+        {
+            Ending.ResetSequence(); sound.ResetSounds(); tutorial.End();
+            if (StartBoard()) return true;
+            RoomChanged();
+            return false;
         }
         void Development()
         {
@@ -439,13 +549,5 @@ namespace FloorFracture
         void OnApplicationFocus(bool focus) { if(!focus) InterruptRound(); }
         void InterruptRound() { if(Stage==GameStage.Countdown||Stage==GameStage.BetweenWaves||Stage==GameStage.Fall||
             Stage==GameStage.Ready||Stage==GameStage.PracticeStep||Stage==GameStage.PracticeStone) PauseRound(); }
-        void Quit()
-        {
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying=false;
-#else
-            Application.Quit();
-#endif
-        }
     }
 }

@@ -53,17 +53,11 @@ namespace FloorFracture
             return Vector2.LerpUnclamped(startCenter, endCenter, (float)fraction);
         }
 
-        internal ulong ExitMask(BoardState board)
+        internal bool CanExitTo(BoardState board, int tile)
         {
-            // Each end has a side-by-side permanent pane. At mid-travel either side step
-            // can add up to half a pane along the lane to one pane across it.
-            ulong candidates = (board.NeighborMask(Tile) | board.NeighborMask(OtherHole)) & board.StationaryMask;
-            ulong exits = 0;
-            float limit = board.Pitch * board.Pitch * 1.2501f;
-            for (int i=0; candidates!=0; i++, candidates >>= 1)
-                if ((candidates & 1UL)!=0 && (board.Center(i)-lockedCenter).sqrMagnitude <= limit)
-                    exits |= 1UL << i;
-            return exits;
+            // At mid-travel an exit can be half a pitch along the lane and one pitch across.
+            return board.IsIntact(tile) && (board.Neighbors(Tile, tile) || board.Neighbors(OtherHole, tile)) &&
+                (board.Center(tile) - lockedCenter).sqrMagnitude <= board.Pitch * board.Pitch * 1.2501f;
         }
 
         internal bool TryLand(Vector2 point, double now)

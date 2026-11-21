@@ -51,6 +51,7 @@ namespace FloorFracture
         private UnityEngine.UI.Text title, body;
         private GlassTile warningPreview;
         private bool previewGentle;
+        private double previewStarted;
         private bool roomRecovery;
         private Font font;
         private Camera eye;
@@ -201,9 +202,17 @@ namespace FloorFracture
                     renderer.sortingOrder = menuCanvas.sortingOrder + 1;
             }
             previewGentle = gentle;
+            previewStarted = Time.unscaledTimeAsDouble;
             warningPreview.gameObject.SetActive(true);
-            warningPreview.ShowWarning(true, Time.unscaledTimeAsDouble, gentle);
+            warningPreview.ShowWarning(true, 0, gentle);
             SetBody(body.text);
+        }
+
+        internal Action RememberPage()
+        {
+            string heading=title.text, message=body.text;
+            var buttons=choices;
+            return () => Show(heading,message,buttons);
         }
 
         public void SetBody(string message)
@@ -359,7 +368,10 @@ namespace FloorFracture
             bool tracked = Tracked;
             if (!Visible) { wasTracked = tracked; return; }
             if (warningPreview && warningPreview.gameObject.activeSelf)
-                warningPreview.ShowWarning(true, Time.unscaledTimeAsDouble, previewGentle);
+            {
+                double age = (Time.unscaledTimeAsDouble - previewStarted) % 4;
+                warningPreview.ShowWarning(age < 1.5, age, previewGentle);
+            }
             if (!tracked) { ClearPointers(); wasTracked = false; Paint(); return; }
             if (!wasTracked) RequestMenuRecenter();
             wasTracked = true;

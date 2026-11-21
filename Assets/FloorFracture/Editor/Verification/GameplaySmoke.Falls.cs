@@ -9,7 +9,7 @@ namespace FloorFracture.Editor
 {
     public static partial class GameplaySmoke
     {
-        private static readonly string[] EndingNames = { "Water", "Lava", "Crystal", "Space", "Sand", "Snow" };
+        private static readonly string[] EndingNames = { "Water", "Lava", "Tar Pit", "Space", "Sand", "Snow" };
 
         private static IEnumerator VerifyEveryEndingExit()
         {
@@ -52,6 +52,11 @@ namespace FloorFracture.Editor
                 previewWalls = VerifyOpenLanding(ending, reduced, previewSurface);
                 if (!reduced) Capture("open-shaft-"+ending.ToLowerInvariant(), SmokeView.CenterEye);
             }
+            if (!skip && (ending == "Tar Pit" || (reduced && (ending == "Sand" || ending == "Water" || ending == "Lava"))))
+            {
+                SetStandingHead(game.State.Center(CornerPane),head.rotation,1.12f);
+                yield return Frames(2);
+            }
             Choose("Preview loss");
             yield return Stage(GameStage.Fall);
             string trial = ending + " / " + (reduced ? "Reduced" : "Full") + (skip ? " / Skip" : " / complete");
@@ -70,7 +75,7 @@ namespace FloorFracture.Editor
             var veil = game.Rig.centerEyeAnchor.Find("View fade").GetComponent<MeshRenderer>();
             var material = new MaterialPropertyBlock();
             double started = Now;
-            double expectedSeconds = reduced ? 3.93 : 9.44;
+            double expectedSeconds = reduced ? 3.93 : 4.44061 + (ending == "Space" ? 8 : ending == "Snow" ? 5.2 : 5);
             if (skip)
             {
                 yield return Delay(.18);
@@ -79,9 +84,30 @@ namespace FloorFracture.Editor
             bool sawBlack = false;
             float[] viewTimes = skip ? Array.Empty<float>() : LandingViewTimes(ending,reduced);
             int nextView = 0;
+            bool checkedPause = false;
+            var motion = new EndingMotionCheck(ending,reduced,chamber.transform,veil);
             while (game.Stage == GameStage.Fall)
             {
                 double age = Now - started;
+                if (!skip)
+                {
+                    motion.Sample();
+                    if (!checkedPause && age >= (reduced ? 2.84 : 7.68))
+                    {
+                        checkedPause = true;
+                        double paused = Now;
+                        var shaft = chamber.transform.Find("Shaft walls");
+                        Vector3 atPause = shaft.position;
+                        game.gameObject.SendMessage("OnApplicationPause",true);
+                        yield return Stage(GameStage.Paused);
+                        yield return Delay(.20);
+                        Require(!chamber.activeSelf && !veil.gameObject.activeInHierarchy && shaft.position == atPause && !game.transform.Find("Tar bubbling").GetComponent<AudioSource>().isPlaying,
+                            trial + " advanced or played tar audio during tracking loss.");
+                        game.gameObject.SendMessage("OnApplicationPause",false);
+                        Choose("Show board"); yield return Stage(GameStage.Fall);
+                        started += Now - paused;
+                    }
+                }
                 Require(age < (skip ? 1.5 : expectedSeconds + 1.0), trial + " timed out.");
                 if (nextView < viewTimes.Length && age >= viewTimes[nextView])
                 {
@@ -96,12 +122,13 @@ namespace FloorFracture.Editor
                 }
                 yield return null;
             }
+            if (!skip) motion.Finish();
             double duration = Now - started;
             Require(nextView == viewTimes.Length, trial + " ended before its landing views were checked.");
             Require((skip || duration >= expectedSeconds - .12) && sawBlack && game.Stage == GameStage.Results && game.Panel.Visible,
                 trial + " did not present its final black frame and Results at the expected time.");
             Require(chamber && !chamber.activeSelf && !veil.enabled && !game.Ending.IsPlaying, trial + " left the ending visible after Results.");
-            foreach (string name in new[] { "Shaft air", "Ending ambience", "Ending impact" })
+            foreach (string name in new[] { "Shaft air", "Ending ambience", "Ending impact", "Tar bubbling" })
             {
                 var source = game.transform.Find(name).GetComponent<AudioSource>();
                 Require(!source.isPlaying && !source.clip, trial + " left audio on " + name);
@@ -114,8 +141,140 @@ namespace FloorFracture.Editor
             for (int cell = 0; cell < game.State.Count; cell++)
                 Require(game.State.IsIntact(cell) == game.State.Layout.Contains(cell), trial + " left a broken pane at " + cell);
             VerifyFloorVisibility(false);
-            report.endingExits.Add(new EndingExitEvidence { ending = ending, reduced = reduced, skipped = skip, seconds = duration });
+            report.endingExits.Add(new EndingExitEvidence { ending = ending, reduced = reduced, skipped = skip, seconds = duration,
+                eyeHeight = motion.EyeHeight, eyeCrossing = motion.EyeCrossing, firstPull = motion.FirstPull, secondPull = motion.SecondPull });
             Save();
+        }
+
+        // Sample the visible renderer transforms and the live audio sources from the production scene.
+        private sealed class EndingMotionCheck
+        {
+            readonly string ending;
+            readonly bool reduced;
+            readonly Transform shaft, surface;
+            readonly MeshRenderer sky, veil, interior;
+            readonly AudioSource impact, bed;
+            readonly MaterialPropertyBlock block = new MaterialPropertyBlock();
+            readonly float originY, eyeHeight;
+            float lastTime, lastHeight, crossingsAt = -1;
+            internal float EyeHeight => eyeHeight;
+            internal float EyeCrossing => crossingsAt;
+            internal float FirstPull { get; private set; } = -1;
+            internal float SecondPull { get; private set; } = -1;
+            int tarCues;
+            bool white, black, muffledTail, checkedLine, checkedInterior;
+            float previousSandLight = float.PositiveInfinity;
+
+            internal EndingMotionCheck(string ending, bool reduced, Transform room, MeshRenderer veil)
+            {
+                this.ending = ending; this.reduced = reduced; this.veil = veil;
+                shaft = room.Find("Shaft walls"); surface = room.Find("Hazard surface");
+                interior = veil.transform.Find("Submerged view").GetComponent<MeshRenderer>();
+                sky = room.Find("Chamber darkness").GetComponent<MeshRenderer>();
+                impact = game.transform.Find("Ending impact").GetComponent<AudioSource>();
+                bed = game.transform.Find("Tar bubbling").GetComponent<AudioSource>();
+                originY = room.position.y;
+                eyeHeight = game.Rig.centerEyeAnchor.position.y-originY;
+            }
+
+            internal void Sample()
+            {
+                var clock = sky.enabled ? sky : interior;
+                if (!clock.enabled) return;
+                clock.GetPropertyBlock(block);
+                float t = block.GetFloat("_Age") - (reduced ? .82f : 4.44061f);
+                if (t <= lastTime) return;
+                float height = surface.position.y-originY;
+                if (reduced)
+                    Require(Mathf.Abs(height)<.005f, ending+" moved the reduced-motion landing.");
+                else if (ending == "Space")
+                    Require(Mathf.Abs(shaft.position.y-originY-80f-39.598f*Mathf.Min(t,8f))<.035f, "Space lost its exit speed.");
+                else if (ending == "Snow")
+                {
+                    if (t>=.7f) Require(Mathf.Abs(height-eyeHeight*.5f)<.015f,"Snow did not settle at waist height.");
+                }
+                else
+                {
+                    Require(height>lastHeight, ending+" stopped sinking after contact.");
+                    if (height>=eyeHeight && crossingsAt<0)
+                        crossingsAt = Mathf.Lerp(lastTime,t,Mathf.InverseLerp(lastHeight,height,eyeHeight));
+                }
+                float duration = ending=="Space" ? 8 : ending=="Snow" ? 5.2f : 5;
+                float seconds = reduced ? t*duration/3.11f : t;
+                if (interior.enabled)
+                {
+                    interior.GetPropertyBlock(block);
+                    bool under = block.GetVector("_InteriorPlane").z != 0;
+                    if (!checkedLine && !under)
+                    {
+                        VerifyImmersionPixels(interior,shaft.parent,ending,reduced,true);
+                        checkedLine = true;
+                    }
+                    if (under && ending == "Sand")
+                    {
+                        float light = block.GetFloat("_Brightness");
+                        Require(light<=previousSandLight+.0001f,"Buried sand grew brighter with depth.");
+                        previousSandLight=light;
+                    }
+                    // Give nearby bubbles time to enter the water after the line closes.
+                    if (!checkedInterior && under && seconds>=(ending=="Water" ? 1.85f : ending=="Sand" ? 2.68f : ending=="Tar Pit" ? 2.93f : 2.17f))
+                    {
+                        VerifyImmersionPixels(interior,shaft.parent,ending,reduced,false);
+                        checkedInterior=true;
+                    }
+                }
+                veil.GetPropertyBlock(block);
+                var tint = block.GetColor("_Tint");
+                bool opaque = veil.enabled && tint.a>=.999f;
+                if (ending=="Snow" && seconds>=2.81f && seconds<=3.19f)
+                {
+                    Require(opaque && Mathf.Min(tint.r,Mathf.Min(tint.g,tint.b))>.99f,"Snow skipped its full whiteout.");
+                    white=true;
+                }
+                if (ending=="Space" && seconds>=7.02f)
+                {
+                    Require(opaque && tint.maxColorComponent<.002f,"Space exposed scenery during its black hold.");
+                    black=true;
+                }
+                if (ending=="Tar Pit")
+                {
+                    if (impact.clip && impact.clip.name=="TarImpact") tarCues |= 1;
+                    if (impact.clip && impact.clip.name=="TarPull")
+                    {
+                        if (impact.pitch>.85f)
+                        {
+                            if (FirstPull<0) FirstPull=seconds;
+                            tarCues |= 2;
+                        }
+                        else
+                        {
+                            if (SecondPull<0) SecondPull=seconds;
+                            tarCues |= 4;
+                        }
+                    }
+                    if (seconds>4.25f && seconds<4.7f)
+                    {
+                        Require(opaque && tint.maxColorComponent<.002f && bed.clip && bed.clip.name=="TarBubbles" &&
+                            bed.GetComponent<AudioLowPassFilter>().cutoffFrequency<550 && bed.volume>0,
+                            "The tar gurgle did not continue under cover after submersion.");
+                        muffledTail=true;
+                    }
+                }
+                lastTime=t; lastHeight=height;
+            }
+
+            internal void Finish()
+            {
+                if (ending!="Space" && ending!="Snow")
+                    Require(checkedLine && checkedInterior,ending+" missed its stereo crossing or buried-view check.");
+                if (ending=="Tar Pit") Require(tarCues==7 && muffledTail && Mathf.Abs(FirstPull-.47f)<.12f && Mathf.Abs(SecondPull-1.57f)<.12f,
+                    $"Tar cues at {FirstPull:F3} and {SecondPull:F3}s or muffled tail missed their timing.");
+                if (ending=="Snow") Require(white,"No white frame before the snow fade.");
+                if (ending=="Space") Require(black,"No final black hold in Space.");
+                if (reduced || ending=="Snow" || ending=="Space") return;
+                float expected = ending=="Water" ? 1.2f : ending=="Lava" ? 1.8f : ending=="Sand" ? 2.3f : 2.5f;
+                Require(Mathf.Abs(crossingsAt-expected)<.06f,$"{ending} crossed the eye at {crossingsAt:F3}s, expected {expected:F2}s.");
+            }
         }
 
         private static Color32[][] VerifyOpenLanding(string ending, bool reduced, MeshRenderer surface, Color32[][] preview = null)
@@ -167,6 +326,25 @@ namespace FloorFracture.Editor
                     probe.transform.SetPositionAndRotation(standing+rotation*Vector3.right*offset,rotation);
                     surface.enabled=false; var without=Read();
                     surface.enabled=true; var with=Read();
+                    if (ending == "Tar Pit" && preview == null)
+                    {
+                        float originalClock = block.GetFloat("_SurfaceClock");
+                        try
+                        {
+                            block.SetFloat("_SurfaceClock",13); surface.SetPropertyBlock(block);
+                            var first = Read();
+                            block.SetFloat("_SurfaceClock",13.8f); surface.SetPropertyBlock(block);
+                            var second = Read();
+                            int moving = 0;
+                            for (int i=0;i<first.Length;i++)
+                                if (Difference(with[i],without[i])>=12 && Difference(first[i],second[i])>=6) moving++;
+                            Require(moving>=6,$"Only {moving} tar pixels changed inside the visible pool.");
+                        }
+                        finally
+                        {
+                            block.SetFloat("_SurfaceClock",originalClock); surface.SetPropertyBlock(block);
+                        }
+                    }
                     walls.enabled = ledges.enabled = false;
                     var landingAlone = Read();
                     walls.enabled = ledges.enabled = true;
@@ -234,6 +412,7 @@ namespace FloorFracture.Editor
             public string ending;
             public bool reduced, skipped;
             public double seconds;
+            public float eyeHeight, eyeCrossing, firstPull, secondPull;
         }
 
         private static IEnumerator ObserveSelectedFall(string ending, bool reduced, int nextEndingPresses)
@@ -339,7 +518,7 @@ namespace FloorFracture.Editor
                 var chamberObject = GameObject.Find("Fall chamber");
                 Require(chamberObject, "The active fall chamber is missing.");
                 chamber = chamberObject.transform;
-                marks = Renderer("Shaft landmarks"); walls = Renderer("Shaft walls"); floor = Renderer("Hazard surface"); flames = Renderer("Flames or crystals");
+                marks = Renderer("Shaft landmarks"); walls = Renderer("Shaft walls"); floor = Renderer("Hazard surface"); flames = Renderer("Lava flames");
                 sky = Renderer("Chamber darkness"); veil = eye.Find("View fade").GetComponent<MeshRenderer>();
                 firstMarks = chamber.position.y;
                 firstWalls = walls.transform.position.y; firstFloor = floor.transform.position.y;
@@ -471,7 +650,7 @@ namespace FloorFracture.Editor
                 {
                     evidence.firstSecondaryEffectAt = age;
                     evidence.contactHazardY = floor.transform.position.y;
-                    Require(evidence.impactSoundAt >= 0 && Mathf.Abs(evidence.contactHazardY - evidence.floorOpeningY) < 0.04f,
+                    Require(evidence.impactSoundAt >= 0 && Mathf.Abs(evidence.contactHazardY - evidence.floorOpeningY) < evidence.eyeHeight*.30f,
                         $"The hazard appeared at {evidence.contactHazardY:F3} m before the landing cue at {evidence.floorOpeningY:F3} m.");
                 }
                 if (reduced ? age < contact - 0.025 : evidence.surfaceReachedAt < 0)
@@ -552,7 +731,7 @@ namespace FloorFracture.Editor
                     evidence.firstSecondaryEffectAt >= evidence.impactSoundAt && evidence.firstSecondaryEffectAt < evidence.impactSoundAt + .15,
                     $"Entry, impact sound and hazard appeared at {evidence.chamberEnteredAt:F3}, {evidence.impactSoundAt:F3} and {evidence.firstSecondaryEffectAt:F3} s.");
                 if (reduced) return;
-                Require(Math.Abs(evidence.surfaceReachedAt - evidence.impactSoundAt) < .015 && Mathf.Abs(marks.transform.position.y - firstMarks - 80f) < .025f,
+                Require(Math.Abs(evidence.surfaceReachedAt - evidence.impactSoundAt) < .015 && marks.transform.position.y - firstMarks > 80f,
                     $"The shaft landed at {evidence.surfaceReachedAt:F3} s after travelling {marks.transform.position.y - firstMarks:F3} m.");
                 Require(evidence.visibleWallSeconds >= 3.0, $"Only {evidence.visibleWallSeconds:F2} s of clearly visible walls passed the {evidence.eyeHeight:F2} m eye before impact.");
                 Require(evidence.skyMostlyDarkAt - evidence.skyFirstDimAt > 1.0, "The room light above the shaft disappeared too quickly.");
@@ -562,13 +741,15 @@ namespace FloorFracture.Editor
             {
                 if (!water)
                 {
-                    Require(SecondaryEffect() && floor.transform.position.y > evidence.floorOpeningY + 0.5f,
-                        "Lava's post-impact rise and surrounding flames were missing from the immersion frame.");
+                    Require(!SecondaryEffect() && !floor.enabled && floor.transform.position.y > evidence.floorOpeningY + 0.5f,
+                        "Submerged lava still exposed its surface or flames.");
                     return;
                 }
-                veil.GetPropertyBlock(material);
-                evidence.immersionTintAlpha = material.GetColor("_Tint").a;
-                Require(veil.enabled && evidence.immersionTintAlpha > 0.25f, "The Water immersion frame did not contain the underwater tint.");
+                var underwater = veil.transform.Find("Submerged view").GetComponent<MeshRenderer>();
+                underwater.GetPropertyBlock(material);
+                evidence.immersionTintAlpha = material.GetVector("_InteriorPlane").z;
+                Require(underwater.enabled && evidence.immersionTintAlpha == 1 && !floor.enabled,
+                    "Water failed to cover the shaft at the immersion frame.");
                 Require(reduced ? Mathf.Abs(floor.transform.position.y - evidence.floorOpeningY) < 0.04f : floor.transform.position.y > eye.position.y + 0.04f,
                     "The Water immersion frame did not correspond to the expected tracked-eye and surface heights.");
             }
@@ -586,7 +767,7 @@ namespace FloorFracture.Editor
                     Require(mid.landmarksVisible && late.landmarksVisible && !late.secondaryEffectActive && late.landmarkTravel > 70f,
                         $"The shaft landmarks or approaching surface were missing before contact at {late.seconds:F3} s.");
                     if (!water)
-                        Require(evidence.fadeDarkAt - evidence.fadeStartedAt > 1.15 && evidence.fadeStartedAt - contact > 3.0,
+                        Require(evidence.fadeDarkAt - evidence.fadeStartedAt > 1.15 && evidence.fadeStartedAt - contact > 1.0,
                             $"The final veil darkened from 5% to 95% between {evidence.fadeStartedAt:F2} and {evidence.fadeDarkAt:F2} s.");
                     Require(evidence.windAtImpact > 0f, "The shaft air was silent on arrival.");
                     foreach (var sample in evidence.samples)

@@ -3,11 +3,11 @@ using System;
 [Flags]
 public enum FloorEndingSet
 {
-    Water = 1, Lava = 2, Crystal = 4, Space = 8, Sand = 16, Snow = 32,
-    All = Water | Lava | Crystal | Space | Sand | Snow
+    Water = 1, Lava = 2, TarPit = 4, Space = 8, Sand = 16, Snow = 32,
+    All = Water | Lava | TarPit | Space | Sand | Snow
 }
 
-internal enum FloorEnding { Water, Lava, Crystal, Space, Sand, Snow }
+internal enum FloorEnding { Water, Lava, TarPit, Space, Sand, Snow }
 
 // The bag belongs to the presentation. Restarting gameplay preserves its place.
 internal sealed class EndingShuffle

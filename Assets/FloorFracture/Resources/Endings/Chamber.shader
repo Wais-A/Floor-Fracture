@@ -3,8 +3,12 @@ Shader "Floor Fracture/Ending chamber"
     Properties
     {
         _Tint("Tint", Color) = (1,1,1,1)
+        [HideInInspector] _DepthTest("Depth test", Float) = 4
+        [HideInInspector] _DepthWrite("Depth write", Float) = 1
         _Role("Surface", Float) = 0
         _Theme("Ending", Float) = 0
+        _SurfaceClock("Surface animation time", Float) = -1
+        _PassDistance("Star travel in metres", Float) = 0
         _Age("Seconds", Float) = 0
         _Reveal("Reveal", Float) = 0
         _Level("World surface height", Float) = -20
@@ -25,7 +29,8 @@ Shader "Floor Fracture/Ending chamber"
             Name "EndingSurface"
             Tags { "LightMode"="SRPDefaultUnlit" }
             Cull Off
-            ZWrite On
+            ZTest [_DepthTest]
+            ZWrite [_DepthWrite]
             Stencil { Ref 4 ReadMask 4 WriteMask 0 Comp [_PortalComparison] Pass Keep }
             Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
             HLSLPROGRAM
@@ -38,7 +43,7 @@ Shader "Floor Fracture/Ending chamber"
             SAMPLER(sampler_WaterNormal);
             CBUFFER_START(UnityPerMaterial)
                 half4 _Tint;
-                float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity, _WideningPerMetre, _ThroatDepth;
+                float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity, _WideningPerMetre, _ThroatDepth, _SurfaceClock, _PassDistance;
                 float4 _Mouth, _MouthRight;
             CBUFFER_END
             struct Attributes
@@ -79,13 +84,15 @@ Shader "Floor Fracture/Ending chamber"
                     }
                     p.xz *= radius / max(.01,topRadius);
                 }
-                if (_Role == 6 && _Theme != 3)
+                if (_Role == 6 && _Theme == 3)
+                    p.y += (frac(seed + _PassDistance/72) - seed)*72;
+                else if (_Role == 6)
                 {
                     float direction = (_Theme == 4 || _Theme == 5) ? -1 : 1;
-                    float speed = _Theme == 4 ? .30 : .18;
+                    float speed = _Theme == 5 ? .74 : (_Theme == 4 ? .30 : .18);
                     float drift = (frac(seed + _Age * speed) - seed) * direction;
                     p.y += drift * 4.3 * _Motion;
-                    p.x += (_Theme == 5 ? drift * 2.9 : sin(_Age*.93+seed*40)*.075) * _Motion;
+                    p.x += (_Theme == 5 ? drift * 5.2 : sin(_Age*.93+seed*40)*.075) * _Motion;
                     p.z += sin(_Age+seed*25) * .05 * _Motion;
                 }
                 if (_Role == 7)
@@ -196,13 +203,12 @@ Shader "Floor Fracture/Ending chamber"
                 {
                     color *= .77+.23*sin(xz.x*13 + sin(xz.y*3.1)*2.2);
                 }
-                else if (_Role == 5)
-                {
-                    float glow = smoothstep(i.seed,i.seed+.13,_Reveal*1.55) * (1-smoothstep(.76,.98,_Reveal));
-                    color *= .11+1.35*glow;
-                }
                 else if (_Role == 6 && _Theme == 3)
-                    color *= .78+.22*sin(i.seed*51+_Age*.9);
+                {
+                    half visibility = 1 - smoothstep(.36+.42*i.seed,.56+.30*i.seed,_Reveal);
+                    color *= (.78+.22*sin(i.seed*51+_Age*.9)) * visibility;
+                    clip(visibility-.005);
+                }
                 else if (_Role == 7)
                     color *= .86+.14*sin(i.seed*37+_Age*6.2);
                 else if (_Role == 8)
@@ -223,10 +229,32 @@ Shader "Floor Fracture/Ending chamber"
                 }
                 else if (_Role == 10)
                 {
-                    float2 facet = abs(frac(float2(xz.x*.32+xz.y*.17,xz.y*.24-xz.x*.12))-.5);
-                    float edge = abs(facet.x-facet.y);
-                    color = lerp(half3(.19,.055,.34), half3(.53,.25,.72), facet.x+facet.y);
-                    color += half3(.25,.58,.7)*(1-smoothstep(.012,.06,edge));
+                    float clock = _SurfaceClock < 0 ? _Time.y : _SurfaceClock;
+                    float2 entry = xz - _Mouth.xz;
+                    float r = length(entry);
+                    float ridges = cos(r*15 + clock*5) * exp2(-r*1.85) * smoothstep(0,.09,_Reveal);
+                    float2 flow = xz*.55 + float2(.21*sin(xz.y*.63+clock*.31),ridges*.33);
+                    float ribbon = sin(flow.x*2.3 + flow.y + .82*sin(flow.y*2.2-clock*.38));
+                    half gloss = smoothstep(.63,.98,ribbon);
+                    color = lerp(half3(.009,.007,.006),half3(.067,.051,.037),.5+.5*ribbon);
+                    color += gloss*lerp(half3(.028,.080,.078),half3(.135,.087,.038),.5+.5*sin(flow.x+clock*.23));
+                    color += half3(.10,.075,.046)*saturate(ridges);
+                    // An irregular bubble cell grows a curved specular cap, bursts,
+                    // and leaves a brief expanding ring on the same pool.
+                    float2 grid = xz*.64;
+                    float2 cell = floor(grid);
+                    float seed = frac(sin(dot(cell,float2(12.9898,78.233)))*4375.3);
+                    float2 bubble = frac(grid)-.5-.18*float2(sin(29*seed),cos(43*seed));
+                    float cycle = frac(clock*(.27+.22*seed)+seed);
+                    float radius = .025 + .20*smoothstep(.04,.74,cycle);
+                    float2 cap = bubble / radius;
+                    half dome = saturate(1-dot(cap,cap));
+                    half glint = pow(saturate(dot(normalize(float3(cap,sqrt(dome)+.001)),float3(-.49,.46,.74))),9);
+                    color += (half3(.038,.029,.018)*dome + half3(.31,.23,.13)*glint)
+                           * smoothstep(.0,.13,dome)*(1-smoothstep(.74,.80,cycle));
+                    float ring = abs(length(bubble)-radius-.22*max(0,cycle-.75));
+                    color += half3(.11,.077,.043)*(1-smoothstep(.008,.028+min(.09,fwidth(grid.x)),ring))
+                           * smoothstep(.73,.80,cycle)*(1-smoothstep(.82,1,cycle));
                 }
                 else if (_Role == 11)
                 {

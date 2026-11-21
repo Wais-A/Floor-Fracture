@@ -25,6 +25,9 @@ namespace FloorFracture.Editor
             var marker = board.Find("Occupied square").GetComponent<MeshRenderer>();
             Require(fissures.enabled && marker.enabled && game.State.ActiveWave == null,
                 "Stepping practice did not show the normal crack warning and occupancy ring without a countdown.");
+            MenuInput(new OVRInput.OVRControllerHands()); yield return Stage(GameStage.Paused);
+            MenuInput(new OVRInput.OVRControllerTouch()); yield return Stage(GameStage.PracticeStep);
+            Require(fissures.enabled && marker.enabled,"Menu resume lost the stepping lesson's marked pane.");
             StandOn(neighbor);
             yield return Wait(() => !startingPane.gameObject.activeSelf, "original practice pane shattering", 4);
             Require(game.Stage == GameStage.PracticeStep && marker.enabled && game.State.CurrentSample.Index == neighbor &&
@@ -37,6 +40,13 @@ namespace FloorFracture.Editor
             Choose("Try the stone");
             yield return Stage(GameStage.PracticeStone);
             var body = stone.Body;
+            var stonePosition=body.position;
+            MenuInput(new OVRInput.OVRControllerTouch()); yield return Stage(GameStage.Paused);
+            yield return Delay(.22);
+            Require(!body.gameObject.activeInHierarchy,"The stone remained interactive in the pause menu.");
+            MenuInput(new OVRInput.OVRControllerHands()); yield return Stage(GameStage.PracticeStone);
+            Require(body.gameObject.activeInHierarchy && Vector3.Distance(body.position,stonePosition)<.02f,
+                "Resuming practice moved the resting stone.");
             var grab = body.GetComponent<Grabbable>();
             var block = body.GetComponentsInChildren<BuildingBlock>(true)
                 .SingleOrDefault(marker => marker.BlockId == "f8766c17-aaf8-4b55-9431-de8deea83842");

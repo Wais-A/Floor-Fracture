@@ -62,7 +62,7 @@ namespace FloorFracture.Editor
 
             StandOn(completed.GuaranteedTile);
             yield return Frames(2);
-            double requested = Now;
+            double requested = game.GameplayTime;
             Choose("Start wave");
             var resumed = game.State.ActiveWave;
             Require(game.Stage == GameStage.Countdown && resumed != null && resumed.StartsAt >= requested &&

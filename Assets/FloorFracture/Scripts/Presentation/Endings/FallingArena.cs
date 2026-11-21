@@ -15,6 +15,7 @@ namespace FloorFracture
             this.board = board;
             this.reduced = reduced;
             start = board.transform.position;
+            board.SetFullFall(!reduced);
         }
 
         internal void Draw(float travel, bool entered)
@@ -37,6 +38,7 @@ namespace FloorFracture
         internal void Restore()
         {
             if (!board) return;
+            board.SetFullFall(false);
             board.transform.position = start;
             board.ShowLiftedBlocks(false);
             board.ShowShardsBelowRim(false);

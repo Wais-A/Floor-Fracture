@@ -19,7 +19,7 @@ namespace FloorFracture.Editor
     {
         private const string Key = "FloorFracture.GameplaySmoke.";
         private const string ScenePath = "Assets/FloorFracture/Scenes/FloorFracture.unity";
-        private static readonly string[] Preferences = { "ff.reduced", "ff.gentle", "ff.volume", "ff.narration" };
+        private static readonly string[] Preferences = { "ff.reduced", "ff.gentle", "ff.volume", "ff.narration", "ff.entireFloor" };
         private static readonly Stack<IEnumerator> Steps = new Stack<IEnumerator>();
         private static GameFlow game;
         private static Pose head, left, right;
@@ -54,6 +54,7 @@ namespace FloorFracture.Editor
                 SessionState.SetInt(Key + name + ".value", PlayerPrefs.GetInt(name));
             }
             PlayerPrefs.DeleteKey("ff.narration");
+            PlayerPrefs.DeleteKey("ff.entireFloor");
             report = new SmokeReport { startedUtc = DateTime.UtcNow.ToString("O"), unityVersion = Application.unityVersion, scene = ScenePath };
             report.depthProviderEnabledInAuthoredScene = AuthoredDepthEnabled();
             Save();
@@ -158,9 +159,11 @@ namespace FloorFracture.Editor
             var outlines = game.Room.transform.Find("Placement outlines");
             Require(outlines && outlines.gameObject.activeInHierarchy && outlines.GetComponent<MeshFilter>().sharedMesh.vertexCount > 0,
                 "The Welcome screen did not show the fitted board's perimeter.");
+            Require(placement.Layout.PaneCount<=16 && placement.Pitch>=.60f && placement.Pitch<=.65f,"The recorded living room did not get the default larger panes.");
             VerifyMenuAndSpatialAudio();
             yield return VerifyHandRecoveryMenu();
             VerifyOccupancyRingMesh();
+            VerifyScoreboardMounts();
             VerifySpawnMarkersCleared();
             Record($"The recorded MRUK living room supplied its floor, furniture and global mesh. The {placement.Columns} × {placement.Rows} board at {placement.Pitch:F3} m pitch appeared at Welcome without a clearance approval prompt.");
             Capture("room-preview", SmokeView.BoardObserver);
@@ -178,6 +181,7 @@ namespace FloorFracture.Editor
             Record("The recorded room displayed accepted panes, furniture and mesh obstacles in their diagnostic colors. Switching it off restored the normal view.");
             VerifyGlassAndPassthrough();
             yield return VerifyMenuRecenter();
+            yield return VerifyMenuPauseAndQuit();
             yield return RayChoose(3, false); yield return Stage(GameStage.Settings);
             Require(!outlines.gameObject.activeSelf, "The Welcome board perimeter stayed visible inside Settings.");
             yield return RayChoose(5, true); yield return Stage(GameStage.Welcome);
@@ -198,7 +202,7 @@ namespace FloorFracture.Editor
             Choose("Start wave"); yield return Stage(GameStage.Countdown);
             VerifyBoardLock();
 
-            bool sawMemory = false, sawLastTile = false;
+            bool sawLastTile = false;
             int initialCount = game.State.Layout.PaneCount;
             for (int index = 0; index < initialCount; index++)
             {
@@ -208,48 +212,54 @@ namespace FloorFracture.Editor
                 {
                     Require(plan.Mode == WaveMode.Classic, "First wave was not Classic.");
                     yield return Frames(2); Capture("classic-glass", SmokeView.BoardObserver);
-                    FrameRingAndClock();
+                    LookAtScoreboard();
                     yield return Frames(2); Capture("classic-player-view", SmokeView.CenterEye);
                 }
-                MeshFilter memoryRim = null;
-                if (plan.Mode == WaveMode.Memory)
-                {
-                    sawMemory = true;
-                    var tile = game.BoardView.Board.Find($"Glass {plan.StartingTile % game.State.Width}, {plan.StartingTile / game.State.Width}");
-                    memoryRim = tile.Find("Rim").GetComponent<MeshFilter>();
-                    yield return Frames(1);
-                    Require(memoryRim.sharedMesh == GlassGeometry.Rim, "A revealed Memory pane must show the full ordinary warning rim.");
-                }
+                Require(plan.Mode!=WaveMode.Memory && plan.Duration==4,"Level one must allow four seconds with the regular reveal.");
+                var marked = game.BoardView.Board.Find($"Glass {plan.StartingTile % game.State.Width}, {plan.StartingTile / game.State.Width}");
+                var warningRim = marked.Find("Rim").GetComponent<MeshFilter>();
+                var warningCracks = marked.Find("Fissures").GetComponent<MeshRenderer>();
+                yield return Frames(1);
+                Require(warningRim.sharedMesh == GlassGeometry.Rim && warningCracks.enabled,"The reveal did not mark the pane that will break.");
                 if (plan.Mode == WaveMode.LastTile) sawLastTile = true;
                 int score = game.State.WavesSurvived;
                 StandOn(plan.GuaranteedTile);
                 yield return Frames(2);
-                Require(game.State.CurrentSample.Index == plan.GuaranteedTile && Now < plan.Deadline && game.State.WavesSurvived == score,
+                Require(game.State.CurrentSample.Index == plan.GuaranteedTile && game.GameplayTime < plan.Deadline && game.State.WavesSurvived == score,
                     "The early step did not register while the countdown remained live.");
                 bool recallSeen = false;
+                var pulse = game.transform.Find("Countdown heartbeat").GetComponent<AudioSource>();
+                var readout = game.ScoreDisplay;
                 while (game.Stage == GameStage.Countdown)
                 {
-                    if (Now < plan.Deadline)
+                    if (game.GameplayTime < plan.Deadline)
                     {
+                        string displayed = readout.text;
+                        int open = displayed.IndexOf('>') + 1;
+                        int close = displayed.IndexOf("</size>",StringComparison.Ordinal);
+                        Require(open > 0 && close > open,"The countdown did not display a numeric beat.");
+                        Require(int.TryParse(displayed.Substring(open,close-open),out int count),"Unreadable countdown beat.");
+                        Require(pulse.clip && pulse.clip.name == (count <= 3 ? "HeartbeatUrgent" : "Heartbeat"),
+                            "Wrong heartbeat for visible count " + count);
                         Require(game.State.IsIntact(plan.StartingTile) && game.State.WavesSurvived == score, "A break or score occurred before zero.");
-                        if (memoryRim && !recallSeen && Now > plan.RevealEndsAt + .05 && !plan.ShowsWarnings(Now))
+                        if (!recallSeen && game.GameplayTime > plan.RevealEndsAt + .05 && !plan.ShowsWarnings(game.GameplayTime))
                         {
-                            Require(memoryRim.sharedMesh == GlassGeometry.SafeRim, "Memory recall must restore the intact two-tone rim before shattering.");
+                            Require(warningRim.sharedMesh == GlassGeometry.SafeRim && !warningCracks.enabled,"Recall must completely clear the earlier warning.");
                             recallSeen = true;
                         }
                     }
-                    Require(Now < plan.Deadline + 2, "The scheduled deadline did not resolve.");
+                    Require(game.GameplayTime < plan.Deadline + 2, "The scheduled deadline did not resolve.");
                     yield return null;
                 }
-                Require(game.Stage == GameStage.BetweenWaves && Now >= plan.Deadline && game.State.BreaksApplied &&
+                Require(game.Stage == GameStage.BetweenWaves && game.GameplayTime >= plan.Deadline && game.State.BreaksApplied &&
                     game.State.WavesSurvived == score + 1 && !game.State.IsIntact(plan.StartingTile), "The survival result disagreed with the saved deadline or support.");
-                if (plan.Mode == WaveMode.Memory) Require(recallSeen, "Memory did not enter recall before zero.");
+                Require(recallSeen, "The wave did not clear its warning before zero.");
                 RecordWave(plan, true);
                 if (index == 0)
                 {
                     yield return Frames(1); Capture("neighboring-hole", SmokeView.BoardObserver);
                     LookAtTile(plan.StartingTile, false);
-                    yield return Wait(() => Now >= plan.Deadline + 0.55, "shards falling below the floor", 3);
+                    yield return Wait(() => game.GameplayTime >= plan.Deadline + 0.55, "shards falling below the floor", 3);
                     var destination = GameObject.Find("Fall chamber").transform.Find("Hazard surface").GetComponent<MeshRenderer>();
                     var selected = new MaterialPropertyBlock();
                     destination.GetPropertyBlock(selected);
@@ -265,7 +275,6 @@ namespace FloorFracture.Editor
                 Require(game.Stage == GameStage.Countdown, "A safe stationary route did not advance the level.");
             }
             Require(game.Stage == GameStage.Ready && game.Level == 2 && sawLastTile, "Last Tile did not rebuild the confirmed board.");
-            if (initialCount >= 9) Require(sawMemory, "The larger first level never entered Memory.");
             Record("Walked each guaranteed stationary step through Last Tile. Level 2 rebuilt and waited for readiness.");
 
             Choose("Main menu"); Choose("Development"); Choose("Seed 379 · level 1");
@@ -274,11 +283,11 @@ namespace FloorFracture.Editor
             Require(losing.Mode == WaveMode.Classic && game.State.WavesSurvived == 0, "Fresh run did not start with Classic and a zero score.");
             while (game.Stage == GameStage.Countdown)
             {
-                if (Now < losing.Deadline) Require(game.State.IsIntact(losing.StartingTile), "The loss tile vanished before zero.");
-                Require(Now < losing.Deadline + 2, "Standing still did not produce a deadline result.");
+                if (game.GameplayTime < losing.Deadline) Require(game.State.IsIntact(losing.StartingTile), "The loss tile vanished before zero.");
+                Require(game.GameplayTime < losing.Deadline + 2, "Standing still did not produce a deadline result.");
                 yield return null;
             }
-            Require(game.Stage == GameStage.Fall && Now >= losing.Deadline && game.State.BreaksApplied &&
+            Require(game.Stage == GameStage.Fall && game.GameplayTime >= losing.Deadline && game.State.BreaksApplied &&
                 game.State.WavesSurvived == 0 && !game.State.IsIntact(losing.StartingTile), "Standing still produced an incorrect Classic deadline loss.");
             RecordWave(losing, false);
             Require(game.Ending.LastEndingName == report.previewBeforeNaturalLoss,
@@ -301,7 +310,7 @@ namespace FloorFracture.Editor
                     Capture("ending-" + ending.ToLowerInvariant(), SmokeView.Ending);
                 }
                 if (i != 1) game.Ending.Skip();
-                yield return Stage(GameStage.Results, 10);
+                yield return Stage(GameStage.Results, 14);
                 VerifyFloorVisibility(false);
                 var resultsBody=game.Panel.transform.Find("Floor Fracture Menu/Instructions").GetComponent<UnityEngine.UI.Text>().text;
                 Require(i==0 ? resultsBody.Contains("glass under the ring shattered") : resultsBody.Contains("Ending preview"),
@@ -341,6 +350,17 @@ namespace FloorFracture.Editor
             // Audition uses the optional stone. Check it after the first-time stepping
             // lesson has established that a fresh run does not instantiate the stone.
             yield return VerifyOfflineNarration();
+            Choose("Play area");
+            Choose("Board size");
+            yield return Wait(()=>game.Stage==GameStage.Welcome && game.Room.EntireFloor,"full-floor refit",55);
+            int fullCount=game.State.Layout.PaneCount;
+            Require(fullCount>=placement.Layout.PaneCount && PlayerPrefs.GetInt("ff.entireFloor")==1,
+                "Full floor lost the enabled setting or produced fewer playable panes on the same scan.");
+            Choose("Play area");
+            Choose("Board size");
+            yield return Wait(()=>game.Stage==GameStage.Welcome && !game.Room.EntireFloor,"default board refit",55);
+            Require(game.State.Layout.PaneCount<=16,"Returning to the default board did not reapply the cap.");
+            Record($"Play area refit the saved room in both modes: {game.State.Layout.PaneCount} default panes and {fullCount} full-floor panes.");
         }
 
         private static void VerifyBoardLock()
@@ -364,6 +384,16 @@ namespace FloorFracture.Editor
         {
             // Only withdraw the recorded room from MRUK's localized room list.
             // Its anchors and the game-owned board remain alive throughout.
+            // This test interrupts a live wave. A smaller board can already have
+            // cleared level three during the preceding moving-pane test.
+            yield return Wait(() => game.Stage==GameStage.Ready || game.Stage==GameStage.Countdown,
+                "the next playable wave after the moving-pane check", 8);
+            if (game.Stage==GameStage.Ready)
+            {
+                StandOn(MiddlePane);
+                Choose("Start wave");
+                yield return Stage(GameStage.Countdown);
+            }
             var rooms=MRUK.Instance.Rooms;
             var original=rooms.Single();
             var board=game.BoardView;
@@ -612,7 +642,7 @@ namespace FloorFracture.Editor
             }
             var moving = game.BoardView.transform.Find("Sliding pane");
             var ring = game.BoardView.transform.Find("Occupied square").GetComponent<MeshRenderer>();
-            var timer = game.BoardView.transform.Find("Countdown and score").GetComponent<TextMesh>();
+            var timer = game.ScoreDisplay;
             var canceled = wave;
             var canceledPane = game.State.Slider;
             yield return Frames(2);
@@ -671,12 +701,12 @@ namespace FloorFracture.Editor
             StandOn(wave.GuaranteedTile); yield return Frames(2);
             Require(game.Stage == GameStage.Countdown && !slide.Locked && game.State.CurrentSample.Index == wave.GuaranteedTile &&
                 game.State.CurrentSample.Kind == SupportKind.Glass, "The deliberate miss did not recover to the stationary escape.");
-            yield return Wait(() => Now > slide.MotionStartsAt + 0.10, "sliding pane to move", 3);
+            yield return Wait(() => game.GameplayTime > slide.MotionStartsAt + 0.10, "sliding pane to move", 3);
             Vector3 oldCenter = moving.localPosition;
             LookAtTile(slide.Tile, false); yield return Delay(0.2);
             Require((moving.localPosition - oldCenter).sqrMagnitude > 0.00005f, "The glass did not travel along the two-hole lane.");
             Capture("level3-moving-pane-player-view", SmokeView.CenterEye);
-            StandAt(slide.CenterAt(Now)); yield return Frames(2);
+            StandAt(slide.CenterAt(game.GameplayTime)); yield return Frames(2);
             Require(slide.Locked && game.State.CurrentSample.IsSlider, "Landing on moving glass did not lock it.");
             Vector3 caught = moving.localPosition;
             Vector3 ringOffset = ring.transform.localPosition-caught;
@@ -818,44 +848,21 @@ namespace FloorFracture.Editor
             Vector3 direction = (target - head.position).normalized;
             if (includeClock)
             {
-                var clock = board.Find("Countdown and score").GetComponent<MeshRenderer>();
+                var clock = game.ScoreDisplay.GetComponent<MeshRenderer>();
                 direction += (clock.bounds.center - head.position).normalized;
             }
             var stance = PlayerTileTracker.ProjectStance(board.worldToLocalMatrix,head.position,head.rotation,ProfileEyeDepth());
             SetStandingHead(stance,Quaternion.LookRotation(direction,Vector3.up));
         }
 
-        private static void FrameRingAndClock()
+        private static void LookAtScoreboard()
         {
-            var board = game.BoardView.Board;
-            var ring = board.Find("Occupied square").GetComponent<MeshRenderer>();
-            var clock = board.Find("Countdown and score").GetComponent<MeshRenderer>();
-            var backing = clock.transform.Find("Contrast backing").GetComponent<MeshRenderer>();
-            var floor = game.Room.FloorEffect;
-            Require(backing.enabled && clock.sortingOrder>backing.sortingOrder &&
-                floor.EffectMeshObjects.Values.Select(p=>p.effectMeshGO.GetComponent<MeshRenderer>())
-                    .Where(r=>r).All(r=>backing.sortingOrder>r.sortingOrder),
-                "The room floor can overpaint the countdown backing.");
-            Vector2 stance = PlayerTileTracker.ProjectStance(board.worldToLocalMatrix,head.position,head.rotation,ProfileEyeDepth());
-            // Fit the screen-space extremes, since the clock can be several metres farther
-            // away than the ring. Repeat once after the eye has pivoted above the planted feet.
-            for (int pass = 0; pass < 2; pass++)
-            {
-                var forward = Vector3.ProjectOnPlane(clock.bounds.center-head.position,Vector3.up).normalized;
-                float low=180f, high=-180f;
-                foreach (var renderer in new[]{ring,clock})
-                {
-                    Bounds bounds=renderer.bounds;
-                    for (int i=0;i<8;i++)
-                    {
-                        var corner=new Vector3((i&1)==0?bounds.min.x:bounds.max.x,(i&2)==0?bounds.min.y:bounds.max.y,
-                            (i&4)==0?bounds.min.z:bounds.max.z)-head.position;
-                        float down=Mathf.Atan2(-corner.y,Vector3.Dot(corner,forward))*Mathf.Rad2Deg;
-                        low=Mathf.Min(low,down); high=Mathf.Max(high,down);
-                    }
-                }
-                SetStandingHead(stance,Quaternion.LookRotation(forward,Vector3.up)*Quaternion.Euler((low+high)*.5f,0,0));
-            }
+            var board=game.BoardView.Board;
+            var display=game.ScoreDisplay;
+            Require(display && display.gameObject.activeInHierarchy && display.transform.position.y>board.position.y+.7f,
+                "The recorded living room did not display an elevated scoreboard.");
+            Vector2 stance=PlayerTileTracker.ProjectStance(board.worldToLocalMatrix,head.position,head.rotation,ProfileEyeDepth());
+            SetStandingHead(stance,Quaternion.LookRotation(display.GetComponent<Renderer>().bounds.center-head.position,Vector3.up));
         }
 
         private static void SetHead(Pose value)
@@ -926,7 +933,7 @@ namespace FloorFracture.Editor
         private static void RecordWave(WavePlan wave, bool survived)
         {
             report.waves.Add(new SmokeWave { mode=wave.Mode.ToString(), start=wave.StartingTile, guaranteed=wave.GuaranteedTile,
-                survived=survived, plannedDeadline=wave.Deadline, observedAfterResolution=Now, score=game.State.WavesSurvived });
+                survived=survived, plannedDeadline=wave.Deadline, observedAfterResolution=game.GameplayTime, score=game.State.WavesSurvived });
             Save();
         }
 
