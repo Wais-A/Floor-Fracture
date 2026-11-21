@@ -1,8 +1,7 @@
 #ifndef FLOOR_FRACTURE_SHAFT_BRICKWORK
 #define FLOOR_FRACTURE_SHAFT_BRICKWORK
 
-// Supply distances along the surface in metres. The room floor, broken glass and
-// falling chamber share the same blue stone, mortar, running bond and course size.
+// The rising floor and deep chamber share a running bond measured in metres.
 half3 ShaftBrickwork(float2 metres)
 {
     const half3 stone = half3(.165, .285, .36);

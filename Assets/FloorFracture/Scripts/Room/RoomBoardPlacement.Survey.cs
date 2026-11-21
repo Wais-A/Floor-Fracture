@@ -12,15 +12,6 @@ namespace FloorFracture
         private FloorMeshScan meshSnapshot;
         private List<FloorSurvey> surveys;
         [SerializeField] private EnvironmentRaycastManager liveManager;
-        private readonly List<Vector2[]> detectedObstacles = new();
-#if UNITY_ANDROID && !UNITY_EDITOR
-        private static readonly Vector2[] DepthSampleOffsets = {
-            Vector2.zero, new(-.3f, -.3f), new(.3f, -.3f), new(-.3f, .3f), new(.3f, .3f)
-        };
-        private int nextLivePane, liveSample, pendingPane = -1;
-        private Vector3 pendingWorldHit;
-        private double nextLiveCheck;
-#endif
         [SerializeField, Tooltip("Show accepted panes in green and the boundaries of measured scan regions.")]
         private bool showPlacementDebug;
         private RoomOutlineView debugView;
@@ -82,8 +73,7 @@ namespace FloorFracture
             var snapshot = meshSnapshot;
             var excluded = declined.ToArray();
             float headroom = Mathf.Max(2.2f, rig.centerEyeAnchor.position.y - semantic[0].Height + .3f);
-            var liveObstacles = detectedObstacles.ToArray();
-            var evidence = await Task.Run(() => semantic.ConvertAll(f => new FloorSurvey(f, snapshot, headroom, excluded, cancel, liveObstacles)), cancel);
+            var evidence = await Task.Run(() => semantic.ConvertAll(f => new FloorSurvey(f, snapshot, headroom, excluded, cancel)), cancel);
             cancel.ThrowIfCancellationRequested();
             if (!StillLocal(scanRevision))
                 return null;
@@ -96,7 +86,6 @@ namespace FloorFracture
             {
                 var obstacles = new List<Vector2[]>(f.Obstacles);
                 obstacles.AddRange(excluded);
-                obstacles.AddRange(liveObstacles);
                 return new RoomFloor(f.Boundary, obstacles, f.Height);
             });
             // A confirmed depth hit excludes its measured location before the next fit.
@@ -138,7 +127,7 @@ namespace FloorFracture
                 {
                     triedLiveSurface = true;
                     var floor = semantic.Find(f => FloorGeometry.Contains(f.Boundary, preferred)) ?? semantic[0];
-                    var observedObstacles = new List<Vector2[]>(liveObstacles);
+                    var observedObstacles = new List<Vector2[]>();
                     var surface = await ReadDepthSurface(floor, observedObstacles, cancel);
                     cancel.ThrowIfCancellationRequested();
                     if (!StillLocal(scanRevision)) return null;
@@ -288,53 +277,6 @@ namespace FloorFracture
         internal static bool IsObstacleOnPane(EnvironmentRaycastHit hit, BoardPlacement fit, int pane, Vector3 eye) =>
             ClassifyFloorRay(hit, fit, pane, eye) == TileClearance.LiveObstacle;
 
-#if UNITY_ANDROID && !UNITY_EDITOR
-        // Spread native depth queries over frames. Repeat a positive hit before interrupting a wave.
-        private void CheckForNewObstacle()
-        {
-            double now = Time.unscaledTimeAsDouble;
-            if (now < nextLiveCheck || !liveManager || !liveManager.isActiveAndEnabled) return;
-            nextLiveCheck = now + .10;
-            var eye = rig.centerEyeAnchor.GetComponent<Camera>();
-            if (!eye || !playAreaVisible) return;
-            var fit = Placement;
-            for (int i = 0; i < fit.Layout.CellCount; i++)
-            {
-                bool confirming = pendingPane >= 0;
-                int index = confirming ? pendingPane : nextLivePane;
-                int sample = liveSample;
-                if (!confirming && ++nextLivePane >= fit.Layout.CellCount)
-                {
-                    nextLivePane = 0;
-                    liveSample = (liveSample + 1) % DepthSampleOffsets.Length;
-                }
-                if (!fit.Layout.Contains(index)) continue;
-                Vector2 offset = DepthSampleOffsets[sample];
-                Vector2 target = fit.ToWorldXZ(
-                    (index % fit.Columns + .5f - fit.Columns * .5f + offset.x) * fit.Pitch,
-                    (index / fit.Columns + .5f - fit.Rows * .5f + offset.y) * fit.Pitch);
-                // Aim a confirmation ray at the height of the previous hit.
-                var world = confirming ? pendingWorldHit : new Vector3(target.x, fit.FloorHeight, target.y);
-                var viewport = eye.WorldToViewportPoint(world);
-                pendingPane = -1;
-                if (viewport.z <= 0 || viewport.x < 0 || viewport.x > 1 || viewport.y < 0 || viewport.y > 1) continue;
-                var delta = world - eye.transform.position;
-                if (!liveManager.Raycast(new Ray(eye.transform.position, delta), out var hit, delta.magnitude + .12f)
-                    || !IsObstacleOnPane(hit, fit, index, eye.transform.position)) return;
-                var point = new Vector2(hit.point.x, hit.point.z);
-                if (confirming && (hit.point - pendingWorldHit).sqrMagnitude < .08f * .08f)
-                {
-                    detectedObstacles.Add(new[] { point });
-                    if (Debug.isDebugBuild) Debug.Log("[Floor Fracture depth] Rechecking the board after a repeated depth hit on a playable pane.", this);
-                    LoadRoom(false, true);
-                    return;
-                }
-                pendingPane = index;
-                pendingWorldHit = hit.point;
-                return;
-            }
-        }
-#endif
 
         private async Task<bool?> CheckVisibleTiles(BoardPlacement fit, List<FloorSurvey> evidence, CancellationToken cancel)
         {

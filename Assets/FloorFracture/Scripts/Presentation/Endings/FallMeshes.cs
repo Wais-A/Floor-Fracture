@@ -18,8 +18,8 @@ internal static class FallMeshes
     internal static Mesh Shaft(float depth)
     {
         var mesh = new Builder();
-        // Rings near the lip give the tile-sized mouth a short, flared throat.
-        float[] levels = { 0f, -.20f, -.45f, -.75f, -1.15f, -1.45f, -depth - 1f };
+        // Include the change of slope so the walls and their ledges follow the same profile.
+        float[] levels = { 0f, -.20f, -.45f, -.75f, -1.15f, -1.45f, -FallScenery.ThroatDepth, -depth - 1f };
         for (int i = 0; i < Rim.Length; i++)
         {
             Color face = Gray(.64f + .24f * Mathf.Abs(Mathf.Sin(i * 1.8f)));
@@ -38,7 +38,8 @@ internal static class FallMeshes
         {
             float y = -distance;
             bool wide = row % 3 == 0;
-            float inset = row == 0 ? .76f : wide ? .89f : .955f;
+            // A narrow bevel at the mouth leaves the glass silhouette readable.
+            float inset = Mathf.Lerp(.984f, wide ? .89f : .955f, Mathf.SmoothStep(0,1,Mathf.InverseLerp(1f,6f,distance)));
             float thickness = wide ? .16f : .065f;
             for (int side = 0; side < Rim.Length; side++)
             {

@@ -13,7 +13,7 @@ namespace FloorFracture
         static readonly int SheenId = Shader.PropertyToID("_Sheen");
         static Material surface;
         public static Material Surface => surface ? surface : surface = MakeMaterial("FloorFractureSurface");
-        MeshRenderer pane, frame, fracture;
+        MeshRenderer pane, body, frame, fracture;
         MeshFilter frameFilter;
         bool lastWarning, lastLow;
         float lastPulse=-1;
@@ -36,14 +36,21 @@ namespace FloorFracture
         {
             var props=new MaterialPropertyBlock(); props.SetColor(ColorId,color); props.SetFloat(SheenId,sheen); renderer.SetPropertyBlock(props);
         }
-        public void Initialize()
+        public void Initialize(Material material = null, Material bodyMaterial = null, float depthScale = 1f)
         {
             if(pane) return;
+            if (!material) material=Surface;
             block=new MaterialPropertyBlock();
-            pane=Part(transform,"Smoky pane",GlassGeometry.Face,Surface);
-            frame=Part(transform,"Rim",GlassGeometry.SafeRim,Surface);
+            pane=Part(transform,"Smoky pane",GlassGeometry.Face,material);
+            if (bodyMaterial)
+            {
+                body=Part(transform,"Glass sides and bottom",GlassGeometry.BlockSides,bodyMaterial);
+                body.transform.localScale=new Vector3(1,depthScale,1);
+                ColorPart(body,Safe,.7f);
+            }
+            frame=Part(transform,"Rim",GlassGeometry.SafeRim,material);
             frameFilter=frame.GetComponent<MeshFilter>();
-            fracture=Part(transform,"Fissures",GlassGeometry.Cracks,Surface);
+            fracture=Part(transform,"Fissures",GlassGeometry.Cracks,material);
             ColorPart(pane,Safe,.7f); ColorPart(frame,Edge); fracture.enabled=false;
         }
         void ColorPart(Renderer r,Color color,float sheen=0)
@@ -62,7 +69,9 @@ namespace FloorFracture
             lastWarning=warn; lastLow=low; lastPulse=pulse; fracture.enabled=warn;
             ColorPart(frame,warn?Color.Lerp(Danger,Fire,low?.23f+pulse*.18f:.12f+pulse*.72f):Edge);
             if(warn) ColorPart(fracture,Color.Lerp(Danger,Fire,low?.40f:.36f+pulse*.46f));
-            ColorPart(pane,warn?new Color(.36f,.24f,.23f,.79f):Safe,.7f);
+            Color tint=warn?new Color(.36f,.24f,.23f,.79f):Safe;
+            ColorPart(pane,tint,.7f);
+            if (body) ColorPart(body,tint,.7f);
         }
     }
 }

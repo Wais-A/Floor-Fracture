@@ -4,32 +4,27 @@ namespace FloorFracture
 {
     public sealed class GlassBoardView : MonoBehaviour
     {
-        static readonly Vector3[] EdgeNormals = { Vector3.back, Vector3.right, Vector3.forward, Vector3.left };
-        static readonly float[] LedgeDepths = { .10f, 1.15f };
         BoardState model;
         GlassTile[] tiles;
         GlassTile moving;
-        MeshRenderer occupancy, fog, holes, underground;
+        MeshRenderer occupancy, fog, holes;
         ShardPool shards;
-        Mesh cutouts, shaft, fogPlane, boundary, labelBackground;
-        Material maskMaterial, wallsMaterial, fogMaterial, shardMaterial;
+        Mesh cutouts, fogPlane, boundary, labelBackground;
+        Material bodyMaterial, paneMaterial, maskMaterial, fogMaterial, shardMaterial;
         TextMesh readout;
         Transform labelPlate;
         bool clockPositionSet;
         float readoutWidth=.68f, readoutHeight=.23f;
         ulong holeBits;
-        Vector2? outsideOpening;
         int practiceHole=-1;
         string lastText;
         public Transform Board => transform;
-        internal bool HasOpenPanes => isActiveAndEnabled && (holeBits != 0 || outsideOpening.HasValue);
+        internal bool HasOpenPanes => isActiveAndEnabled && holeBits != 0;
         internal float ChamberRadius
         {
             get
             {
                 float extent = Mathf.Max(model.Width,model.Height)*model.Pitch*.5f;
-                if (outsideOpening is Vector2 center)
-                    extent = Mathf.Max(extent, Mathf.Max(Mathf.Abs(center.x),Mathf.Abs(center.y)) + model.Pitch*.5f);
                 return Mathf.Max(1.48f, extent/.76f+.4f);
             }
         }
@@ -41,6 +36,15 @@ namespace FloorFracture
             var template=Resources.Load<GameObject>("GlassTile");
             var prefab=template?template.GetComponent<GlassTile>():null;
             if(!prefab) throw new System.InvalidOperationException("Missing Resources/GlassTile prefab");
+            paneMaterial=GlassTile.MakeMaterial("FloorFractureSurface");
+            bodyMaterial = new Material(paneMaterial);
+            bodyMaterial.SetFloat("_BlockBody",1);
+            bodyMaterial.SetInt("_Cull",(int)UnityEngine.Rendering.CullMode.Back);
+            ShowLiftedBlocks(false);
+            maskMaterial=GlassTile.MakeMaterial("FloorFractureMask");
+            fogMaterial=GlassTile.MakeMaterial("FloorFractureFog");
+            foreach (var material in new[] {paneMaterial, bodyMaterial, maskMaterial, fogMaterial})
+                material.SetFloat("_MappedFloorY", pose.position.y);
             tiles=new GlassTile[board.Count];
             float paneScale=board.Pitch/GlassGeometry.AuthoredPitch;
             var fittedScale=new Vector3(paneScale,1,paneScale);
@@ -49,23 +53,20 @@ namespace FloorFracture
                 if (!board.Layout.Contains(i)) continue;
                 var t=Instantiate(prefab,transform); t.name="Glass "+(i%board.Width)+", "+(i/board.Width);
                 t.transform.localPosition=GlassGeometry.Ground(board.Center(i));
-                t.transform.localScale=fittedScale; t.Initialize(); tiles[i]=t;
+                t.transform.localScale=fittedScale; t.Initialize(paneMaterial,bodyMaterial,paneScale); tiles[i]=t;
             }
             moving=Instantiate(prefab,transform); moving.name="Sliding pane"; moving.transform.localScale=fittedScale;
-            moving.Initialize(); moving.gameObject.SetActive(false);
-            occupancy=GlassTile.Part(transform,"Occupied square",GlassGeometry.Ring,GlassTile.Surface);
+            moving.Initialize(paneMaterial,bodyMaterial,paneScale); moving.gameObject.SetActive(false);
+            occupancy=GlassTile.Part(transform,"Occupied square",GlassGeometry.Ring,paneMaterial);
             occupancy.transform.localScale=fittedScale;
             GlassTile.Tint(occupancy,new Color(.90f,1f,.73f)); occupancy.enabled=false;
-            maskMaterial=GlassTile.MakeMaterial("FloorFractureMask"); wallsMaterial=GlassTile.MakeMaterial("FloorFractureDepth");
-            wallsMaterial.SetFloat("_Courses",1);
-            shardMaterial=GlassTile.MakeMaterial("FloorFractureDepth"); fogMaterial=GlassTile.MakeMaterial("FloorFractureFog");
-            cutouts=new Mesh{name="Open floor apertures"}; shaft=new Mesh{name="Connected shafts"};
+            shardMaterial=GlassTile.MakeMaterial("FloorFractureDepth");
+            cutouts=new Mesh{name="Open floor apertures"};
             holes=GlassTile.Part(transform,"Opening stencil",cutouts,maskMaterial);
-            underground=GlassTile.Part(transform,"Glass opening edges",shaft,wallsMaterial);
             shards=gameObject.AddComponent<ShardPool>(); shards.Initialize(shardMaterial,paneScale);
             var b=new GlassGeometry.Builder();
             foreach (var edge in board.Layout.Perimeter(board.Pitch)) b.Stroke(edge.a,edge.b,.012f,.006f);
-            boundary=b.Create("Board perimeter"); var border=GlassTile.Part(transform,"Perimeter",boundary,GlassTile.Surface);
+            boundary=b.Create("Board perimeter"); var border=GlassTile.Part(transform,"Perimeter",boundary,paneMaterial);
             GlassTile.Tint(border,new Color(.61f,.82f,.85f,.96f));
             b=new GlassGeometry.Builder();
             float half=board.Pitch*.5f;
@@ -206,90 +207,43 @@ namespace FloorFracture
             RebuildHoles(holeBits | (1UL << cell));
         }
 
-        // A development preview or a leaning eye can be just outside the fitted grid.
-        // Continue its grid lines into the brick so this opening never covers an intact pane.
-        internal Vector3? OpenOutsidePane(Vector3 entry)
+        internal void ShowLiftedBlocks(bool lifted, bool belowRim = false)
         {
-            Vector2 local = PlayerTileTracker.Project(transform,entry);
-            float pitch = model.Pitch;
-            var half = new Vector2(model.Width, model.Height) * .5f;
-            var cell = local/pitch + half;
-            // Interior gaps were excluded by room placement, including gaps occupied by furniture.
-            if (cell.x >= 0f && cell.x < model.Width && cell.y >= 0f && cell.y < model.Height) return null;
-            var center = (new Vector2(Mathf.Floor(cell.x)+.5f,Mathf.Floor(cell.y)+.5f) - half) * pitch;
-            outsideOpening = center;
-            RebuildHoles(holeBits);
-            return transform.TransformPoint(GlassGeometry.Ground(center));
+            // At rest the stencil carries Meta's floor-depth test. Only a broken
+            // pane can reveal glass below the physical floor. Once lifted, the
+            // blocks have their own visible silhouette above the real floor.
+            bodyMaterial.SetFloat("_DepthTestBlock",lifted && !belowRim ? 1f : 0f);
+            bodyMaterial.SetInt("_PortalComparison", (int)(lifted ?
+                UnityEngine.Rendering.CompareFunction.Always : UnityEngine.Rendering.CompareFunction.Equal));
         }
-
-        internal void CloseOutsidePane()
-        {
-            if (!outsideOpening.HasValue) return;
-            outsideOpening = null;
-            RebuildHoles(holeBits);
-        }
-
         internal void ShowShardsBelowRim(bool belowRim)
         {
             var comparison = belowRim ? UnityEngine.Rendering.CompareFunction.Always : UnityEngine.Rendering.CompareFunction.Equal;
-            // The flared preview throat belongs inside the open panes even from below.
-            // Its back faces would otherwise cover the rising brick and intact glass.
+            // Shards are visible through the aperture until the viewer passes below the rim.
             shardMaterial.SetInt("_PortalComparison", (int)comparison);
         }
         void RebuildHoles(ulong bits)
         {
-            holeBits=bits; var m=new GlassGeometry.Builder(); var w=new GlassGeometry.Builder();
-            for(int i=0;i<model.Count;i++)
+            holeBits = bits;
+            var maskGeometry = new GlassGeometry.Builder();
+            var openings = new BoardLayout(model.Width, model.Height, bits);
+            float pitch = model.Pitch;
+            for (int row = 0; row < openings.Rows; row++)
+            for (int col = 0; col < openings.Columns; col++)
             {
-                if((bits&(1UL<<i))==0) continue;
-                var p=GlassGeometry.Ground(model.Center(i)); float h=model.Pitch*.5f;
-                Vector3[] c={p+new Vector3(-h,0,-h),p+new Vector3(h,0,-h),p+new Vector3(h,0,h),p+new Vector3(-h,0,h)};
-                m.Quad(c[0],c[1],c[2],c[3],Color.white,Color.white);
-                // A short, flared brick throat gives a safe viewer near/far parallax.
-                // It has no bottom. The landing is in the shared chamber 80 metres below.
-                int col=i%model.Width, row=i/model.Width;
-                int[] neighbors={row>0?i-model.Width:-1,col+1<model.Width?i+1:-1,row+1<model.Height?i+model.Width:-1,col>0?i-1:-1};
-                bool Exposed(int edge) => neighbors[edge]<0 || (bits&(1UL<<neighbors[edge]))==0;
-                for(int j=0;j<4;j++)
-                {
-                    if(!Exposed(j)) continue;
-                    int previous=(j+3)%4, next=(j+1)%4;
-                    Vector3 normal=EdgeNormals[j];
-                    Vector3 expandA=normal+(Exposed(previous)?EdgeNormals[previous]:Vector3.zero);
-                    Vector3 expandB=normal+(Exposed(next)?EdgeNormals[next]:Vector3.zero);
-                    Vector3 a=c[j], b=c[next];
-                    var top=Color.white*(.82f+j*.05f);
-                    var lower=Color.white*.59f;
-                    const float throatDepth=2.4f, flare=.30f;
-                    Vector3 aLower=a+Vector3.down*throatDepth+expandA*(throatDepth*flare);
-                    Vector3 bLower=b+Vector3.down*throatDepth+expandB*(throatDepth*flare);
-                    w.Quad(a,b,bLower,aLower,top,lower,throatDepth,model.Pitch);
-                    // A stone cap at the mouth and one ledge below make the depth legible
-                    // while the far water or lava stays visible through the center.
-                    foreach(float depth in LedgeDepths)
-                    {
-                        Vector3 aBack=a+Vector3.down*depth+expandA*(depth*flare);
-                        Vector3 bBack=b+Vector3.down*depth+expandB*(depth*flare);
-                        Vector3 aFront=aBack-expandA*.045f, bFront=bBack-expandB*.045f;
-                        w.Quad(aBack,bBack,bFront,aFront,Color.white,Color.white,.045f,model.Pitch);
-                        w.Quad(aFront,bFront,bFront+Vector3.down*.055f,aFront+Vector3.down*.055f,
-                            lower,lower,.055f,model.Pitch);
-                    }
-                }
+                if (!openings.HasPane(col, row)) continue;
+                maskGeometry.Quad(GlassGeometry.Ground(openings.Corner(col, row, pitch)),
+                    GlassGeometry.Ground(openings.Corner(col + 1, row, pitch)),
+                    GlassGeometry.Ground(openings.Corner(col + 1, row + 1, pitch)),
+                    GlassGeometry.Ground(openings.Corner(col, row + 1, pitch)), Color.white, Color.white);
             }
-            if (outsideOpening is Vector2 outside)
-            {
-                float h = model.Pitch*.5f;
-                Vector3 p = GlassGeometry.Ground(outside);
-                m.Quad(p + new Vector3(-h,0,-h), p + new Vector3(h,0,-h), p + new Vector3(h,0,h), p + new Vector3(-h,0,h), Color.white,Color.white);
-            }
-            m.Write(cutouts); w.Write(shaft);
-            holes.enabled = bits!=0 || outsideOpening.HasValue;
-            underground.enabled = bits!=0;
+
+            maskGeometry.Write(cutouts);
+            holes.enabled = bits!=0;
         }
         void OnDestroy()
         {
-            foreach(Object asset in new Object[]{cutouts,shaft,fogPlane,boundary,labelBackground,maskMaterial,wallsMaterial,shardMaterial,fogMaterial})
+            foreach(Object asset in new Object[]{cutouts,fogPlane,boundary,labelBackground,bodyMaterial,paneMaterial,maskMaterial,shardMaterial,fogMaterial})
                 if(asset) Destroy(asset);
         }
     }

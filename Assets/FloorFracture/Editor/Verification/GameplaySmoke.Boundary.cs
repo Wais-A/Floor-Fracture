@@ -43,11 +43,11 @@ namespace FloorFracture.Editor
                 $"{label} boundary exit left stage {game.Stage}, glass {glassVisible}, chamber {chamberVisible}, brick {!FloorSurface.HideMesh}.");
             VerifyFloorVisibility(false);
             int expectedLevel = cleared ? level + 1 : level;
-            Require(game.State.ActiveWave == null && game.State.WavesSurvived == score && game.Level == expectedLevel &&
-                game.WaveNumber == nextWave && Enumerable.Range(0, game.State.Count).All(i => game.State.IsIntact(i) == ((cleared && game.State.Layout.Contains(i)) || remaining[i])),
+            Require(game.State.ActiveWave == null && game.State.WavesSurvived == score && game.Level == level &&
+                Enumerable.Range(0, game.State.Count).All(i => game.State.IsIntact(i) == remaining[i]),
                 label + " pause changed the completed score, new level or surviving panes.");
             yield return Delay(cleared ? 1.85 : 1.35);
-            Require(game.Stage == GameStage.Paused && game.Level == expectedLevel && game.State.WavesSurvived == score,
+            Require(game.Stage == GameStage.Paused && game.Level == level && game.State.WavesSurvived == score,
                 label + " advanced again at the canceled result deadline.");
 
             // A localized player may reveal the board to find glass. Starting the

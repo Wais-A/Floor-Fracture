@@ -12,7 +12,9 @@ internal sealed class FallScenery
         Mouth = Shader.PropertyToID("_Mouth"), MouthRight = Shader.PropertyToID("_MouthRight");
     // Four seconds under gravity leaves more than three seconds of walls after a standing eye enters.
     internal const float ShaftDepth = 80f;
-    // A player looking into the opening from an adjacent pane can see the distant landing.
+    // A near-vertical throat gives an oblique view of the wall from the next pane.
+    // Below it the chamber opens out, preserving the view of the landing in flight.
+    internal const float ThroatDepth = 18f;
     const float WideningPerMetre = .72f;
     static readonly Color[] wallTints = {
         new Color(.19f,.28f,.30f), new Color(.25f,.15f,.12f), new Color(.18f,.17f,.25f),
@@ -46,6 +48,7 @@ internal sealed class FallScenery
         world = new GameObject("Fall chamber").transform;
         surfaceMaterial = new Material(Resources.Load<Shader>("Endings/Chamber"));
         surfaceMaterial.SetFloat("_WideningPerMetre",WideningPerMetre);
+        surfaceMaterial.SetFloat("_ThroatDepth",ThroatDepth);
         // Establish the sky's projection alpha before fading walls or the landing can write depth.
         backgroundMaterial = new Material(surfaceMaterial) { renderQueue = surfaceMaterial.renderQueue - 1 };
         fadeMaterial = new Material(Resources.Load<Shader>("Endings/ViewFade"));
@@ -140,21 +143,22 @@ internal sealed class FallScenery
     // Returns the submersion factor at the viewer's actual height.
     internal float Draw(float age, float progress, bool reduced, float travel, out bool entered)
     {
-        bool visible = !reduced || age >= .32f;
+        // In reduced motion, hold the preview in place until the comfort fade reaches black.
+        bool tableau = reduced && age >= .32f;
         // The chamber and its destination are one moving world until the feet reach the surface.
         // Only the upper metre of the throat widens as the lip draws near.
-        float top = reduced ? 5f : travel;
+        float top = tableau ? 5f : travel;
         float rimY = world.position.y + top;
         // Keep every real opening in place as the board rises. Release the stencil as its
         // plane crosses the near clip distance so it cannot clip the view from inside.
-        bool useStencil = hasFloorApertures && !reduced && rimY < head.position.y - .05f;
+        bool useStencil = hasFloorApertures && !tableau && rimY < head.position.y - .05f;
         if (stencilEnabled != useStencil)
         {
             stencilEnabled = useStencil;
             surfaceMaterial.SetInt("_PortalComparison",(int)(useStencil ? CompareFunction.Equal : CompareFunction.Always));
         }
         float mouthRadius = Mathf.Lerp(startRadius,Mathf.Max(startRadius,Mathf.Min(radius,.77f)),Ease(0,1.35f,top));
-        float surfaceY = reduced ? 0f : travel-ShaftDepth;
+        float surfaceY = tableau ? 0f : travel-ShaftDepth;
         Color wallColor = wallTints[(int)kind], sky = skyTints[(int)kind];
         float wallAlpha = 1, particleAlpha = Ease(0,.17f,progress);
         float floorAlpha = 1, pillarsAlpha = 0, light = 0;
@@ -205,23 +209,23 @@ internal sealed class FallScenery
         properties.Clear();
         properties.SetFloat(Theme,(int)kind); properties.SetFloat(Age,age);
         properties.SetFloat(Reveal,progress); properties.SetFloat(Level,level); properties.SetFloat(Motion,motion);
-        entered = reduced ? visible : rimY >= head.position.y;
+        entered = reduced ? tableau : rimY >= head.position.y;
         properties.SetVector(Mouth,new Vector4(entryWorld.x,rimY,entryWorld.z,mouthRadius));
-        properties.SetVector(MouthRight,new Vector4(mouthRight.x,mouthRight.z,0,reduced || hasFloorApertures ? 0 : 1));
+        properties.SetVector(MouthRight,new Vector4(mouthRight.x,mouthRight.z,0,tableau || hasFloorApertures ? 0 : 1));
         // The shaft stays lit. Only the view past its walls gradually loses the room light.
-        float overhead = reduced ? 1 : Ease(.15f,26f,rimY-head.position.y);
-        Paint(background,kind == FloorEnding.Space ? 8 : 0,sky,visible ? overhead : 0);
+        float overhead = tableau ? 1 : Ease(.15f,26f,rimY-head.position.y);
+        Paint(background,kind == FloorEnding.Space ? 8 : 0,sky,overhead);
         walls.transform.localPosition = landmarks.transform.localPosition = Vector3.up*top;
-        Paint(walls,1,wallColor,visible ? wallAlpha : 0);
+        Paint(walls,1,wallColor,wallAlpha);
         Color ledgeColor = Color.Lerp(wallColor,new Color(.84f,.88f,.85f),.64f);
-        Paint(landmarks,9,ledgeColor,visible ? wallAlpha : 0);
+        Paint(landmarks,9,ledgeColor,wallAlpha);
         floor.transform.localPosition = new Vector3(0,surfaceY,0);
-        Paint(floor,floorRole,surfaceColor,visible ? floorAlpha : 0);
+        Paint(floor,floorRole,surfaceColor,floorAlpha);
         if (nativeWater)
         {
             // The same rippling surface stays visible all the way from the glass to impact.
             // The transparent Floor Zone layer adds close-up detail as the splash starts.
-            nativeWater.enabled = visible && kind == FloorEnding.Water && progress > 0;
+            nativeWater.enabled = kind == FloorEnding.Water && progress > 0;
             nativeWater.transform.localPosition = floor.transform.localPosition + Vector3.up*.009f;
             if (nativeWater.enabled && nativeWater.sharedMaterial.HasProperty("_Color"))
             {
@@ -232,17 +236,17 @@ internal sealed class FallScenery
             }
         }
         pillars.transform.localPosition = entryLocal + Vector3.up*(kind == FloorEnding.Lava ? surfaceY-.11f : 0);
-        Paint(pillars,kind == FloorEnding.Lava ? 7 : 5,Color.white, visible ? pillarsAlpha : 0);
+        Paint(pillars,kind == FloorEnding.Lava ? 7 : 5,Color.white, pillarsAlpha);
         if (replacementFire)
         {
-            bool lit = visible && kind == FloorEnding.Lava && pillarsAlpha > .20f;
+            bool lit = kind == FloorEnding.Lava && pillarsAlpha > .20f;
             if (lit != replacementFire.activeSelf) replacementFire.SetActive(lit);
             replacementFire.transform.localPosition = entryLocal + new Vector3(1.25f,surfaceY,0);
         }
-        Paint(motes,6,Color.white,visible && kind != FloorEnding.Crystal ? particleAlpha : 0);
+        Paint(motes,6,Color.white,kind != FloorEnding.Crystal ? particleAlpha : 0);
         opening.transform.localPosition = entryLocal + new Vector3(0,eyeHeight+3.35f,0);
         opening.transform.localScale = Vector3.one * Mathf.Lerp(1.05f,.28f,Ease(.4f,.88f,progress));
-        Paint(opening,0,new Color(1,.83f,.54f),visible ? light : 0);
+        Paint(opening,0,new Color(1,.83f,.54f),light);
         return immersion;
     }
 
@@ -290,10 +294,17 @@ internal sealed class FallScenery
         properties.Clear(); properties.SetColor(Tint,color); veil.SetPropertyBlock(properties);
     }
 
+    internal void SetTrackingPaused(bool paused)
+    {
+        world.gameObject.SetActive(!paused);
+        if (veil) veil.gameObject.SetActive(!paused);
+    }
+
     internal void Hide()
     {
         if (veil)
         {
+            veil.gameObject.SetActive(true);
             veil.enabled = false;
             if (world) veil.transform.SetParent(world,false);
         }
