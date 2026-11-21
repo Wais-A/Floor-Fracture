@@ -29,12 +29,9 @@ namespace FloorFracture.Editor
             var hands=new OVRInput.OVRControllerHands();
             var fit=game.Room.Placement;
             Choose("Start"); StandOn(MiddlePane); Choose("Start wave");
+            yield return Stage(GameStage.Countdown);
             yield return Delay(.24);
             var wave=game.State.ActiveWave;
-            var readout=game.ScoreDisplay;
-            string remaining=readout.text;
-            Vector3 mountedAt=readout.transform.position;
-            Quaternion mountedFacing=readout.transform.rotation;
             var warned=game.BoardView.Board.Find($"Glass {wave.StartingTile%game.State.Width}, {wave.StartingTile/game.State.Width}/Fissures").GetComponent<Renderer>();
             MenuInput(touch);
             yield return Stage(GameStage.Paused);
@@ -44,16 +41,16 @@ namespace FloorFracture.Editor
             MenuInput(hands);
             yield return Stage(GameStage.Countdown);
             yield return Frames(2);
-            Require(game.State.ActiveWave==wave && readout.text==remaining && !game.Panel.Visible,
+            Require(game.State.ActiveWave==wave && !game.Panel.Visible,
                 "The controller/hand pause consumed time or replaced the active wave.");
-            Require(warned.enabled && readout.transform.position==mountedAt && readout.transform.rotation==mountedFacing,
-                "Pausing during the reveal moved the clock or hid the cracks early.");
+            Require(warned.enabled && wave.ShowsWarnings(game.GameplayTime),
+                "Pausing during the reveal consumed the time left to show the cracks.");
             yield return Wait(()=>game.GameplayTime>wave.RevealEndsAt+.10,"warning to clear",3);
             MenuInput(hands);
             yield return Delay(.4);
             MenuInput(touch);
             yield return Frames(2);
-            Require(game.State.ActiveWave==wave && !warned.enabled && readout.text.Contains("RECALL"),
+            Require(game.State.ActiveWave==wave && !warned.enabled,
                 "Resuming during recall replayed the reveal.");
             MenuInput(hands);
             yield return Stage(GameStage.Paused);
@@ -82,6 +79,55 @@ namespace FloorFracture.Editor
             Choose("Start"); StandOn(MiddlePane); Choose("Start wave"); yield return Stage(GameStage.Countdown);
             MenuInput(touch); Choose("Main menu"); yield return Stage(GameStage.Welcome);
             Record("Meta Touch and hand Menu edges paused and resumed the same countdown. Holding Menu kept it paused. The hand menu froze a fall, and the panel resumed it. Results Quit returned to Welcome and started a fresh playable wave on the same floor.");
+        }
+
+        private static IEnumerator VerifyStartCount()
+        {
+            var touch = new OVRInput.OVRControllerTouch();
+            Choose("Start"); StandOn(MiddlePane); Choose("Start wave");
+            var label = game.Panel.Head.Find("Start count/Count").GetComponent<Text>();
+            bool Showing(string value) => label.isActiveAndEnabled && label.text == value;
+            Require(game.Stage == GameStage.CountIn && Showing("3") && game.State.ActiveWave == null &&
+                !game.Panel.EditorChoose("Start wave"), "Start should show 3 once and protect the glass.");
+            yield return Wait(() => Showing("2"), "second count", 2);
+            MenuInput(touch);
+            yield return Delay(1.1);
+            Require(!label.isActiveAndEnabled && game.State.ActiveWave == null, "Pause exposed or consumed the count.");
+            Choose("Resume");
+            Require(Showing("2"), "Resume skipped the frozen numeral.");
+            yield return Wait(() => Showing("1"), "last count", 2);
+            Require(game.State.ActiveWave == null && game.State.WavesSurvived == 0, "A wave began before GO.");
+            StandAt(new Vector2(100, 100));
+            yield return Stage(GameStage.Ready);
+            Require(!label.isActiveAndEnabled && game.State.ActiveWave == null, "Leaving the board at GO started a wave.");
+
+            StandOn(MiddlePane); Choose("Start wave");
+            game.SendMessage("OnApplicationPause", true);
+            game.SendMessage("OnApplicationPause", false);
+            Choose("Show board");
+            Require(game.Stage == GameStage.Ready && !label.isActiveAndEnabled, "Tracking recovery retained the old count.");
+            var sound = game.GetComponent<GameSound>();
+            int knocks = sound.EditorStartKnocks;
+            int goCues = sound.EditorGoCues;
+            double pressed = game.GameplayTime;
+            Choose("Start wave");
+            int other = PlayablePanes.First(tile => game.State.Neighbors(MiddlePane, tile));
+            StandOn(other);
+            yield return Stage(GameStage.Countdown);
+            var wave = game.State.ActiveWave;
+            Require(Showing("GO!") && wave.StartingTile == other && wave.StartsAt >= pressed + 3 &&
+                wave.Deadline == wave.StartsAt + wave.Duration, "GO must start a full wave on the current pane.");
+            StandOn(wave.GuaranteedTile);
+            yield return Wait(() => !label.isActiveAndEnabled, "GO fade", 1);
+            yield return Stage(GameStage.BetweenWaves);
+            yield return Stage(GameStage.Countdown, 2.5);
+            Require(!label.isActiveAndEnabled && game.WaveNumber == 2, "An automatic switch played a new count-in.");
+            Require(sound.EditorStartKnocks == knocks + 3 && sound.EditorGoCues == goCues + 1,
+                "Only the three start knocks and GO should sound across a manual and automatic wave.");
+            Require(!game.transform.Find("Wall scoreboard") && !game.transform.Find("Countdown tick"),
+                "A gameplay clock or its ticking voice was created.");
+            MenuInput(touch); Choose("Main menu");
+            Record("Manual starts showed 3, 2, 1 and GO at the headset. Pause froze the count, tracking reset it, leaving the board canceled it, and changing panes selected the new starting tile. The next switch started directly.");
         }
 
         private static IEnumerator VerifySettingsPreviewAndVolume()
@@ -160,8 +206,6 @@ namespace FloorFracture.Editor
                     level = (level + 1) % 5;
                     if (i == 0) yield return RayChoose(3, true);
                     else Choose("Volume");
-                    var heartbeat = sound.transform.Find("Countdown heartbeat").GetComponent<AudioSource>();
-                    Require(Mathf.Approximately(heartbeat.volume,.43f * level/4f),"Countdown did not follow master volume.");
                     Require(PlayerPrefs.GetInt("ff.volume") == level && clicks == before + 1 && Mathf.Approximately(clickVolume, level / 4f),
                         "A volume choice must play exactly one click at the newly selected master volume, including mute.");
                 }
@@ -215,6 +259,7 @@ namespace FloorFracture.Editor
                 Choose("Start");
                 StandOn(MiddlePane);
                 Choose("Start wave");
+                yield return Stage(GameStage.Countdown);
                 Require(game.Stage == GameStage.Countdown && !game.Panel.Visible, "The countdown should hide the menu.");
                 var hiddenPose = WorldPose(canvas);
                 display.NotifyRecenter();
@@ -298,7 +343,9 @@ namespace FloorFracture.Editor
             Vector3 forward = Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
             Vector3 offset = forward * .56f + Vector3.down * .24f;
             var expected = new Pose(head.position + offset, Quaternion.LookRotation(offset, Vector3.up));
-            Require(game.Panel.Visible && HasPose(canvas, expected), "The open page did not face the eye at the reachable menu distance.");
+            Require(game.Panel.Visible && HasPose(canvas, expected),
+                $"Menu recenter failed at {game.Stage}. Expected {expected.position:F3} at yaw {yaw:F1}, " +
+                $"observed {canvas.position:F3} at yaw {canvas.eulerAngles.y:F1}, visible={game.Panel.Visible}.");
         }
 
         private static Pose WorldPose(Transform item) => new Pose(item.position, item.rotation);

@@ -49,7 +49,9 @@ namespace FloorFracture.Editor
             Record(rig);
             var manager = rig.GetComponent<OVRManager>();
             manager.isInsightPassthroughEnabled = true;
+            manager.localDimming = false;
             var managerData = new SerializedObject(manager);
+            managerData.FindProperty("_enableDynamicResolution").boolValue = false;
             managerData.FindProperty("_trackingOriginType").intValue = (int)OVRManager.TrackingOrigin.FloorLevel;
             managerData.FindProperty("requestScenePermissionOnStartup").boolValue = false;
             managerData.ApplyModifiedPropertiesWithoutUndo();
@@ -191,6 +193,8 @@ namespace FloorFracture.Editor
             depth.OcclusionShadersMode = OcclusionShadersMode.SoftOcclusion;
             depth.RemoveHands = false;
             Record(depth);
+            providerBlock.gameObject.SetActive(false);
+            Record(providerBlock.gameObject);
         }
 
         public static void ConfigureFloorRaycasts(RoomBoardPlacement placement, OVRCameraRig rig)
@@ -210,6 +214,7 @@ namespace FloorFracture.Editor
             Record(block.gameObject);
             Record(manager);
             var data = new SerializedObject(placement);
+            data.FindProperty("depthProvider").objectReferenceValue = sharedDepth;
             data.FindProperty("liveManager").objectReferenceValue = manager;
             data.ApplyModifiedPropertiesWithoutUndo();
             Record(placement);

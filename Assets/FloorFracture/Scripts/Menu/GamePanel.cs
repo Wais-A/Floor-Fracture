@@ -49,6 +49,9 @@ namespace FloorFracture
         public bool EditorSimulatesControllers => desktop != null && desktop.Active;
 #endif
         private UnityEngine.UI.Text title, body;
+        private Canvas countCanvas;
+        private UnityEngine.UI.Text countLabel;
+        private static readonly string[] StartCounts = { "GO!", "1", "2", "3" };
         private GlassTile warningPreview;
         private bool previewGentle;
         private double previewStarted;
@@ -144,6 +147,39 @@ namespace FloorFracture
         public void Show(string heading, string message, params MenuChoice[] options)
         {
             ShowPage(heading, message, options, false);
+        }
+
+        public void ShowStartCount(int count, float opacity = 1f)
+        {
+            if (!countCanvas)
+            {
+                var go = new GameObject("Start count", typeof(RectTransform), typeof(Canvas));
+                var rect = (RectTransform)go.transform;
+                rect.SetParent(Head, false);
+                rect.localPosition = new Vector3(0, .12f, .95f);
+                rect.localScale = Vector3.one * .001f;
+                rect.sizeDelta = new Vector2(360, 150);
+                countCanvas = go.GetComponent<Canvas>();
+                countCanvas.renderMode = RenderMode.WorldSpace;
+                countCanvas.worldCamera = eye;
+                countCanvas.sortingOrder = 30;
+                countLabel = Label(rect, "Count", 100, FontStyle.Bold, Ink);
+                countLabel.rectTransform.sizeDelta = rect.sizeDelta;
+                countLabel.alignment = TextAnchor.MiddleCenter;
+                var outline = countLabel.gameObject.AddComponent<UnityEngine.UI.Outline>();
+                outline.effectColor = new Color(0, .05f, .07f, .95f);
+                outline.effectDistance = new Vector2(3, -3);
+            }
+            countLabel.text = StartCounts[count];
+            var color = Ink;
+            color.a = opacity;
+            countLabel.color = color;
+            countCanvas.gameObject.SetActive(true);
+        }
+
+        public void HideStartCount()
+        {
+            if (countCanvas) countCanvas.gameObject.SetActive(false);
         }
 
         public void ShowRoomRecovery(string message, Action checkAgain, Action openSpaceSetup, Action togglePlacement = null)
@@ -245,7 +281,8 @@ namespace FloorFracture
         {
             if (!Head || !panel) return;
             // The native rig can report tracking before its first floor-relative eye pose arrives.
-            var origin = OVRManager.instance ? OVRManager.instance.trackingOriginType : OVRManager.TrackingOrigin.EyeLevel;
+            var manager = OVRManager.instance ? OVRManager.instance : rig.GetComponent<OVRManager>();
+            var origin = manager ? manager.trackingOriginType : OVRManager.TrackingOrigin.EyeLevel;
             bool floorOrigin = origin == OVRManager.TrackingOrigin.FloorLevel || origin == OVRManager.TrackingOrigin.Stage;
             if (!Tracked || (floorOrigin && Mathf.Abs(Head.localPosition.y) < .001f))
             {
@@ -370,7 +407,7 @@ namespace FloorFracture
             if (warningPreview && warningPreview.gameObject.activeSelf)
             {
                 double age = (Time.unscaledTimeAsDouble - previewStarted) % 4;
-                warningPreview.ShowWarning(age < 1.5, age, previewGentle);
+                warningPreview.ShowWarning(age < .8, age, previewGentle);
             }
             if (!tracked) { ClearPointers(); wasTracked = false; Paint(); return; }
             if (!wasTracked) RequestMenuRecenter();
@@ -489,6 +526,7 @@ namespace FloorFracture
 
         private void OnDisable()
         {
+            HideStartCount();
             SetRecenterSources(null, null);
             OVRManager.InputFocusAcquired -= OnInputFocusAcquired;
             recenterRequestedFrame = -1;
@@ -538,7 +576,13 @@ namespace FloorFracture
         public void EditorUseRecenterDisplay(OVRDisplay display) =>
             SetRecenterSources(display, OVRManager.GetCurrentInputSubsystem());
 
-        private void OnDestroy() { desktop?.Dispose(); }
 #endif
+        private void OnDestroy()
+        {
+            if (countCanvas) Destroy(countCanvas.gameObject);
+#if UNITY_EDITOR
+            desktop?.Dispose();
+#endif
+        }
     }
 }

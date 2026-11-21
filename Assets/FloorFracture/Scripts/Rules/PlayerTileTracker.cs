@@ -32,9 +32,9 @@ namespace FloorFracture
 
         private readonly Vector2 startCenter, endCenter;
         private Vector2 lockedCenter;
-        private const double OneWaySeconds = 1.20;
+        public double OneWaySeconds { get; }
 
-        internal SlidingPane(BoardState board, int tile, int otherHole, double start)
+        internal SlidingPane(BoardState board, int tile, int otherHole, double start, double duration)
         {
             Tile = tile;
             OtherHole = otherHole;
@@ -42,7 +42,9 @@ namespace FloorFracture
             endCenter = board.Center(otherHole);
             Direction = (endCenter-startCenter).normalized;
             HalfSize = board.Pitch * BoardState.PaneHalfPitch;
-            MotionStartsAt = start + 0.65;
+            double pace = Math.Min(1, duration / 2);
+            MotionStartsAt = start + .65 * pace;
+            OneWaySeconds = 1.20 * pace;
         }
 
         public Vector2 CenterAt(double now)
@@ -52,6 +54,8 @@ namespace FloorFracture
             double fraction = phase <= 1 ? phase : 2 - phase;
             return Vector2.LerpUnclamped(startCenter, endCenter, (float)fraction);
         }
+
+        internal void RestoreLock(bool wasLocked) => Locked = wasLocked;
 
         internal bool CanExitTo(BoardState board, int tile)
         {
@@ -78,10 +82,12 @@ namespace FloorFracture
         public const float BorderTolerance = 0.035f;
         public const float SupportReach = 0.09f;
         public const double GapGrace = 0.3;
+        internal const double JumpGapGrace = .45;
         public TileSample Current { get; private set; } = new TileSample(SupportKind.Untracked);
 
         private double gapStartedAt = double.NaN;
-        internal double GapDeadline => gapStartedAt + GapGrace;
+        private bool crossingJumpGap;
+        internal double GapDeadline => gapStartedAt + (crossingJumpGap ? JumpGapGrace : GapGrace);
         private double previousPoseTime = double.NaN;
         private Vector2 previousPose;
 
@@ -116,14 +122,15 @@ namespace FloorFracture
         internal void ResetTiming()
         {
             gapStartedAt = double.NaN;
+            crossingJumpGap = false;
             previousPoseTime = double.NaN;
         }
 
         // Between two tracked frames, estimate the pose at zero instead of giving an extra frame to move.
         internal Vector2 PoseAtDeadline(Vector2 point, double now, double deadline)
         {
-            if (now <= deadline || double.IsNaN(previousPoseTime) || previousPoseTime >= deadline)
-                return point;
+            if (now <= deadline || double.IsNaN(previousPoseTime)) return point;
+            if (previousPoseTime >= deadline) return previousPose;
             float fraction = (float)((deadline - previousPoseTime) / (now - previousPoseTime));
             return previousPose + (point - previousPose) * fraction;
         }
@@ -131,6 +138,11 @@ namespace FloorFracture
         internal TileSample Sample(BoardState board, Vector2 point, bool tracked, double now)
         {
             TileSample sample = Classify(board, point, tracked, now);
+            var wave = board.ActiveWave;
+            if (sample.Kind != SupportKind.Gap || wave == null || sample.Index != wave.JumpGap)
+                crossingJumpGap = false;
+            else if (Current.Kind != SupportKind.Gap || Current.Index != sample.Index)
+                crossingJumpGap = Current.Kind == SupportKind.Glass && Current.Index == wave.StartingTile;
             Current = new TileSample(sample.Kind, sample.Index, sample.IsSlider, point);
             if (sample.Kind == SupportKind.Glass || sample.Kind == SupportKind.Gap)
             {

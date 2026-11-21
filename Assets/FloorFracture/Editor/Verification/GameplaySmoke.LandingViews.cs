@@ -36,7 +36,6 @@ namespace FloorFracture.Editor
             {
                 foreach (var part in parts) part.gameObject.layer=layer;
                 camera.enabled=false;
-                camera.stereoTargetEye=StereoTargetEyeMask.None;
                 camera.GetUniversalAdditionalCameraData().allowXRRendering=false;
                 camera.clearFlags=CameraClearFlags.SolidColor; camera.backgroundColor=Color.magenta;
                 camera.cullingMask=line ? 1<<layer : game.Rig.centerEyeAnchor.GetComponent<Camera>().cullingMask | (1<<layer);
@@ -169,7 +168,6 @@ namespace FloorFracture.Editor
                 var eyePose = game.Rig.centerEyeAnchor;
                 camera.CopyFrom(eyePose.GetComponent<Camera>());
                 camera.enabled = false;
-                camera.stereoTargetEye = StereoTargetEyeMask.None;
                 camera.GetUniversalAdditionalCameraData().allowXRRendering = false;
                 camera.allowHDR = false;
                 camera.clearFlags = CameraClearFlags.SolidColor;

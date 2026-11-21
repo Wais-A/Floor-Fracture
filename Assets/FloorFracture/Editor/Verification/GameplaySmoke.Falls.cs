@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -45,7 +46,7 @@ namespace FloorFracture.Editor
                 StandOn(CornerPane);
                 game.BoardView.PracticeBreak(AdjacentPane(CornerPane));
                 yield return Delay(1.80);
-                LookAtTile(AdjacentPane(CornerPane),false);
+                LookAtTile(AdjacentPane(CornerPane));
                 var previewChamber = GameObject.Find("Fall chamber");
                 Require(previewChamber && !game.Ending.IsPlaying, "A safe pane did not reveal the shared chamber before loss.");
                 previewSurface = previewChamber.transform.Find("Hazard surface").GetComponent<MeshRenderer>();
@@ -78,13 +79,17 @@ namespace FloorFracture.Editor
             double expectedSeconds = reduced ? 3.93 : 4.44061 + (ending == "Space" ? 8 : ending == "Snow" ? 5.2 : 5);
             if (skip)
             {
+                // The preview button bypasses the gameplay shatter. Queue the ordinary glass
+                // layers so this skip also has a delayed echo to cancel.
+                game.GetComponent<GameSound>().Break(game.Rig.centerEyeAnchor.position + Vector3.down, 1);
                 yield return Delay(.18);
                 game.Ending.Skip();
             }
             bool sawBlack = false;
             float[] viewTimes = skip ? Array.Empty<float>() : LandingViewTimes(ending,reduced);
             int nextView = 0;
-            bool checkedPause = false;
+            bool checkedPause = false, queuedGlassAtExit = false;
+            double pauseAge = ending == "Space" ? (reduced ? .44 : 2.35) : (reduced ? 2.84 : 7.68);
             var motion = new EndingMotionCheck(ending,reduced,chamber.transform,veil);
             while (game.Stage == GameStage.Fall)
             {
@@ -92,7 +97,12 @@ namespace FloorFracture.Editor
                 if (!skip)
                 {
                     motion.Sample();
-                    if (!checkedPause && age >= (reduced ? 2.84 : 7.68))
+                    if (ending == "Space" && !queuedGlassAtExit && age >= (reduced ? .62 : 4.24))
+                    {
+                        game.GetComponent<GameSound>().Break(game.Rig.centerEyeAnchor.position + Vector3.down, 1);
+                        queuedGlassAtExit = true;
+                    }
+                    if (!checkedPause && age >= pauseAge)
                     {
                         checkedPause = true;
                         double paused = Now;
@@ -101,8 +111,8 @@ namespace FloorFracture.Editor
                         game.gameObject.SendMessage("OnApplicationPause",true);
                         yield return Stage(GameStage.Paused);
                         yield return Delay(.20);
-                        Require(!chamber.activeSelf && !veil.gameObject.activeInHierarchy && shaft.position == atPause && !game.transform.Find("Tar bubbling").GetComponent<AudioSource>().isPlaying,
-                            trial + " advanced or played tar audio during tracking loss.");
+                        Require(!chamber.activeSelf && !veil.gameObject.activeInHierarchy && shaft.position == atPause &&
+                            motion.PausedAudioIsSilent(), trial + " advanced or played fall audio during tracking loss.");
                         game.gameObject.SendMessage("OnApplicationPause",false);
                         Choose("Show board"); yield return Stage(GameStage.Fall);
                         started += Now - paused;
@@ -123,12 +133,16 @@ namespace FloorFracture.Editor
                 yield return null;
             }
             if (!skip) motion.Finish();
+            Require(motion.GlassIsClear(), trial + " left scheduled glass after the ending.");
+            int expectedCues = skip || ending == "Space" ? 0 : ending == "Tar Pit" ? 3 : 1;
+            Require(game.GetComponent<GameSound>().EditorLandingCueCount == expectedCues,
+                trial + " played the wrong number of contact and suction cues.");
             double duration = Now - started;
             Require(nextView == viewTimes.Length, trial + " ended before its landing views were checked.");
             Require((skip || duration >= expectedSeconds - .12) && sawBlack && game.Stage == GameStage.Results && game.Panel.Visible,
                 trial + " did not present its final black frame and Results at the expected time.");
             Require(chamber && !chamber.activeSelf && !veil.enabled && !game.Ending.IsPlaying, trial + " left the ending visible after Results.");
-            foreach (string name in new[] { "Shaft air", "Ending ambience", "Ending impact", "Tar bubbling" })
+            foreach (string name in new[] { "Shaft air", "Shaft roar", "Ending ambience", "Ending impact", "Tar bubbling" })
             {
                 var source = game.transform.Find(name).GetComponent<AudioSource>();
                 Require(!source.isPlaying && !source.clip, trial + " left audio on " + name);
@@ -153,7 +167,9 @@ namespace FloorFracture.Editor
             readonly bool reduced;
             readonly Transform shaft, surface;
             readonly MeshRenderer sky, veil, interior;
-            readonly AudioSource impact, bed;
+            readonly AudioSource impact, bed, hiss, roar, ambience;
+            readonly AudioSource[] glass;
+            bool heardApproach, heardLanding;
             readonly MaterialPropertyBlock block = new MaterialPropertyBlock();
             readonly float originY, eyeHeight;
             float lastTime, lastHeight, crossingsAt = -1;
@@ -173,8 +189,56 @@ namespace FloorFracture.Editor
                 sky = room.Find("Chamber darkness").GetComponent<MeshRenderer>();
                 impact = game.transform.Find("Ending impact").GetComponent<AudioSource>();
                 bed = game.transform.Find("Tar bubbling").GetComponent<AudioSource>();
+                hiss = game.transform.Find("Shaft air").GetComponent<AudioSource>();
+                roar = game.transform.Find("Shaft roar").GetComponent<AudioSource>();
+                ambience = game.transform.Find("Ending ambience").GetComponent<AudioSource>();
+                glass = game.GetComponent<GameSound>().GetComponentsInChildren<AudioSource>()
+                    .Where(v => v.name.StartsWith("Pane impact ") || v.name.StartsWith("Glass fragments ") || v.name.StartsWith("Shaft echo ")).ToArray();
                 originY = room.position.y;
                 eyeHeight = game.Rig.centerEyeAnchor.position.y-originY;
+            }
+
+            internal bool GlassIsClear() => glass.All(voice => !voice.clip && !voice.isPlaying);
+            internal bool PausedAudioIsSilent() =>
+                !hiss.isPlaying && !roar.isPlaying && !impact.isPlaying && !ambience.isPlaying && !bed.isPlaying && GlassIsClear();
+
+            void SampleSound(float secondsSinceContact)
+            {
+                if (secondsSinceContact < -.025f)
+                {
+                    Require(!impact.clip && !ambience.clip && ambience.volume == 0 && bed.volume == 0, ending + " announced the landing early.");
+                    if (secondsSinceContact > (reduced ? -.25f : -.8f))
+                    {
+                        float master = PlayerPrefs.GetInt("ff.volume", 3) / 4f;
+                        Require(hiss.clip && roar.clip && hiss.volume > 0 && roar.volume > 0 &&
+                            hiss.spatialBlend == 0 && roar.spatialBlend == 0 &&
+                            (reduced ? hiss.volume < .31f*master && roar.volume < .11f*master : roar.volume > .40f*master),
+                            ending + " lost the motion-specific shaft swell before the far end.");
+                        heardApproach = true;
+                    }
+                    return;
+                }
+                if (secondsSinceContact < 0) return;
+                if (ending == "Space")
+                {
+                    Require(hiss.volume == 0 && roar.volume == 0 && !hiss.isPlaying && !roar.isPlaying &&
+                        !impact.clip && !ambience.clip && !bed.clip && glass.All(voice => !voice.isPlaying && !voice.clip),
+                        "A wind, impact, ambience or glass tail crossed the Space exit.");
+                    heardLanding = true;
+                    return;
+                }
+                if (secondsSinceContact > .12f)
+                    Require(hiss.volume == 0 && roar.volume == 0, "Wind masked the landing after contact.");
+                if (heardLanding) return;
+                if (ending == "Sand")
+                    Require(ambience.clip && !ambience.loop && ambience.clip.length >= 5f,
+                        "Burial must play one continuous sand recording from contact.");
+                string expectedClip = ending switch { "Water" => "WaterImpact", "Lava" => "LavaImpact",
+                    "Tar Pit" => "TarImpact", "Snow" => "SnowImpact", _ => "SandImpact" };
+                Require(impact.clip && impact.clip.name == expectedClip && impact.spatialBlend == 1f && impact.minDistance >= Vector3.Distance(impact.transform.position, game.Rig.centerEyeAnchor.position) &&
+                    Mathf.Abs(impact.transform.position.y - originY) < .3f,
+                    ending + " did not play its positional contact cue at the landing.");
+                heardLanding = true;
             }
 
             internal void Sample()
@@ -183,6 +247,7 @@ namespace FloorFracture.Editor
                 if (!clock.enabled) return;
                 clock.GetPropertyBlock(block);
                 float t = block.GetFloat("_Age") - (reduced ? .82f : 4.44061f);
+                SampleSound(t);
                 if (t <= lastTime) return;
                 float height = surface.position.y-originY;
                 if (reduced)
@@ -252,6 +317,11 @@ namespace FloorFracture.Editor
                             tarCues |= 4;
                         }
                     }
+                    // A GPU readback can span the cue time. Check the live source against
+                    // the ending clock on each observed frame.
+                    int expectedCues = seconds >= 1.57f ? 7 : seconds >= .47f ? 3 : 1;
+                    Require(tarCues == expectedCues,
+                        $"Tar cue mask at {seconds:F3}s was {tarCues}, expected {expectedCues}.");
                     if (seconds>4.25f && seconds<4.7f)
                     {
                         Require(opaque && tint.maxColorComponent<.002f && bed.clip && bed.clip.name=="TarBubbles" &&
@@ -265,9 +335,10 @@ namespace FloorFracture.Editor
 
             internal void Finish()
             {
+                Require(heardApproach && heardLanding, ending + " missed the shaft approach or contact audio check.");
                 if (ending!="Space" && ending!="Snow")
                     Require(checkedLine && checkedInterior,ending+" missed its stereo crossing or buried-view check.");
-                if (ending=="Tar Pit") Require(tarCues==7 && muffledTail && Mathf.Abs(FirstPull-.47f)<.12f && Mathf.Abs(SecondPull-1.57f)<.12f,
+                if (ending=="Tar Pit") Require(tarCues==7 && muffledTail,
                     $"Tar cues at {FirstPull:F3} and {SecondPull:F3}s or muffled tail missed their timing.");
                 if (ending=="Snow") Require(white,"No white frame before the snow fade.");
                 if (ending=="Space") Require(black,"No final black hold in Space.");
@@ -311,7 +382,6 @@ namespace FloorFracture.Editor
             {
                 foreach (var t in objects) t.gameObject.layer=layer;
                 camera.enabled=false;
-                camera.stereoTargetEye=StereoTargetEyeMask.None;
                 camera.GetUniversalAdditionalCameraData().allowXRRendering=false;
                 camera.cullingMask=1<<layer;
                 camera.clearFlags=CameraClearFlags.SolidColor;
@@ -424,6 +494,11 @@ namespace FloorFracture.Editor
             for (int i = 0; i < nextEndingPresses; i++) Choose("Next ending");
             Choose("Seed 379 · level 1"); yield return Stage(GameStage.Ready);
 
+            // Development previews use a separate bag. Seed the real one before starting this hazard check.
+            int desiredEnding = Array.IndexOf(EndingNames, ending);
+            for (int seed = 0; seed < 256 && game.Ending.EditorPeekNextLevelEnding != desiredEnding; seed++)
+                game.Ending.SetShuffleSeed(seed);
+            Require(game.Ending.EditorPeekNextLevelEnding == desiredEnding, "No fixture seed selected " + ending);
             // A real deadline loss shatters the occupied tile before the rim shot.
             var stance = game.State.Center(CornerPane) + new Vector2(-.34f,.26f) * game.State.Pitch;
             var board = game.BoardView.Board;
@@ -628,6 +703,7 @@ namespace FloorFracture.Editor
                 evidence.maxRigDisplacement = Mathf.Max(evidence.maxRigDisplacement, rigTravel);
                 evidence.maxRigRotation = Mathf.Max(evidence.maxRigRotation, rigAngle);
                 Require(rigTravel < 0.002f && rigAngle < 0.2f, $"The XR rig moved {rigTravel:F3} m / {rigAngle:F2}° during the loss.");
+                if (age < contact) evidence.windAtImpact = Mathf.Max(evidence.windAtImpact,wind.volume);
                 bool effect = SecondaryEffect();
                 bool entered = reduced ? !game.BoardView.gameObject.activeSelf : walls.transform.position.y >= eye.position.y;
                 if (entered && evidence.chamberEnteredAt < 0) evidence.chamberEnteredAt = age;
@@ -642,7 +718,6 @@ namespace FloorFracture.Editor
                 if (impact.clip && evidence.impactSoundAt < 0)
                 {
                     evidence.impactSoundAt = age;
-                    evidence.windAtImpact = wind.volume;
                     Require(entered && (reduced || evidence.surfaceReachedAt >= 0),
                         $"The impact sound started before the chamber entry or surface arrival at {age:F3} s.");
                 }

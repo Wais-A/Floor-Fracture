@@ -11,7 +11,6 @@ namespace FloorFracture
     {
         private FloorMeshScan meshSnapshot;
         private List<FloorSurvey> surveys;
-        private FloorSurvey acceptedSurvey;
         [SerializeField] private EnvironmentRaycastManager liveManager;
         [SerializeField, Tooltip("Show accepted panes in green and the boundaries of measured scan regions.")]
         private bool showPlacementDebug;
@@ -148,10 +147,7 @@ namespace FloorFracture
                 {
                     var selectedSurvey = evidence.Find(s => s.ChecksEveryTile(fit));
                     if (selectedSurvey != null && snapshot.Matches(meshSnapshot))
-                    {
-                        acceptedSurvey = selectedSurvey;
                         return fit;
-                    }
                     // World locking can refine anchor poses while placing. Prove the selected footprint
                     // against the latest buffers in this frame so small corrections can settle at Welcome.
                     foreach (var floor in floors)
@@ -160,7 +156,6 @@ namespace FloorFracture
                         if (selectedSurvey == null) break;
                         var current = selectedSurvey.Refresh(floor, meshSnapshot, headroom, excluded, cancel);
                         if (!current.ChecksEveryTile(fit)) continue;
-                        acceptedSurvey = current;
                         surveys = new List<FloorSurvey> { current };
                         return fit;
                     }

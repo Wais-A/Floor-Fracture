@@ -9,7 +9,6 @@ public enum FloorEndingSet
 
 internal enum FloorEnding { Water, Lava, TarPit, Space, Sand, Snow }
 
-// The bag belongs to the presentation. Restarting gameplay preserves its place.
 internal sealed class EndingShuffle
 {
     readonly Random random;
@@ -17,7 +16,36 @@ internal sealed class EndingShuffle
     int mask, count, next;
     int previous = -1;
 
-    internal EndingShuffle(int seed) { random = new Random(seed); }
+    internal EndingShuffle(int seed, string saved = null)
+    {
+        random = new Random(seed);
+        if (string.IsNullOrEmpty(saved) || saved.Length > bag.Length + 1) return;
+        int divider = saved.IndexOf('|');
+        if (divider < 1) return;
+
+        // Digits before the divider were drawn, in order. The last of those
+        // also guards the boundary when a completed bag is loaded at launch.
+        int seen = 0;
+        for (int i = 0; i < saved.Length; i++)
+        {
+            if (i == divider) continue;
+            int slot = saved[i] - '0';
+            if (slot < 0 || slot >= bag.Length || (seen & (1 << slot)) != 0) return;
+            bag[i < divider ? i : i - 1] = slot;
+            seen |= 1 << slot;
+        }
+        mask = seen;
+        count = saved.Length - 1;
+        next = divider;
+        previous = bag[next - 1];
+    }
+
+    internal string Save()
+    {
+        var slots = new char[count];
+        for (int i = 0; i < count; i++) slots[i] = (char)('0' + bag[i]);
+        return new string(slots).Insert(next, "|");
+    }
 
     internal int Peek(FloorEndingSet enabled)
     {

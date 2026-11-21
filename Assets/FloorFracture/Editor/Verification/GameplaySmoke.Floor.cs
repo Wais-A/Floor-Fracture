@@ -105,7 +105,7 @@ namespace FloorFracture.Editor
                     board.Draw(wave,default,10.70,gentle);
                     Require(Surface(danger)==start && danger.Find("Fissures").GetComponent<Renderer>().enabled,
                         "The pulse continued after its initial flash or cracks disappeared early.");
-                    board.Draw(wave,default,11.5,gentle);
+                    board.Draw(wave,default,wave.RevealEndsAt,gentle);
                     Require(Surface(danger)==Surface(safe) && !danger.Find("Fissures").GetComponent<Renderer>().enabled,
                         "The end of the reveal left a color or crack clue on the dangerous pane.");
                 }
@@ -128,7 +128,6 @@ namespace FloorFracture.Editor
             try
             {
                 camera.enabled=false;
-                camera.stereoTargetEye=StereoTargetEyeMask.None;
                 camera.GetUniversalAdditionalCameraData().allowXRRendering=false;
                 camera.clearFlags=CameraClearFlags.SolidColor;
                 camera.backgroundColor=Color.magenta;
@@ -195,6 +194,7 @@ namespace FloorFracture.Editor
             int sensor, float near, System.Func<Color32[]> read)
         {
             var pane = game.BoardView.GetComponentsInChildren<MeshRenderer>().First(r => r.name == "Smoky pane");
+            ShaderUtil.CompilePass(pane.sharedMaterial, 0, true);
             var center = pane.bounds.center;
             var oldPose = new Pose(camera.transform.position, camera.transform.rotation);
             int oldMask = camera.cullingMask, oldLayer = pane.gameObject.layer;
@@ -324,6 +324,7 @@ namespace FloorFracture.Editor
                 ShaderUtil.SetAsyncCompilation(commands, false);
                 commands.SetRenderTarget(new RenderTargetIdentifier(target, 0, CubemapFace.Unknown, -1));
                 commands.DrawProcedural(Matrix4x4.identity, material, pass, MeshTopology.Triangles, 3, 2);
+                ShaderUtil.RestoreAsyncCompilation(commands);
                 Graphics.ExecuteCommandBuffer(commands);
                 commands.Clear();
             }

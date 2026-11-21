@@ -16,7 +16,13 @@ public sealed class FallSequence : MonoBehaviour
     enum PreviewEnding { Shuffle = -1, Water, Lava, TarPit, Space, Sand, Snow }
     [SerializeField] PreviewEnding developmentEnding = PreviewEnding.Shuffle;
 #endif
-    EndingShuffle shuffle = new EndingShuffle(Environment.TickCount);
+    EndingShuffle shuffle;
+    string shufflePreference;
+    int selectedLevel;
+    public int CurrentLevelEnding { get; private set; } = -1;
+#if UNITY_EDITOR || DEBUG
+    readonly EndingShuffle developmentShuffle = new EndingShuffle(Guid.NewGuid().GetHashCode());
+#endif
     FloorFracture.GlassBoardView board;
     FloorFracture.FallingArena arena;
     FallScenery scenery;
@@ -44,31 +50,61 @@ public sealed class FallSequence : MonoBehaviour
         opening = pointOnFloor; width = Mathf.Max(.1f,tileWidth); yaw = yawDegrees; hasOpening = true;
     }
 
+    void Awake() => LoadShuffle("ff.waveEndingBag.v1", Guid.NewGuid().GetHashCode());
+
+    void LoadShuffle(string preference, int seed)
+    {
+        shufflePreference = preference;
+        shuffle = new EndingShuffle(seed, PlayerPrefs.GetString(preference));
+    }
+
     public void SetShuffleSeed(int seed) => shuffle = new EndingShuffle(seed);
+
+#if UNITY_EDITOR
+    public void EditorUseShufflePreferences(string preference, int seed) => LoadShuffle(preference,seed);
+    public int EditorPeekNextLevelEnding => shuffle.Peek(enabledEndings);
+#endif
+
+    internal void SelectLevel(int level)
+    {
+        // Every wave and tracking retry in this level shares the same chamber.
+        if (selectedLevel == level) return;
+        selectedLevel = level;
+        CurrentLevelEnding = shuffle.Next(enabledEndings);
+        if (CurrentLevelEnding < 0) return;
+        PlayerPrefs.SetString(shufflePreference, shuffle.Save());
+        PlayerPrefs.Save();
+    }
 
     internal void SetBoard(FloorFracture.GlassBoardView nextBoard)
     {
         if (visiblePreview >= 0) scenery.Hide();
         visiblePreview = -1;
+        selectedLevel = 0;
+        CurrentLevelEnding = -1;
         board = nextBoard;
         // First use loads the sample water and builds the shaft meshes. Do it while the
         // board is being set up so the first timed shatter can show its destination immediately.
         if (board) PrepareChamber();
     }
 
-    int SelectEnding(bool consume)
+    int PresentationEnding(bool developmentPreview, bool beginFall = false)
     {
 #if UNITY_EDITOR || DEBUG
-        if ((Application.isEditor || Debug.isDebugBuild) && developmentEnding != PreviewEnding.Shuffle)
-            return (int)developmentEnding;
+        if (developmentPreview && (Application.isEditor || Debug.isDebugBuild))
+        {
+            if (developmentEnding != PreviewEnding.Shuffle) return (int)developmentEnding;
+            return beginFall ? developmentShuffle.Next(enabledEndings) : developmentShuffle.Peek(enabledEndings);
+        }
 #endif
-        return consume ? shuffle.Next(enabledEndings) : shuffle.Peek(enabledEndings);
+        // A tutorial can open a pane before the first real wave. Preview it without drawing.
+        return selectedLevel > 0 ? CurrentLevelEnding : shuffle.Peek(enabledEndings);
     }
 
-    internal void ShowOpenPanes(Transform viewer)
+    internal void ShowOpenPanes(Transform viewer, bool developmentPreview = false)
     {
         if (IsPlaying) return;
-        int selected = board && board.HasOpenPanes && viewer ? SelectEnding(false) : -1;
+        int selected = board && board.HasOpenPanes && viewer ? PresentationEnding(developmentPreview) : -1;
         if (selected == visiblePreview) return;
         visiblePreview = selected;
         if (selected < 0) { scenery?.Hide(); return; }
@@ -98,7 +134,7 @@ public sealed class FallSequence : MonoBehaviour
 #endif
     }
 
-    public void Begin(Transform head, bool reducedMotion, Action finished)
+    public void Begin(Transform head, bool reducedMotion, Action finished, bool developmentPreview = false)
     {
         // SetOpening can be called immediately before replacing an in-flight preview.
         Vector3 nextOpening = opening;
@@ -115,7 +151,7 @@ public sealed class FallSequence : MonoBehaviour
         if (!sound) sound = GetComponent<GameSound>();
         if (!sound) sound = FindAnyObjectByType<GameSound>();
         if (!sound) sound = gameObject.AddComponent<GameSound>();
-        int selected = SelectEnding(true);
+        int selected = PresentationEnding(developmentPreview, true);
         bool emptyBag = selected < 0;
         kind = emptyBag ? FloorEnding.Water : (FloorEnding)selected;
         LastEndingName = emptyBag ? string.Empty : kind == FloorEnding.TarPit ? "Tar Pit" : kind.ToString();
@@ -131,7 +167,7 @@ public sealed class FallSequence : MonoBehaviour
         if (!emptyBag && board) arena = new FloorFracture.FallingArena(board,reduced);
         OpenChamber(this.head,kind,nextOpening,nextWidth,nextYaw);
         if (emptyBag) { Blackout(); return; }
-        sound.BeginFall(kind);
+        sound.BeginFall(kind, ContactTime);
         Draw(0f);
     }
 
@@ -146,7 +182,7 @@ public sealed class FallSequence : MonoBehaviour
             pausedAt = null;
         }
         scenery.SetTrackingPaused(paused);
-        sound.SetFallPaused(paused);
+        sound.SetFallPaused(paused, ContactTime - (float)((pausedAt ?? now) - startedAt));
         if (!paused && blackFrame >= 0) blackFrame = Time.frameCount;
     }
 
@@ -163,9 +199,11 @@ public sealed class FallSequence : MonoBehaviour
         Draw((float)(Time.unscaledTimeAsDouble - startedAt));
     }
 
+    float ContactTime => reduced ? .82f : RimHold + FreeFallTime;
+
     void Draw(float age)
     {
-        float contact = reduced ? .82f : RimHold + FreeFallTime;
+        float contact = ContactTime;
         float duration = kind == FloorEnding.Space ? 8f : kind == FloorEnding.Snow ? 5.2f : 5f;
         float p = Mathf.Clamp01((age - contact) / (reduced ? 3.11f : duration));
         float seconds = p * duration;
@@ -178,38 +216,32 @@ public sealed class FallSequence : MonoBehaviour
         arena?.Draw(travel,entered);
         float fade = FallScenery.Ease(3f,5f,seconds);
         // At constant acceleration, speed as a fraction of impact speed is t / tImpact.
-        float air = reduced ? .25f : fallingTime / FreeFallTime;
+        float air = reduced ? .34f * Mathf.Clamp01(age / contact) : fallingTime / FreeFallTime;
+        if (age >= contact && kind != FloorEnding.Space)
+        {
+            if (!impactPlayed)
+            {
+                impactPlayed = true;
+                Vector3 point = scenery.SplashPosition();
+                if (kind == FloorEnding.Water) scenery.Splash(point,reduced);
+                sound.Land(kind,point);
+            }
+            air *= 1 - FallScenery.Ease(0, .08f, age - contact);
+        }
         float ambiance = 0;
         float tint = 0;
         Color tintColor = Color.black;
         switch (kind)
         {
             case FloorEnding.Water:
-                if (!impactPlayed && age >= contact)
-                {
-                    Vector3 point = scenery.SplashPosition();
-                    scenery.Splash(point,reduced); sound.WaterImpact(point); impactPlayed = true;
-                }
-                air *= 1-Mathf.Max(immersion,.70f*FallScenery.Ease(0,.17f,p));
                 ambiance = Mathf.Max(immersion,.18f*FallScenery.Ease(0,.20f,p));
                 break;
             case FloorEnding.Lava:
-                if (!impactPlayed && age >= contact)
-                {
-                    sound.LavaImpact(scenery.SplashPosition());
-                    impactPlayed = true;
-                }
-                ambiance = FallScenery.Ease(0,.45f,seconds); air *= 1-ambiance;
+                ambiance = FallScenery.Ease(0,.45f,seconds);
                 break;
             case FloorEnding.TarPit:
-                air *= 1-FallScenery.Ease(0,.35f,seconds);
                 if (age >= contact)
                 {
-                    if (!impactPlayed)
-                    {
-                        sound.TarImpact(scenery.SplashPosition());
-                        impactPlayed = true;
-                    }
                     int due = seconds >= SecondPull ? 2 : seconds >= FirstPull ? 1 : 0;
                     if (due > tarPulls)
                     {
@@ -222,21 +254,19 @@ public sealed class FallSequence : MonoBehaviour
                 fade = FallScenery.Ease(3.3f,4.2f,seconds);
                 break;
             case FloorEnding.Space:
-                air *= 1-FallScenery.Ease(.25f,6.8f,seconds);
+                // Passing the broken rim enters the chamber; vacuum begins at the far end of the 80 m shaft.
+                if (age >= contact) sound.SilenceSpace();
                 fade = FallScenery.Ease(4.8f,7f,seconds);
                 break;
             case FloorEnding.Sand:
                 ambiance = FallScenery.Ease(0,.55f,seconds)*(1-FallScenery.Ease(3.8f,5f,seconds));
-                air *= 1-FallScenery.Ease(0,.45f,seconds);
                 break;
             case FloorEnding.Snow:
-                ambiance = age >= contact ? .32f + .68f*FallScenery.Ease(0,.8f,seconds) : 0;
-                air *= 1-ambiance;
+                ambiance = FallScenery.Ease(.16f,.80f,seconds);
                 tintColor = Color.white; tint = FallScenery.Ease(0,2.8f,seconds);
                 fade = FallScenery.Ease(3.2f,5.2f,seconds);
                 break;
         }
-        if (reduced) air *= .275f;
         float ambienceFade = kind == FloorEnding.TarPit ? FallScenery.Ease(4.2f,5f,seconds) : fade;
         sound.MixFall(air*(1-fade),ambiance*(1-ambienceFade));
         if (reduced && age < .70f)

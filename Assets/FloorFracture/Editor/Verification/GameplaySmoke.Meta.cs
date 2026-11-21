@@ -26,17 +26,15 @@ namespace FloorFracture.Editor
             "Packages/com.meta.xr.sdk.core/Editor/BuildingBlocks/BlockData/SharedSpatialAnchorCore/Prefabs/SharedSpatialAnchorCore.prefab"
         };
 
-        private static bool AuthoredDepthEnabled()
+        private static bool AuthoredDepthReady()
         {
-            // The stock provider disables itself at runtime on a desktop without a depth sensor.
-            // Read the actual scene's authored enablement before that SDK lifecycle runs.
             Scene scene = SceneManager.GetSceneByPath(ScenePath);
             bool preview = !scene.IsValid() || !scene.isLoaded;
             if (preview) scene = EditorSceneManager.OpenPreviewScene(ScenePath);
             try
             {
                 var managers = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<EnvironmentDepthManager>(true)).ToArray();
-                return managers.Length == 1 && managers[0].enabled && managers[0].gameObject.activeInHierarchy;
+                return managers.Length == 1 && managers[0].enabled && !managers[0].gameObject.activeSelf;
             }
             finally { if (preview) EditorSceneManager.ClosePreviewScene(scene); }
         }
@@ -57,10 +55,11 @@ namespace FloorFracture.Editor
             Require(raycast && raycast.CustomTrackingSpace == game.Rig.trackingSpace &&
                 new SerializedObject(game.Room).FindProperty("liveManager").objectReferenceValue == raycast,
                 "Placement must use Meta's installed Environment Raycast Manager in the headset tracking space.");
-            report.depthSupportedInFixture = EnvironmentDepthManager.IsSupported;
-            Require(report.depthProviderEnabledInAuthoredScene && depth.gameObject.activeInHierarchy &&
-                (depth.transform == block.transform || depth.transform.IsChildOf(block.transform)) && (!report.depthSupportedInFixture || depth.enabled),
-                "The enabled SDK Occlusion Dependencies block did not supply the scene's sole environment depth manager.");
+            report.depthSupportedInFixture = UnityEngine.XR.OpenXR.OpenXRRuntime.IsExtensionEnabled("XR_META_environment_depth") && EnvironmentDepthManager.IsSupported;
+            Require(report.depthProviderReadyInAuthoredScene && depth.isActiveAndEnabled == report.depthSupportedInFixture &&
+                new SerializedObject(game.Room).FindProperty("depthProvider").objectReferenceValue == depth &&
+                (depth.transform == block.transform || depth.transform.IsChildOf(block.transform)),
+                "Room placement must activate the shared environment depth provider only on a supported runtime.");
 
             var models = roots.SelectMany(root => root.GetComponentsInChildren<Transform>(true));
             foreach (var model in models)
@@ -75,7 +74,7 @@ namespace FloorFracture.Editor
             }
             Require(!markers.Any(marker => marker.BlockId == "7358e191-33b7-43ca-b066-b2f00531ac66" ||
                 marker.BlockId == "975428dc-db04-4e43-be4a-232f192cd3eb"), "An SDK example cube or shared spatial anchor block was installed in the main scene.");
-            Record("The gameplay scene keeps the app’s wall and furniture overlay inactive. MRUK fits the board and the brick samples the live stereo environment depth. The saved scene enables one SDK environment depth provider and contains no example cube, occlusion root, raycast marker, or shared anchor.");
+            Record("The gameplay scene keeps the wall and furniture overlay inactive, gates the shared depth provider on runtime support, and contains no SDK demonstration objects.");
         }
 
         private static void VerifyStoneOcclusion(PracticeStone tutorial)
@@ -117,7 +116,7 @@ namespace FloorFracture.Editor
 
             var sound = game.GetComponent<GameSound>();
             var positional = sound.GetComponentsInChildren<AudioSource>(true).Where(source => source.transform.parent == sound.transform && source.spatialBlend >= 0.99f).ToArray();
-            Require(positional.Length == 11, "The gameplay audio pool did not contain the eleven expected positional sources.");
+            Require(positional.Length == 12, "The gameplay audio pool did not contain the twelve expected positional sources.");
             foreach (var source in positional)
             {
                 var spatial = source.GetComponents<MetaXRAudioSource>();
@@ -126,7 +125,7 @@ namespace FloorFracture.Editor
                     spatial[0].isActiveAndEnabled && spatial[0].EnableSpatialization,
                     "The pooled game source is missing its enabled Meta spatializer: " + source.name);
             }
-            Record("All eleven pooled positional glass, tar and landing sources retain the actual Spatial Audio block and one enabled MetaXRAudioSource with spatialization enabled.");
+            Record("All twelve pooled positional glass, draft, tar and landing sources carry the Spatial Audio block and one enabled MetaXRAudioSource.");
 
             bool HasPokeHand(string side) => hands.Any(poke => poke.GetComponentsInParent<Transform>(true)
                 .Any(parent => parent.name == "ComprehensiveInteractors" + side));

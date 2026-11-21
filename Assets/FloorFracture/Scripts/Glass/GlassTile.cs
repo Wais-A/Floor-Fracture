@@ -15,6 +15,7 @@ namespace FloorFracture
         public static Material Surface => surface ? surface : surface = MakeMaterial("FloorFractureSurface");
         MeshRenderer pane, body, frame, fracture;
         MeshFilter frameFilter;
+        AudioSource crackVoice;
         bool lastWarning, lastLow;
         float lastPulse=-1;
         MaterialPropertyBlock block;
@@ -57,12 +58,40 @@ namespace FloorFracture
         {
             block.SetColor(ColorId,color); block.SetFloat(SheenId,sheen); r.SetPropertyBlock(block);
         }
-        public void ShowWarning(bool warn,double revealAge,bool low)
+        internal void SoundWarning(GameSound sound, bool warned, int cell, int groupSize, double age, double remaining)
+        {
+            if (!warned || sound.MasterVolume <= 0f)
+            {
+                StopCrack();
+                return;
+            }
+
+            bool start = !crackVoice || !crackVoice.gameObject.activeSelf;
+            if (!crackVoice) crackVoice = sound.CreateCrackVoice(transform, cell);
+            // Keep simultaneous cracks legible and soften the end of short reveals.
+            float gain = .74f / Mathf.Sqrt(Mathf.Min(groupSize, 16));
+            crackVoice.volume = sound.MasterVolume * gain * Mathf.Clamp01((float)remaining / .035f);
+            if (!start) return;
+            crackVoice.gameObject.SetActive(true);
+            // Different positions in the recording keep simultaneous panes from sounding in unison.
+            float offset = (cell % 7) * .071f;
+            crackVoice.time = offset + (float)age * crackVoice.pitch;
+            crackVoice.Play();
+        }
+
+        void StopCrack()
+        {
+            if (crackVoice && crackVoice.gameObject.activeSelf) crackVoice.gameObject.SetActive(false);
+        }
+
+        void OnDisable() => StopCrack();
+
+        public void ShowWarning(bool warn,double revealAge,bool low,double revealDuration=.36)
         {
             Initialize();
             if(!warn&&!lastWarning) return;
-            // A single 0.36-second amber pulse leaves the cracks readable for the rest of the reveal.
-            float progress=Mathf.Clamp01((float)revealAge/.36f);
+            // Short expert clues still complete one amber pulse.
+            float progress=Mathf.Clamp01((float)(revealAge/System.Math.Min(.36,revealDuration)));
             float pulse=warn && progress<1f ? Mathf.Sin(Mathf.PI*progress) : 0f;
             if(warn==lastWarning && low==lastLow && Mathf.Abs(pulse-lastPulse)<.025f) return;
             if (lastWarning != warn) frameFilter.sharedMesh=warn ? GlassGeometry.Rim : GlassGeometry.SafeRim;

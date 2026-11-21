@@ -64,6 +64,7 @@ namespace FloorFracture.Editor
             yield return Frames(2);
             double requested = game.GameplayTime;
             Choose("Start wave");
+            yield return Stage(GameStage.Countdown);
             var resumed = game.State.ActiveWave;
             Require(game.Stage == GameStage.Countdown && resumed != null && resumed.StartsAt >= requested &&
                 resumed.Level == expectedLevel && resumed.Number == nextWave && resumed.StartingTile == completed.GuaranteedTile &&

@@ -214,6 +214,7 @@ MonoBehaviour:
   liveManager: {fileID: 846901786}
   showPlacementDebug: 0
   rig: {fileID: 955109992}
+  depthProvider: {fileID: 44480453}
   floorSpawns: {fileID: 54861137}
   floorEffect: {fileID: 1692174211}
   outlineShader: {fileID: 4800000, guid: cbc12925e9c4448cbdc98314207e6f54, type: 3}
@@ -285,7 +286,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &44480453
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -536,6 +537,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FloorFracture.GameFlow
   Room: {fileID: 27512913}
   Rig: {fileID: 955109992}
+  useDynamicResolution: 1
 --- !u!4 &237852967
 Transform:
   m_ObjectHideFlags: 0
@@ -1315,12 +1317,16 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
+      propertyPath: _localDimming
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 11400000, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: _trackingOriginType
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: _enableDynamicResolution
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11400000, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
       propertyPath: isInsightPassthroughEnabled

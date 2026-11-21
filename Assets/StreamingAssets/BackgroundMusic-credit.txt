@@ -1,0 +1,10 @@
+Dust
+Music by Tri-Tachyon - https://soundcloud.com/tri-tachyon/albums
+Source: https://opengameart.org/content/soundscape-dust-ambient-guitar
+Licensed under Creative Commons Attribution 4.0 International.
+https://creativecommons.org/licenses/by/4.0/
+Game edit: trimmed the lead-in, adjusted the level, crossfaded the guitar opening and faded the ending for repeat playback.
+
+Opening: Clean_E1st_str_pluck.wav by SpeedY (CC0), arranged and mixed with Park ambiences by Thimras (CC0).
+https://freesound.org/people/SpeedY/sounds/8394/
+https://opengameart.org/content/park-ambiences

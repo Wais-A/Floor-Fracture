@@ -1,46 +1,73 @@
+using System;
 using UnityEngine;
 
-/// <summary>Menu cues, pooled positional glass sounds, and the loss soundscape.</summary>
+/// <summary>Centered start cues and shaft audio, with positional glass and landing cues.</summary>
 [DisallowMultipleComponent]
 public sealed class GameSound : MonoBehaviour
 {
     [SerializeField, Range(0, 1)] float volume = .75f;
-    AudioSource ui, countdown, falling, ambience, accent, tarBed;
+    AudioSource ui, falling, roar, ambience, accent, tarBed;
+    AudioSource music;
+    float musicFade = 1f, musicTarget = 1f;
+    const float MusicGain = .12f;
+    const float MusicFadeSeconds = .30f;
+    AudioSource holeDraft;
+    const float DraftGain = .40f;
+    float draftFade;
     AudioLowPassFilter tarFilter;
     readonly AudioSource[,] glass = new AudioSource[3, 3];
     readonly float[,] glassGains = new float[3, 3];
     int nextGlass, pendingCount;
     Vector3 weightedPosition;
-    AudioClip click, heartbeat, urgentHeartbeat, impact, fragments, echo, clear, wind, submerged, heat, tarBubbles, tarImpact, tarPull, sand, snow, splash;
-    float fallGain, ambienceGain, accentGain;
+    AudioClip paneStress, click, startKnock, startGo, impact, fragments, echo, clear, wind, lowWind;
+    AudioClip submerged, heat, tarBubbles, tarImpact, tarPull, sand, snow, splash, lavaImpact, sandImpact, snowImpact;
+    float fallGain, roarGain, ambienceGain, accentGain;
+    double spaceExitDsp = double.PositiveInfinity;
+    bool inSpace, spaceSilent;
     public const string SpatialVoiceResource = "GlassSpatialVoice";
     GameObject spatialVoicePrefab;
 #if UNITY_EDITOR
-    public event System.Action<float> EditorMenuClick;
+    public event Action<float> EditorMenuClick;
+    public int EditorStartKnocks { get; private set; }
+    public int EditorGoCues { get; private set; }
+    public int EditorLandingCueCount { get; private set; }
 #endif
 
     void Awake()
     {
         spatialVoicePrefab = Resources.Load<GameObject>(SpatialVoiceResource);
         if (!spatialVoicePrefab)
-            throw new System.InvalidOperationException("Prepare the game scene to create the Meta Spatial Audio prefab.");
-        click = Clip("Click"); heartbeat = Clip("Heartbeat"); urgentHeartbeat = Clip("HeartbeatUrgent");
+            throw new InvalidOperationException("Prepare the game scene to create the Meta Spatial Audio prefab.");
+        click = Clip("Click"); startKnock = Clip("ClockTick"); startGo = Clip("StartGo");
+        paneStress = Clip("PaneStress");
         impact = Clip("Impact"); fragments = Clip("Fragments"); echo = Clip("Echo"); clear = Clip("Clear");
-        wind = Clip("Air"); submerged = Clip("Submerged"); heat = Clip("Heat");
+        wind = Clip("Air"); lowWind = Clip("ShaftRoar"); submerged = Clip("Submerged"); heat = Clip("Heat");
         tarBubbles = Clip("TarBubbles"); tarImpact = Clip("TarImpact"); tarPull = Clip("TarPull");
         sand = Clip("Sand"); snow = Clip("Snow");
-        splash = Resources.Load<AudioClip>("Endings/MetaFloorZone/Audio/WaterPerturbed2");
-        if (splash != null && splash.loadState == AudioDataLoadState.Unloaded) splash.LoadAudioData();
+        lavaImpact = Clip("LavaImpact"); sandImpact = Clip("SandImpact"); snowImpact = Clip("SnowImpact");
+        splash = Clip("WaterImpact");
         ui = Voice("Menu and countdown", false);
-        countdown = Voice("Countdown heartbeat", false);
+        music = Voice("Background music", false);
+        music.clip = Clip("BackgroundMusic");
+        music.loop = true;
+        holeDraft = Voice("Opening draft", true);
+        holeDraft.clip = Clip("HoleDraft");
+        holeDraft.loop = true;
+        holeDraft.volume = 0f;
+        holeDraft.minDistance = 1.6f;
         falling = Voice("Shaft air", false);
+        roar = Voice("Shaft roar", false);
         ambience = Voice("Ending ambience", false);
         accent = Voice("Ending impact", true);
-        tarBed = Voice("Tar bubbling",true);
-        tarBed.loop = true;
+        tarBed = Voice("Tar bubbling", true);
+        // Contact is at the feet, even when the player is standing at full height.
+        accent.minDistance = tarBed.minDistance = 2.6f;
+        // The positional impact needs to cut through the head-relative rush at contact.
+        accent.GetComponent<MetaXRAudioSource>().GainBoostDb = 7f;
+        accent.priority = 32;
+        falling.priority = roar.priority = 64;
         tarFilter = tarBed.gameObject.AddComponent<AudioLowPassFilter>();
         tarFilter.lowpassResonanceQ = 1f;
-        falling.loop = ambience.loop = true;
         for (int i = 0; i < glass.GetLength(0); i++)
         {
             glass[i, 0] = Voice("Pane impact " + i, true);
@@ -67,14 +94,35 @@ public sealed class GameSound : MonoBehaviour
         return source;
     }
 
+    internal float MasterVolume => volume;
+
+    internal AudioSource CreateCrackVoice(Transform pane, int cell)
+    {
+        var emitter = Instantiate(spatialVoicePrefab, pane, false);
+        emitter.name = "Glass strain";
+        var voice = emitter.GetComponent<AudioSource>();
+        voice.clip = paneStress;
+        voice.pitch = .94f + .025f * (cell % 5);
+        voice.priority = 160;
+        return voice;
+    }
+
     public void SetVolume(float value)
     {
         volume = Mathf.Clamp01(value);
         if (!ui) return;
+        if (volume == 0f)
+        {
+            StopGlass();
+            ui.Stop();
+            accent.Stop();
+            ClearHoleDraft();
+        }
         ui.volume = volume;
-        countdown.volume = .43f * volume;
+        ApplyMusicVolume();
         tarBed.volume = ambienceGain * volume;
         falling.volume = fallGain * volume;
+        roar.volume = roarGain * volume;
         ambience.volume = ambienceGain * volume;
         accent.volume = accentGain * volume;
         for (int i = 0; i < glass.GetLength(0); i++)
@@ -83,15 +131,60 @@ public sealed class GameSound : MonoBehaviour
     }
 
     public void Click() => Cue(click, .38f);
-    public void Tick(int secondsRemaining)
+    public void Completion() => Cue(clear, .54f);
+    // Let the fall effects take over without seeking or restarting the score.
+    internal void SetMusicAudible(bool audible)
     {
-        if (!isActiveAndEnabled || secondsRemaining < 1) return;
-        countdown.clip = secondsRemaining <= 3 ? urgentHeartbeat : heartbeat;
-        countdown.Play();
+        musicTarget = audible ? 1f : 0f;
+        if (!audible && spaceSilent)
+        {
+            musicFade = 0f;
+            ApplyMusicVolume();
+        }
     }
 
-    public void StopCountdown() { if (countdown) countdown.Stop(); }
-    public void Completion() => Cue(clear, .54f);
+    void ApplyMusicVolume() => music.volume = MusicGain * Mathf.SmoothStep(0f, 1f, musicFade) * volume;
+
+    internal void UpdateHoleDraft(Vector3? opening)
+    {
+        if (volume == 0f) return;
+        float dt = Time.unscaledDeltaTime;
+        if (opening.HasValue)
+        {
+            if (!holeDraft.isPlaying)
+            {
+                holeDraft.transform.position = opening.Value;
+                holeDraft.Play();
+            }
+            else
+                holeDraft.transform.position = Vector3.Lerp(holeDraft.transform.position, opening.Value,
+                    1f - Mathf.Exp(-22f * dt));
+        }
+        else if (!holeDraft.isPlaying) return;
+
+        draftFade = opening.HasValue ? Mathf.Min(1f, draftFade + dt / .32f) :
+            Mathf.Max(0f, draftFade - dt / .45f);
+        holeDraft.volume = DraftGain * volume * Mathf.SmoothStep(0f, 1f, draftFade);
+        if (draftFade == 0f && !opening.HasValue) holeDraft.Stop();
+    }
+
+    internal void ClearHoleDraft()
+    {
+        if (holeDraft.isPlaying) holeDraft.Stop();
+        draftFade = holeDraft.volume = 0f;
+    }
+
+    void Update()
+    {
+        if (musicFade == musicTarget) return;
+        musicFade = Mathf.MoveTowards(musicFade, musicTarget, Time.unscaledDeltaTime / MusicFadeSeconds);
+        ApplyMusicVolume();
+    }
+
+    public void StartCountCue(bool go)
+    {
+        if (volume > 0f) Cue(go ? startGo : startKnock, go ? .84f : .66f);
+    }
 
     void Cue(AudioClip clip, float gain)
     {
@@ -99,13 +192,15 @@ public sealed class GameSound : MonoBehaviour
         ui.PlayOneShot(clip, gain);
 #if UNITY_EDITOR
         if (clip == click) EditorMenuClick?.Invoke(ui.volume);
+        if (clip == startKnock) ++EditorStartKnocks;
+        if (clip == startGo) ++EditorGoCues;
 #endif
     }
 
     // Individual tile callers and a caller already supplying a wave centroid share one mix per frame.
     public void Break(Vector3 worldPoint, int count)
     {
-        if (!isActiveAndEnabled || count <= 0) return;
+        if (!isActiveAndEnabled || count <= 0 || volume == 0 || spaceSilent) return;
         weightedPosition += worldPoint * count;
         pendingCount += count;
     }
@@ -126,7 +221,7 @@ public sealed class GameSound : MonoBehaviour
 
     void PlayGlass(int layer, AudioClip clip, Vector3 position, double when, float gain)
     {
-        if (!clip) return;
+        if (!clip || when >= spaceExitDsp) return;
         var voice = glass[nextGlass, layer];
         voice.Stop();
         voice.transform.position = position;
@@ -134,82 +229,155 @@ public sealed class GameSound : MonoBehaviour
         glassGains[nextGlass, layer] = gain;
         voice.volume = gain * volume;
         voice.PlayScheduled(when);
+        if (when + clip.length > spaceExitDsp) voice.SetScheduledEndTime(spaceExitDsp);
     }
 
-    internal void BeginFall(FloorEnding ending)
+    void StopGlass()
+    {
+        pendingCount = 0;
+        weightedPosition = Vector3.zero;
+        foreach (var voice in glass) if (voice) { voice.Stop(); voice.clip = null; }
+    }
+
+    internal void BeginFall(FloorEnding ending, float timeToContact)
     {
         StopFall();
-        StopCountdown();
+#if UNITY_EDITOR
+        EditorLandingCueCount = 0;
+#endif
+        inSpace = ending == FloorEnding.Space;
         falling.clip = wind;
-        switch (ending)
-        {
-            case FloorEnding.Water: ambience.clip = submerged; break;
-            case FloorEnding.Lava: ambience.clip = heat; break;
-            case FloorEnding.Sand: ambience.clip = sand; break;
-            case FloorEnding.Snow: ambience.clip = snow; break;
-        }
-        if (falling.clip) falling.Play();
-        if (ambience.clip) ambience.Play();
+        roar.clip = lowWind;
+        if (inSpace) ScheduleSpaceExit(timeToContact);
+        else { falling.Play(); roar.Play(); }
+    }
+
+    void ScheduleSpaceExit(float remaining)
+    {
+        const double lead = .015;
+        double dsp = AudioSettings.dspTime;
+        spaceExitDsp = dsp + remaining;
+        if (remaining <= lead) { SilenceSpace(); return; }
+        // Play the final portion of each dry recording. Its last four milliseconds
+        // taper to digital zero and its last sample coincides with the shaft exit.
+        StartWindTail(falling, remaining - lead, dsp + lead);
+        StartWindTail(roar, remaining - lead, dsp + lead);
+        foreach (var voice in glass)
+            if (voice.clip && voice.isPlaying) voice.SetScheduledEndTime(spaceExitDsp);
+    }
+
+    void StartWindTail(AudioSource source, double seconds, double dsp)
+    {
+        source.Stop();
+        var clip = source.clip;
+        source.timeSamples = Mathf.Clamp(clip.samples - Mathf.RoundToInt((float)(seconds * clip.frequency)), 0, clip.samples - 1);
+        source.PlayScheduled(dsp);
+        source.SetScheduledEndTime(spaceExitDsp);
+    }
+
+    internal void SilenceSpace()
+    {
+        if (spaceSilent) return;
+        spaceSilent = true;
+        falling.Stop(); roar.Stop(); StopGlass();
+        fallGain = roarGain = falling.volume = roar.volume = 0f;
     }
 
     internal void MixFall(float air, float environment)
     {
-        fallGain = Mathf.Clamp01(air) * .48f;
+        float speed = spaceSilent ? 0f : Mathf.Clamp01(air);
+        fallGain = .88f * speed;
+        roarGain = .68f * speed * speed;
         ambienceGain = Mathf.Clamp01(environment) * .55f;
         falling.volume = fallGain * volume;
+        roar.volume = roarGain * volume;
         ambience.volume = ambienceGain * volume;
         tarBed.volume = ambienceGain * volume;
     }
 
-    internal void WaterImpact(Vector3 position) => Accent(splash, position, .84f);
-    internal void LavaImpact(Vector3 position) => Accent(echo, position, .92f, .60f);
-    internal void TarImpact(Vector3 position)
+    internal void Land(FloorEnding ending, Vector3 position)
     {
-        tarBed.transform.position = position;
-        tarFilter.cutoffFrequency = 3200;
-        tarBed.clip = tarBubbles;
-        tarBed.Play();
-        Accent(tarImpact,position,.9f);
+        // Start each recording on contact so the impact leads into its own settling sound.
+        switch (ending)
+        {
+            case FloorEnding.Water: Accent(splash, position, .96f); ambience.clip = submerged; break;
+            case FloorEnding.Lava: Accent(lavaImpact, position, .96f); ambience.clip = heat; break;
+            case FloorEnding.Sand: Accent(sandImpact, position, .94f); ambience.clip = sand; break;
+            case FloorEnding.Snow: Accent(snowImpact, position, .94f); ambience.clip = snow; break;
+            case FloorEnding.TarPit:
+                Accent(tarImpact, position, .96f);
+                tarBed.transform.position = position;
+                tarFilter.cutoffFrequency = 3200;
+                tarBed.clip = tarBubbles;
+                tarBed.Play();
+                return;
+            default: return;
+        }
+        ambience.Play();
     }
 
-    internal void TarSuction(Vector3 position, int pull) => Accent(tarPull,position,.76f,pull == 1 ? .94f : .78f);
-    internal void MuffleTar(float immersion) => tarFilter.cutoffFrequency = Mathf.Lerp(3200,480,immersion);
+    internal void TarSuction(Vector3 position, int pull) => Accent(tarPull, position, .48f, pull == 1 ? .94f : .78f);
+    internal void MuffleTar(float immersion) => tarFilter.cutoffFrequency = Mathf.Lerp(3200, 480, immersion);
 
     void Accent(AudioClip clip, Vector3 position, float gain, float pitch = 1f)
     {
-        if (!clip) return;
+        if (!clip || volume == 0f) return;
         accent.transform.position = position;
         accent.clip = clip;
         accent.pitch = pitch;
         accentGain = gain;
         accent.volume = gain * volume;
         accent.Play();
+#if UNITY_EDITOR
+        ++EditorLandingCueCount;
+#endif
     }
 
-    internal void SetFallPaused(bool paused)
+    internal void SetFallPaused(bool paused, float timeToContact)
     {
-        if (paused) { falling.Pause(); ambience.Pause(); accent.Pause(); tarBed.Pause(); }
-        else { falling.UnPause(); ambience.UnPause(); accent.UnPause(); tarBed.UnPause(); }
+        if (paused)
+        {
+            falling.Pause(); roar.Pause(); ambience.Pause(); accent.Pause(); tarBed.Pause();
+            StopGlass();
+        }
+        else
+        {
+            if (inSpace && !spaceSilent) ScheduleSpaceExit(timeToContact);
+            else if (!inSpace) { falling.UnPause(); roar.UnPause(); }
+            ambience.UnPause(); accent.UnPause(); tarBed.UnPause();
+        }
     }
 
     internal void StopFall()
     {
         if (!falling) return;
-        falling.Stop(); ambience.Stop(); accent.Stop(); tarBed.Stop();
-        falling.clip = ambience.clip = accent.clip = tarBed.clip = null;
-        fallGain = ambienceGain = accentGain = 0f;
-        falling.volume = ambience.volume = accent.volume = tarBed.volume = 0f;
+        if (falling.clip) StopGlass();
+        inSpace = spaceSilent = false;
+        spaceExitDsp = double.PositiveInfinity;
+        falling.Stop(); roar.Stop(); ambience.Stop(); accent.Stop(); tarBed.Stop();
+        falling.clip = roar.clip = ambience.clip = accent.clip = tarBed.clip = null;
+        fallGain = roarGain = ambienceGain = accentGain = 0f;
+        falling.volume = roar.volume = ambience.volume = accent.volume = tarBed.volume = 0f;
     }
 
     public void ResetSounds()
     {
-        pendingCount = 0;
-        weightedPosition = Vector3.zero;
         if (!ui) return;
-        StopFall();
-        ui.Stop(); StopCountdown();
-        foreach (var voice in glass) if (voice) voice.Stop();
+        ClearHoleDraft();
+        StopFall(); StopGlass();
+        ui.Stop();
     }
 
-    void OnDisable() => ResetSounds();
+    void OnEnable()
+    {
+        if (!music || !music.clip) return;
+        music.UnPause();
+        if (!music.isPlaying) music.Play();
+    }
+
+    void OnDisable()
+    {
+        ResetSounds();
+        if (music) music.Pause();
+    }
 }
