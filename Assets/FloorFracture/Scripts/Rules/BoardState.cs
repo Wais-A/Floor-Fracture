@@ -21,13 +21,19 @@ namespace FloorFracture
         public SlidingPane Slider { get; private set; }
         public TileSample CurrentSample => tracker.Current;
         public bool BreaksApplied { get; private set; }
+        public int AppliedBreakGroupCount { get; private set; }
         public WaveLossReason LastLoss { get; private set; }
         internal int IntactCount { get; private set; }
         private bool[] stationary;
+        private bool[] waveStartStationary;
+        private int waveStartIntactCount;
+        private SlidingPane waveStartSlider;
+        private bool sliderWasLocked;
 
         private readonly PlayerTileTracker tracker = new PlayerTileTracker();
         private float[] columnEdges, rowEdges;
         private int advancedWavesSurvived;
+        internal bool LastWaveWasJump { get; private set; }
         private bool levelEnded;
 
         public BoardState(int width, int height, int seed, float pitch = MinPitch) { Reset(width, height, seed, pitch); }
@@ -63,9 +69,13 @@ namespace FloorFracture
         public void RebuildLevel()
         {
             stationary = null;
+            waveStartStationary = null;
+            waveStartSlider = null;
+            AppliedBreakGroupCount = 0;
             IntactCount = Layout.PaneCount;
             ActiveWave = null;
             Slider = null;
+            LastWaveWasJump = false;
             levelEnded = false;
             BreaksApplied = false;
             LastLoss = WaveLossReason.None;
@@ -133,8 +143,13 @@ namespace FloorFracture
                 throw new ArgumentException("The start must be supported by glass.", nameof(startingTile));
 
             var plan = WavePlanner.Plan(this, startingTile, level, waveNumber, advancedWavesSurvived, now);
+            waveStartStationary = stationary;
+            waveStartIntactCount = IntactCount;
+            waveStartSlider = Slider;
+            sliderWasLocked = Slider != null && Slider.Locked;
+            AppliedBreakGroupCount = 0;
             if (plan.NewSliderTile >= 0)
-                Slider = new SlidingPane(this, plan.NewSliderTile, plan.OtherSliderHole, now);
+                Slider = new SlidingPane(this, plan.NewSliderTile, plan.OtherSliderHole, now, plan.Duration);
             ActiveWave = plan;
             BreaksApplied = false;
             tracker.ResetTiming();
@@ -143,51 +158,56 @@ namespace FloorFracture
 
         public void Pause()
         {
-            // The optional pane belongs to the wave that introduced it until that wave resolves.
-            if (ActiveWave != null && ActiveWave.NewSliderTile >= 0) Slider = null;
+            if (ActiveWave != null)
+            {
+                stationary = waveStartStationary;
+                IntactCount = waveStartIntactCount;
+                Slider = waveStartSlider;
+                Slider?.RestoreLock(sliderWasLocked);
+                AppliedBreakGroupCount = 0;
+                BreaksApplied = false;
+            }
             ActiveWave = null;
             tracker.Reset();
         }
 
-        // Consume each result once. GameFlow supplies an unscaled monotonic timestamp and handles
-        // the resulting phase change. Scheduled breaks commit together only at the wave deadline.
+        // Resolve timer events against interpolated poses even when several events fall between frames.
         public WaveResult Tick(Vector2 localXZ, bool tracked, double now)
         {
             WavePlan wave = ActiveWave;
             if (wave == null) return WaveResult.Pending;
             CheckTime(now);
             if (now < wave.StartsAt) throw new ArgumentOutOfRangeException(nameof(now));
-            if (!tracked || IndexAt(localXZ) < 0)
+            if (!tracked || IndexAt(localXZ) < 0) return Interrupt(localXZ, tracked, now);
+
+            double until = Math.Min(now, wave.Deadline);
+            while (AppliedBreakGroupCount < wave.BreakGroups.Count)
             {
-                Pause();
-                tracker.Sample(this, localXZ, tracked, now);
-                return WaveResult.Paused;
+                var group = wave.BreakGroups[AppliedBreakGroupCount];
+                if (group.BreaksAt >= wave.Deadline || group.BreaksAt > until) break;
+
+                WaveResult grace = CheckGapExpiry(wave, localXZ, now, group.BreaksAt);
+                if (grace != WaveResult.Pending) return grace;
+                Vector2 atBreak = tracker.PoseAtDeadline(localXZ, now, group.BreaksAt);
+                if (IndexAt(atBreak) < 0) return Interrupt(atBreak, true, group.BreaksAt);
+                ApplyEarlyGroup(group);
+                tracker.Sample(this, atBreak, true, group.BreaksAt);
+                tracker.UpdateGap(group.BreaksAt);
             }
 
-            bool atDeadline = now >= wave.Deadline;
-            double sampleTime = atDeadline ? wave.Deadline : now;
-            double gapDeadline = tracker.GapDeadline;
-            if (gapDeadline <= sampleTime && gapDeadline < wave.Deadline)
-            {
-                Vector2 atExpiry = tracker.PoseAtDeadline(localXZ, now, gapDeadline);
-                if (tracker.Sample(this, atExpiry, true, gapDeadline).Kind == SupportKind.Gap)
-                {
-                    ActiveWave = null;
-                    levelEnded = true;
-                    LastLoss = WaveLossReason.GapGraceExpired;
-                    return WaveResult.Lost;
-                }
-                tracker.UpdateGap(gapDeadline);
-            }
-            Vector2 point = atDeadline ? tracker.PoseAtDeadline(localXZ, now, wave.Deadline) : localXZ;
-            TileSample sample = tracker.Sample(this, point, true, sampleTime);
-            tracker.UpdateGap(sampleTime);
-            if (!atDeadline) return WaveResult.Pending;
+            WaveResult beforeSample = CheckGapExpiry(wave, localXZ, now, until);
+            if (beforeSample != WaveResult.Pending) return beforeSample;
+            Vector2 point = tracker.PoseAtDeadline(localXZ, now, until);
+            if (IndexAt(point) < 0) return Interrupt(point, true, until);
+            TileSample sample = tracker.Sample(this, point, true, until);
+            tracker.UpdateGap(until);
+            if (until < wave.Deadline) return WaveResult.Pending;
 
             bool survived = sample.Kind == SupportKind.Glass && wave.IsSafe(sample.Index);
             stationary = wave.Stationary;
             IntactCount = wave.StationarySafe.Count;
             if (Slider != null && wave.IsBreaking(Slider.Tile)) Slider = null;
+            AppliedBreakGroupCount = wave.BreakGroups.Count;
             BreaksApplied = true;
             ActiveWave = null;
             if (!survived)
@@ -198,14 +218,61 @@ namespace FloorFracture
                     wave.Mode == WaveMode.Memory ? WaveLossReason.MemoryPane : WaveLossReason.CrackedPane;
                 return WaveResult.Lost;
             }
+            LastWaveWasJump = wave.IsJump;
             ++WavesSurvived;
             if (wave.Mode == WaveMode.LastTile)
             {
                 levelEnded = true;
                 return WaveResult.LevelCleared;
             }
-            if (wave.Level >= 2) ++advancedWavesSurvived;
+            if (wave.Level >= 2 && !wave.IsJump) ++advancedWavesSurvived;
             return WaveResult.Survived;
+        }
+
+        private WaveResult Interrupt(Vector2 point, bool tracked, double time)
+        {
+            Pause();
+            tracker.Sample(this, point, tracked, time);
+            return WaveResult.Paused;
+        }
+
+        private WaveResult CheckGapExpiry(WavePlan wave, Vector2 point, double now, double until)
+        {
+            double expiry = tracker.GapDeadline;
+            if (!(expiry <= until && expiry < wave.Deadline)) return WaveResult.Pending;
+            Vector2 atExpiry = tracker.PoseAtDeadline(point, now, expiry);
+            if (IndexAt(atExpiry) < 0) return Interrupt(atExpiry, true, expiry);
+            if (tracker.Sample(this, atExpiry, true, expiry).Kind == SupportKind.Gap)
+            {
+                ActiveWave = null;
+                levelEnded = true;
+                LastLoss = WaveLossReason.GapGraceExpired;
+                return WaveResult.Lost;
+            }
+            tracker.UpdateGap(expiry);
+            return WaveResult.Pending;
+        }
+
+        private void ApplyEarlyGroup(WaveBreakGroup group)
+        {
+            // The first early collapse gets a writable copy. Tracking loss can then restore
+            // the exact pre-wave footprint, including old holes, with a reference swap.
+            if (AppliedBreakGroupCount == 0)
+            {
+                var intact = new bool[Count];
+                for (int tile = 0; tile < Count; ++tile) intact[tile] = IsIntact(tile);
+                stationary = intact;
+            }
+            foreach (int tile in group.Tiles)
+            {
+                if (stationary[tile])
+                {
+                    stationary[tile] = false;
+                    --IntactCount;
+                }
+                if (Slider != null && Slider.Tile == tile) Slider = null;
+            }
+            ++AppliedBreakGroupCount;
         }
 
         private static void CheckTime(double now)

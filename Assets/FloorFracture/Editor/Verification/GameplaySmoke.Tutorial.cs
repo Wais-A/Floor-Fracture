@@ -124,6 +124,9 @@ namespace FloorFracture.Editor
                 yield return GrabPracticeStone(body, grab);
                 yield return CarryStoneTo(restPoint - board.right * .22f, .65f);
                 yield return CarryStoneTo(restPoint, .95f);
+                // The grab transformer can reach the final hand pose a physics update later.
+                yield return Wait(() => Vector3.Distance(body.position, restPoint) < .004f,
+                    "the held stone to reach its rest position", 2);
                 yield return Delay(.4);
                 Require(Vector3.Distance(body.position, restPoint) < .04f, "The carried stone did not come to rest above the pane.");
                 SetHands(left, false);

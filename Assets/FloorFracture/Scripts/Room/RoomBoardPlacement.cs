@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Meta.XR.EnvironmentDepth;
 using Meta.XR.MRUtilityKit;
 using UnityEngine;
+using UnityEngine.XR.OpenXR;
 #if UNITY_ANDROID && !UNITY_EDITOR
 using UnityEngine.Android;
 #endif
@@ -16,6 +18,7 @@ namespace FloorFracture
     public sealed partial class RoomBoardPlacement : MonoBehaviour
     {
         [SerializeField] private OVRCameraRig rig;
+        [SerializeField] private EnvironmentDepthManager depthProvider;
         [SerializeField] private FindSpawnPositions floorSpawns;
         [UnityEngine.Serialization.FormerlySerializedAs("floorWaterMesh")]
         [SerializeField] private EffectMesh floorEffect;
@@ -34,7 +37,6 @@ namespace FloorFracture
         public BoardPlacement Placement { get; private set; }
         public int ScannedSpawnCount { get; private set; }
         public EffectMesh FloorEffect => floorEffect;
-        public MRUKRoom ConfirmedRoom => Status == RoomPlacementStatus.Confirmed ? room : null;
         private const string EntireFloorKey = "ff.entireFloor";
         public bool EntireFloor { get; private set; }
         public event Action Changed;
@@ -42,6 +44,7 @@ namespace FloorFracture
         private const string DeniedMessage = "Allow spatial data for Floor Fracture in app permissions, then retry.";
         private const string MissingRoomMessage = "The headset hasn't found a saved room here yet. Look around and check again, or scan the floor and furniture in Space Setup.";
         private readonly List<Vector2[]> declined = new List<Vector2[]>();
+        private Coroutine pendingDepthStart;
         private MRUK mruk;
         private MRUKRoom room;
         private List<RoomFloor> floors;
@@ -65,10 +68,10 @@ namespace FloorFracture
 #if UNITY_EDITOR
                 if (usingFixture) return HasConfirmedRoom();
 #endif
-                if (!mruk.IsWorldLockActive || !HasConfirmedRoom()) return false;
+                if (!HasNativeRoomTracking || !HasConfirmedRoom()) return false;
                 var eye = rig.centerEyeAnchor.position;
-                var current = mruk.GetCurrentRoom();
-                if (current && !MatchesConfirmedRoom(current) && mruk.Rooms.Count > 1 &&
+                var current = mruk.Rooms.Count > 1 ? mruk.GetCurrentRoom() : null;
+                if (current && !MatchesConfirmedRoom(current) &&
                     MrukFloorReader.ContainsFloorPoint(current, eye, TrackingFloorAtEye(eye))) return false;
                 var point = new Vector2(eye.x, eye.z);
                 // Test against the accepted survey. Later edits to a floor polygon or
@@ -90,6 +93,10 @@ namespace FloorFracture
         private bool MatchesConfirmedRoom(MRUKRoom candidate) => candidate &&
             (candidate == room || (confirmedRoomId != Guid.Empty && candidate.Anchor.Uuid == confirmedRoomId));
 
+        // MRUK can retain its last world-lock state for a frame after OpenXR shuts down.
+        private bool HasNativeRoomTracking => mruk.IsWorldLockActive && OVRPlugin.initialized &&
+            OVRPlugin.GetNativeOpenXRSession() != 0;
+
         private MRUKRoom CurrentTrackedRoom()
         {
             if (!mruk || !rig || !rig.centerEyeAnchor || !rig.trackingSpace) return null;
@@ -98,9 +105,9 @@ namespace FloorFracture
             fixture = usingFixture;
             if (fixture && mruk.Rooms.Count == 1 && mruk.Rooms[0].FloorAnchors.Count <= 1) return mruk.Rooms[0];
 #endif
-            if (!fixture && !mruk.IsWorldLockActive) return null;
+            if (!fixture && !HasNativeRoomTracking) return null;
             var eye = rig.centerEyeAnchor.position;
-            return MrukFloorReader.FindContainingRoom(mruk.Rooms, mruk.GetCurrentRoom(),
+            return MrukFloorReader.FindContainingRoom(mruk.Rooms, fixture ? null : mruk.GetCurrentRoom(),
                 eye, TrackingFloorAtEye(eye), fixture);
         }
 
@@ -123,6 +130,7 @@ namespace FloorFracture
             OVRManager.InputFocusAcquired += OnTrackingAvailable;
             OVRManager.HMDMounted += OnTrackingAvailable;
             OVRManager.TrackingAcquired += OnTrackingAvailable;
+            ResumeDepth();
         }
 
         private void Start()
@@ -134,6 +142,35 @@ namespace FloorFracture
                 StartCoroutine(RecoverSimulatorPassthrough());
 #endif
             Retry();
+        }
+
+        private void ResumeDepth()
+        {
+            if (isActiveAndEnabled && depthProvider && !depthProvider.gameObject.activeSelf && pendingDepthStart == null &&
+                OpenXRRuntime.IsExtensionEnabled("XR_META_environment_depth") && EnvironmentDepthManager.IsSupported)
+                pendingDepthStart = StartCoroutine(EnableDepthAfterFirstFrame());
+        }
+
+        private void SuspendDepth()
+        {
+            if (pendingDepthStart != null) StopCoroutine(pendingDepthStart);
+            pendingDepthStart = null;
+            if (depthProvider) depthProvider.gameObject.SetActive(false);
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused) SuspendDepth();
+            else ResumeDepth();
+        }
+
+        private System.Collections.IEnumerator EnableDepthAfterFirstFrame()
+        {
+            // The provider starts fetching depth in onBeforeRender. OpenXR must be submitting frames first.
+            while (!OVRPlugin.hasVrFocus) yield return null;
+            yield return new WaitForEndOfFrame();
+            pendingDepthStart = null;
+            depthProvider.gameObject.SetActive(true);
         }
 
         private void Update()
@@ -187,6 +224,7 @@ namespace FloorFracture
 
         private void OnDisable()
         {
+            SuspendDepth();
             if (liveManager) liveManager.gameObject.SetActive(false);
             revision++;
             debugView?.Show(false, default);
@@ -229,18 +267,6 @@ namespace FloorFracture
                 return;
             }
             LoadRoom(false, room != null);
-        }
-
-        public bool IsClearStandFootprint(Vector3 center, float radius)
-        {
-            if (Status != RoomPlacementStatus.Confirmed || acceptedSurvey == null || !IsRoomLocalized ||
-                !FloorGeometry.Finite(center.x) || !FloorGeometry.Finite(center.z) ||
-                !FloorGeometry.Finite(radius) || radius <= 0f) return false;
-            float half = radius + FloorSurvey.FootMargin;
-            return acceptedSurvey.Check(new[] {
-                new Vector2(center.x - half, center.z - half), new Vector2(center.x + half, center.z - half),
-                new Vector2(center.x + half, center.z + half), new Vector2(center.x - half, center.z + half)
-            }) == TileClearance.Clear;
         }
 
         public void RequestSpaceSetup()
@@ -295,7 +321,6 @@ namespace FloorFracture
 #endif
             awaitingSavedFloor = false;
             ScannedSpawnCount = 0;
-            acceptedSurvey = null;
             surveys = null;
             meshSnapshot = null;
             CancellationToken lifetime = destroyCancellationToken;
@@ -481,7 +506,7 @@ namespace FloorFracture
 
         private string LocalizationMessage()
         {
-            if (rig && rig.centerEyeAnchor && rig.trackingSpace && mruk.IsWorldLockActive)
+            if (rig && rig.centerEyeAnchor && rig.trackingSpace && HasNativeRoomTracking)
             {
                 var eye = rig.centerEyeAnchor.position;
                 float height = TrackingFloorAtEye(eye);

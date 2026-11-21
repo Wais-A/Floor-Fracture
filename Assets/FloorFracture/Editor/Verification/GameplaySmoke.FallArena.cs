@@ -126,7 +126,6 @@ namespace FloorFracture.Editor
                 {
                     camera.CopyFrom(game.Rig.centerEyeAnchor.GetComponent<Camera>());
                     camera.enabled = false;
-                    camera.stereoTargetEye = StereoTargetEyeMask.None;
                     camera.GetUniversalAdditionalCameraData().allowXRRendering = false;
                     camera.clearFlags = CameraClearFlags.SolidColor;
                     camera.backgroundColor = Color.black;

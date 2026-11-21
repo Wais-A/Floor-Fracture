@@ -22,8 +22,12 @@ public class AttributeBasedFieldGenerator : IIncrementalGenerator
             .Select((cls, _) => cls!)
             .Collect();
 
-        context.RegisterSourceOutput(classDeclarations, GenerateLayerClasses);
-        context.RegisterSourceOutput(classDeclarations, LayerModelLoader.GenerateModelLoader);
+        context.RegisterSourceOutput(classDeclarations, (spc, operators) =>
+        {
+            if (operators.IsEmpty) return;
+            GenerateLayerClasses(spc, operators);
+            LayerModelLoader.GenerateModelLoader(spc, operators);
+        });
     }
 
     // generate the Layer.g.cs file with the partial layer classes with the generated methods for all the ops

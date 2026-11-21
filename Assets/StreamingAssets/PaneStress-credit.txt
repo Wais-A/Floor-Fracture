@@ -1,0 +1,4 @@
+PaneStress.wav uses a trimmed, filtered, and level-adjusted excerpt of “Breaking_Ice_01.wav” by dheming.
+Source: https://freesound.org/people/dheming/sounds/268023/
+License: Creative Commons Attribution 4.0 International (CC BY 4.0)
+https://creativecommons.org/licenses/by/4.0/

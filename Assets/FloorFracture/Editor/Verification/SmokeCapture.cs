@@ -25,7 +25,6 @@ namespace FloorFracture.Editor
                 var camera = holder.AddComponent<Camera>();
                 camera.CopyFrom(game.Rig.centerEyeAnchor.GetComponent<Camera>());
                 camera.enabled = false;
-                camera.stereoTargetEye = StereoTargetEyeMask.None;
                 camera.clearFlags = CameraClearFlags.SolidColor;
                 camera.backgroundColor = Color.black;
                 camera.fieldOfView = view == SmokeView.CenterEye ? 78f : 66f;
@@ -86,7 +85,7 @@ namespace FloorFracture.Editor
 
                 if (name == "classic-player-view")
                 {
-                    CheckFraming(camera, game.ScoreDisplay.GetComponent<MeshRenderer>());
+                    CheckFraming(camera, game.BoardView.Board.Find("Occupied square").GetComponent<MeshRenderer>());
                 }
 
                 var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
