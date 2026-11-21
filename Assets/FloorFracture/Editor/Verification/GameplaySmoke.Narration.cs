@@ -66,11 +66,11 @@ namespace FloorFracture.Editor
             Choose("Preview loss"); game.Ending.Skip(); yield return Stage(GameStage.Results);
             Require(game.Ending.LastWasSkipped && !speaker.clip && body.text.Contains(OfflineNarration.ResultsCaption),
                 "Skipping a fall should show the Results caption silently.");
-            Choose("Restart"); Choose("Main menu"); Choose("Development"); Choose("Preview loss");
+            Choose("Retry Level"); Choose("Main menu"); Choose("Development"); Choose("Preview loss");
             yield return Stage(GameStage.Results,8);
             Require(!game.Ending.LastWasSkipped,"The previous Skip carried into a new fall.");
             ExpectSpoken(GameStage.Results,OfflineNarration.ResultsCaption);
-            Choose("Restart");
+            Choose("Retry Level");
             Require(!speaker.clip && !speaker.isPlaying,"Restart overlapped the Results voice with the new game.");
             game.Ending.SetDevelopmentEnding(-1);
             Choose("Main menu"); Choose("Settings"); Choose("Narration");

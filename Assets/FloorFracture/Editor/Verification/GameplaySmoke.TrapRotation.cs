@@ -61,7 +61,7 @@ namespace FloorFracture.Editor
                 Require(game.Ending.LastEndingName == EndingNames[forcedPreview] && !PlayerPrefs.HasKey(key),
                     "A development preview drew from the real level bag or ignored its selection.");
                 game.Ending.Skip(); yield return Stage(GameStage.Results);
-                Choose("Quit to main menu");
+                Choose("Main menu");
 
                 var order = new List<int>();
                 Choose("Start"); StandOn(MiddlePane); Choose("Start wave");
@@ -148,7 +148,7 @@ namespace FloorFracture.Editor
                         game.Ending.LastEndingName == EndingNames[order[i]] && PlayerPrefs.GetString(key) == saved,
                         "A confirmed loss switched away from the trap shown through the hole or consumed another draw.");
                     game.Ending.Skip(); yield return Stage(GameStage.Results);
-                    Choose("Quit to main menu");
+                    Choose("Main menu");
                 }
                 report.endingOrder = order.Select(slot => EndingNames[slot]).ToList();
                 Record(waves + " survived waves kept one destination throughout each of six levels: " + string.Join(", ",report.endingOrder) +

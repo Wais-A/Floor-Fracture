@@ -148,7 +148,7 @@ namespace FloorFracture.Editor
                 Require(!source.isPlaying && !source.clip, trial + " left audio on " + name);
             }
             VerifyFloorVisibility(false);
-            Choose("Restart");
+            Choose("Retry Level");
             yield return Stage(GameStage.Ready);
             Require(game.Level == 1 && game.WaveNumber == 1 && game.State.WavesSurvived == 0 &&
                 game.State.ActiveWave == null && game.BoardView.gameObject.activeSelf, trial + " left an incomplete board reset.");
@@ -536,7 +536,7 @@ namespace FloorFracture.Editor
             }
             Require(game.Stage == GameStage.Results, "The ending did not reach its results screen.");
             witness.Finish();
-            Choose("Restart"); yield return Stage(GameStage.Ready);
+            Choose("Retry Level"); yield return Stage(GameStage.Ready);
             arena.VerifyReset();
             Record(reduced
                 ? ending + " reduced motion kept the chamber geometry stationary before contact and reached results."
