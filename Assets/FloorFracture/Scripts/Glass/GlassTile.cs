@@ -57,19 +57,19 @@ namespace FloorFracture
         {
             block.SetColor(ColorId,color); block.SetFloat(SheenId,sheen); r.SetPropertyBlock(block);
         }
-        public void ShowWarning(bool warn,double now,bool low)
+        public void ShowWarning(bool warn,double revealAge,bool low)
         {
             Initialize();
             if(!warn&&!lastWarning) return;
-            // Slow luminance modulation. The branching shape stays visible at both intensity settings.
-            float phase=(float)(now%10)*.8f;
-            float pulse=warn?Mathf.SmoothStep(0,1,.5f-.5f*Mathf.Cos(phase*2*Mathf.PI)):0;
+            // A single 0.36-second amber pulse leaves the cracks readable for the rest of the reveal.
+            float progress=Mathf.Clamp01((float)revealAge/.36f);
+            float pulse=warn && progress<1f ? Mathf.Sin(Mathf.PI*progress) : 0f;
             if(warn==lastWarning && low==lastLow && Mathf.Abs(pulse-lastPulse)<.025f) return;
             if (lastWarning != warn) frameFilter.sharedMesh=warn ? GlassGeometry.Rim : GlassGeometry.SafeRim;
             lastWarning=warn; lastLow=low; lastPulse=pulse; fracture.enabled=warn;
             ColorPart(frame,warn?Color.Lerp(Danger,Fire,low?.23f+pulse*.18f:.12f+pulse*.72f):Edge);
             if(warn) ColorPart(fracture,Color.Lerp(Danger,Fire,low?.40f:.36f+pulse*.46f));
-            Color tint=warn?new Color(.36f,.24f,.23f,.79f):Safe;
+            Color tint=warn ? Color.Lerp(new Color(.36f,.24f,.23f,.79f), new Color(1f,.56f,.13f,.90f),pulse*(low?.22f:.70f)) : Safe;
             ColorPart(pane,tint,.7f);
             if (body) ColorPart(body,tint,.7f);
         }

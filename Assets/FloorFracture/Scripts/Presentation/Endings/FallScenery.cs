@@ -9,6 +9,7 @@ internal sealed class FallScenery
         Theme = Shader.PropertyToID("_Theme"), Age = Shader.PropertyToID("_Age"),
         Reveal = Shader.PropertyToID("_Reveal"), Level = Shader.PropertyToID("_Level"),
         Motion = Shader.PropertyToID("_Motion"), Opacity = Shader.PropertyToID("_Opacity"),
+        SurfaceClock = Shader.PropertyToID("_SurfaceClock"), PassDistance = Shader.PropertyToID("_PassDistance"),
         Mouth = Shader.PropertyToID("_Mouth"), MouthRight = Shader.PropertyToID("_MouthRight");
     // Four seconds under gravity leaves more than three seconds of walls after a standing eye enters.
     internal const float ShaftDepth = 80f;
@@ -16,32 +17,39 @@ internal sealed class FallScenery
     // Below it the chamber opens out, preserving the view of the landing in flight.
     internal const float ThroatDepth = 18f;
     const float WideningPerMetre = .72f;
+    static readonly Color SandColor = new Color(.72f,.49f,.24f);
+    const float LineWidth = .14f;
+    // Allow for both eye offsets and pose updates between Update and stereo rendering.
+    const float EyeMargin = .08f;
+    static readonly int InteriorPlane = Shader.PropertyToID("_InteriorPlane");
     static readonly Color[] wallTints = {
-        new Color(.19f,.28f,.30f), new Color(.25f,.15f,.12f), new Color(.18f,.17f,.25f),
+        new Color(.19f,.28f,.30f), new Color(.25f,.15f,.12f), new Color(.17f,.13f,.09f),
         new Color(.18f,.19f,.26f), new Color(.44f,.31f,.19f), new Color(.26f,.40f,.53f)
     };
     static readonly Color[] skyTints = {
-        new Color(.018f,.049f,.060f), new Color(.040f,.019f,.014f), new Color(.027f,.019f,.048f),
+        new Color(.018f,.049f,.060f), new Color(.040f,.019f,.014f), new Color(.027f,.021f,.014f),
         new Color(.009f,.012f,.030f), new Color(.061f,.039f,.021f), new Color(.16f,.25f,.36f)
     };
 
     readonly Transform world;
-    readonly Material surfaceMaterial, backgroundMaterial, fadeMaterial;
+    readonly Material surfaceMaterial, backgroundMaterial, fadeMaterial, interiorMaterial, bubbleMaterial;
     readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
     readonly MaterialPropertyBlock waterProperties = new MaterialPropertyBlock();
-    readonly MeshRenderer walls, landmarks, background, floor, nativeWater, pillars, motes, opening;
-    MeshRenderer veil;
+    readonly MeshRenderer walls, landmarks, background, floor, nativeWater, pillars, motes;
+    MeshRenderer veil, interior;
     readonly List<Mesh> ownedMeshes = new List<Mesh>();
     readonly Mesh[] moteMeshes = new Mesh[6];
-    readonly Mesh boxMesh, crystalMesh, flameMesh;
+    readonly Mesh boxMesh;
     readonly GameObject splashPrefab, replacementFire;
     readonly Color sourceWaterColor;
     GameObject splash;
     FloorEnding kind;
     Transform head;
-    float eyeHeight, startRadius, radius;
+    float eyeHeight, startRadius, radius, surfaceStartTime;
+    internal float EyeHeight => eyeHeight;
     Vector3 mouthRight, entryWorld, entryLocal;
-    bool hasFloorApertures, stencilEnabled;
+    bool hasFloorApertures, stencilEnabled, fullyUnder;
+    float sandShade;
 
     internal FallScenery(Material waterOverride, GameObject splashOverride, GameObject fireOverride)
     {
@@ -52,9 +60,12 @@ internal sealed class FallScenery
         // Establish the sky's projection alpha before fading walls or the landing can write depth.
         backgroundMaterial = new Material(surfaceMaterial) { renderQueue = surfaceMaterial.renderQueue - 1 };
         fadeMaterial = new Material(Resources.Load<Shader>("Endings/ViewFade"));
+        interiorMaterial = new Material(fadeMaterial) { renderQueue = fadeMaterial.renderQueue - 2 };
+        bubbleMaterial = new Material(surfaceMaterial) { renderQueue = fadeMaterial.renderQueue - 1 };
+        bubbleMaterial.SetInt("_DepthTest",(int)CompareFunction.Always);
+        bubbleMaterial.SetInt("_DepthWrite",0);
         boxMesh = Own(FallMeshes.Box());
         Mesh disk = Own(FallMeshes.Disk());
-        crystalMesh = Own(FallMeshes.Spires(false)); flameMesh = Own(FallMeshes.Spires(true));
         walls = Part("Shaft walls", Own(FallMeshes.Shaft(ShaftDepth)), surfaceMaterial);
         landmarks = Part("Shaft landmarks", Own(FallMeshes.Landmarks(ShaftDepth)), surfaceMaterial);
         background = Part("Chamber darkness", boxMesh, backgroundMaterial);
@@ -67,10 +78,9 @@ internal sealed class FallScenery
             nativeWater = Part("Floor Zone water ripples", disk, native);
             if (native.HasProperty("_Color")) sourceWaterColor = native.GetColor("_Color");
         }
-        pillars = Part("Flames or crystals", crystalMesh, surfaceMaterial);
+        pillars = Part("Lava flames", Own(FallMeshes.Flames()), surfaceMaterial);
         motes = Part("Particles", null, surfaceMaterial);
-        opening = Part("Last light overhead", disk, surfaceMaterial);
-        veil = Part("View fade", boxMesh, fadeMaterial);
+        CreateView();
         splashPrefab = splashOverride ? splashOverride : Resources.Load<GameObject>("Endings/MetaFloorZone/prefabs/Splash");
         if (fireOverride)
         {
@@ -97,14 +107,25 @@ internal sealed class FallScenery
         return renderer;
     }
 
+    void CreateView()
+    {
+        veil = Part("View fade",boxMesh,fadeMaterial);
+        interior = Part("Submerged view",boxMesh,interiorMaterial);
+        interior.transform.SetParent(veil.transform,false);
+        interior.enabled = false;
+    }
+
     internal void Begin(Transform viewer, FloorEnding chosen, Vector3 center, Vector3 entry, float width,
         float yaw, float chamberRadius, bool throughOpenPanes)
     {
-        head = viewer; kind = chosen;
+        head = viewer; kind = chosen; surfaceStartTime = Time.time;
         world.SetPositionAndRotation(center, Quaternion.Euler(0,yaw,0));
         entryWorld = entry;
         entryLocal = world.InverseTransformPoint(entry);
         hasFloorApertures = throughOpenPanes;
+        fullyUnder = false;
+        sandShade = 1;
+        motes.sharedMaterial = kind == FloorEnding.Water ? bubbleMaterial : surfaceMaterial;
         eyeHeight = Mathf.Max(.25f, viewer.position.y-center.y);
         startRadius = Mathf.Max(.08f, width*.5f);
         radius = chamberRadius;
@@ -125,14 +146,14 @@ internal sealed class FallScenery
         pillars.transform.localScale = new Vector3(ringScale,1,ringScale);
         motes.transform.localScale = kind == FloorEnding.Sand ? pillars.transform.localScale : Vector3.one;
         motes.transform.localPosition = entryLocal;
-        pillars.GetComponent<MeshFilter>().sharedMesh = kind == FloorEnding.Lava ? flameMesh : crystalMesh;
-        if (kind != FloorEnding.Crystal)
+        if (kind != FloorEnding.TarPit)
         {
             if (!moteMeshes[(int)kind]) moteMeshes[(int)kind] = Own(FallMeshes.Motes(kind));
             motes.GetComponent<MeshFilter>().sharedMesh = moteMeshes[(int)kind];
         }
         world.gameObject.SetActive(true);
-        if (!veil) veil = Part("View fade",boxMesh,fadeMaterial);
+        if (!veil) CreateView();
+        interior.enabled = false;
         veil.transform.SetParent(head, false);
         veil.transform.localPosition = Vector3.zero;
         veil.transform.localRotation = Quaternion.identity;
@@ -141,7 +162,7 @@ internal sealed class FallScenery
     }
 
     // Returns the submersion factor at the viewer's actual height.
-    internal float Draw(float age, float progress, bool reduced, float travel, out bool entered)
+    internal float Draw(float age, float progress, float seconds, bool reduced, float travel, out bool entered, bool preview = false)
     {
         // In reduced motion, hold the preview in place until the comfort fade reaches black.
         bool tableau = reduced && age >= .32f;
@@ -161,52 +182,49 @@ internal sealed class FallScenery
         float surfaceY = tableau ? 0f : travel-ShaftDepth;
         Color wallColor = wallTints[(int)kind], sky = skyTints[(int)kind];
         float wallAlpha = 1, particleAlpha = Ease(0,.17f,progress);
-        float floorAlpha = 1, pillarsAlpha = 0, light = 0;
+        float floorAlpha = 1, pillarsAlpha = 0;
         int floorRole = 0;
         Color surfaceColor = wallColor*.70f;
-        float immersion = 0;
+        float surfaceAboveEye = world.position.y + surfaceY - head.position.y;
+        if (reduced) surfaceAboveEye = eyeHeight * (FallSequence.Burial(kind,seconds)-1);
+        float immersion = Ease(-.09f,.14f,surfaceAboveEye);
+        DrawInterior(age,seconds,surfaceAboveEye);
         switch (kind)
         {
             case FloorEnding.Water:
-                if (!reduced)
-                    surfaceY += (eyeHeight+.40f)*Ease(.07f,.79f,progress);
-                immersion = reduced ? Ease(.50f,.73f,progress) :
-                    Mathf.SmoothStep(0,1,Mathf.InverseLerp(-.09f,.14f,world.position.y+surfaceY-head.position.y));
                 floorRole = 2; surfaceColor = new Color(.035f,.20f,.22f);
-                particleAlpha *= immersion;
+                particleAlpha *= fullyUnder ? Ease(EyeMargin,EyeMargin+.18f,surfaceAboveEye) : 0;
                 break;
             case FloorEnding.Lava:
-                if (!reduced) surfaceY += Mathf.Max(0,eyeHeight-.75f)*Ease(.10f,.68f,progress);
                 floorRole = 3;
-                pillarsAlpha = Ease(0,.12f,progress);
+                pillarsAlpha = seconds > 0 ? .52f+.48f*Ease(0,.18f,seconds) : 0;
+                particleAlpha = pillarsAlpha;
                 break;
-            case FloorEnding.Crystal:
+            case FloorEnding.TarPit:
                 floorRole = 10;
-                pillarsAlpha = Ease(0,.10f,progress);
                 break;
             case FloorEnding.Space:
                 floorRole = 11;
-                wallAlpha = floorAlpha = 1-Ease(0,.15f,progress);
-                particleAlpha = Ease(0,.13f,progress)*(1-Ease(.78f,.97f,progress));
+                float exit = reduced ? Ease(0,.55f,seconds) : Ease(ShaftDepth-12,ShaftDepth,travel);
+                floorAlpha = 1-exit;
+                wallAlpha = 1-Ease(0,1.0f,seconds);
+                particleAlpha = exit*(1-Ease(2.8f,6.95f,seconds));
                 break;
             case FloorEnding.Sand:
-                if (!reduced) surfaceY += Mathf.Max(0,eyeHeight-.14f)*Ease(.06f,.79f,progress);
-                float lastLight = Ease(.62f,.87f,progress);
-                wallColor = Color.Lerp(wallColor, Color.black, lastLight);
-                sky = Color.Lerp(sky,Color.black,lastLight);
-                surfaceColor = Color.Lerp(new Color(.72f,.49f,.24f), Color.black,lastLight);
-                particleAlpha *= 1-lastLight;
+                surfaceColor = SandColor;
                 floorRole = 4;
-                light = Ease(.04f,.30f,progress)*(1-Ease(.84f,.99f,progress));
                 break;
             case FloorEnding.Snow:
                 floorRole = 12;
-                sky = Color.Lerp(sky,new Color(.53f,.66f,.77f),Ease(.06f,.64f,progress));
+                particleAlpha = seconds > 0 ? .32f+.68f*Ease(0,.8f,seconds) : 0;
+                sky = Color.Lerp(sky,new Color(.73f,.83f,.93f),Ease(0,2.8f,seconds));
                 break;
         }
         float level = world.position.y + surfaceY;
         float motion = reduced ? .10f : 1;
         properties.Clear();
+        properties.SetFloat(SurfaceClock,preview ? -1 : surfaceStartTime+age);
+        properties.SetFloat(PassDistance,reduced ? 0 : Mathf.Max(0,travel-ShaftDepth+12f));
         properties.SetFloat(Theme,(int)kind); properties.SetFloat(Age,age);
         properties.SetFloat(Reveal,progress); properties.SetFloat(Level,level); properties.SetFloat(Motion,motion);
         entered = reduced ? tableau : rimY >= head.position.y;
@@ -214,18 +232,18 @@ internal sealed class FallScenery
         properties.SetVector(MouthRight,new Vector4(mouthRight.x,mouthRight.z,0,tableau || hasFloorApertures ? 0 : 1));
         // The shaft stays lit. Only the view past its walls gradually loses the room light.
         float overhead = tableau ? 1 : Ease(.15f,26f,rimY-head.position.y);
-        Paint(background,kind == FloorEnding.Space ? 8 : 0,sky,overhead);
+        Paint(background,kind == FloorEnding.Space ? 8 : 0,sky,fullyUnder ? 0 : overhead);
         walls.transform.localPosition = landmarks.transform.localPosition = Vector3.up*top;
-        Paint(walls,1,wallColor,wallAlpha);
+        Paint(walls,1,wallColor,fullyUnder ? 0 : wallAlpha);
         Color ledgeColor = Color.Lerp(wallColor,new Color(.84f,.88f,.85f),.64f);
-        Paint(landmarks,9,ledgeColor,wallAlpha);
+        Paint(landmarks,9,ledgeColor,fullyUnder ? 0 : wallAlpha);
         floor.transform.localPosition = new Vector3(0,surfaceY,0);
-        Paint(floor,floorRole,surfaceColor,floorAlpha);
+        Paint(floor,floorRole,surfaceColor,fullyUnder ? 0 : floorAlpha);
         if (nativeWater)
         {
             // The same rippling surface stays visible all the way from the glass to impact.
             // The transparent Floor Zone layer adds close-up detail as the splash starts.
-            nativeWater.enabled = kind == FloorEnding.Water && progress > 0;
+            nativeWater.enabled = kind == FloorEnding.Water && progress > 0 && !fullyUnder;
             nativeWater.transform.localPosition = floor.transform.localPosition + Vector3.up*.009f;
             if (nativeWater.enabled && nativeWater.sharedMaterial.HasProperty("_Color"))
             {
@@ -236,18 +254,59 @@ internal sealed class FallScenery
             }
         }
         pillars.transform.localPosition = entryLocal + Vector3.up*(kind == FloorEnding.Lava ? surfaceY-.11f : 0);
-        Paint(pillars,kind == FloorEnding.Lava ? 7 : 5,Color.white, pillarsAlpha);
+        Paint(pillars,7,Color.white,fullyUnder ? 0 : pillarsAlpha);
         if (replacementFire)
         {
-            bool lit = kind == FloorEnding.Lava && pillarsAlpha > .20f;
+            bool lit = kind == FloorEnding.Lava && pillarsAlpha > .20f && !fullyUnder;
             if (lit != replacementFire.activeSelf) replacementFire.SetActive(lit);
             replacementFire.transform.localPosition = entryLocal + new Vector3(1.25f,surfaceY,0);
         }
-        Paint(motes,6,Color.white,kind != FloorEnding.Crystal ? particleAlpha : 0);
-        opening.transform.localPosition = entryLocal + new Vector3(0,eyeHeight+3.35f,0);
-        opening.transform.localScale = Vector3.one * Mathf.Lerp(1.05f,.28f,Ease(.4f,.88f,progress));
-        Paint(opening,0,new Color(1,.83f,.54f),light);
+        if (fullyUnder && splash && splash.activeSelf) splash.SetActive(false);
+        if (kind == FloorEnding.TarPit || (fullyUnder && kind != FloorEnding.Water)) particleAlpha = 0;
+        Paint(motes,6,Color.white,particleAlpha);
         return immersion;
+    }
+
+    void DrawInterior(float age, float seconds, float surfaceAboveEye)
+    {
+        if (seconds <= 0 || kind == FloorEnding.Space || kind == FloorEnding.Snow) return;
+        if (!fullyUnder && surfaceAboveEye < -LineWidth-EyeMargin)
+        {
+            interior.enabled = false;
+            return;
+        }
+        if (!interior.enabled && kind == FloorEnding.Sand)
+        {
+            Vector3 point = head.position;
+            sandShade = .77f + .23f*Mathf.Sin(point.x*13 + Mathf.Sin(point.z*3.1f)*2.2f);
+        }
+        fullyUnder |= surfaceAboveEye >= EyeMargin;
+        Color color = Color.black;
+        float brightness = 1;
+        float depth = Mathf.Max(0,surfaceAboveEye)/eyeHeight;
+        switch (kind)
+        {
+            case FloorEnding.Sand:
+                color = SandColor;
+                brightness = sandShade*Mathf.Exp(-1.4f*depth);
+                break;
+            case FloorEnding.Lava:
+                color = new Color(.48f,.019f,.007f);
+                brightness = Mathf.Exp(-.5f*depth);
+                break;
+            case FloorEnding.Water:
+                color = new Color(.032f,.24f,.29f);
+                brightness = Mathf.Exp(-.22f*depth);
+                break;
+        }
+        properties.Clear();
+        properties.SetColor(Tint,color);
+        properties.SetFloat(Age,age);
+        properties.SetFloat("_Brightness",brightness);
+        properties.SetVector(InteriorPlane,new Vector4(head.position.y+surfaceAboveEye,LineWidth,
+            fullyUnder ? 1 : 0,kind == FloorEnding.Water ? 1 : 0));
+        interior.SetPropertyBlock(properties);
+        interior.enabled = true;
     }
 
     void Paint(MeshRenderer renderer, int role, Color tint, float opacity)
@@ -308,6 +367,7 @@ internal sealed class FallScenery
             veil.enabled = false;
             if (world) veil.transform.SetParent(world,false);
         }
+        if (interior) interior.enabled = false;
         if (splash) { splash.SetActive(false); }
         if (replacementFire) replacementFire.SetActive(false);
         if (world) world.gameObject.SetActive(false);
@@ -321,6 +381,7 @@ internal sealed class FallScenery
         if (world) Object.Destroy(world.gameObject);
         else if (veil) Object.Destroy(veil.gameObject);
         Object.Destroy(surfaceMaterial); Object.Destroy(backgroundMaterial); Object.Destroy(fadeMaterial);
+        Object.Destroy(interiorMaterial); Object.Destroy(bubbleMaterial);
         foreach (Mesh owned in ownedMeshes) Object.Destroy(owned);
     }
 

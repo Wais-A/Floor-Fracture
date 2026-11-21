@@ -7,6 +7,7 @@ namespace FloorFracture.Tests
 {
     public sealed class BoardRulesEditorTests
     {
+        [Test] public void ScalableRectanglesAndSparseLayouts() => BoardRuleChecks.VariableSizeLayouts();
         [Test] public void CoordinatesAndSeams() => BoardRuleChecks.CoordinatesAndSeams();
         [Test] public void PlantedStanceAndGapEdges() => BoardRuleChecks.PlantedStanceAndGapEdges();
         [Test] public void DeadlinesAndPause() => BoardRuleChecks.DeadlinesAndPause();
@@ -41,6 +42,18 @@ namespace FloorFracture.Tests
         [TestCase(8, 9)]
         [TestCase(3, 22)]
         [TestCase(33, 2)]
+        [TestCase(65, 3)]
+        public void RectangularResetFitsTheEntireBoard(int columns, int rows)
+        {
+            var board = new BoardState(2, 2, 379);
+            board.Reset(columns, rows, 379);
+            int last = columns * rows - 1;
+            Assert.That(board.Layout.PaneCount, Is.EqualTo(last + 1));
+            Assert.That(board.IsIntact(last), Is.True);
+            Assert.That(board.BeginWave(last, 1, 1, 0).IsBreaking(last), Is.True);
+        }
+
+        [TestCase(2, 1)]
         [TestCase(1, 32)]
         [TestCase(2, int.MaxValue)]
         public void RejectsUnsupportedDimensionsBeforeResettingTheBoard(int columns, int rows)

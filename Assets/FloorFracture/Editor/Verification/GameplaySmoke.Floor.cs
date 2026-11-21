@@ -57,12 +57,12 @@ namespace FloorFracture.Editor
             try
             {
                 var board = probe.AddComponent<GlassBoardView>();
-                var state = new BoardState(3, 3, 379);
+                var state = new BoardState(9, 9, 379);
                 board.Build(state, Pose.identity);
                 var mesh = probe.transform.Find("Opening stencil").GetComponent<MeshFilter>().sharedMesh;
                 var fragments = probe.transform.Find("Falling fragments");
-                foreach (var cells in new[] { new[] { 0 }, new[] { 0, 1 }, new[] { 0, 4 },
-                    new[] { 0, 1, 3 }, new[] { 0, 1, 2, 3, 5, 6, 7, 8 } })
+                foreach (var cells in new[] { new[] { 0 }, new[] { 0, 1 }, new[] { 0, 10 },
+                    new[] { 0, 1, 9 }, new[] { 0, 1, 2, 9, 11, 18, 19, 20 }, new[] { 0, 64, 80 } })
                 {
                     board.Draw(null, default, Now, false);
                     foreach (int cell in cells) board.RevealLossAperture(cell);
@@ -85,7 +85,31 @@ namespace FloorFracture.Editor
                     Mathf.Approximately(sides.GetComponent<Renderer>().bounds.size.x,sides.GetComponent<Renderer>().bounds.size.y) &&
                     probe.transform.Find("Sliding pane/Glass sides and bottom").GetComponent<MeshFilter>().sharedMesh == tile,
                     "The fitted and sliding glass must have four outward sides and a bottom at one block width.");
-                Record("Single, adjoining, diagonal, L-shaped and ring-shaped breaks opened flat apertures with exposed glass and no perimeter lining.");
+                var wave=state.BeginWave(80,1,1,10);
+                var danger=probe.transform.Find("Glass 8, 8");
+                var safe=probe.transform.Find($"Glass {wave.GuaranteedTile%9}, {wave.GuaranteedTile/9}");
+                var block=new MaterialPropertyBlock();
+                Color Surface(Transform tile)
+                {
+                    tile.Find("Smoky pane").GetComponent<Renderer>().GetPropertyBlock(block);
+                    return block.GetColor("_Color");
+                }
+                foreach (bool gentle in new[] {false,true})
+                {
+                    board.Draw(wave,default,10,gentle);
+                    Color start=Surface(danger);
+                    board.Draw(wave,default,10.18,gentle);
+                    Color peak=Surface(danger);
+                    Require(peak.r>start.r+.08f && Surface(safe)==GlassTile.Safe,"The single amber pulse missed its target pane.");
+                    if (gentle) Require(peak.r<.60f,"Gentle warning went as bright as the standard pulse.");
+                    board.Draw(wave,default,10.70,gentle);
+                    Require(Surface(danger)==start && danger.Find("Fissures").GetComponent<Renderer>().enabled,
+                        "The pulse continued after its initial flash or cracks disappeared early.");
+                    board.Draw(wave,default,11.5,gentle);
+                    Require(Surface(danger)==Surface(safe) && !danger.Find("Fissures").GetComponent<Renderer>().enabled,
+                        "The end of the reveal left a color or crack clue on the dangerous pane.");
+                }
+                Record("A 9 × 9 board rendered distinct apertures at positions 0, 64 and 80, plus adjoining, diagonal, L-shaped and ring-shaped breaks.");
             }
             finally { Object.Destroy(probe); }
         }

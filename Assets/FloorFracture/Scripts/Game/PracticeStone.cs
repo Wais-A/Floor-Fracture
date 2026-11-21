@@ -22,6 +22,9 @@ namespace FloorFracture
         readonly bool[] simulatedSelection = new bool[2];
 #endif
         float releaseTime;
+        float? pausedAt;
+        bool stoneWasVisible;
+        Vector3 pausedVelocity, pausedSpin;
         const float Radius=.045f;
         public Rigidbody Body => stone;
 
@@ -48,8 +51,30 @@ namespace FloorFracture
         }
         public void End()
         {
-            onLanding=null;
+            onLanding=null; pausedAt=null;
             if(stone) stone.gameObject.SetActive(false);
+        }
+        internal void SetMenuPaused(bool paused)
+        {
+            if (!stone || paused==pausedAt.HasValue) return;
+            if (paused)
+            {
+                pausedAt=Time.unscaledTime;
+                stoneWasVisible=stone.gameObject.activeSelf;
+                pausedVelocity=stone.linearVelocity;
+                pausedSpin=stone.angularVelocity;
+                stone.gameObject.SetActive(false);
+                return;
+            }
+            releaseTime+=Time.unscaledTime-pausedAt.Value;
+            pausedAt=null;
+            if (state==StoneState.Held || state==StoneState.Returning) { ReturnStone(); return; }
+            stone.gameObject.SetActive(stoneWasVisible);
+            if (stoneWasVisible && !stone.isKinematic)
+            {
+                stone.linearVelocity=pausedVelocity;
+                stone.angularVelocity=pausedSpin;
+            }
         }
         public void ReturnStone()
         {
@@ -75,7 +100,7 @@ namespace FloorFracture
         }
         void OnPointer(PointerEvent evt)
         {
-            if(onLanding==null||!stone.gameObject.activeInHierarchy||state==StoneState.Returning||state==StoneState.Hit) return;
+            if(pausedAt.HasValue||onLanding==null||!stone.gameObject.activeInHierarchy||state==StoneState.Returning||state==StoneState.Hit) return;
             if(evt.Type==PointerEventType.Select)
             {
                 state=StoneState.Held; stone.useGravity=true;
@@ -115,7 +140,7 @@ namespace FloorFracture
 
         void OnNativeThrow(Vector3 velocity,Vector3 angularVelocity)
         {
-            if(onLanding==null||(state!=StoneState.Held&&state!=StoneState.Flying)||stone.isKinematic) return;
+            if(pausedAt.HasValue||onLanding==null||(state!=StoneState.Held&&state!=StoneState.Flying)||stone.isKinematic) return;
             ObserveHeldPose();
             if(lastPoseTime-stillSince<.25) return;
             // ISDK excludes identical positions from its velocity history. A player
@@ -130,7 +155,7 @@ namespace FloorFracture
         // into the prefab so the SDK transformer and grab/release lifecycle still run.
         void Update()
         {
-            if(onLanding==null||!stone.gameObject.activeInHierarchy||!input.EditorSimulatesControllers||state==StoneState.Hit||state==StoneState.Returning) return;
+            if(pausedAt.HasValue||onLanding==null||!stone.gameObject.activeInHierarchy||!input.EditorSimulatesControllers||state==StoneState.Hit||state==StoneState.Returning) return;
             for(int i=0;i<2;i++)
             {
                 bool left=i==0; var hand=input.Grip(left); if(!hand) continue;
@@ -161,7 +186,7 @@ namespace FloorFracture
         void OnApplicationFocus(bool focus) { if(!focus&&state==StoneState.Held) state=StoneState.Returning; }
         void FixedUpdate()
         {
-            if(onLanding==null||!stone||!surface) return;
+            if(pausedAt.HasValue||onLanding==null||!stone||!surface) return;
             if(state==StoneState.Held&&!input.Tracked) state=StoneState.Returning;
             if(state==StoneState.Returning)
             {

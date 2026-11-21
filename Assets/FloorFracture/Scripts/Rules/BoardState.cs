@@ -7,7 +7,7 @@ namespace FloorFracture
 
     public sealed class BoardState
     {
-        public const int MinAxis = 2, MaxPanes = 64, MaxAxis = MaxPanes / MinAxis;
+        public const int MinAxis = 2, MaxAxis = int.MaxValue / MinAxis;
         public const float CompactMinPitch = 0.40f, MinPitch = 0.50f, MaxPitch = 0.67f;
         public const float PaneHalfPitch = .484f;
         public float Pitch { get; private set; }
@@ -22,20 +22,20 @@ namespace FloorFracture
         public TileSample CurrentSample => tracker.Current;
         public bool BreaksApplied { get; private set; }
         public WaveLossReason LastLoss { get; private set; }
-        internal ulong StationaryMask { get; private set; }
-        internal ulong FullMask => Layout.Mask;
+        internal int IntactCount { get; private set; }
+        private bool[] stationary;
 
         private readonly PlayerTileTracker tracker = new PlayerTileTracker();
-        private readonly float[] columnEdges = new float[MaxPanes + 1], rowEdges = new float[MaxPanes + 1];
-        private int regularWavesSurvived;
+        private float[] columnEdges, rowEdges;
+        private int advancedWavesSurvived;
         private bool levelEnded;
 
         public BoardState(int width, int height, int seed, float pitch = MinPitch) { Reset(width, height, seed, pitch); }
         public BoardState(BoardLayout layout, int seed, float pitch) { Reset(layout, seed, pitch); }
 
-        // Each pane occupies one bit. A long, narrow rectangle can use all 64 bits.
+        // A row-major tile index and its rectangular cell count must both fit in an int.
         public static int MaxRowsFor(int columns) =>
-            columns >= MinAxis && columns <= MaxAxis ? MaxPanes / columns : 0;
+            columns >= MinAxis && columns <= MaxAxis ? int.MaxValue / columns : 0;
 
         public void Reset(int width, int height, int seed, float pitch = MinPitch)
         {
@@ -54,15 +54,16 @@ namespace FloorFracture
             Pitch = pitch;
             Seed = seed;
             WavesSurvived = 0;
-            regularWavesSurvived = 0;
-            SetEdges(columnEdges, Width, pitch);
-            SetEdges(rowEdges, Height, pitch);
+            advancedWavesSurvived = 0;
+            columnEdges = Edges(Width, pitch);
+            rowEdges = Edges(Height, pitch);
             RebuildLevel();
         }
 
         public void RebuildLevel()
         {
-            StationaryMask = FullMask;
+            stationary = null;
+            IntactCount = Layout.PaneCount;
             ActiveWave = null;
             Slider = null;
             levelEnded = false;
@@ -72,7 +73,7 @@ namespace FloorFracture
         }
 
         public bool IsIntact(int index) =>
-            index >= 0 && index < Count && (StationaryMask & (1UL << index)) != 0;
+            stationary == null ? Layout.Contains(index) : (uint)index < (uint)stationary.Length && stationary[index];
 
         public Vector2 Center(int index)
         {
@@ -87,39 +88,33 @@ namespace FloorFracture
             return Layout.HasPane(x, z) ? z * Width + x : -1;
         }
 
-        private static void SetEdges(float[] edges, int length, float pitch)
+        private static float[] Edges(int length, float pitch)
         {
             // Store seam coordinates at the same single precision as tracked Vector2
             // poses. Some Mono builds retain extra precision in an inline comparison.
+            var edges = new float[length + 1];
             for (int i = 0; i <= length; ++i) edges[i] = (i - length * 0.5f) * pitch;
+            return edges;
         }
 
         private static int CellOnAxis(float value, float[] edges, int length)
         {
             if (!(value >= edges[0] && value < edges[length])) return -1;
-            for (int i = 1; i < length; ++i)
-                if (value < edges[i]) return i - 1;
-            return length - 1;
-        }
-
-        internal ulong NeighborMask(int tile) => AdjacentMask(1UL << tile);
-
-        internal ulong SideNeighbors(int tile, bool horizontalLane)
-        {
-            ulong bit = 1UL << tile;
-            ulong vertical = (bit >> Width) | (bit << Width);
-            return NeighborMask(tile) & (horizontalLane ? vertical : ~vertical);
+            int low = 0, high = length;
+            while (high - low > 1)
+            {
+                int mid = low + (high - low) / 2;
+                if (value < edges[mid]) high = mid;
+                else low = mid;
+            }
+            return low;
         }
 
         public bool CanStepFrom(int from, int to) =>
-            (uint)to < (uint)Count && (uint)from < (uint)Count && (StepMask(from) & (1UL << to)) != 0;
+            Slider != null && Slider.Locked && from == Slider.Tile ? Slider.CanExitTo(this, to) : Neighbors(from, to);
 
-        internal ulong StepMask(int from) =>
-            Slider != null && Slider.Locked && from == Slider.Tile ? Slider.ExitMask(this) : NeighborMask(from);
-
-        internal ulong AdjacentMask(ulong group) => Layout.Adjacent(group);
-
-        public bool Neighbors(int a, int b) => (uint)a < (uint)Count && (uint)b < (uint)Count && (NeighborMask(a) & (1UL << b)) != 0;
+        public bool Neighbors(int a, int b) => Layout.Contains(a) && Layout.Contains(b) &&
+            Math.Abs(a % Width - b % Width) + Math.Abs(a / Width - b / Width) == 1;
 
         public TileSample Sample(Vector2 localXZ, bool tracked, double now)
         {
@@ -137,7 +132,7 @@ namespace FloorFracture
             if (!IsIntact(startingTile) && !(Slider != null && Slider.Locked && Slider.Tile == startingTile))
                 throw new ArgumentException("The start must be supported by glass.", nameof(startingTile));
 
-            var plan = WavePlanner.Plan(this, startingTile, level, waveNumber, regularWavesSurvived, now);
+            var plan = WavePlanner.Plan(this, startingTile, level, waveNumber, advancedWavesSurvived, now);
             if (plan.NewSliderTile >= 0)
                 Slider = new SlidingPane(this, plan.NewSliderTile, plan.OtherSliderHole, now);
             ActiveWave = plan;
@@ -190,7 +185,8 @@ namespace FloorFracture
             if (!atDeadline) return WaveResult.Pending;
 
             bool survived = sample.Kind == SupportKind.Glass && wave.IsSafe(sample.Index);
-            StationaryMask = wave.StationaryMask;
+            stationary = wave.Stationary;
+            IntactCount = wave.StationarySafe.Count;
             if (Slider != null && wave.IsBreaking(Slider.Tile)) Slider = null;
             BreaksApplied = true;
             ActiveWave = null;
@@ -208,7 +204,7 @@ namespace FloorFracture
                 levelEnded = true;
                 return WaveResult.LevelCleared;
             }
-            ++regularWavesSurvived;
+            if (wave.Level >= 2) ++advancedWavesSurvived;
             return WaveResult.Survived;
         }
 

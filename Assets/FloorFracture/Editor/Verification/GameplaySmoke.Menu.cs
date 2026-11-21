@@ -9,6 +9,81 @@ namespace FloorFracture.Editor
 {
     public static partial class GameplaySmoke
     {
+        // Feed Meta's public button-state buffers through the same GetDown path used on Quest.
+        private static void MenuInput(OVRInput.OVRControllerBase source, bool alreadyHeld=false)
+        {
+            var devices=OVRInput.controllers;
+            try
+            {
+                source.previousState.Buttons=alreadyHeld ? (uint)OVRInput.RawButton.Start : 0;
+                source.currentState.Buttons=(uint)OVRInput.RawButton.Start;
+                OVRInput.controllers=new System.Collections.Generic.List<OVRInput.OVRControllerBase> { source };
+                game.SendMessage("Update");
+            }
+            finally { OVRInput.controllers=devices; }
+        }
+
+        private static IEnumerator VerifyMenuPauseAndQuit()
+        {
+            var touch=new OVRInput.OVRControllerTouch();
+            var hands=new OVRInput.OVRControllerHands();
+            var fit=game.Room.Placement;
+            Choose("Start"); StandOn(MiddlePane); Choose("Start wave");
+            yield return Delay(.24);
+            var wave=game.State.ActiveWave;
+            var readout=game.ScoreDisplay;
+            string remaining=readout.text;
+            Vector3 mountedAt=readout.transform.position;
+            Quaternion mountedFacing=readout.transform.rotation;
+            var warned=game.BoardView.Board.Find($"Glass {wave.StartingTile%game.State.Width}, {wave.StartingTile/game.State.Width}/Fissures").GetComponent<Renderer>();
+            MenuInput(touch);
+            yield return Stage(GameStage.Paused);
+            MenuInput(touch,true);
+            Require(game.Stage==GameStage.Paused && game.Panel.Visible,"Holding Menu dismissed the pause screen.");
+            yield return Delay(wave.Duration+.15);
+            MenuInput(hands);
+            yield return Stage(GameStage.Countdown);
+            yield return Frames(2);
+            Require(game.State.ActiveWave==wave && readout.text==remaining && !game.Panel.Visible,
+                "The controller/hand pause consumed time or replaced the active wave.");
+            Require(warned.enabled && readout.transform.position==mountedAt && readout.transform.rotation==mountedFacing,
+                "Pausing during the reveal moved the clock or hid the cracks early.");
+            yield return Wait(()=>game.GameplayTime>wave.RevealEndsAt+.10,"warning to clear",3);
+            MenuInput(hands);
+            yield return Delay(.4);
+            MenuInput(touch);
+            yield return Frames(2);
+            Require(game.State.ActiveWave==wave && !warned.enabled && readout.text.Contains("RECALL"),
+                "Resuming during recall replayed the reveal.");
+            MenuInput(hands);
+            yield return Stage(GameStage.Paused);
+            yield return RayChoose(2,false);
+            yield return Stage(GameStage.Welcome);
+
+            Choose("Development"); game.Ending.SetDevelopmentEnding(0); Choose("Preview loss");
+            yield return Stage(GameStage.Fall); yield return Delay(1.05);
+            var walls=GameObject.Find("Fall chamber").transform.Find("Shaft walls");
+            MenuInput(hands);
+            var paused=walls.position;
+            yield return Delay(.35);
+            Require(game.Stage==GameStage.Paused && !walls.gameObject.activeInHierarchy &&
+                walls.position==paused,"Hand Menu failed to freeze and conceal the fall.");
+            yield return RayChoose(1,true);
+            yield return Stage(GameStage.Fall); yield return Frames(3);
+            Require(walls.gameObject.activeInHierarchy && walls.position.y>=paused.y && walls.position.y-paused.y<1.5f,
+                "Resuming from the panel jumped ahead in the fall.");
+            game.Ending.Skip(); yield return Stage(GameStage.Results);
+            yield return RayChoose(2,false);
+            yield return Stage(GameStage.Welcome);
+            Require(game.Panel.Visible && !game.Ending.IsPlaying && game.BoardView.gameObject.activeInHierarchy &&
+                game.State.ActiveWave==null && game.State.WavesSurvived==0 && game.Level==1 &&
+                game.Room.Placement.Equals(fit),"Results Quit did not restore the main menu on the same floor.");
+            game.Ending.SetDevelopmentEnding(-1);
+            Choose("Start"); StandOn(MiddlePane); Choose("Start wave"); yield return Stage(GameStage.Countdown);
+            MenuInput(touch); Choose("Main menu"); yield return Stage(GameStage.Welcome);
+            Record("Meta Touch and hand Menu edges paused and resumed the same countdown. Holding Menu kept it paused. The hand menu froze a fall, and the panel resumed it. Results Quit returned to Welcome and started a fresh playable wave on the same floor.");
+        }
+
         private static IEnumerator VerifySettingsPreviewAndVolume()
         {
             var oldHead = head;
@@ -64,7 +139,7 @@ namespace FloorFracture.Editor
                     Choose("Warning");
                     bool gentle = PlayerPrefs.GetInt("ff.gentle") != 0;
                     Require(gentle != oldGentle, "Warning setting did not persist.");
-                    reference.ShowWarning(true, Now, gentle);
+                    reference.ShowWarning(true, 0, gentle);
                     foreach (string name in new[] { "Smoky pane", "Rim", "Fissures" })
                     {
                         var sample = preview.Find(name);
@@ -85,6 +160,8 @@ namespace FloorFracture.Editor
                     level = (level + 1) % 5;
                     if (i == 0) yield return RayChoose(3, true);
                     else Choose("Volume");
+                    var heartbeat = sound.transform.Find("Countdown heartbeat").GetComponent<AudioSource>();
+                    Require(Mathf.Approximately(heartbeat.volume,.43f * level/4f),"Countdown did not follow master volume.");
                     Require(PlayerPrefs.GetInt("ff.volume") == level && clicks == before + 1 && Mathf.Approximately(clickVolume, level / 4f),
                         "A volume choice must play exactly one click at the newly selected master volume, including mute.");
                 }

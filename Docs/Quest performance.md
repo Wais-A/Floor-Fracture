@@ -95,7 +95,7 @@ A follow-up tested whether reusing the opening mesh buffers would improve the re
 | Largest simultaneous shatter | Watch the breaking panes while standing safely. Keep the wave with the highest actual break count and repeat the same route. | Use the largest `event_count` on a `shatter` event. The following two seconds carry `shatter_count` and `shatter_wave_seed`. |
 | Fog | Play a wave with fog crossing the visible board. | Filter `stage=Countdown` and `fog=1`. |
 | Sliding glass | Watch or catch the moving pane, then watch it lock. | Filter `stage=Countdown` and `slider=active` or `locked`. |
-| Six endings | Play Water, Lava, Crystal, Space, Sand and Snow to results. Use full motion for the first comparison. Repeat the busiest ending with reduced motion. | Filter `stage=Fall` and `ending`. The `reduced_motion` field identifies the selected setting. |
+| Six endings | Play Water, Lava, Tar Pit, Space, Sand and Snow to results. Use full motion for the first comparison. Repeat the busiest ending with reduced motion. | Filter `stage=Fall` and `ending`. The `reduced_motion` field identifies the selected setting. |
 
 From this Mac the native Meta recorder also accepts Android broadcasts. Read the current setting with `LOG_STATE`, enable capture for the test with `ENABLE_CSV`, and restore its previous value afterward. Both actions target `com.oculus.ovrmonitormetricsservice/.SettingsBroadcastReceiver` with the action prefix `com.oculus.ovrmonitormetricsservice.`. This was verified with the paired Quest captures above. [Meta recording controls](https://developers.meta.com/vr/documentation/native/android/ts-ovrmetricstool/)
 

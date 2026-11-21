@@ -86,9 +86,7 @@ namespace FloorFracture.Editor
 
                 if (name == "classic-player-view")
                 {
-                    var board = game.BoardView.Board;
-                    CheckFraming(camera, board.Find("Occupied square").GetComponent<MeshRenderer>());
-                    CheckFraming(camera, board.Find("Countdown and score").GetComponent<MeshRenderer>());
+                    CheckFraming(camera, game.ScoreDisplay.GetComponent<MeshRenderer>());
                 }
 
                 var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };

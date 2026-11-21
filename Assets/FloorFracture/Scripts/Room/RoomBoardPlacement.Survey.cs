@@ -11,6 +11,7 @@ namespace FloorFracture
     {
         private FloorMeshScan meshSnapshot;
         private List<FloorSurvey> surveys;
+        private FloorSurvey acceptedSurvey;
         [SerializeField] private EnvironmentRaycastManager liveManager;
         [SerializeField, Tooltip("Show accepted panes in green and the boundaries of measured scan regions.")]
         private bool showPlacementDebug;
@@ -69,6 +70,7 @@ namespace FloorFracture
 
         private async Task<BoardPlacement?> FitSurveyAsync(Vector2 preferred, List<Vector2> suggestions, int scanRevision, CancellationToken cancel, bool measureView)
         {
+            bool entireFloor = EntireFloor;
             var semantic = floors;
             var snapshot = meshSnapshot;
             var excluded = declined.ToArray();
@@ -82,48 +84,18 @@ namespace FloorFracture
                 LogSurvey(evidence, "saved mesh", snapshot, true);
             bool liveVeto = false;
             bool triedLiveSurface = false;
-            var searchFloors = semantic.ConvertAll(f =>
-            {
-                var obstacles = new List<Vector2[]>(f.Obstacles);
-                obstacles.AddRange(excluded);
-                return new RoomFloor(f.Boundary, obstacles, f.Height);
-            });
-            // A confirmed depth hit excludes its measured location before the next fit.
+            // Refit the same padded pane geometry after every live veto, retaining the veto
+            // through finer grids and alternate headings.
             for (int attempt = 0; attempt < 4; attempt++)
             {
-                bool first = attempt == 0;
-                var result = await Task.Run<BoardPlacement?>(() =>
-                {
-                    BoardPlacement? rectangle = null;
-                    if (first && BoardFitter.TryFindOnSurfaces(searchFloors, preferred, out var exact, cancel, suggestions, FloorSurvey.FootMargin) &&
-                        evidence.Exists(s => s.ChecksEveryTile(exact))) rectangle = exact;
-                    if (!rectangle.HasValue)
-                    {
-                        var rectangles = new List<RoomFloor>();
-                        foreach (var s in evidence) s.AddClearRectangles(rectangles);
-                        if (BoardFitter.TryFindOnSurfaces(rectangles, preferred, out var fitted, cancel, suggestions, FloorSurvey.FootMargin, true) &&
-                            evidence.Exists(s => s.ChecksEveryTile(fitted))) rectangle = fitted;
-                    }
-                    if (first && !rectangle.HasValue) return null; // Refine also searches connected layouts.
-                    var connected = FloorSurvey.FindConnected(evidence, preferred, cancel, out _);
-                    return FloorSurvey.CoversMore(connected, rectangle) ? connected : rectangle;
-                }, cancel);
+                var refined = await Task.Run(() => FloorSurvey.Refine(evidence, snapshot, headroom,
+                    excluded, preferred, suggestions, cancel, entireFloor), cancel);
                 cancel.ThrowIfCancellationRequested();
-                if (!StillLocal(scanRevision))
-                    return null;
-                if (!result.HasValue && first)
-                {
-                    var refined = await Task.Run(() => FloorSurvey.Refine(evidence, snapshot, headroom,
-                        excluded, preferred, suggestions, cancel), cancel);
-                    cancel.ThrowIfCancellationRequested();
-                    if (!StillLocal(scanRevision)) return null;
-                    surveys = evidence = refined.surveys;
-                    result = refined.fit;
-                    if (Debug.isDebugBuild || Application.isEditor)
-                        LogSurvey(evidence, "refined saved mesh", snapshot, false);
-                }
+                if (!StillLocal(scanRevision)) return null;
+                surveys = evidence = refined.surveys;
+                var result = refined.fit;
 #if UNITY_ANDROID && !UNITY_EDITOR
-                if (first && (!result.HasValue || measureView) && liveManager && EnvironmentRaycastManager.IsSupported)
+                if (attempt == 0 && (!result.HasValue || measureView) && liveManager && EnvironmentRaycastManager.IsSupported)
                 {
                     triedLiveSurface = true;
                     var floor = semantic.Find(f => FloorGeometry.Contains(f.Boundary, preferred)) ?? semantic[0];
@@ -135,19 +107,17 @@ namespace FloorFracture
                     {
                         var verified = await Task.Run(() =>
                         {
-                            var current = new FloorSurvey(floor, snapshot, headroom, excluded, cancel, observedObstacles, surface);
-                            return FloorSurvey.Refine(new List<FloorSurvey> { current }, snapshot, headroom,
-                                excluded, preferred, suggestions, cancel);
+                            // The depth surface describes the viewed floor. Retain all other
+                            // surveyed floor patches and prove candidates against their own data.
+                            var current = new List<FloorSurvey>(evidence);
+                            int index = current.FindIndex(s => ReferenceEquals(s.Floor, floor));
+                            current[index] = new FloorSurvey(floor, snapshot, headroom, excluded, cancel, observedObstacles, surface);
+                            return FloorSurvey.Refine(current, snapshot, headroom, excluded, preferred, suggestions, cancel, entireFloor);
                         }, cancel);
                         cancel.ThrowIfCancellationRequested();
                         if (!StillLocal(scanRevision)) return null;
-                        var prior = result;
                         surveys = evidence = verified.surveys;
                         result = verified.fit;
-                        if (prior is BoardPlacement old && evidence.Exists(s => s.ChecksEveryTile(old)) &&
-                            (!result.HasValue || old.Layout.PaneCount * old.Pitch * old.Pitch >
-                                result.Value.Layout.PaneCount * result.Value.Pitch * result.Value.Pitch))
-                            result = prior;
                         if (Debug.isDebugBuild) LogSurvey(evidence, "verified with live floor", snapshot, false);
                     }
                 }
@@ -176,16 +146,21 @@ namespace FloorFracture
                 // Re-read current Unity anchors and mesh before anything in GameFlow creates glass.
                 if (TryReadFloors() && floors.Exists(f => BoardFitter.Fits(f, fit, FloorSurvey.FootMargin)))
                 {
-                    if (snapshot.Matches(meshSnapshot)) return fit;
+                    var selectedSurvey = evidence.Find(s => s.ChecksEveryTile(fit));
+                    if (selectedSurvey != null && snapshot.Matches(meshSnapshot))
+                    {
+                        acceptedSurvey = selectedSurvey;
+                        return fit;
+                    }
                     // World locking can refine anchor poses while placing. Prove the selected footprint
                     // against the latest buffers in this frame so small corrections can settle at Welcome.
-                    var selectedSurvey = evidence.Find(s => s.ChecksEveryTile(fit));
                     foreach (var floor in floors)
                     {
                         if (!BoardFitter.Fits(floor, fit, FloorSurvey.FootMargin)) continue;
                         if (selectedSurvey == null) break;
                         var current = selectedSurvey.Refresh(floor, meshSnapshot, headroom, excluded, cancel);
                         if (!current.ChecksEveryTile(fit)) continue;
+                        acceptedSurvey = current;
                         surveys = new List<FloorSurvey> { current };
                         return fit;
                     }
@@ -293,10 +268,10 @@ namespace FloorFracture
             int calls = 0, hits = 0, unseen = 0, warming = 0, exclusions = 0;
             async Task<EnvironmentRaycastHit?> Sample(Vector3 target)
             {
-                if (++calls % 8 == 0) await Awaitable.NextFrameAsync(cancel);
                 cancel.ThrowIfCancellationRequested();
                 var view = eye.WorldToViewportPoint(target);
                 if (view.z <= 0 || view.x < 0 || view.x > 1 || view.y < 0 || view.y > 1) return null;
+                if (++calls % 8 == 0) await Awaitable.NextFrameAsync(cancel);
                 var delta = target - eye.transform.position;
                 liveManager.Raycast(new Ray(eye.transform.position, delta), out var hit, delta.magnitude + .30f);
                 if (hit.status == EnvironmentRaycastHitStatus.Hit) hits++;
@@ -312,10 +287,9 @@ namespace FloorFracture
             void Exclude(Vector2 point)
             {
                 exclusions++;
-                var observed = new[] { point };
                 foreach (var survey in evidence)
                     if (Mathf.Abs(survey.Floor.Height - fit.FloorHeight) <= .025f)
-                        survey.MarkWorld(observed, TileClearance.LiveObstacle);
+                        survey.RecordLiveObstacle(point);
             }
             // Allow the newly enabled Meta raycaster to warm up with the same candidate and room.
             double deadline = Time.realtimeSinceStartupAsDouble + 1.5;

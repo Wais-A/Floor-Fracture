@@ -20,6 +20,20 @@ namespace FloorFracture
         Mesh mesh;
         MeshRenderer view;
         float paneScale;
+        float pausedAt;
+        internal bool FullFall { get; set; }
+
+        void OnDisable() { pausedAt = Time.unscaledTime; }
+        void OnEnable()
+        {
+            float elapsed = Time.unscaledTime - pausedAt;
+            for (int i = 0; i < active.Count; i++)
+            {
+                var piece = active[i];
+                piece.Born += elapsed;
+                active[i] = piece;
+            }
+        }
         public int ActiveCount => active.Count;
 
         public void Initialize(Material material, float tileScale)
@@ -56,7 +70,7 @@ namespace FloorFracture
             for(int k=active.Count-1;k>=0;k--)
             {
                 var piece=active[k]; float t=Mathf.Max(0,now-piece.Born);
-                if(t>1.65f) { active.RemoveAt(k); continue; }
+                if(t>(FullFall ? 2.55f : 1.65f)) { active.RemoveAt(k); continue; }
                 var rot=Quaternion.AngleAxis(t*piece.Spin,piece.Axis);
                 var center=piece.Origin+piece.Offset*t+Vector3.down*(piece.Speed*t+2.1f*t*t);
                 var face=GlassGeometry.Pieces[piece.Face]; int first=vertices.Count;
@@ -68,7 +82,9 @@ namespace FloorFracture
                 }
                 for(int i=1;i<face.Length-1;i++) { triangles.Add(first); triangles.Add(first+i); triangles.Add(first+i+1); }
             }
-            mesh.Clear(); mesh.SetVertices(vertices); mesh.SetColors(colors); mesh.SetTriangles(triangles,0); mesh.RecalculateBounds();
+            mesh.Clear();
+            if (vertices.Count > ushort.MaxValue) mesh.indexFormat=UnityEngine.Rendering.IndexFormat.UInt32;
+            mesh.SetVertices(vertices); mesh.SetColors(colors); mesh.SetTriangles(triangles,0); mesh.RecalculateBounds();
             view.enabled=active.Count!=0;
         }
         void OnDestroy() { if(mesh) Destroy(mesh); }

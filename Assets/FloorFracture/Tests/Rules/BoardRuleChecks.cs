@@ -16,6 +16,7 @@ namespace FloorFracture.Tests
             ModesAndReset();
             SlidingAndGrace();
             CancelledSlidingWave();
+            VariableSizeLayouts();
             return CheckSequences() + " " + CheckLargerBoards();
         }
 
@@ -143,6 +144,116 @@ namespace FloorFracture.Tests
                    $"and checked onward reachability for {choices} advertised choices.";
         }
 
+        public static void VariableSizeLayouts()
+        {
+            var occupied = new List<int>();
+            for (int y = 0; y < 12; ++y)
+                for (int x = 0; x < 12; ++x)
+                    if (x <= y || x >= 9) occupied.Add(y * 12 + x);
+            occupied.Remove(64); // Pane 0 is present while 64 is an interior cutout.
+            occupied.Add(143);  // A duplicate must not affect the count.
+            var sparse = new BoardLayout(12, 12, occupied);
+            Check(sparse.IsPlayable && !sparse.IsRectangle && sparse.PaneCount == occupied.Count - 1 &&
+                sparse.Contains(0) && !sparse.Contains(64) && sparse.Contains(128),
+                "Occupancy must distinguish positions a word apart, including an interior cutout.");
+            occupied.Reverse();
+            var repeat = new BoardLayout(12, 12, occupied);
+            Check(sparse.Equals(repeat) && sparse.GetHashCode() == repeat.GetHashCode(),
+                "Refitting the same occupied cells must produce an equal board regardless of input order.");
+            occupied.Remove(128);
+            occupied.Add(80);
+            Check(!sparse.Equals(new BoardLayout(12, 12, occupied)), "Shape equality must inspect high indices.");
+            occupied.Clear();
+            Check(sparse.Contains(143), "A constructed layout must be independent of its input collection.");
+            Check(!new BoardLayout(130, 1, new[] {0, 1, 64, 65}).IsPlayable &&
+                !new BoardLayout(65, 2, new[] {64, 65}).IsPlayable,
+                "Disconnected islands and consecutive indices across a row boundary are unplayable.");
+            Check(!new BoardLayout(8, 2, new[] {0, 1, 16}).IsPlayable,
+                "Out-of-bounds source indices must invalidate a layout.");
+            foreach (BoardLayout layout in new[] {sparse, BoardLayout.Rectangle(12, 12),
+                BoardLayout.Rectangle(2, 70), BoardLayout.Rectangle(130, 1)})
+            {
+                Check(layout.IsPlayable, "The large layout must support a wave.");
+                var board = new BoardState(layout, 379, .5f);
+                int expectedEdges = 0, actualEdges = 0;
+                for (int tile = 0; tile < board.Count; ++tile)
+                {
+                    Check(board.IndexAt(board.Center(tile)) == (layout.Contains(tile) ? tile : -1),
+                        "A high-index pane or cutout failed the center/stance round trip.");
+                    if (!layout.Contains(tile)) continue;
+                    int x = tile % board.Width, y = tile / board.Width;
+                    if (!layout.HasPane(x - 1, y)) ++expectedEdges;
+                    if (!layout.HasPane(x + 1, y)) ++expectedEdges;
+                    if (!layout.HasPane(x, y - 1)) ++expectedEdges;
+                    if (!layout.HasPane(x, y + 1)) ++expectedEdges;
+                }
+                foreach (var edge in layout.Perimeter(board.Pitch)) ++actualEdges;
+                Check(actualEdges == expectedEdges, "The perimeter must follow every occupied pane.");
+                foreach (int level in new[] {1, 3})
+                {
+                    board.RebuildLevel();
+                    int start = board.Count - 1;
+                    int intact = layout.PaneCount;
+                    for (int number = 1; ; ++number)
+                    {
+                        Check(number < layout.PaneCount, "A large board must finish shrinking.");
+                        var wave = board.BeginWave(start, level, number, number * 10);
+                        Check(wave.IsBreaking(start) && !wave.IsSafe(start) && board.IsIntact(wave.GuaranteedTile) &&
+                            board.CanStepFrom(start, wave.GuaranteedTile) && wave.StationarySafe.Count < intact,
+                            "A large board must force a reachable step and strictly shrink.");
+                        var marked = new HashSet<int>(wave.BreakingTiles);
+                        var safe = new HashSet<int>(wave.SafeTiles);
+                        var stationary = new HashSet<int>(wave.StationarySafe);
+                        var seen = new HashSet<int> {wave.GuaranteedTile};
+                        var queue = new Queue<int>(seen);
+                        while (queue.Count > 0)
+                        {
+                            int tile = queue.Dequeue();
+                            foreach (int other in new[] { tile - 1, tile + 1, tile - board.Width, tile + board.Width })
+                                if (board.Neighbors(tile, other) && stationary.Contains(other) && seen.Add(other))
+                                    queue.Enqueue(other);
+                        }
+                        Check(seen.SetEquals(stationary), "High-index survivor groups must stay edge-connected.");
+                        for (int tile = 0; tile < board.Count; ++tile)
+                        {
+                            bool exists = board.IsIntact(tile) || board.Slider?.Tile == tile;
+                            Check(wave.IsBreaking(tile) == marked.Contains(tile) && wave.IsSafe(tile) == safe.Contains(tile) &&
+                                exists == (wave.IsSafe(tile) ^ wave.IsBreaking(tile)),
+                                "Every existing pane must appear in exactly one wave list, including above index 63.");
+                        }
+                        Check(!wave.IsBreaking(board.Count) && !wave.IsSafe(-1), "Out-of-bounds wave queries must be false.");
+                        start = wave.GuaranteedTile;
+                        Resolve(board, wave, new Step(start, false));
+                        intact = stationary.Count;
+                        if (wave.Mode == WaveMode.LastTile) break;
+                    }
+                }
+            }
+
+            var sliderBoard = new BoardState(12, 12, 0);
+            int from = 143;
+            for (int n = 1; n <= 3; ++n)
+            {
+                var wave = sliderBoard.BeginWave(from, 3, n, n * 10);
+                from = wave.GuaranteedTile;
+                Resolve(sliderBoard, wave, new Step(from, false));
+            }
+            var offer = sliderBoard.BeginWave(from, 3, 4, 40);
+            var pane = sliderBoard.Slider;
+            Check(pane != null && pane.Tile >= 64 && pane.OtherHole >= 64 && offer.IsSafe(pane.Tile),
+                "The large-board fixture needs a sliding lane entirely above index 63.");
+            double middle = pane.MotionStartsAt + .6;
+            var caught = pane.CenterAt(middle);
+            sliderBoard.Tick(caught, true, middle);
+            Check(pane.Locked && sliderBoard.CurrentSample.IsSlider, "A high-index slider must catch over its lane.");
+            Resolve(sliderBoard, offer, new Step(pane.Tile, false));
+            var exit = sliderBoard.BeginWave(pane.Tile, 3, 5, 50);
+            Check(exit.IsBreaking(pane.Tile) && sliderBoard.CanStepFrom(pane.Tile, exit.GuaranteedTile) &&
+                (sliderBoard.Center(exit.GuaranteedTile) - caught).sqrMagnitude <= sliderBoard.Pitch * sliderBoard.Pitch * 1.2501f,
+                "A locked high-index slider must shatter with a reachable stationary exit.");
+            Resolve(sliderBoard, exit, new Step(exit.GuaranteedTile, false));
+        }
+
         private static void ValidatePlan(BoardState board, WavePlan plan, int start, ulong oldMask)
         {
             Check(plan.StartingTile == start && plan.IsBreaking(start) && !plan.IsSafe(start), "Start must break.");
@@ -167,8 +278,8 @@ namespace FloorFracture.Tests
                     Check((NeighborBits(i, board.Width, board.Height) & survivors) != 0,
                         "Every choice must have a stationary orthogonal neighbor for the next wave.");
             }
-            Check(!plan.IsBreaking(-1) && !plan.IsSafe(-1) && !plan.IsBreaking(64) && !plan.IsSafe(64),
-                "Indices outside the 64-bit footprint must not alias valid tile indices.");
+            Check(!plan.IsBreaking(-1) && !plan.IsSafe(-1) && !plan.IsBreaking(board.Count) && !plan.IsSafe(board.Count),
+                "Indices outside the footprint must not alias valid tile indices.");
             Check((plan.Mode == WaveMode.LastTile) == (plan.StationarySafe.Count == 1), "Finale must leave one permanent pane.");
         }
 
@@ -252,10 +363,10 @@ namespace FloorFracture.Tests
             Check(b.CurrentSample.Index == 2, "Equivalent panes should stabilize the marker near the seam.");
             b.Tick(new Vector2(0.05f, 0.25f), true, 3);
             Check(b.CurrentSample.Index == 3, "Marker should follow a real step.");
-            b.Tick(b.Center(0), true, 4);
-            b.Tick(new Vector2(0.001f, -0.25f), true, 4.5);
+            b.Tick(b.Center(0), true, wave.Deadline - .6);
+            b.Tick(new Vector2(0.001f, -0.25f), true, wave.Deadline - .4);
             Check(b.CurrentSample.Index == 0, "A seam must not move a planted stance just because the wave marks a neighbour safe.");
-            b.Tick(b.Center(2), true, 4.9);
+            b.Tick(b.Center(2), true, wave.Deadline - .1);
             Check(b.Tick(across, true, wave.Deadline) == WaveResult.Survived && b.CurrentSample.Index == 2,
                 "The marker must retain the same support through zero.");
             var second = b.BeginWave(b.CurrentSample.Index, 1, 2, 6);
@@ -266,22 +377,23 @@ namespace FloorFracture.Tests
         {
             var board = new BoardState(4, 4, 3);
             var first = board.BeginWave(0, 1, 1, 10);
-            Check(first.Duration == 5 && first.ShowsWarnings(14.99), "Opening wave must show danger for five seconds.");
+            Check(first.Duration == 4 && first.RevealEndsAt == 11.5 && first.ShowsWarnings(11.499) &&
+                !first.ShowsWarnings(11.5), "Opening danger must be visible for the first 1.5 seconds of four.");
             ulong full = IntactMask(board);
             Vector2 safe = board.Center(first.GuaranteedTile);
-            Check(board.Tick(safe, true, 14.9999) == WaveResult.Pending && IntactMask(board) == full &&
+            Check(board.Tick(safe, true, first.Deadline - .0001) == WaveResult.Pending && IntactMask(board) == full &&
                 ReferenceEquals(first, board.ActiveWave), "Early safety must not advance or reroll the wave.");
-            Check(board.Tick(board.Center(0), true, 15) == WaveResult.Lost && board.BreaksApplied &&
+            Check(board.Tick(board.Center(0), true, first.Deadline) == WaveResult.Lost && board.BreaksApplied &&
                 board.WavesSurvived == 0 && board.LastLoss == WaveLossReason.CrackedPane, "Remaining on the start at zero must lose to its marked glass.");
             board.Reset(4, 4, 3);
             Check(board.LastLoss == WaveLossReason.None,"A previous loss explanation survived Restart.");
             first = board.BeginWave(0, 1, 1, 10);
-            board.Tick(board.Center(0), true, 14.99);
-            Check(board.Tick(safe, true, 15.99) == WaveResult.Lost, "A late frame cannot grant an extra step after zero.");
+            board.Tick(board.Center(0), true, first.Deadline - .01);
+            Check(board.Tick(safe, true, first.Deadline + .99) == WaveResult.Lost, "A late frame cannot grant an extra step after zero.");
             board.Reset(4, 4, 3);
             first = board.BeginWave(0, 1, 1, 10);
-            board.Tick(safe, true, 14.99);
-            Check(board.Tick(board.Center(0), true, 15.99) == WaveResult.Survived, "A step after zero cannot revoke survival.");
+            board.Tick(safe, true, first.Deadline - .01);
+            Check(board.Tick(board.Center(0), true, first.Deadline + .99) == WaveResult.Survived, "A step after zero cannot revoke survival.");
 
             foreach (int reason in new[] { 0, 1, 2, 3 })
             {
@@ -292,13 +404,13 @@ namespace FloorFracture.Tests
                 {
                     Vector2 interrupted = reason == 0 ? new Vector2(2, 0) :
                         reason == 1 ? safe : new Vector2(float.NaN, 0);
-                    Check(board.Tick(interrupted, reason != 1, 15) == WaveResult.Paused, "Interruption must pause even at zero.");
+                    Check(board.Tick(interrupted, reason != 1, first.Deadline) == WaveResult.Paused, "Interruption must pause even at zero.");
                 }
                 Check(!board.BreaksApplied && board.ActiveWave == null && IntactMask(board) == full &&
                     board.WavesSurvived == 0, "Pausing must preserve all previously solid glass and score.");
                 var from = board.Sample(board.Center(4), true, 40);
                 var fresh = board.BeginWave(from.Index, 1, 1, 40);
-                Check(fresh.Deadline == 45 && fresh.IsBreaking(4) && Adjacent(4, fresh.GuaranteedTile, 4),
+                Check(fresh.Deadline == 44 && fresh.IsBreaking(4) && Adjacent(4, fresh.GuaranteedTile, 4),
                     "Resume needs a full timer and a legal move from the current pose.");
             }
         }
@@ -382,15 +494,21 @@ namespace FloorFracture.Tests
                     if (level == 1 && number == 1)
                         Check(Same(plan.BreakingTiles, baseline.BreakingTiles) && plan.Duration == baseline.Duration &&
                             plan.Seed == baseline.Seed, "Opening pattern must be independent of run seed and wall clock.");
-                    if (level == 1) Check(!plan.Fog && board.Slider == null, "The first level must introduce base play.");
+                    if (level == 1) Check(!plan.Fog && plan.Mode != WaveMode.Memory && board.Slider == null,
+                        "The first level must introduce only stationary glass and the finale.");
                     if (level == 2 && number == 1) sawFog = plan.Fog;
-                    if (plan.Mode == WaveMode.Memory)
-                        Check(plan.ShowsWarnings(plan.StartsAt) && !plan.ShowsWarnings(plan.RevealEndsAt) &&
-                            !plan.ShowsWarnings(plan.Deadline), "Memory must hide damage cues while the timer continues.");
+                    if (level < 3) Check(board.Slider == null, "Moving glass was introduced before level three.");
+                    Check(plan.ShowsWarnings(plan.StartsAt) && plan.ShowsWarnings(plan.RevealEndsAt - .0001) &&
+                        !plan.ShowsWarnings(plan.StartsAt - .0001) && !plan.ShowsWarnings(plan.RevealEndsAt) &&
+                        !plan.ShowsWarnings(plan.Deadline), "Damage cues must end at the reveal boundary on every wave.");
+                    double normal = level == 1 ? 1.5 : Math.Max(.85, 1.25 - (level - 2) * .15);
+                    double expected = plan.Mode == WaveMode.Memory ? Math.Max(.75, normal - .15) : normal;
+                    Check(Math.Abs(plan.RevealEndsAt - plan.StartsAt - expected) < 1e-8,
+                        "Reveal time must follow the level and its Memory adjustment.");
                     start = plan.GuaranteedTile;
                     Resolve(board, plan, new Step(start, false));
                     if (plan.Mode == WaveMode.LastTile) break;
-                    modes.Add(plan.Mode);
+                    if (level >= 2) modes.Add(plan.Mode);
                 }
                 int score = board.WavesSurvived;
                 board.RebuildLevel();
@@ -398,8 +516,9 @@ namespace FloorFracture.Tests
                     "Clearing must restore the original footprint and retain run score.");
             }
             Check(sawFog && modes[0] == WaveMode.Classic && modes[1] == WaveMode.Memory, "Base and fog introductions failed.");
-            for (int i = 2; i + 1 < modes.Count; i += 2)
-                Check(modes[i] != modes[i + 1], "A shuffled two-card bag must contain one of each mode.");
+            for (int i = 0; i + 2 < modes.Count; i += 3)
+                Check(modes.GetRange(i, 3).FindAll(mode => mode == WaveMode.Memory).Count == 1,
+                    "Each group of three regular advanced waves must offer one Memory round.");
             board.Reset(2, 3, -55);
             Check(board.WavesSurvived == 0 && board.Slider == null && board.ActiveWave == null &&
                 board.CurrentSample.Kind == SupportKind.Untracked && IntactMask(board) == 63, "Restart must clear the run.");
@@ -408,7 +527,7 @@ namespace FloorFracture.Tests
             {
                 board.RebuildLevel();
                 double duration = board.BeginWave(0, level, 1, 0).Duration;
-                Check(duration == Math.Max(2.5, 5.0 - (level - 1) * 0.4) && duration <= previous,
+                Check(duration == Math.Max(2.5, 4.0 - (level - 1) * .3) && duration <= previous,
                     "Level timing must shorten to a finite ordinary-step floor.");
                 previous = duration;
             }
@@ -417,9 +536,9 @@ namespace FloorFracture.Tests
         public static void ReportsResolvedLoss()
         {
             var board = new BoardState(5,3,379,.539f);
-            var classic = board.BeginWave(0,1,1,0);
+            var classic = board.BeginWave(0,2,1,0);
             board.Tick(board.Center(classic.GuaranteedTile),true,classic.Deadline);
-            var memory = board.BeginWave(classic.GuaranteedTile,1,2,10);
+            var memory = board.BeginWave(classic.GuaranteedTile,2,2,10);
             Check(memory.Mode==WaveMode.Memory && !memory.ShowsWarnings(memory.Deadline),
                 "The explanation fixture needs a hidden Memory warning.");
             Check(board.Tick(board.Center(memory.StartingTile),true,memory.Deadline)==WaveResult.Lost &&

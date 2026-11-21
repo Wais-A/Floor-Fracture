@@ -61,6 +61,9 @@ namespace FloorFracture
 
     public static class BoardFitter
     {
+        // Keep the rectangle contact search bounded. The connected fitter can examine
+        // a whole surveyed floor and uses these rectangles as additional placement candidates.
+        private const int RectangleSearchLimit = 64;
         private const float PitchPrecision = 0.0005f;
 
         private readonly struct Coverage : IComparable<Coverage>
@@ -162,7 +165,7 @@ namespace FloorFracture
                             cancellation, out _)) continue;
                     for (int columns = BoardState.MinAxis; columns <= frame.MaximumCounts.x; ++columns)
                     {
-                        int maxRows = Math.Min(frame.MaximumCounts.y, BoardState.MaxRowsFor(columns));
+                        int maxRows = Math.Min(frame.MaximumCounts.y, RectangleSearchLimit / columns);
                         for (int rows = BoardState.MinAxis; rows <= maxRows; ++rows)
                         {
                             float upper = frame.PitchLimit(columns, rows);
@@ -409,7 +412,7 @@ namespace FloorFracture
                 foreach (var outline in source.Obstacles) obstacles.Add(Project(outline));
             }
 
-            private static int AxisCount(float meters) => Math.Min(BoardState.MaxAxis,
+            private static int AxisCount(float meters) => Math.Min(RectangleSearchLimit / BoardState.MinAxis,
                 Mathf.FloorToInt((meters + FloorGeometry.Epsilon) / BoardState.MinPitch));
 
             public Vector2 ToLocal(Vector2 point) => new Vector2(Vector2.Dot(point, right), Vector2.Dot(point, forward));

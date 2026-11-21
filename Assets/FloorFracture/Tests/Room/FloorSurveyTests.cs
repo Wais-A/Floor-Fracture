@@ -250,6 +250,7 @@ namespace FloorFracture.Tests
                 Vector2.zero, null, default);
             Assert.That(result.fit.HasValue, Is.True);
             Assert.That(result.surveys[0].ChecksEveryTile(result.fit.Value), Is.True);
+            Assert.That(result.fit.Value.Layout.PaneCount, Is.GreaterThanOrEqualTo(4));
             Assert.That(result.surveys[0].Refresh(coarse.Floor, scan, 2.2f, null, default)
                 .ChecksEveryTile(result.fit.Value), Is.True);
         }
@@ -319,6 +320,80 @@ namespace FloorFracture.Tests
                 foreach (int tile in wave.SafeTiles) Assert.That(fit.Layout.Contains(tile), Is.True);
                 board.Pause();
             }
+        }
+
+        [Test]
+        public void CappedFitStaysNearTheWearerAndFullFloorCanExceedSixtyFourPanes()
+        {
+            Surface(-5, -5, 5, 5);
+            Assert.That(FloorMeshScan.TryCreate(vertices.ToArray(), indices.ToArray(), Matrix4x4.identity, out var scan), Is.True);
+            var floor = new RoomFloor(Box(-5, -5, 5, 5), new List<Vector2[]>());
+            var survey = new FloorSurvey(floor, scan, 2.2f, null, default);
+            var wearer = new Vector2(2.7f, 2.6f);
+            var capped = FloorSurvey.FindConnected(new[] { survey }, wearer, default, out _).Value;
+            Assert.That(capped.Layout.PaneCount, Is.EqualTo(16));
+            Assert.That(capped.Pitch, Is.InRange(.60f, .65f));
+            Assert.That(Vector2.Distance(capped.Center, wearer), Is.LessThan(.65f));
+            Assert.That(survey.ChecksEveryTile(capped), Is.True);
+
+            var full = FloorSurvey.FindConnected(new[] { survey }, wearer, default, out _, entireFloor: true).Value;
+            Assert.That(full.Pitch, Is.InRange(.60f, .65f));
+            Assert.That(full.Layout.PaneCount, Is.GreaterThan(150));
+            Assert.That(full.Layout.IsPlayable && survey.ChecksEveryTile(full), Is.True);
+            Assert.That(BoardFitter.Fits(floor, full, FloorSurvey.FootMargin), Is.True);
+        }
+
+        [Test]
+        public void CappedCompactFitKeepsTheLargestPitchThatOffersFourPanes()
+        {
+            Surface(0, 0, 1.29f, 2.28f);
+            Assert.That(FloorMeshScan.TryCreate(vertices.ToArray(), indices.ToArray(), Matrix4x4.identity, out var scan), Is.True);
+            var floor = new RoomFloor(Box(0, 0, 1.29f, 2.28f), new List<Vector2[]>());
+            var survey = new FloorSurvey(floor, scan, 2.2f, null, default);
+            var fit = FloorSurvey.FindConnected(new[] { survey }, Vector2.one, default, out _).Value;
+            Assert.That(fit.Pitch, Is.EqualTo(.55f));
+            Assert.That(fit.Layout.PaneCount, Is.GreaterThanOrEqualTo(4));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void NarrowConcaveFloorKeepsBothLegsOfAnAisleAtCompactPitch(bool entireFloor)
+        {
+            const float length = 2.56f, width = .64f;
+            Surface(0, 0, length, width);
+            Surface(0, width, width, length);
+            var boundary = new[] {
+                Vector2.zero, new Vector2(length, 0), new Vector2(length, width),
+                new Vector2(width, width), new Vector2(width, length), new Vector2(0, length)
+            };
+            Assert.That(FloorMeshScan.TryCreate(vertices.ToArray(), indices.ToArray(), Matrix4x4.identity, out var scan), Is.True);
+            var survey = new FloorSurvey(new RoomFloor(boundary, new List<Vector2[]>()), scan, 2.2f, null, default);
+            var result = FloorSurvey.Refine(new List<FloorSurvey> { survey }, scan, 2.2f, null,
+                Vector2.one * .3f, null, default, entireFloor);
+            Assert.That(result.fit.HasValue, Is.True);
+            var fit = result.fit.Value;
+            Assert.That(fit.Pitch, Is.InRange(.40f, .48f));
+            Assert.That(fit.Layout.PaneCount, Is.GreaterThanOrEqualTo(7));
+            Assert.That(fit.Layout.IsRectangle, Is.False);
+            Assert.That(fit.Layout.IsPlayable && result.surveys[0].ChecksEveryTile(fit), Is.True);
+            Assert.That(BoardFitter.Fits(survey.Floor, fit, FloorSurvey.FootMargin), Is.True);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ReconfirmedLiveObstacleRemainsExcludedAcrossRetryAndRefresh(bool entireFloor)
+        {
+            Surface(-3, -3, 3, 3);
+            var survey = Survey();
+            Assert.That(FloorMeshScan.TryCreate(vertices.ToArray(), indices.ToArray(), Matrix4x4.identity, out var scan), Is.True);
+            survey.RecordLiveObstacle(Vector2.zero);
+            var result = FloorSurvey.Refine(new List<FloorSurvey> { survey }, scan, 2.2f, null,
+                Vector2.zero, null, default, entireFloor);
+            Assert.That(result.fit.HasValue, Is.True);
+            var refreshed = result.surveys[0].Refresh(survey.Floor, scan, 2.2f, null, default);
+            Assert.That(refreshed.Check(Box(-.02f, -.02f, .02f, .02f)), Is.EqualTo(TileClearance.LiveObstacle));
+            Assert.That(refreshed.ChecksEveryTile(result.fit.Value), Is.True);
+            if (!entireFloor) Assert.That(result.fit.Value.Layout.PaneCount, Is.LessThanOrEqualTo(16));
         }
 
         [Test]

@@ -62,7 +62,9 @@ namespace FloorFracture
             }
             public void Write(Mesh mesh)
             {
-                mesh.Clear(); mesh.SetVertices(Vertices); mesh.SetColors(Colors); mesh.SetUVs(0,Uv);
+                mesh.Clear();
+                if (Vertices.Count > ushort.MaxValue) mesh.indexFormat=UnityEngine.Rendering.IndexFormat.UInt32;
+                mesh.SetVertices(Vertices); mesh.SetColors(Colors); mesh.SetUVs(0,Uv);
                 mesh.SetTriangles(Indices,0); mesh.RecalculateBounds();
             }
             public Mesh Create(string name) { var m=new Mesh{name=name}; Write(m); return m; }

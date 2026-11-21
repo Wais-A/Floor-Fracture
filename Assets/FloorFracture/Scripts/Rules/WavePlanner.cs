@@ -22,15 +22,14 @@ namespace FloorFracture
         public IReadOnlyList<int> BreakingTiles { get; }
         public IReadOnlyList<int> SafeTiles { get; }
         public IReadOnlyList<int> StationarySafe { get; }
-        internal ulong StationaryMask { get; }
+        internal bool[] Stationary { get; }
         internal int NewSliderTile { get; }
         internal int OtherSliderHole { get; }
 
-        private readonly ulong breakingMask;
-        private readonly ulong safeMask;
+        private readonly bool[] breaking;
 
         internal WavePlan(BoardState board, int level, int number, int seed, int start, int guaranteed,
-            ulong stationary, int newSlider, int otherSliderHole, WaveMode mode, double now)
+            bool[] stationary, int newSlider, int otherSliderHole, WaveMode mode, double now)
         {
             Level = level;
             Number = number;
@@ -38,180 +37,192 @@ namespace FloorFracture
             StartingTile = start;
             GuaranteedTile = guaranteed;
             StartsAt = now;
-            Duration = Math.Max(2.5, 5.0 - (level - 1) * 0.4);
-            RevealEndsAt = now + Math.Min(1.65, Duration * 0.4);
-            Fog = level >= 2 && (number & 1) == 1 && mode != WaveMode.LastTile;
+            Duration = Math.Max(2.5, 4.0 - (level - 1) * .3);
+            double reveal = level == 1 ? 1.5 : Math.Max(.85, 1.25 - (level - 2) * .15);
+            RevealEndsAt = now + (mode == WaveMode.Memory ? Math.Max(.75, reveal - .15) : reveal);
+            Fog = level >= 2 && (number - 1) % 3 == 0 && mode != WaveMode.LastTile;
             Mode = mode;
-            StationaryMask = stationary;
+            Stationary = stationary;
             NewSliderTile = newSlider;
             OtherSliderHole = otherSliderHole;
 
-            // An earlier, locked pane can break over its old hole. A new optional pane is
-            // separate from the permanent survivors, so its underlying hole never fills in.
-            breakingMask = board.StationaryMask & ~stationary;
-            if (board.Slider != null) breakingMask |= 1UL << board.Slider.Tile;
-            safeMask = stationary;
-            if (newSlider >= 0) safeMask |= 1UL << newSlider;
-            StationarySafe = CellList(stationary, board.Count);
-            SafeTiles = newSlider < 0 ? StationarySafe : CellList(safeMask, board.Count);
-            BreakingTiles = CellList(breakingMask, board.Count);
+            // A previous slider breaks over its old hole. The newly offered slider is
+            // an additional safe choice and never fills in its underlying hole.
+            breaking = new bool[board.Count];
+            var survivors = new List<int>();
+            var allSafe = newSlider < 0 ? null : new List<int>();
+            var breaks = new List<int>();
+            for (int tile = 0; tile < board.Count; ++tile)
+            {
+                if (stationary[tile]) survivors.Add(tile);
+                if (IsSafe(tile)) allSafe?.Add(tile);
+                else if (board.IsIntact(tile) || board.Slider?.Tile == tile)
+                {
+                    breaking[tile] = true;
+                    breaks.Add(tile);
+                }
+            }
+            StationarySafe = survivors.AsReadOnly();
+            SafeTiles = allSafe == null ? StationarySafe : allSafe.AsReadOnly();
+            BreakingTiles = breaks.AsReadOnly();
         }
 
-        public bool IsBreaking(int tile) => Contains(breakingMask, tile);
-        public bool IsSafe(int tile) => Contains(safeMask, tile);
-        public bool ShowsWarnings(double now) =>
-            now >= StartsAt && now <= Deadline && (Mode != WaveMode.Memory || now < RevealEndsAt);
-
-        private static bool Contains(ulong mask, int index)
-        {
-            return index >= 0 && index < BoardState.MaxPanes && (mask & (1UL << index)) != 0;
-        }
-
-        private static IReadOnlyList<int> CellList(ulong mask, int count)
-        {
-            var cells = new List<int>();
-            for (int i = 0; i < count; ++i)
-                if (Contains(mask, i)) cells.Add(i);
-            return cells.AsReadOnly();
-        }
+        public bool IsBreaking(int tile) => (uint)tile < (uint)breaking.Length && breaking[tile];
+        public bool IsSafe(int tile) =>
+            (uint)tile < (uint)Stationary.Length && (Stationary[tile] || tile == NewSliderTile);
+        public bool ShowsWarnings(double now) => now >= StartsAt && now < RevealEndsAt;
     }
 
-    // The largest connected component adjacent to the start gives the player the longest
-    // viable continuation. Grow survivors outward from the reserved first step, so each
-    // intermediate choice is connected even if removing the starting tile splits the board.
     public static class WavePlanner
     {
         internal static WavePlan Plan(BoardState board, int start, int level, int number,
-            int regularWavesSurvived, double now)
+            int advancedWavesSurvived, double now)
         {
             bool opening = level == 1 && number == 1;
             int seed = PatternSeed(board, start, level, number, opening);
             var random = new Generator(seed);
-            ulong eligible = board.StationaryMask & ~(1UL << start);
-            ulong adjacent = board.StepMask(start) & eligible;
-            ulong visited = 0, options = 0;
+
+            // Removing the player's pane can split the board. Only consider exits into
+            // a largest reachable component, so the first step supports a viable continuation.
+            var componentSizes = new int[board.Count];
+            var queue = new int[board.IntactCount];
+            var options = new List<int>(8);
             int largest = 0;
             for (int tile = 0; tile < board.Count; ++tile)
             {
-                ulong bit = 1UL << tile;
-                if ((adjacent & ~visited & bit) == 0) continue;
-                ulong component = Flood(board, bit, eligible);
-                visited |= component;
-                int size = CountBits(component);
+                if (!board.IsIntact(tile) || !board.CanStepFrom(start, tile)) continue;
+                int size = componentSizes[tile];
+                if (size == 0) size = MeasureComponent(board, start, tile, queue, componentSizes);
                 if (size < largest) continue;
-                if (size > largest) options = 0;
+                if (size > largest) options.Clear();
                 largest = size;
-                options |= component & adjacent;
+                options.Add(tile);
             }
-            if (options == 0) throw new InvalidOperationException("The starting pane has no stationary step.");
-            int guaranteed = Pick(options, ref random, opening);
-            ulong componentMask = Flood(board, 1UL << guaranteed, eligible);
-            int intact = CountBits(board.StationaryMask);
+            if (options.Count == 0) throw new InvalidOperationException("The starting pane has no stationary step.");
+            int guaranteed = options[opening ? 0 : random.Next(options.Count)];
+            int intact = board.IntactCount;
             int maximum = Math.Min(largest, Math.Max(1, intact - 1));
-            int minimum = Math.Min(maximum, Math.Max(2, (intact + 1) / 2));
+            int minimum = Math.Min(maximum, Math.Max(2, intact / 2 + intact % 2));
             int target = opening
-                ? Math.Min(maximum, (2 * intact + 2) / 3)
+                ? Math.Min(maximum, intact - intact / 3)
                 : minimum + random.Next(maximum - minimum + 1);
+            var survivors = GrowSurvivors(board.Layout, guaranteed, target, componentSizes, opening, ref random);
 
-            ulong survivors = 1UL << guaranteed;
-            for (int size = 1; size < target; ++size)
-            {
-                ulong frontier = board.AdjacentMask(survivors) & componentMask & ~survivors;
-                if (frontier == 0)
-                {
-                    // A new constraint that exhausts the candidate set still leaves a fair finale.
-                    survivors = 1UL << guaranteed;
-                    break;
-                }
-                survivors |= 1UL << Pick(frontier, ref random, opening);
-            }
-
-            WaveMode mode = survivors == (1UL << guaranteed)
-                ? WaveMode.LastTile : ChooseMode(board.Seed, regularWavesSurvived);
-            int sliderTile = -1;
-            int otherHole = -1;
+            WaveMode mode = target == 1 ? WaveMode.LastTile :
+                level == 1 ? WaveMode.Classic : ChooseMode(board.Seed, advancedWavesSurvived);
+            int sliderTile = -1, otherHole = -1;
             if (mode != WaveMode.LastTile && level >= 3 && board.Slider == null)
-            {
-                // A full pane travels between two old holes. At each end, a permanent
-                // side step must remain so a player can lock the pane anywhere along it.
-                ulong holes = board.AdjacentMask(survivors) & ~board.StationaryMask;
-                int lanes = 0;
-                for (int a = 0; a < board.Count; ++a)
-                {
-                    if ((holes & (1UL<<a)) == 0) continue;
-                    ulong adjacentHoles = board.NeighborMask(a) & holes;
-                    for (int b = a+1; b < board.Count; ++b)
-                    {
-                        if ((adjacentHoles & (1UL<<b)) == 0) continue;
-                        bool horizontal = a / board.Width == b / board.Width;
-                        if ((board.SideNeighbors(a,horizontal) & survivors) == 0 ||
-                            (board.SideNeighbors(b,horizontal) & survivors) == 0) continue;
-                        if (random.Next(++lanes) != 0) continue;
-                        bool reverse = random.Next(2) != 0;
-                        sliderTile = reverse ? b : a;
-                        otherHole = reverse ? a : b;
-                    }
-                }
-            }
+                ChooseSlider(board, survivors, ref random, out sliderTile, out otherHole);
             return new WavePlan(board, level, number, seed, start, guaranteed, survivors,
                 sliderTile, otherHole, mode, now);
         }
 
-        private static WaveMode ChooseMode(int seed, int regularWavesSurvived)
+        private static int MeasureComponent(BoardState board, int start, int first, int[] queue, int[] sizes)
         {
-            if (regularWavesSurvived == 0) return WaveMode.Classic;
-            if (regularWavesSurvived == 1) return WaveMode.Memory;
-            int slot = regularWavesSurvived - 2;
-            uint bag = Mix(unchecked((uint)seed) ^ Mix((uint)(slot / 2 + 1)));
-            bool memory = ((bag ^ (uint)slot) & 1) != 0;
-            return memory ? WaveMode.Memory : WaveMode.Classic;
+            int tail = 1;
+            queue[0] = first;
+            sizes[first] = -1;
+            for (int head = 0; head < tail; ++head)
+                for (int d = 0; d < 4; ++d)
+                {
+                    int next = board.Layout.Neighbor(queue[head], d);
+                    if (next == start || !board.IsIntact(next) || sizes[next] != 0) continue;
+                    sizes[next] = -1;
+                    queue[tail++] = next;
+                }
+            for (int i = 0; i < tail; ++i) sizes[queue[i]] = tail;
+            return tail;
+        }
+
+        private static bool[] GrowSurvivors(BoardLayout layout, int first, int target, int[] available,
+            bool opening, ref Generator random)
+        {
+            var survivors = new bool[layout.CellCount];
+            var frontier = new List<int>();
+            int tile = first;
+            available[first] = 0;
+            for (int count = 1; ; ++count)
+            {
+                survivors[tile] = true;
+                if (count == target) return survivors;
+                for (int d = 0; d < 4; ++d)
+                {
+                    int next = layout.Neighbor(tile, d);
+                    if (next < 0 || available[next] == 0) continue;
+                    available[next] = 0;
+                    // Row-major selection preserves saved seeds across board representations.
+                    frontier.Insert(~frontier.BinarySearch(next), next);
+                }
+                int pick = opening ? 0 : random.Next(frontier.Count);
+                tile = frontier[pick];
+                frontier.RemoveAt(pick);
+            }
+        }
+
+        private static void ChooseSlider(BoardState board, bool[] survivors, ref Generator random,
+            out int sliderTile, out int otherHole)
+        {
+            sliderTile = otherHole = -1;
+            int lanes = 0;
+            for (int a = 0; a < board.Count; ++a)
+            {
+                if (!board.Layout.Contains(a) || board.IsIntact(a)) continue;
+                // Enumerate each pair of old holes once, in row-major order.
+                for (int direction = 2; direction <= 3; ++direction)
+                {
+                    int b = board.Layout.Neighbor(a, direction);
+                    if (!board.Layout.Contains(b) || board.IsIntact(b)) continue;
+                    bool horizontal = direction == 2;
+                    if (!HasSideExit(board.Layout, a, horizontal, survivors) ||
+                        !HasSideExit(board.Layout, b, horizontal, survivors)) continue;
+                    if (random.Next(++lanes) != 0) continue;
+                    bool reverse = random.Next(2) != 0;
+                    sliderTile = reverse ? b : a;
+                    otherHole = reverse ? a : b;
+                }
+            }
+        }
+
+        private static bool HasSideExit(BoardLayout layout, int tile, bool horizontal, bool[] survivors)
+        {
+            int left = layout.Neighbor(tile, horizontal ? 0 : 1);
+            int right = layout.Neighbor(tile, horizontal ? 3 : 2);
+            return (left >= 0 && survivors[left]) || (right >= 0 && survivors[right]);
+        }
+
+        // Each group of three regular waves from level two onward contains one Memory round.
+        private static WaveMode ChooseMode(int seed, int advancedWavesSurvived)
+        {
+            int group = advancedWavesSurvived / 3;
+            int memorySlot = group == 0 ? 1 : (int)(Mix((uint)seed ^ Mix((uint)group)) % 3);
+            return advancedWavesSurvived % 3 == memorySlot ? WaveMode.Memory : WaveMode.Classic;
         }
 
         private static int PatternSeed(BoardState board, int start, int level, int number, bool opening)
         {
             unchecked
             {
+                // Retain the seeded patterns that ran on the original single-word boards.
                 uint shape = (uint)(board.Width | (board.Height << 4) | (start << 8));
-                // Preserve the existing seeds where each dimension fits in four bits.
-                // Tag larger dimensions and give each its own six-bit field.
-                if (board.Width >= 16 || board.Height >= 16)
+                if (board.Count > 64)
+                    shape = Mix(Mix((uint)board.Width) ^ (uint)board.Height) ^ Mix((uint)start);
+                else if (board.Width >= 16 || board.Height >= 16)
                     shape = 0x80000000u | (uint)(board.Width | (board.Height << 6) | (start << 12));
-                uint value = Mix(shape) ^ Mix((uint)board.StationaryMask) ^ Mix((uint)(board.StationaryMask >> 32));
+                uint value = Mix(shape);
+                for (int first = 0; first < board.Count;)
+                {
+                    uint word = 0;
+                    int length = Math.Min(32, board.Count - first);
+                    for (int bit = 0; bit < length; ++bit)
+                        if (board.IsIntact(first + bit)) word |= 1u << bit;
+                    value = first < 64 ? value ^ Mix(word) : Mix(value ^ word ^ (uint)first);
+                    first += length;
+                }
                 value ^= Mix((uint)level) ^ Mix((uint)number * 0x9e3779b9u);
                 value ^= opening ? 0u : Mix((uint)board.Seed);
                 if (board.Slider != null) value ^= Mix((uint)(board.Slider.Tile + 1));
                 return (int)Mix(value);
             }
-        }
-
-        private static ulong Flood(BoardState board, ulong seed, ulong allowed)
-        {
-            ulong group = seed, frontier = seed;
-            while (frontier != 0)
-            {
-                frontier = board.AdjacentMask(frontier) & allowed & ~group;
-                group |= frontier;
-            }
-            return group;
-        }
-
-        internal static int CountBits(ulong mask)
-        {
-            int count = 0;
-            while (mask != 0)
-            {
-                mask &= mask - 1;
-                ++count;
-            }
-            return count;
-        }
-
-        private static int Pick(ulong mask, ref Generator random, bool first)
-        {
-            int skip = first ? 0 : random.Next(CountBits(mask));
-            for (int tile = 0; mask != 0; ++tile, mask >>= 1)
-                if ((mask & 1) != 0 && skip-- == 0) return tile;
-            throw new InvalidOperationException("Cannot select a tile from an empty pattern.");
         }
 
         // Explicit unsigned arithmetic gives the same shuffled board on Mono and IL2CPP.
