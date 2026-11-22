@@ -190,7 +190,6 @@ namespace Unity.InferenceEngine
 
         public static readonly int k_ID_updatesLength = Shader.PropertyToID("updatesLength");
         public static readonly int k_ID_indexRemapDim = Shader.PropertyToID("indexRemapDim");
-        public static readonly int k_ID_trailing = Shader.PropertyToID("trailing");
         public static readonly int k_ID_Iptr = Shader.PropertyToID("Iptr");
         public static readonly int k_ID_Uptr = Shader.PropertyToID("Uptr");
         public static readonly int k_ID_UIntptr = Shader.PropertyToID("UIntptr");

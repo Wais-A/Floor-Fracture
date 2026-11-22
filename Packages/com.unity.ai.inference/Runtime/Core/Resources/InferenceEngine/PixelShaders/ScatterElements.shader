@@ -123,7 +123,7 @@ Shader "Hidden/InferenceEngine/ScatterElements"
                 uint idxOnCurDim;
                 uint indicesLinearIdx;
                 uint axis = posAxis;
-                int curDim;
+                uint curDim;
 
                 bool idxOnCurDimValidForIndicesTensor; // TODO
 

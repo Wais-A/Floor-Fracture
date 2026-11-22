@@ -41,13 +41,13 @@ Shader "Hidden/InferenceEngine/GridSample"
             {
                 #ifdef ZEROS
                 #ifdef GRIDSAMPLE1D
-                if (pos.x < 0 || pos.x >= X_width)
+                if (pos.x < 0 || pos.x >= (int)X_width)
                 #endif
                 #ifdef GRIDSAMPLE2D
-                if (pos.x < 0 || pos.x >= X_width || pos.y < 0 || pos.y >= X_height)
+                if (pos.x < 0 || pos.x >= (int)X_width || pos.y < 0 || pos.y >= (int)X_height)
                 #endif
                 #ifdef GRIDSAMPLE3D
-                if (pos.x < 0 || pos.x >= X_width || pos.y < 0 || pos.y >= X_height || pos.z < 0 || pos.z >= X_depth)
+                if (pos.x < 0 || pos.x >= (int)X_width || pos.y < 0 || pos.y >= (int)X_height || pos.z < 0 || pos.z >= (int)X_depth)
                 #endif
                 return 0;
                 #endif

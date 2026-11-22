@@ -467,12 +467,12 @@ Shader "Hidden/InferenceEngine/ConvTranspose"
                             // Note that for the rest of input channels tracking vars, they apply to both kernel and x input data:
                             uint4 inChanGroupFirstBlockSubBlockOffset4 = (firstInChanXGroupOffsetTmp4) & 3; // % 4;
 
-                            int4 inChanTodoInFirstBlock4 = min((uint4)(X_channelsPerGroup), 4 - inChanGroupFirstBlockSubBlockOffset4) & 3; // %4
+                            uint4 inChanTodoInFirstBlock4 = min((uint4)(X_channelsPerGroup), 4 - inChanGroupFirstBlockSubBlockOffset4) & 3; // %4
                             uint4 inChanFullBlocksNum4 = (X_channelsPerGroup - inChanTodoInFirstBlock4) >> 2; // /4;
-                            int4 inChanTodoInLastBlock4 = (X_channelsPerGroup - inChanTodoInFirstBlock4) & 3; // % 4
+                            uint4 inChanTodoInLastBlock4 = (X_channelsPerGroup - inChanTodoInFirstBlock4) & 3; // % 4
 
                             bool4 activeMask4 = inChanTodoInFirstBlock4 > 0;
-                            int cDiv4 = 0;
+                            uint cDiv4 = 0;
 
                             uint4 blockIndexX = indexX[0] + xInChanGroupBlockOffsets4;// + cDiv4 * xInChanBlockStride;
                             uint4 blockIndexK = indexK[0] + kOutChanAxis1Offset4 + kInChanGroupBlockOffsets4;// + cDiv4 * kAxis0BlockStride;

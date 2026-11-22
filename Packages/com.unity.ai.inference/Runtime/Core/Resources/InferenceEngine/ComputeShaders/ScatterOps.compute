@@ -4,7 +4,7 @@
 #pragma multi_compile_local _ INT
 #include "Tensor.cginc"
 
-uint trailing[8];
+int shapeX[8];
 uint reduction;
 uint updatesLength;
 uint indicesLength;
@@ -35,7 +35,11 @@ void ScatterND(uint3 dispatchThreadID : SV_DispatchThreadID)
     uint indexO = 0;
     for (uint j = 0; j < indexRemapDim; j++)
     {
-        indexO += trailing[j] * Iptr[i * indexRemapDim + j];
+        int size = shapeX[j];
+        int coordinate = Iptr[i * indexRemapDim + j];
+        if (coordinate < 0) coordinate += size;
+        if ((uint)coordinate >= (uint)size) return;
+        indexO = indexO * (uint)size + (uint)coordinate;
     }
     DTYPE vw = Uptr[i * updatesLength + k];
 
