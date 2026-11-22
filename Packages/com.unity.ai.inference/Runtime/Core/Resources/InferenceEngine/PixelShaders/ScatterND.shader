@@ -60,36 +60,37 @@ Shader "Hidden/InferenceEngine/ScatterND"
                 uint lowerIndexO = blockIndexO % SliceLength;
                 uint upperIndexO = blockIndexO / SliceLength;
                 uint n = upperIndexO;
-                uint indexX[8];
-                uint shapeInitial[8];
+                int indexX[8];
+                int negativeIndexX[8];
 
-                for (uint j = K - 1; j < 8; j--)
+                for (int axis = (int)K - 1; axis >= 0; axis--)
                 {
-                    shapeInitial[j] = ShapeX[rank - 1 - j];
-                    indexX[j] = n % shapeInitial[j];
-                    n /= shapeInitial[j];
+                    uint size = ShapeX[(int)rank - 1 - axis];
+                    indexX[axis] = (int)(n % size);
+                    negativeIndexX[axis] = indexX[axis] - (int)size;
+                    n /= size;
                 }
                 for (uint j = 0; j < NumIndices; j++)
                 {
                     int4 b = SampleBlockB(Kdiv4 * j);
-                    if (K > 0 && (b[0] != indexX[0] && b[0] + shapeInitial[0] != indexX[0]))
+                    if (K > 0 && (b[0] != indexX[0] && b[0] != negativeIndexX[0]))
                         continue;
-                    if (K > 1 && (b[1] != indexX[1] && b[1] + shapeInitial[1] != indexX[1]))
+                    if (K > 1 && (b[1] != indexX[1] && b[1] != negativeIndexX[1]))
                         continue;
-                    if (K > 2 && (b[2] != indexX[2] && b[2] + shapeInitial[2] != indexX[2]))
+                    if (K > 2 && (b[2] != indexX[2] && b[2] != negativeIndexX[2]))
                         continue;
-                    if (K > 3 && (b[3] != indexX[3] && b[3] + shapeInitial[3] != indexX[3]))
+                    if (K > 3 && (b[3] != indexX[3] && b[3] != negativeIndexX[3]))
                         continue;
 
                     #ifdef K_LARGE
                     b = SampleBlockB(Kdiv4 * j + 1);
-                    if (K > 4 && (b[0] != indexX[4] && b[0] + shapeInitial[4] != indexX[4]))
+                    if (K > 4 && (b[0] != indexX[4] && b[0] != negativeIndexX[4]))
                         continue;
-                    if (K > 5 && (b[1] != indexX[5] && b[1] + shapeInitial[5] != indexX[5]))
+                    if (K > 5 && (b[1] != indexX[5] && b[1] != negativeIndexX[5]))
                         continue;
-                    if (K > 6 && (b[2] != indexX[6] && b[2] + shapeInitial[6] != indexX[6]))
+                    if (K > 6 && (b[2] != indexX[6] && b[2] != negativeIndexX[6]))
                         continue;
-                    if (K > 7 && (b[3] != indexX[7] && b[3] + shapeInitial[7] != indexX[7]))
+                    if (K > 7 && (b[3] != indexX[7] && b[3] != negativeIndexX[7]))
                         continue;
                     #endif
 

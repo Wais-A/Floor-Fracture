@@ -51,8 +51,8 @@ Shader "Hidden/InferenceEngine/SliceSet"
                 uint mask = 1;
                 for (uint j = 0; j < 8; j++)
                 {
-                    uint m = n % ShapeO[j];
-                    int d = clamp(((int)m - (int)Starts[j]) / (int)Steps[j], 0, (int)ShapeV[j] - 1);
+                    int m = (int)(n % ShapeO[j]);
+                    int d = clamp((m - (int)Starts[j]) / (int)Steps[j], 0, (int)ShapeV[j] - 1);
                     blockIndexV += d * (int)StridesV[j];
                     mask *= (m == (int)Starts[j] + d * (int)Steps[j]);
                     n /= ShapeO[j];
@@ -65,8 +65,8 @@ Shader "Hidden/InferenceEngine/SliceSet"
                 uint4 mask4 = 1;
                 for (uint j = 0; j < 8; j++)
                 {
-                    uint4 m4 = n4 % ShapeO[j];
-                    int4 d4 = clamp(((int4)m4 - (int4)Starts[j]) / (int4)Steps[j], 0, (int4)ShapeV[j] - 1);
+                    int4 m4 = (int4)(n4 % ShapeO[j]);
+                    int4 d4 = clamp((m4 - (int4)Starts[j]) / (int4)Steps[j], 0, (int4)ShapeV[j] - 1);
                     indexV4 += d4 * (int4)StridesV[j];
                     mask4 *= (m4 == (int4)Starts[j] + d4 * (int4)Steps[j]);
                     n4 /= ShapeO[j];

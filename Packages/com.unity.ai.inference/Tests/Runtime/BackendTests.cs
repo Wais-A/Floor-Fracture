@@ -62,6 +62,24 @@ namespace Unity.InferenceEngine.Tests
                 expectedTensor.Dispose();
         }
 
+        [TestCase(BackendType.CPU)]
+        [TestCase(BackendType.GPUCompute)]
+        [TestCase(BackendType.GPUPixel)]
+        public void ScatterNDNegativeCoordinatesUpdateTheExpectedSlices(BackendType backend)
+        {
+            var graph = new FunctionalGraph();
+            var shape = new TensorShape(2, 3, 2);
+            var data = graph.AddInput<int>(shape);
+            var indices = Functional.Constant(new TensorShape(2, 2), new[] { -1, -1, 0, 1 });
+            var updates = Functional.Constant(new TensorShape(2, 2), new[] { 7, 8, 9, 10 });
+            var scatter = Functional.FromLayer(new ScatterND(ScatterReductionMode.None), new[] { data, indices, updates });
+            using var worker = new Worker(graph.Compile(scatter), backend);
+            using var input = new Tensor<int>(shape, new int[12]);
+            worker.Schedule(input);
+            using var output = ((Tensor<int>)worker.PeekOutput()).ReadbackAndClone();
+            CollectionAssert.AreEqual(new[] { 0, 0, 9, 10, 0, 0, 0, 0, 0, 0, 7, 8 }, output.DownloadToArray());
+        }
+
         [Test]
         [UnityPlatform(include = new[] { RuntimePlatform.WindowsEditor, RuntimePlatform.WindowsPlayer, RuntimePlatform.OSXEditor, RuntimePlatform.OSXPlayer, RuntimePlatform.LinuxEditor, RuntimePlatform.LinuxPlayer })] // TODO investigate iOS and Android fails
         public void Conv()

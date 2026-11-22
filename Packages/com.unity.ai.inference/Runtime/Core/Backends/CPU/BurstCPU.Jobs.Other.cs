@@ -1978,13 +1978,38 @@ namespace Unity.InferenceEngine
             }
         }
 
+        unsafe struct ScatterNDShape
+        {
+            int rank;
+            fixed int dimensions[TensorShape.maxRank];
+
+            public ScatterNDShape(TensorShape shape, int indexedDimensions)
+            {
+                rank = indexedDimensions;
+                for (int axis = 0; axis < rank; axis++) dimensions[axis] = shape[axis];
+            }
+
+            public int Offset(int* indices, int tuple)
+            {
+                int offset = 0;
+                for (int axis = 0; axis < rank; axis++)
+                {
+                    int size = dimensions[axis];
+                    int coordinate = indices[tuple * rank + axis];
+                    if (coordinate < 0) coordinate += size;
+                    if ((uint)coordinate >= (uint)size) return -1;
+                    offset = offset * size + coordinate;
+                }
+                return offset;
+            }
+        }
+
         [BurstCompile(OptimizeFor = OptimizeFor.Performance, FloatMode = FloatMode.Default, FloatPrecision = FloatPrecision.Standard, CompileSynchronously = true)]
         unsafe struct ScatterNDFloatJob : IJobParallelFor, IJobResourceDeclarationXSBO
         {
             public Layers.ScatterReductionMode reduction;
             public int updatesLength;
-            public int indexRemapDim;
-            public fixed int trailing[8];
+            public ScatterNDShape indexShape;
             public ReadOnlyMemResource X { get; set; } float* Xptr => (float*)X.ptr;
             public ReadOnlyMemResource S { get; set; } int* Sptr => (int*)S.ptr;
             public ReadOnlyMemResource B { get; set; } float* Bptr => (float*)B.ptr;
@@ -1995,11 +2020,8 @@ namespace Unity.InferenceEngine
                 int k = threadIdx % updatesLength;
                 int i = threadIdx / updatesLength;
 
-                int indexO = 0;
-                for (int j = 0; j < indexRemapDim; j++)
-                {
-                    indexO += trailing[j] * (int)Sptr[i * indexRemapDim + j];
-                }
+                int indexO = indexShape.Offset(Sptr, i);
+                if (indexO < 0) return;
                 float vw = Bptr[i * updatesLength + k];
 
                 if (reduction == Layers.ScatterReductionMode.None)
@@ -2020,8 +2042,7 @@ namespace Unity.InferenceEngine
         {
             public Layers.ScatterReductionMode reduction;
             public int updatesLength;
-            public int indexRemapDim;
-            public fixed int trailing[8];
+            public ScatterNDShape indexShape;
             public ReadOnlyMemResource X { get; set; } int* Xptr => (int*)X.ptr;
             public ReadOnlyMemResource S { get; set; } int* Sptr => (int*)S.ptr;
             public ReadOnlyMemResource B { get; set; } int* Bptr => (int*)B.ptr;
@@ -2032,11 +2053,8 @@ namespace Unity.InferenceEngine
                 int k = threadIdx % updatesLength;
                 int i = threadIdx / updatesLength;
 
-                int indexO = 0;
-                for (int j = 0; j < indexRemapDim; j++)
-                {
-                    indexO += trailing[j] * (int)Sptr[i * indexRemapDim + j];
-                }
+                int indexO = indexShape.Offset(Sptr, i);
+                if (indexO < 0) return;
                 int vw = Bptr[i * updatesLength + k];
 
                 if (reduction == Layers.ScatterReductionMode.None)

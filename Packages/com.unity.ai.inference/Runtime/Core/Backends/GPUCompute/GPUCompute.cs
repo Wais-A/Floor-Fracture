@@ -2837,17 +2837,9 @@ namespace Unity.InferenceEngine
             cb.SetComputeIntParam(fn.shader, k_ID_updatesLength, updatesLength);
             cb.SetComputeIntParam(fn.shader, k_ID_indicesLength, indicesLength);
             cb.SetComputeIntParam(fn.shader, k_ID_indexRemapDim, indexRemapDim);
-            unsafe
-            {
-                var trailing = stackalloc int[8];
-                int trailingDim = 1;
-                for (int j = (indexRemapDim - 1); j >= 0; j--)
-                {
-                    trailing[j] = trailingDim;
-                    trailingDim *= X.shape[j];
-                }
-                cb.SetInt8(fn, k_ID_trailing, trailing);
-            }
+            Span<int> dimensions = stackalloc int[indexRemapDim];
+            for (int axis = 0; axis < indexRemapDim; axis++) dimensions[axis] = X.shape[axis];
+            cb.SetInt8(fn, k_ID_shapeX, dimensions);
             cb.SetTensorAsBuffer(fn, k_ID_Iptr, Pin(indices));
             cb.SetTensorAsBuffer(fn, k_ID_Uptr, Pin(updates));
             cb.SetTensorAsBuffer(fn, k_ID_Optr, Pin(O));

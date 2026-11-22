@@ -1347,17 +1347,8 @@ namespace Unity.InferenceEngine
 
             var job = new ScatterNDFloatJob();
             job.updatesLength = updatesLength;
-            job.indexRemapDim = indexRemapDim;
+            job.indexShape = new ScatterNDShape(X.shape, indexRemapDim);
             job.reduction = reduction;
-            unsafe
-            {
-                int trailing = 1;
-                for (int j = (indexRemapDim - 1); j >= 0; j--)
-                {
-                    job.trailing[j] = trailing;
-                    trailing *= X.shape[j];
-                }
-            }
             job.ScheduleXSBO(Pin(X), Pin(indices), Pin(updates), Pin(O), updatesLength * indicesLength, 32);
         }
 
@@ -1372,17 +1363,8 @@ namespace Unity.InferenceEngine
 
             var job = new ScatterNDIntJob();
             job.updatesLength = updatesLength;
-            job.indexRemapDim = indexRemapDim;
+            job.indexShape = new ScatterNDShape(X.shape, indexRemapDim);
             job.reduction = reduction;
-            unsafe
-            {
-                int trailing = 1;
-                for (int j = (indexRemapDim - 1); j >= 0; j--)
-                {
-                    job.trailing[j] = trailing;
-                    trailing *= X.shape[j];
-                }
-            }
             job.ScheduleXSBO(Pin(X), Pin(indices), Pin(updates), Pin(O), updatesLength * indicesLength, 32);
         }
 
