@@ -27,6 +27,7 @@ namespace FloorFracture
         public int Tile { get; }
         public int OtherHole { get; }
         public Vector2 Direction { get; }
+        public int TravelCells { get; }
         public double MotionStartsAt { get; }
         public bool Locked { get; private set; }
 
@@ -41,10 +42,12 @@ namespace FloorFracture
             startCenter = board.Center(tile);
             endCenter = board.Center(otherHole);
             Direction = (endCenter-startCenter).normalized;
+            TravelCells = Math.Abs(otherHole % board.Width - tile % board.Width) +
+                Math.Abs(otherHole / board.Width - tile / board.Width);
             HalfSize = board.Pitch * BoardState.PaneHalfPitch;
             double pace = Math.Min(1, duration / 2);
             MotionStartsAt = start + .65 * pace;
-            OneWaySeconds = 1.20 * pace;
+            OneWaySeconds = TravelCells * 1.20 * pace;
         }
 
         public Vector2 CenterAt(double now)
@@ -60,8 +63,9 @@ namespace FloorFracture
         internal bool CanExitTo(BoardState board, int tile)
         {
             // At mid-travel an exit can be half a pitch along the lane and one pitch across.
-            return board.IsIntact(tile) && (board.Neighbors(Tile, tile) || board.Neighbors(OtherHole, tile)) &&
-                (board.Center(tile) - lockedCenter).sqrMagnitude <= board.Pitch * board.Pitch * 1.2501f;
+            if (!board.IsIntact(tile)) return false;
+            Vector2 delta = board.Center(tile) - lockedCenter;
+            return delta.sqrMagnitude <= board.Pitch * board.Pitch * 1.2501f;
         }
 
         internal bool TryLand(Vector2 point, double now)
@@ -139,7 +143,7 @@ namespace FloorFracture
         {
             TileSample sample = Classify(board, point, tracked, now);
             var wave = board.ActiveWave;
-            if (sample.Kind != SupportKind.Gap || wave == null || sample.Index != wave.JumpGap)
+            if (sample.Kind != SupportKind.Gap || wave == null || !wave.IsJumpGap(sample.Index))
                 crossingJumpGap = false;
             else if (Current.Kind != SupportKind.Gap || Current.Index != sample.Index)
                 crossingJumpGap = Current.Kind == SupportKind.Glass && Current.Index == wave.StartingTile;
@@ -171,10 +175,16 @@ namespace FloorFracture
             int index = board.IndexAt(point);
             if (index < 0) return new TileSample(SupportKind.Outside);
             bool intact = board.IsIntact(index);
-            var slider = board.Slider;
-            if (slider != null && !intact && slider.TryLand(point, now))
-                return new TileSample(SupportKind.Glass, slider.Tile, true);
+            if (!intact)
+            {
+                for (int i = 0; i < board.Sliders.Count; ++i)
+                {
+                    var pane = board.Sliders[i];
+                    if (pane.TryLand(point, now)) return new TileSample(SupportKind.Glass, pane.Tile, true);
+                }
+            }
 
+            var slider = Current.IsSlider ? board.SliderFor(Current.Index) : null;
             float half = board.Pitch * BoardState.PaneHalfPitch;
             float reach = intact ? BorderTolerance : SupportReach;
             if (Current.Kind == SupportKind.Glass &&

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace FloorFracture
@@ -18,7 +19,14 @@ namespace FloorFracture
         public int Seed { get; private set; }
         public int WavesSurvived { get; private set; }
         public WavePlan ActiveWave { get; private set; }
-        public SlidingPane Slider { get; private set; }
+        private SlidingPane[] sliders = Array.Empty<SlidingPane>();
+        public IReadOnlyList<SlidingPane> Sliders => sliders;
+        public SlidingPane Slider => sliders.Length == 0 ? null : sliders[0];
+        public SlidingPane SliderFor(int tile)
+        {
+            foreach (var pane in sliders) if (pane.Tile == tile) return pane;
+            return null;
+        }
         public TileSample CurrentSample => tracker.Current;
         public bool BreaksApplied { get; private set; }
         public int AppliedBreakGroupCount { get; private set; }
@@ -27,13 +35,13 @@ namespace FloorFracture
         private bool[] stationary;
         private bool[] waveStartStationary;
         private int waveStartIntactCount;
-        private SlidingPane waveStartSlider;
-        private bool sliderWasLocked;
+        private SlidingPane[] waveStartSliders = Array.Empty<SlidingPane>();
+        private int lockedAtWaveStart;
 
         private readonly PlayerTileTracker tracker = new PlayerTileTracker();
         private float[] columnEdges, rowEdges;
         private int advancedWavesSurvived;
-        internal bool LastWaveWasJump { get; private set; }
+        internal int ConsecutiveJumps { get; private set; }
         private bool levelEnded;
 
         public BoardState(int width, int height, int seed, float pitch = MinPitch) { Reset(width, height, seed, pitch); }
@@ -70,12 +78,12 @@ namespace FloorFracture
         {
             stationary = null;
             waveStartStationary = null;
-            waveStartSlider = null;
+            waveStartSliders = Array.Empty<SlidingPane>();
             AppliedBreakGroupCount = 0;
             IntactCount = Layout.PaneCount;
             ActiveWave = null;
-            Slider = null;
-            LastWaveWasJump = false;
+            sliders = Array.Empty<SlidingPane>();
+            ConsecutiveJumps = 0;
             levelEnded = false;
             BreaksApplied = false;
             LastLoss = WaveLossReason.None;
@@ -120,8 +128,11 @@ namespace FloorFracture
             return low;
         }
 
-        public bool CanStepFrom(int from, int to) =>
-            Slider != null && Slider.Locked && from == Slider.Tile ? Slider.CanExitTo(this, to) : Neighbors(from, to);
+        public bool CanStepFrom(int from, int to)
+        {
+            var pane = SliderFor(from);
+            return pane != null && pane.Locked ? pane.CanExitTo(this, to) : Neighbors(from, to);
+        }
 
         public bool Neighbors(int a, int b) => Layout.Contains(a) && Layout.Contains(b) &&
             Math.Abs(a % Width - b % Width) + Math.Abs(a / Width - b / Width) == 1;
@@ -139,17 +150,27 @@ namespace FloorFracture
             if (waveNumber < 1) throw new ArgumentOutOfRangeException(nameof(waveNumber));
             if (ActiveWave != null || levelEnded)
                 throw new InvalidOperationException("A new wave requires a ready, unfinished board.");
-            if (!IsIntact(startingTile) && !(Slider != null && Slider.Locked && Slider.Tile == startingTile))
+            if (!IsIntact(startingTile) && SliderFor(startingTile)?.Locked != true)
                 throw new ArgumentException("The start must be supported by glass.", nameof(startingTile));
 
             var plan = WavePlanner.Plan(this, startingTile, level, waveNumber, advancedWavesSurvived, now);
             waveStartStationary = stationary;
             waveStartIntactCount = IntactCount;
-            waveStartSlider = Slider;
-            sliderWasLocked = Slider != null && Slider.Locked;
+            waveStartSliders = sliders;
+            lockedAtWaveStart = 0;
+            for (int i = 0; i < sliders.Length; ++i)
+                if (sliders[i].Locked) lockedAtWaveStart |= 1 << i;
             AppliedBreakGroupCount = 0;
-            if (plan.NewSliderTile >= 0)
-                Slider = new SlidingPane(this, plan.NewSliderTile, plan.OtherSliderHole, now, plan.Duration);
+            if (plan.OfferedSliders.Length != 0)
+            {
+                CopyStationary();
+                sliders = plan.OfferedSliders;
+                foreach (var pane in sliders)
+                {
+                    stationary[pane.Tile] = false;
+                    --IntactCount;
+                }
+            }
             ActiveWave = plan;
             BreaksApplied = false;
             tracker.ResetTiming();
@@ -162,8 +183,9 @@ namespace FloorFracture
             {
                 stationary = waveStartStationary;
                 IntactCount = waveStartIntactCount;
-                Slider = waveStartSlider;
-                Slider?.RestoreLock(sliderWasLocked);
+                sliders = waveStartSliders;
+                for (int i = 0; i < sliders.Length; ++i)
+                    sliders[i].RestoreLock((lockedAtWaveStart & (1 << i)) != 0);
                 AppliedBreakGroupCount = 0;
                 BreaksApplied = false;
             }
@@ -206,7 +228,7 @@ namespace FloorFracture
             bool survived = sample.Kind == SupportKind.Glass && wave.IsSafe(sample.Index);
             stationary = wave.Stationary;
             IntactCount = wave.StationarySafe.Count;
-            if (Slider != null && wave.IsBreaking(Slider.Tile)) Slider = null;
+            sliders = wave.OfferedSliders;
             AppliedBreakGroupCount = wave.BreakGroups.Count;
             BreaksApplied = true;
             ActiveWave = null;
@@ -218,15 +240,22 @@ namespace FloorFracture
                     wave.Mode == WaveMode.Memory ? WaveLossReason.MemoryPane : WaveLossReason.CrackedPane;
                 return WaveResult.Lost;
             }
-            LastWaveWasJump = wave.IsJump;
+            ConsecutiveJumps = wave.IsJump ? ConsecutiveJumps + 1 : 0;
             ++WavesSurvived;
-            if (wave.Mode == WaveMode.LastTile)
+            if (wave.Mode == WaveMode.LastTile || (wave.IsJump && !sample.IsSlider && !HasStandingExit(sample.Index)))
             {
                 levelEnded = true;
                 return WaveResult.LevelCleared;
             }
             if (wave.Level >= 2 && !wave.IsJump) ++advancedWavesSurvived;
             return WaveResult.Survived;
+        }
+
+        private bool HasStandingExit(int tile)
+        {
+            for (int d = 0; d < 4; ++d)
+                if (IsIntact(Layout.Neighbor(tile, d))) return true;
+            return false;
         }
 
         private WaveResult Interrupt(Vector2 point, bool tracked, double time)
@@ -257,12 +286,7 @@ namespace FloorFracture
         {
             // The first early collapse gets a writable copy. Tracking loss can then restore
             // the exact pre-wave footprint, including old holes, with a reference swap.
-            if (AppliedBreakGroupCount == 0)
-            {
-                var intact = new bool[Count];
-                for (int tile = 0; tile < Count; ++tile) intact[tile] = IsIntact(tile);
-                stationary = intact;
-            }
+            if (stationary == waveStartStationary) CopyStationary();
             foreach (int tile in group.Tiles)
             {
                 if (stationary[tile])
@@ -270,9 +294,17 @@ namespace FloorFracture
                     stationary[tile] = false;
                     --IntactCount;
                 }
-                if (Slider != null && Slider.Tile == tile) Slider = null;
+                if (SliderFor(tile) != null)
+                    sliders = Array.FindAll(sliders, pane => pane.Tile != tile);
             }
             ++AppliedBreakGroupCount;
+        }
+
+        private void CopyStationary()
+        {
+            var copy = new bool[Count];
+            for (int tile = 0; tile < Count; ++tile) copy[tile] = IsIntact(tile);
+            stationary = copy;
         }
 
         private static void CheckTime(double now)

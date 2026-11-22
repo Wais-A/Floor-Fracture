@@ -130,89 +130,99 @@ namespace FloorFracture.Editor
 
         private static IEnumerator VerifyStagedPressure()
         {
-            foreach (int level in new[] { 5, 7, 12 })
+            foreach (int level in new[] {6,7,9,12})
             {
-                Choose("Development");
-                Choose("Later levels");
-                Choose("Level " + level);
+                // Start an actual development run on the room fitted by the scene.
+                game.SendMessage("DevelopmentRun",level);
                 int RankStart(int tile)
                 {
-                    var probe = new BoardState(game.State.Layout, 379, game.State.Pitch);
-                    var plan = probe.BeginWave(tile, level, 1, 0);
-                    return (plan.IsJump == (level == 12) ? game.State.Count : 0) + plan.StationarySafe.Count;
+                    var probe=new BoardState(game.State.Layout,379,game.State.Pitch);
+                    var plan=probe.BeginWave(tile,level,1,0);
+                    return 100*(plan.JumpLandings.Count+plan.RowRoute.Count)+plan.StationarySafe.Count;
                 }
-                int start = PlayablePanes.OrderByDescending(RankStart).First();
-                StandOn(start);
-                Choose("Start wave");
+                int start=PlayablePanes.OrderByDescending(RankStart).First();
+                Transform Tile(int i) => game.BoardView.Board.Find($"Glass {i%game.State.Width}, {i/game.State.Width}");
+                bool Cracked(int i) => Tile(i).Find("Fissures").GetComponent<Renderer>().enabled;
+                StandOn(start); Choose("Start wave");
                 yield return Stage(GameStage.Countdown);
-                var wave = game.State.ActiveWave;
-                if (level == 12) Require(wave.IsJump, "The opening should offer a one-hole jump.");
-                if (wave.IsJump)
+                var wave=game.State.ActiveWave;
+                var ring=game.BoardView.Board.Find("Occupied square").GetComponent<Renderer>();
+                Require(!game.BoardView.Board.Find("Jump direction") && !game.BoardView.Board.Find("Jump landing") &&
+                    ring.enabled,"Only the underfoot support ring should be present.");
+                if(level==6 || level==9)
                 {
-                    var landing = game.BoardView.Board.Find("Jump landing").GetComponent<Renderer>();
-                    var arrow = game.BoardView.Board.Find("Jump direction").GetComponent<Renderer>();
-                    Require(wave.IsJump && !game.State.IsIntact(wave.JumpGap) && game.State.IsIntact(start) &&
-                        landing.enabled && arrow.enabled,
-                        "The one-hole jump needs an open lane, a visible direction and a marked landing.");
-                    StandAt(game.State.Center(wave.JumpGap));
-                    yield return Delay(.34);
-                    Require(game.Stage == GameStage.Countdown && game.State.CurrentSample.Kind == SupportKind.Gap,
-                        "The marked gap did not allow time to cross.");
-                    StandOn(wave.GuaranteedTile);
-                    yield return Stage(GameStage.BetweenWaves, 4);
-                    Require(game.State.WavesSurvived == 1 && !landing.enabled && !arrow.enabled,
-                        "Landing did not score once and clear the jump markers.");
-                    if (level == 12)
+                    Require(wave.RowRoute.Count==(level==6 ? 2 : 3),"The fitted room must support the complete row crossing.");
+                    if(level==6)
                     {
-                        MenuInput(new OVRInput.OVRControllerTouch());
-                        Choose("Main menu");
-                        yield return Stage(GameStage.Welcome);
-                        continue;
+                        // Stay on the first marked row, then retry this level through Results.
+                        yield return Stage(GameStage.Fall,4);
+                        Require(game.State.LastLoss==WaveLossReason.GapGraceExpired,"Waiting on the first row should lose after it falls.");
+                        game.Ending.Skip(); yield return Stage(GameStage.Results);
+                        Choose("Retry Level 6"); StandOn(start); Choose("Start wave");
+                        yield return Stage(GameStage.Countdown);
+                        wave=game.State.ActiveWave;
                     }
-                    yield return Stage(GameStage.Countdown, 4);
-                    wave = game.State.ActiveWave;
+                    if(level==9)
+                    {
+                        StandOn(wave.RowRoute[0]);
+                        yield return Wait(()=>game.State.AppliedBreakGroupCount==1,"first row to fall",3);
+                        MenuInput(new OVRInput.OVRControllerTouch());
+                        double frozen=game.GameplayTime;
+                        yield return Delay(.3);
+                        Require(game.Stage==GameStage.Paused && frozen==game.GameplayTime && game.State.AppliedBreakGroupCount==1,
+                            "Opening the menu must freeze the current row.");
+                        Choose("Resume");
+                        int trap=game.Ending.CurrentLevelEnding;
+                        game.SendMessage("OnApplicationPause",true); game.SendMessage("OnApplicationPause",false);
+                        Choose("Show board");
+                        Require(game.State.IsIntact(start) && Tile(start).gameObject.activeSelf &&
+                            game.Ending.CurrentLevelEnding==trap,"Tracking recovery must restore the rows and trap.");
+                        StandOn(start); Choose("Start wave"); yield return Stage(GameStage.Countdown);
+                        wave=game.State.ActiveWave;
+                    }
+                    for(int i=0;i<wave.RowRoute.Count;++i)
+                    {
+                        int previous=i==0 ? start : wave.RowRoute[i-1];
+                        int next=wave.RowRoute[i];
+                        Require(Cracked(previous) && !Cracked(next),"Only the currently falling row should cue the next step.");
+                        if(i==0) Capture("level-"+level+"-collapsing-row",SmokeView.BoardObserver);
+                        StandOn(next);
+                        if(i+1<wave.RowRoute.Count)
+                        {
+                            int groups=i+1;
+                            yield return Wait(()=>game.State.AppliedBreakGroupCount==groups,"next row cue",3);
+                            Require(!Tile(previous).gameObject.activeSelf && Tile(next).gameObject.activeSelf,
+                                "Visual glass disagreed with the row that just fell.");
+                        }
+                    }
                 }
-                int score = game.State.WavesSurvived;
-                int groups = wave.BreakGroups.Count;
-                Require(!wave.IsJump && groups >= 2, $"Level {level} did not stage an ordinary collapse.");
-                var first = wave.BreakGroups[0];
-                var last = wave.BreakGroups[groups - 1];
-                Require(last.Tiles.Contains(wave.StartingTile) && last.BreaksAt == wave.Deadline,
-                    "Starting glass was scheduled to give way early.");
-                Transform Tile(int i) => game.BoardView.Board.Find($"Glass {i % game.State.Width}, {i / game.State.Width}");
-                var earlyPane = Tile(first.Tiles[0]);
-                var latePane = Tile(wave.StartingTile);
-                Require(earlyPane.Find("Fissures").GetComponent<Renderer>().enabled &&
-                    !latePane.Find("Fissures").GetComponent<Renderer>().enabled, "The sweep lit its last group at the first cue.");
-                yield return Wait(() => game.GameplayTime >= wave.RevealEndsAt + .04, "end of sweep", 2);
-                Require(!earlyPane.Find("Fissures").GetComponent<Renderer>().enabled &&
-                    !latePane.Find("Fissures").GetComponent<Renderer>().enabled, "Recall retained a visible clue.");
-                yield return Wait(() => game.State.AppliedBreakGroupCount >= 1, "first early collapse", 4);
-                Require(!earlyPane.gameObject.activeSelf && latePane.gameObject.activeSelf && game.Stage == GameStage.Countdown,
-                    "The early hole or the protected starting glass disagreed with the rules.");
-                if (level == 7)
+                else if(level==7)
                 {
-                    int trap = game.Ending.CurrentLevelEnding;
-                    game.SendMessage("OnApplicationPause", true);
-                    game.SendMessage("OnApplicationPause", false);
-                    Choose("Show board");
-                    Require(game.State.IsIntact(first.Tiles[0]) && earlyPane.gameObject.activeSelf,
-                        "Tracking recovery left a provisional hole from the canceled wave.");
-                    Choose("Start wave");
-                    yield return Stage(GameStage.Countdown);
-                    wave = game.State.ActiveWave;
-                    Require(game.Ending.CurrentLevelEnding == trap && game.State.AppliedBreakGroupCount == 0,
-                        "Tracking recovery consumed the trap or an early break.");
+                    Require(wave.JumpLandings.Count>1,"The recorded floor should offer alternate jump directions.");
+                    int landing=wave.JumpLandings.First(tile=>tile!=wave.GuaranteedTile);
+                    yield return Wait(()=>game.GameplayTime>=wave.JumpOpensAt+.03,"gap opening",3);
+                    Capture("jump-with-open-landings",SmokeView.BoardObserver);
+                    int gap=(start+landing)/2;
+                    Require(!game.State.IsIntact(gap) && !Tile(gap).gameObject.activeSelf && Tile(landing).gameObject.activeSelf,
+                        "The alternate crossing must contain one visible opening and a clear landing.");
+                    StandOn(gap); yield return Delay(.33);
+                    Require(game.Stage==GameStage.Countdown && game.State.CurrentSample.Kind==SupportKind.Gap &&
+                        !ring.enabled,"The crossing must allow time over the gap and clear the feet ring.");
+                    StandOn(landing); yield return Frames(2);
+                    Require(game.State.CurrentSample.Index==landing && ring.enabled,"The alternate landing must restore the feet ring.");
                 }
-                StandOn(wave.GuaranteedTile);
+                else
+                {
+                    Require(wave.BreakGroups.Count==1 && !wave.IsJump && wave.RowRoute.Count==0 &&
+                        wave.BreakingTiles.All(Cracked),"All marked panes must cue together on a simultaneous wave.");
+                    StandOn(wave.GuaranteedTile);
+                }
                 yield return Stage(GameStage.BetweenWaves,5);
-                Require(game.State.WavesSurvived == score + 1 && !game.State.IsIntact(wave.StartingTile),
-                    "A stationary step failed to survive the staged break.");
-                MenuInput(new OVRInput.OVRControllerTouch());
-                Choose("Main menu");
+                Require(game.State.WavesSurvived==1 && !game.State.IsIntact(start),"The crossing must score once.");
+                MenuInput(new OVRInput.OVRControllerTouch()); Choose("Main menu");
                 yield return Stage(GameStage.Welcome);
             }
-            Record("Levels 5 and 7 staged early collapses around a protected start. Tracking recovery restored the glass and trap. Level 12 opened one gap and showed the arrow and landing ring. Crossing the gap scored one wave and cleared both markers.");
+            Record("Crossed two rows at level 6 and three at level 9, lost and retried level 6, froze a row in the menu and restored it after tracking recovery. Landed in an alternate direction at level 7 with only the support ring. All marked glass fell together at level 12.");
         }
     }
 }

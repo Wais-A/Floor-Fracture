@@ -92,7 +92,11 @@ namespace FloorFracture.Editor
                             PlayerPrefs.GetString(key) == saved, "A new wave or tracking retry changed the level's trap.");
                         if (waves > firstWave)
                             Require(VisibleTrap() == slot, "An existing opening changed destination between waves.");
-                        StandOn(game.State.ActiveWave.GuaranteedTile);
+                        var wave=game.State.ActiveWave;
+                        int nextTile=wave.GuaranteedTile;
+                        if (wave.IsJump)
+                            nextTile=wave.JumpLandings.OrderByDescending(tile=>wave.StationarySafe.Count(other=>game.State.Neighbors(tile,other))).First();
+                        StandOn(nextTile);
                         yield return Stage(GameStage.BetweenWaves, 10);
                         yield return Frames(1);
                         waves++;
@@ -110,7 +114,18 @@ namespace FloorFracture.Editor
                         Require(game.Ending.EditorPeekNextLevelEnding == next,
                             "Reloading a partial bag changed the next level's trap.");
                     }
-                    if (level < EndingNames.Length) Choose("Start wave");
+                    if (level < EndingNames.Length)
+                    {
+                        // Pick a multi-wave crossing for this rotation test when the room also offers a lone final landing.
+                        int Onward(int tile)
+                        {
+                            var board=new BoardState(game.State.Layout,game.State.Seed,game.State.Pitch);
+                            var plan=board.BeginWave(tile,level+1,1,0);
+                            return plan.StationarySafe.Count;
+                        }
+                        StandOn(PlayablePanes.OrderByDescending(Onward).First());
+                        Choose("Start wave");
+                    }
                 }
 
                 // Reload the completely exhausted bag with a seed that would otherwise

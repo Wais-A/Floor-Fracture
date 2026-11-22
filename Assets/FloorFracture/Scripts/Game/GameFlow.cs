@@ -16,7 +16,8 @@ namespace FloorFracture
         bool pausedBoardVisible;
         Action restorePausedPage;
         double? menuPausedAt;
-        double menuPauseSeconds;
+        double menuPauseSeconds, cueDelaySeconds;
+        int nextCueGroup;
         public GameStage Stage
         {
             get => stage;
@@ -60,7 +61,7 @@ namespace FloorFracture
         const string StoneInstructions="Grab the stone with your hand or controller. " + OfflineNarration.StoneCaption;
         static MenuChoice Choice(string text,Action action) => new(text,action);
         // Waves, sliding panes and between-wave delays all consume this gameplay clock.
-        public double GameplayTime => (menuPausedAt ?? Time.unscaledTimeAsDouble) - menuPauseSeconds;
+        public double GameplayTime => (menuPausedAt ?? Time.unscaledTimeAsDouble) - menuPauseSeconds - cueDelaySeconds;
         bool Tracked => !appPaused&&Panel&&Panel.Tracked&&Room&&Room.IsRoomLocalized;
         bool CanHearOpening => Stage == GameStage.Countdown || Stage == GameStage.BetweenWaves ||
             Stage == GameStage.PracticeStep || Stage == GameStage.PracticeStone;
@@ -128,7 +129,7 @@ namespace FloorFracture
             if (Room.Status != RoomPlacementStatus.Confirmed) return false;
             menuPausedAt=null;
             restorePausedPage=null;
-            menuPauseSeconds=0;
+            menuPauseSeconds=cueDelaySeconds=0;
             if(BoardView) { BoardView.gameObject.SetActive(false); Destroy(BoardView.gameObject); }
             var fit=Room.Placement; State=new BoardState(fit.Layout,SelectedSeed,fit.Pitch);
             var board=new GameObject("Confirmed glass board"); BoardView=board.AddComponent<GlassBoardView>(); BoardView.Build(State,fit.Pose,sound);
@@ -262,10 +263,12 @@ namespace FloorFracture
             Stage=GameStage.Ready; BoardView.gameObject.SetActive(true);
             var start=Choice("Start wave",StartCountIn);
             var menu=Choice("Main menu",ReturnToMainMenu);
-            if (Level>=5 && WaveNumber==1)
+            if (Level==5 && WaveNumber==1)
                 text+=" Marked groups fall in order. Your starting pane breaks last.";
+            if (Level>=6 && WaveNumber==1)
+                text+=" When rows crack in turn, keep stepping onto clear glass.";
             if (Level>=2 && WaveNumber==1)
-                text+=" When an arrow appears, cross one opening to the marked landing.";
+                text+=" When a gap opens around you, cross one opening to any clear pane within reach.";
             Panel.Show("Level "+Level,text,offerStone ? new[]{start,Choice("Try the stone (optional)",StartStonePractice),menu} : new[]{start,menu});
         }
         void StartCountIn()
@@ -308,6 +311,7 @@ namespace FloorFracture
         void StartWave(TileSample sample, double now, bool manual)
         {
             var plan=State.BeginWave(sample.Index,Level,WaveNumber,now);
+            nextCueGroup=0;
             Ending.SelectLevel(Level);
             Stage=GameStage.Countdown; Panel.Hide();
             showingGo = manual;
@@ -383,18 +387,21 @@ namespace FloorFracture
         void UpdateWave(double now)
         {
             var plan=State.ActiveWave;
+            double frameTime=plan.TimeForVisibleCue(now,ref nextCueGroup);
+            cueDelaySeconds+=now-frameTime;
+            now=frameTime;
             if (showingGo)
             {
                 float alpha = Mathf.Clamp01((float)(1 - (now - plan.StartsAt) / GoSeconds));
                 if (alpha > 0) Panel.ShowStartCount(0, alpha);
                 else { Panel.HideStartCount(); showingGo = false; }
             }
-            var resolvingSlider=State.Slider;
+            var resolvingSliders=State.Sliders;
             int previousGroupCount=State.AppliedBreakGroupCount;
             WaveResult result=State.Tick(HeadXZ,Tracked,now);
             if(result==WaveResult.Paused) { PauseRound(); return; }
             for (int i=previousGroupCount; i<State.AppliedBreakGroupCount; i++)
-                ShatterGroup(plan.BreakGroups[i],resolvingSlider,now);
+                ShatterGroup(plan.BreakGroups[i],resolvingSliders,now);
             var support = State.CurrentSample;
             if(result==WaveResult.Pending)
             {
@@ -408,14 +415,16 @@ namespace FloorFracture
             if(levelFinished) sound.Completion(); else ++WaveNumber;
             Stage=GameStage.BetweenWaves; waitUntil=now+(levelFinished?1.8:plan.RecoverySeconds);
         }
-        void ShatterGroup(WaveBreakGroup group, SlidingPane slider,double now)
+        void ShatterGroup(WaveBreakGroup group, IReadOnlyList<SlidingPane> sliders,double now)
         {
             metrics?.Mark("shatter",group.Tiles.Count);
             Vector3 nearest=Vector3.zero;
             float closest=float.PositiveInfinity;
             foreach(int cell in group.Tiles)
             {
-                var center=slider != null && slider.Tile==cell ? slider.CenterAt(group.BreaksAt) : State.Center(cell);
+                var center=State.Center(cell);
+                for (int i=0; i<sliders.Count; ++i)
+                    if (sliders[i].Tile==cell) { center=sliders[i].CenterAt(group.BreaksAt); break; }
                 var point=BoardView.Shatter(cell,center,now-group.BreaksAt);
                 float distance=(point-Panel.Head.position).sqrMagnitude;
                 if(distance<closest) { closest=distance; nearest=point; }
