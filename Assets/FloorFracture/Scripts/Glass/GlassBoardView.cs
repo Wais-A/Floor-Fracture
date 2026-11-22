@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace FloorFracture
@@ -7,10 +8,10 @@ namespace FloorFracture
         BoardState model;
         GameSound sound;
         GlassTile[] tiles;
-        GlassTile moving;
-        MeshRenderer occupancy, fog, holes, landingRing, takeoffArrow;
+        IReadOnlyList<SlidingPane> displayedSliders;
+        MeshRenderer occupancy, fog, holes;
         ShardPool shards;
-        Mesh cutouts, fogPlane, boundary, landingMesh, arrowMesh;
+        Mesh cutouts, fogPlane, boundary;
         Material bodyMaterial, paneMaterial, maskMaterial, fogMaterial, shardMaterial;
         bool[] openPanes;
         int practiceHole=-1;
@@ -37,10 +38,11 @@ namespace FloorFracture
             var hit = new Vector2(eye.x + toFloor.x, eye.z + toFloor.z);
             int cell = model.IndexAt(hit);
             if (cell < 0 || !openPanes[cell]) return false;
-            if (model.Slider != null && moving.gameObject.activeSelf)
+            for (int i = 0; i < model.Sliders.Count; ++i)
             {
-                var center = moving.transform.localPosition;
-                float half = model.Slider.HalfSize;
+                var pane = model.Sliders[i];
+                var center = tiles[pane.Tile].transform.localPosition;
+                float half = pane.HalfSize;
                 if (Mathf.Abs(hit.x - center.x) <= half && Mathf.Abs(hit.y - center.z) <= half) return false;
             }
             source = transform.TransformPoint(GlassGeometry.Ground(model.Center(cell), -.16f));
@@ -50,7 +52,7 @@ namespace FloorFracture
         public void Build(BoardState board,Pose pose,GameSound gameSound = null)
         {
             sound=gameSound;
-            model=board; transform.SetPositionAndRotation(pose.position+Vector3.up*.009f,pose.rotation);
+            model=board; transform.SetPositionAndRotation(pose.position,pose.rotation);
             var template=Resources.Load<GameObject>("GlassTile");
             var prefab=template?template.GetComponent<GlassTile>():null;
             if(!prefab) throw new System.InvalidOperationException("Missing Resources/GlassTile prefab");
@@ -74,30 +76,15 @@ namespace FloorFracture
                 t.transform.localPosition=GlassGeometry.Ground(board.Center(i));
                 t.transform.localScale=fittedScale; t.Initialize(paneMaterial,bodyMaterial,paneScale); tiles[i]=t;
             }
-            moving=Instantiate(prefab,transform); moving.name="Sliding pane"; moving.transform.localScale=fittedScale;
-            moving.Initialize(paneMaterial,bodyMaterial,paneScale); moving.gameObject.SetActive(false);
             occupancy=GlassTile.Part(transform,"Occupied square",GlassGeometry.Ring,paneMaterial);
             occupancy.transform.localScale=fittedScale;
             GlassTile.Tint(occupancy,new Color(.90f,1f,.73f)); occupancy.enabled=false;
-            landingMesh=GlassGeometry.Circle(.165f,.014f,true,.005f);
-            var arrow=new GlassGeometry.Builder();
-            arrow.Stroke(new Vector2(-.07f,.10f),new Vector2(0,.18f),.016f,.022f);
-            arrow.Stroke(new Vector2(0,.18f),new Vector2(.07f,.10f),.016f,.022f);
-            arrowMesh=arrow.Create("Jump chevron");
-            landingRing=GlassTile.Part(transform,"Jump landing",landingMesh,paneMaterial);
-            takeoffArrow=GlassTile.Part(transform,"Jump direction",arrowMesh,paneMaterial);
-            foreach(var marker in new[]{landingRing,takeoffArrow})
-            {
-                marker.transform.localScale=fittedScale;
-                GlassTile.Tint(marker,new Color(.38f,1f,.71f));
-                marker.enabled=false;
-            }
             shardMaterial=GlassTile.MakeMaterial("FloorFractureDepth");
             cutouts=new Mesh{name="Open floor apertures"};
             holes=GlassTile.Part(transform,"Opening stencil",cutouts,maskMaterial);
             shards=gameObject.AddComponent<ShardPool>(); shards.Initialize(shardMaterial,paneScale);
             var b=new GlassGeometry.Builder();
-            foreach (var edge in board.Layout.Perimeter(board.Pitch)) b.Stroke(edge.a,edge.b,.012f,.006f);
+            foreach (var edge in board.Layout.Perimeter(board.Pitch)) b.Stroke(edge.a,edge.b,.012f,GlassGeometry.MarkingHeight);
             boundary=b.Create("Board perimeter"); var border=GlassTile.Part(transform,"Perimeter",boundary,paneMaterial);
             GlassTile.Tint(border,new Color(.61f,.82f,.85f,.96f));
             b=new GlassGeometry.Builder();
@@ -106,8 +93,8 @@ namespace FloorFracture
             {
                 if (!tiles[i]) continue;
                 var p=board.Center(i);
-                b.Quad(new(p.x-half,.052f,p.y-half),new(p.x+half,.052f,p.y-half),
-                    new(p.x+half,.052f,p.y+half),new(p.x-half,.052f,p.y+half),Color.white,Color.white);
+                b.Quad(new(p.x-half,GlassGeometry.FogHeight,p.y-half),new(p.x+half,GlassGeometry.FogHeight,p.y-half),
+                    new(p.x+half,GlassGeometry.FogHeight,p.y+half),new(p.x-half,GlassGeometry.FogHeight,p.y+half),Color.white,Color.white);
                 // Keep one continuous fog bank across the connected panes.
                 for (int v=b.Uv.Count-4; v<b.Uv.Count; v++)
                     b.Uv[v]=new Vector2((i%board.Width+b.Uv[v].x)/board.Width,(i/board.Width+b.Uv[v].y)/board.Height);
@@ -120,6 +107,13 @@ namespace FloorFracture
         {
             if(tiles==null) return;
             bool openingsChanged=false;
+            var sliders = model.Sliders;
+            if (displayedSliders != sliders && displayedSliders != null)
+                for (int i = 0; i < displayedSliders.Count; ++i)
+                {
+                    int tile = displayedSliders[i].Tile;
+                    tiles[tile].transform.localPosition = GlassGeometry.Ground(model.Center(tile));
+                }
             for(int i=0;i<tiles.Length;i++)
             {
                 if (!tiles[i]) continue;
@@ -129,20 +123,25 @@ namespace FloorFracture
                     openPanes[i]=open;
                     openingsChanged=true;
                 }
-                bool visible=!open;
+                var pane = model.SliderFor(i);
+                bool visible = !open || pane != null;
                 if(tiles[i].gameObject.activeSelf!=visible) tiles[i].gameObject.SetActive(visible);
-                if(visible) DrawWarning(tiles[i],i);
+                if (visible)
+                {
+                    if (pane != null) tiles[i].transform.localPosition = GlassGeometry.Ground(pane.CenterAt(now));
+                    DrawWarning(tiles[i],i);
+                }
             }
             if(openingsChanged) RebuildHoles();
-            var slide=model.Slider;
-            moving.gameObject.SetActive(slide!=null);
-            if(slide!=null)
+            if (sliders.Count != 0 || displayedSliders != sliders)
             {
-                moving.transform.localPosition=GlassGeometry.Ground(slide.CenterAt(now));
-                DrawWarning(moving,slide.Tile);
+                maskMaterial.SetVector(CoveredPane0, CoveredPane(0,now));
+                maskMaterial.SetVector(CoveredPane1, CoveredPane(1,now));
             }
+            displayedSliders = sliders;
+            var slide = sample.IsSlider ? model.SliderFor(sample.Index) : null;
             occupancy.enabled=sample.Kind==SupportKind.Glass && sample.Index>=0 && sample.Index!=practiceHole &&
-                (sample.IsSlider ? slide!=null && slide.Tile==sample.Index : model.IsIntact(sample.Index));
+                (sample.IsSlider ? slide!=null : model.IsIntact(sample.Index));
             if(occupancy.enabled)
             {
                 var center=sample.IsSlider&&slide!=null?slide.CenterAt(now):model.Center(sample.Index);
@@ -151,18 +150,9 @@ namespace FloorFracture
                 Vector2 contact=sample.Stance-center;
                 contact.x=Mathf.Clamp(contact.x,-inset,inset);
                 contact.y=Mathf.Clamp(contact.y,-inset,inset);
-                occupancy.transform.localPosition=GlassGeometry.Ground(center+contact,.014f);
+                occupancy.transform.localPosition=GlassGeometry.Ground(center+contact);
             }
             fog.enabled=wave!=null&&wave.Fog;
-            landingRing.enabled=takeoffArrow.enabled=wave!=null && wave.IsJump;
-            if (landingRing.enabled)
-            {
-                Vector2 start=model.Center(wave.StartingTile), landing=model.Center(wave.GuaranteedTile);
-                landingRing.transform.localPosition=GlassGeometry.Ground(landing,.012f);
-                takeoffArrow.transform.localPosition=GlassGeometry.Ground(start,.012f);
-                takeoffArrow.transform.localRotation=Quaternion.LookRotation(GlassGeometry.Ground(landing-start));
-            }
-
             void DrawWarning(GlassTile tile,int cell)
             {
                 var group=wave?.BreakGroupFor(cell);
@@ -174,6 +164,16 @@ namespace FloorFracture
                     warned ? group.RevealEndsAt-now : double.PositiveInfinity);
             }
         }
+        static readonly int CoveredPane0 = Shader.PropertyToID("_CoveredPane0");
+        static readonly int CoveredPane1 = Shader.PropertyToID("_CoveredPane1");
+        Vector4 CoveredPane(int index, double now)
+        {
+            if (index >= model.Sliders.Count) return Vector4.zero;
+            var pane = model.Sliders[index];
+            var center = pane.CenterAt(now);
+            return new Vector4(center.x, center.y, pane.HalfSize, 0);
+        }
+
         public void Shatter(int index)
         {
             if (model.Layout.Contains(index)) Shatter(index,model.Center(index));
@@ -232,7 +232,7 @@ namespace FloorFracture
         }
         void OnDestroy()
         {
-            foreach(Object asset in new Object[]{cutouts,fogPlane,boundary,landingMesh,arrowMesh,bodyMaterial,paneMaterial,maskMaterial,shardMaterial,fogMaterial})
+            foreach(Object asset in new Object[]{cutouts,fogPlane,boundary,bodyMaterial,paneMaterial,maskMaterial,shardMaterial,fogMaterial})
                 if(asset) Destroy(asset);
         }
     }

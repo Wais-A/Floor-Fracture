@@ -9,6 +9,11 @@ namespace FloorFracture
         public const float AuthoredPitch = .50f;
         public const float Half = AuthoredPitch * BoardState.PaneHalfPitch;
         public const float RingRadius = .069f, RingWidth = .007f;
+        // Small separations keep transparent floor markings in draw order at contact height.
+        private const float RimHeight = .0005f;
+        internal const float MarkingHeight = .001f;
+        private const float RingHeight = .0015f;
+        internal const float FogHeight = .002f;
         private const float KeylineWidth = RingWidth * .5f;
         public const float RingOuterRadius = RingRadius + RingWidth * .5f + KeylineWidth;
         public static readonly Vector2[] Points = {
@@ -75,7 +80,7 @@ namespace FloorFracture
             var b=new Builder();
             if(border)
             {
-                for(int i=0;i<8;i++) b.Stroke(Points[i],Points[(i+1)%8],.009f,.004f);
+                for(int i=0;i<8;i++) b.Stroke(Points[i],Points[(i+1)%8],.009f,RimHeight);
             }
             else b.Quad(Ground(Points[0]),Ground(Points[2]),Ground(Points[4]),Ground(Points[6]),Color.white,Color.white);
             return b.Create(border?"Glass rim":"Glass surface");
@@ -117,10 +122,10 @@ namespace FloorFracture
             {
                 var a = corners[i];
                 var z = corners[(i + 1) % corners.Length];
-                b.Quad(Ground(a * outer,.004f), Ground(z * outer,.004f),
-                    Ground(z * split,.004f), Ground(a * split,.004f), Color.white, Color.white);
-                b.Quad(Ground(a * split,.004f), Ground(z * split,.004f),
-                    Ground(z * inner,.004f), Ground(a * inner,.004f), slate, slate);
+                b.Quad(Ground(a * outer,RimHeight), Ground(z * outer,RimHeight),
+                    Ground(z * split,RimHeight), Ground(a * split,RimHeight), Color.white, Color.white);
+                b.Quad(Ground(a * split,RimHeight), Ground(z * split,RimHeight),
+                    Ground(z * inner,RimHeight), Ground(a * inner,RimHeight), slate, slate);
             }
             return b.Create("Intact glass rim");
         }
@@ -135,7 +140,7 @@ namespace FloorFracture
                 int a=piece[i], c=piece[(i+1)%piece.Length];
                 if(a<8 && c<8) continue;
                 int key=Mathf.Min(a,c)*32+Mathf.Max(a,c);
-                if(edges.Add(key)) b.Stroke(Points[a],Points[c],(a==16||c==16)?.0040f:.0050f,.006f);
+                if(edges.Add(key)) b.Stroke(Points[a],Points[c],(a==16||c==16)?.0040f:.0050f,MarkingHeight);
             }
             return b.Create("Fitted fracture lines");
         }
@@ -152,9 +157,9 @@ namespace FloorFracture
                 var start=new Vector2(Mathf.Cos(a),Mathf.Sin(a));
                 var end=new Vector2(Mathf.Cos(z),Mathf.Sin(z));
                 if(keylineWidth>0)
-                    b.Quad(Ground(start*brightEdge,.018f),Ground(end*brightEdge,.018f),
-                        Ground(end*outerEdge,.018f),Ground(start*outerEdge,.018f),charcoal,charcoal);
-                b.Stroke(start*radius,end*radius,width,.018f);
+                    b.Quad(Ground(start*brightEdge,RingHeight),Ground(end*brightEdge,RingHeight),
+                        Ground(end*outerEdge,RingHeight),Ground(start*outerEdge,RingHeight),charcoal,charcoal);
+                b.Stroke(start*radius,end*radius,width,RingHeight);
             }
             return b.Create("Occupancy ring");
         }

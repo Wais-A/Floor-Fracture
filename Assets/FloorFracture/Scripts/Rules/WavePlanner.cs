@@ -32,8 +32,12 @@ namespace FloorFracture
         public int Seed { get; }
         public int StartingTile { get; }
         public int GuaranteedTile { get; }
-        public int JumpGap { get; }
-        public bool IsJump => JumpGap >= 0;
+        public IReadOnlyList<int> JumpLandings { get; }
+        public int JumpGap => IsJump ? StartingTile + (GuaranteedTile - StartingTile) / 2 : -1;
+        public bool IsJump => JumpLandings.Count != 0;
+        public double JumpOpensAt { get; }
+        // Each entry is the next reachable pane in the straight crossing, including its safe end.
+        public IReadOnlyList<int> RowRoute { get; }
         public double StartsAt { get; }
         public double Duration { get; }
         public double Deadline => StartsAt + Duration;
@@ -45,43 +49,53 @@ namespace FloorFracture
         public IReadOnlyList<int> SafeTiles { get; }
         public IReadOnlyList<int> StationarySafe { get; }
         internal bool[] Stationary { get; }
-        internal int NewSliderTile { get; }
-        internal int OtherSliderHole { get; }
+        internal SlidingPane[] OfferedSliders { get; }
 
         private readonly WaveBreakGroup[] groupByTile;
 
         internal WavePlan(BoardState board, int level, int number, int seed, int start, int guaranteed,
-            bool[] stationary, int newSlider, int otherSliderHole, WaveMode mode, WavePacing pacing, double now,
-            int jumpGap)
+            bool[] stationary, SlidingPane[] sliders, WaveMode mode, WavePacing pacing, double now,
+            IReadOnlyList<int> landings, int[] rowRoute)
         {
             Level = level;
             Number = number;
             Seed = seed;
             StartingTile = start;
             GuaranteedTile = guaranteed;
-            JumpGap = jumpGap;
+            JumpLandings = landings;
+            RowRoute = rowRoute;
             StartsAt = now;
             double switchSeconds = WavePacing.SwitchSeconds(level, number);
-            Duration = IsJump ? Math.Max(switchSeconds, 1.85) : switchSeconds;
+            JumpOpensAt = now;
+            if (IsJump)
+            {
+                for (int y = Math.Max(0, start / board.Width - 1); y <= Math.Min(board.Height - 1, start / board.Width + 1); ++y)
+                    for (int x = Math.Max(0, start % board.Width - 1); x <= Math.Min(board.Width - 1, start % board.Width + 1); ++x)
+                        if (y * board.Width + x != start && board.IsIntact(y * board.Width + x))
+                            JumpOpensAt = now + WavePacing.MinimumStep;
+                Duration = JumpOpensAt - now + Math.Max(switchSeconds, WavePacing.JumpSeconds);
+            }
+            else if (RowRoute.Count != 0)
+            {
+                for (int i = 0; i < RowRoute.Count; ++i) Duration += WavePacing.RowStepSeconds(i);
+            }
+            else Duration = switchSeconds;
             RecoverySeconds = WavePacing.RecoveryAt(level);
-            Fog = !IsJump && mode != WaveMode.LastTile && level >= 2 &&
+            Fog = !IsJump && RowRoute.Count == 0 && mode != WaveMode.LastTile && level >= 2 &&
                 (level >= 9 ? number % 3 != 0 : (number - 1) % (level >= 5 ? 2 : 3) == 0);
             Mode = mode;
             Stationary = stationary;
-            NewSliderTile = newSlider;
-            OtherSliderHole = otherSliderHole;
+            OfferedSliders = sliders;
 
-            // A previous slider breaks over its old hole. The newly offered slider is
-            // an additional safe choice and never fills in its underlying hole.
             groupByTile = new WaveBreakGroup[board.Count];
             var survivors = new List<int>();
-            var allSafe = newSlider < 0 ? null : new List<int>();
+            var allSafe = sliders.Length == 0 ? null : new List<int>();
             var breaks = new List<int>();
             for (int tile = 0; tile < board.Count; ++tile)
             {
                 if (stationary[tile]) survivors.Add(tile);
                 if (IsSafe(tile)) allSafe?.Add(tile);
-                else if (board.IsIntact(tile) || board.Slider?.Tile == tile)
+                else if (board.IsIntact(tile) || board.SliderFor(tile) != null)
                     breaks.Add(tile);
             }
             StationarySafe = survivors.AsReadOnly();
@@ -95,23 +109,43 @@ namespace FloorFracture
         {
             if (IsJump)
             {
-                var takeoff = new List<int>(8);
-                var atZero = new List<int>();
+                var opening = new List<int>();
+                var final = new List<int>();
                 foreach (int tile in breaks)
                 {
-                    if (tile != StartingTile && WavePlanner.TouchesStart(board, StartingTile, tile))
-                        takeoff.Add(tile);
-                    else atZero.Add(tile);
+                    if (tile != StartingTile && WavePlanner.TouchesStart(board, StartingTile, tile)) opening.Add(tile);
+                    else final.Add(tile);
                 }
-                var open = new WaveBreakGroup(takeoff, StartsAt, 0, StartsAt);
-                var finish = new WaveBreakGroup(atZero, StartsAt, clueSeconds, Deadline);
-                foreach (int tile in takeoff) groupByTile[tile] = open;
-                foreach (int tile in atZero) groupByTile[tile] = finish;
-                return Array.AsReadOnly(new[] { open, finish });
+                var jumpGroups = new List<WaveBreakGroup>(2);
+                if (opening.Count != 0) jumpGroups.Add(Register(opening, StartsAt, clueSeconds, JumpOpensAt));
+                jumpGroups.Add(Register(final, JumpOpensAt, clueSeconds, Deadline));
+                return jumpGroups.AsReadOnly();
             }
+            if (RowRoute.Count != 0)
+            {
+                int rowCount = RowRoute.Count;
+                var rows = new List<int>[rowCount];
+                for (int i = 0; i < rowCount; ++i) rows[i] = new List<int>();
+                foreach (int tile in breaks)
+                {
+                    int distance = RowDistance(board, StartingTile, RowRoute[0], tile);
+                    rows[Math.Clamp(distance, 0, rowCount - 1)].Add(tile);
+                }
+                var schedule = new WaveBreakGroup[rowCount];
+                double cue = StartsAt;
+                for (int i = 0; i < rowCount; ++i)
+                {
+                    double drop = i == rowCount - 1 ? Deadline : cue + WavePacing.RowStepSeconds(i);
+                    schedule[i] = Register(rows[i], cue, clueSeconds, drop);
+                    cue = drop;
+                }
+                return schedule;
+            }
+            if (Level >= 6)
+                return new[] { Register(breaks, StartsAt, clueSeconds, Deadline) };
             // Keep the player's pane for zero, even when the sweep starts on that side.
             bool sweep = Mode != WaveMode.LastTile && (Level >= 3 || Mode == WaveMode.Memory);
-            int desired = !sweep ? 1 : Level < 7 ? 2 : 3;
+            int desired = sweep ? 2 : 1;
             int count = Math.Min(desired, breaks.Count);
             var ordered = new List<int>(breaks);
             ordered.Remove(StartingTile);
@@ -132,14 +166,35 @@ namespace FloorFracture
             {
                 int size = ordered.Count / count + (i < ordered.Count % count ? 1 : 0);
                 var tiles = ordered.GetRange(first, size);
-                double revealStart = StartsAt + Math.Min(.12, Duration * .12) * i;
-                double breakTime = StartsAt + Duration * WavePacing.BreakFraction(Level, i, count);
-                var group = new WaveBreakGroup(tiles, revealStart, clueSeconds, breakTime);
-                groups[i] = group;
-                foreach (int tile in tiles) groupByTile[tile] = group;
+                double delay = Math.Min(.12 * i, Duration - WavePacing.MinimumStep);
+                double breakAfter = i < count - 1 && Level == 5 ? Duration * .75 : Duration;
+                groups[i] = Register(tiles, StartsAt + delay, clueSeconds,
+                    StartsAt + Math.Max(breakAfter, delay + WavePacing.MinimumStep));
                 first += size;
             }
             return Array.AsReadOnly(groups);
+        }
+
+        private WaveBreakGroup Register(List<int> tiles, double cue, double clueSeconds, double drop)
+        {
+            var group = new WaveBreakGroup(tiles, cue, clueSeconds, drop);
+            foreach (int tile in tiles) groupByTile[tile] = group;
+            return group;
+        }
+
+        internal static int RowDistance(BoardState board, int start, int next, int tile)
+        {
+            int dx = next % board.Width - start % board.Width;
+            int dy = next / board.Width - start / board.Width;
+            return dx * (tile % board.Width - start % board.Width) + dy * (tile / board.Width - start / board.Width);
+        }
+
+        public bool IsJumpGap(int tile)
+        {
+            if (tile < 0) return false;
+            for (int i = 0; i < JumpLandings.Count; ++i)
+                if (StartingTile + (JumpLandings[i] - StartingTile) / 2 == tile) return true;
+            return false;
         }
 
         private static long SweepPosition(BoardState board, int tile, int direction)
@@ -160,9 +215,30 @@ namespace FloorFracture
             (uint)tile < (uint)groupByTile.Length ? groupByTile[tile] : null;
         public bool ShowsWarning(int tile, double now) => BreakGroupFor(tile)?.ShowsWarning(now) == true;
         public bool IsBreaking(int tile) => BreakGroupFor(tile) != null;
-        public bool IsSafe(int tile) =>
-            (uint)tile < (uint)Stationary.Length && (Stationary[tile] || tile == NewSliderTile);
-        public bool ShowsWarnings(double now) => now >= StartsAt && now < RevealEndsAt;
+        public bool IsSafe(int tile)
+        {
+            if ((uint)tile >= (uint)Stationary.Length) return false;
+            if (Stationary[tile]) return true;
+            foreach (var pane in OfferedSliders) if (pane.Tile == tile) return true;
+            return false;
+        }
+
+        // Give a newly displayed group its full interval even if rendering missed its scheduled frame.
+        // The scene clock carries the delay forward, so the next row starts when the last row visibly drops.
+        public double TimeForVisibleCue(double now, ref int nextGroup)
+        {
+            if (nextGroup >= BreakGroups.Count || now < BreakGroups[nextGroup].RevealStartsAt) return now;
+            double cue = BreakGroups[nextGroup].RevealStartsAt;
+            do { ++nextGroup; } while (nextGroup < BreakGroups.Count && BreakGroups[nextGroup].RevealStartsAt == cue);
+            return cue;
+        }
+
+        public bool ShowsWarnings(double now)
+        {
+            for (int i = 0; i < BreakGroups.Count; ++i)
+                if (BreakGroups[i].ShowsWarning(now)) return true;
+            return false;
+        }
     }
 
     public static class WavePlanner
@@ -174,18 +250,17 @@ namespace FloorFracture
             int seed = PatternSeed(board, start, level, number, opening);
             var random = new Generator(seed);
 
-            // Removing the player's pane can split the board. Only consider exits into
-            // a largest reachable component, so the first step supports a viable continuation.
-            var componentSizes = new int[board.Count];
-            var queue = new int[board.IntactCount];
-            var options = new List<int>(8);
+            var pacing = WavePacing.At(level);
+            int desired = Math.Max(1, pacing.TargetSurvivors(board.IntactCount));
+            int slot = level >= 9 ? (int)(((long)level - 9 + number - 1) % 6) :
+                level >= 6 ? (int)(((long)level - 6 + number - 1) % 4) : -1;
+            bool rowTurn = slot == 0;
+            bool jumpTurn = level < 6 || (slot != 0 && slot != (level >= 9 ? 3 : 2));
             var landings = new List<int>(4);
-            // Introduce fog and sliding glass before jumps on their teaching levels.
-            // From level four, check even the opening wave, while the most lanes are intact.
             bool jumpsUnlocked = level >= 4 || (level >= 2 && number >= level);
-            if (jumpsUnlocked && !board.LastWaveWasJump && board.Slider == null)
+            if (jumpTurn && jumpsUnlocked && board.ConsecutiveJumps < (level >= 9 ? 2 : 1) && board.Sliders.Count == 0)
             {
-                for (int direction = 0; direction < 4; direction++)
+                for (int direction = 0; direction < 4; ++direction)
                 {
                     int gap = board.Layout.Neighbor(start, direction);
                     if (!board.Layout.Contains(gap)) continue;
@@ -193,40 +268,152 @@ namespace FloorFracture
                     if (board.IsIntact(landing)) landings.Add(landing);
                 }
             }
-            bool jump = landings.Count > 0;
-            if (jump)
-            {
-                // Exclude the whole ring, including corners, from the surviving component.
-                // A missing scan cell can never be the gap: all three cells were fitted.
-                for (int tile = 0; tile < board.Count; tile++)
-                    if (TouchesStart(board, start, tile)) componentSizes[tile] = -1;
-            }
-            int largest = 0;
-            for (int tile = 0; tile < board.Count; ++tile)
-            {
-                if (!board.IsIntact(tile) || !(jump ? landings.Contains(tile) : board.CanStepFrom(start, tile))) continue;
-                int size = componentSizes[tile];
-                if (size == 0) size = MeasureComponent(board, start, tile, queue, componentSizes);
-                if (size < largest) continue;
-                if (size > largest) options.Clear();
-                largest = size;
-                options.Add(tile);
-            }
-            if (options.Count == 0) throw new InvalidOperationException("The starting pane has no stationary step.");
-            int guaranteed = options[opening ? 0 : random.Next(options.Count)];
-            int intact = board.IntactCount;
-            int maximum = Math.Min(largest, Math.Max(1, intact - 1));
-            var pacing = WavePacing.At(level);
-            int target = Math.Min(maximum, Math.Max(1, pacing.TargetSurvivors(intact)));
-            var survivors = GrowSurvivors(board.Layout, guaranteed, target, componentSizes, opening, ref random);
 
-            WaveMode mode = target == 1 ? WaveMode.LastTile : jump ? WaveMode.Jump :
+            int guaranteed;
+            int[] route = Array.Empty<int>();
+            bool[] survivors;
+            if (landings.Count > 0)
+            {
+                guaranteed = landings[random.Next(landings.Count)];
+                survivors = JumpSurvivors(board, start, landings, desired, ref random);
+            }
+            else
+            {
+                if (rowTurn && board.Sliders.Count == 0)
+                    route = ChooseRow(board, start, level >= 9 ? 3 : 2, ref random);
+                survivors = OrdinarySurvivors(board, start, desired, route, opening, ref random, out guaranteed);
+            }
+            int remaining = 0;
+            foreach (bool safe in survivors) if (safe) ++remaining;
+            WaveMode mode = remaining == 1 ? WaveMode.LastTile : landings.Count != 0 ? WaveMode.Jump :
                 level == 1 ? WaveMode.Classic : ChooseMode(board.Seed, advancedWavesSurvived, level);
-            int sliderTile = -1, otherHole = -1;
-            if (!jump && mode != WaveMode.LastTile && level >= 3 && board.Slider == null)
-                ChooseSlider(board, survivors, ref random, out sliderTile, out otherHole);
-            return new WavePlan(board, level, number, seed, start, guaranteed, survivors,
-                sliderTile, otherHole, mode, pacing, now, jump ? start + (guaranteed - start) / 2 : -1);
+            var sliders = level >= 3 && remaining > 1 && board.Sliders.Count == 0 ?
+                ChooseSliders(board, start, survivors, route, landings.Count != 0, level >= 6 ? 2 : 1,
+                    now, WavePacing.SwitchSeconds(level, number), ref random) : Array.Empty<SlidingPane>();
+            return new WavePlan(board, level, number, seed, start, guaranteed, survivors, sliders,
+                mode, pacing, now, landings.AsReadOnly(), route);
+        }
+
+        private static int[] ChooseRow(BoardState board, int start, int maxSteps, ref Generator random)
+        {
+            int best = 0, direction = -1, ties = 0;
+            for (int d = 0; d < 4; ++d)
+            {
+                int tile = start, steps = 0;
+                while (steps < maxSteps && board.IsIntact(tile = board.Layout.Neighbor(tile, d))) ++steps;
+                if (steps == 0 || steps < best) continue;
+                if (steps > best) { best = steps; ties = 0; }
+                if (random.Next(++ties) == 0) direction = d;
+            }
+            if (direction < 0) return Array.Empty<int>();
+            var route = new int[best];
+            int current = start;
+            for (int i = 0; i < best; ++i) route[i] = current = board.Layout.Neighbor(current, direction);
+            return route;
+        }
+
+        private static bool[] OrdinarySurvivors(BoardState board, int start, int desired, int[] route,
+            bool opening, ref Generator random, out int guaranteed)
+        {
+            var sizes = new int[board.Count];
+            var queue = new int[board.IntactCount];
+            int largest;
+            if (route.Length != 0)
+            {
+                // All final survivors lie beyond the last row that falls.
+                guaranteed = route[route.Length - 1];
+                for (int i = 0; i < sizes.Length; ++i)
+                    if (WavePlan.RowDistance(board, start, route[0], i) < route.Length) sizes[i] = -1;
+                largest = MeasureComponent(board, start, guaranteed, queue, sizes);
+            }
+            else
+            {
+                var options = new List<int>(8);
+                largest = 0;
+                for (int tile = 0; tile < board.Count; ++tile)
+                {
+                    if (!board.IsIntact(tile) || !board.CanStepFrom(start, tile)) continue;
+                    int size = sizes[tile];
+                    if (size == 0) size = MeasureComponent(board, start, tile, queue, sizes);
+                    if (size < largest) continue;
+                    if (size > largest) { options.Clear(); largest = size; }
+                    options.Add(tile);
+                }
+                if (options.Count == 0) throw new InvalidOperationException("No supported step from the current pane.");
+                guaranteed = options[opening ? 0 : random.Next(options.Count)];
+            }
+            int target = Math.Min(largest, Math.Min(desired, Math.Max(1, board.IntactCount - 1)));
+            return GrowSurvivors(board.Layout, guaranteed, target, sizes, opening, ref random);
+        }
+
+        private static bool[] JumpSurvivors(BoardState board, int start, List<int> landings, int target, ref Generator random)
+        {
+            // Join every available landing to its reachable peers. Opposite ends of a narrow
+            // floor can be separate islands. Each keeps an onward step whenever one exists.
+            var parent = new int[board.Count];
+            Array.Fill(parent, -1);
+            var kept = new bool[board.Count];
+            var queue = new Queue<int>();
+            int count = 0;
+            foreach (int landing in landings)
+            {
+                if (parent[landing] < 0)
+                {
+                    parent[landing] = landing;
+                    queue.Enqueue(landing);
+                    while (queue.Count > 0)
+                    {
+                        int here = queue.Dequeue();
+                        for (int d = 0; d < 4; ++d)
+                        {
+                            int next = board.Layout.Neighbor(here, d);
+                            if (!board.IsIntact(next) || parent[next] >= 0 || TouchesStart(board, start, next)) continue;
+                            parent[next] = here;
+                            queue.Enqueue(next);
+                        }
+                    }
+                }
+                for (int tile = landing; !kept[tile]; tile = parent[tile])
+                {
+                    kept[tile] = true;
+                    ++count;
+                }
+            }
+            foreach (int landing in landings)
+            {
+                int exit = -1;
+                for (int d = 0; d < 4; ++d)
+                {
+                    int next = board.Layout.Neighbor(landing, d);
+                    if (next < 0 || parent[next] < 0) continue;
+                    if (kept[next]) { exit = -1; break; }
+                    exit = next;
+                }
+                if (exit >= 0) { kept[exit] = true; ++count; }
+            }
+            var frontier = new List<int>();
+            for (int tile = 0; tile < kept.Length; ++tile) if (kept[tile]) AddNeighbors(tile);
+            while (count < target && frontier.Count != 0)
+            {
+                int pick = random.Next(frontier.Count), tile = frontier[pick];
+                frontier[pick] = frontier[frontier.Count - 1];
+                frontier.RemoveAt(frontier.Count - 1);
+                kept[tile] = true;
+                ++count;
+                AddNeighbors(tile);
+            }
+            return kept;
+
+            void AddNeighbors(int tile)
+            {
+                for (int d = 0; d < 4; ++d)
+                {
+                    int next = board.Layout.Neighbor(tile, d);
+                    if (next < 0 || parent[next] < 0 || kept[next]) continue;
+                    parent[next] = -1;
+                    frontier.Add(next);
+                }
+            }
         }
 
         internal static bool TouchesStart(BoardState board, int start, int tile) =>
@@ -286,28 +473,44 @@ namespace FloorFracture
             }
         }
 
-        private static void ChooseSlider(BoardState board, bool[] survivors, ref Generator random,
-            out int sliderTile, out int otherHole)
+        private static SlidingPane[] ChooseSliders(BoardState board, int start, bool[] survivors, int[] row,
+            bool jump, int limit, double now, double duration, ref Generator random)
         {
-            sliderTile = otherHole = -1;
-            int lanes = 0;
-            for (int a = 0; a < board.Count; ++a)
+            var panes = new List<SlidingPane>(limit);
+            var reserved = new bool[board.Count];
+            while (panes.Count < limit)
             {
-                if (!board.Layout.Contains(a) || board.IsIntact(a)) continue;
-                // Enumerate each pair of old holes once, in row-major order.
-                for (int direction = 2; direction <= 3; ++direction)
+                int source = -1, end = -1, bestLength = 0, ties = 0;
+                for (int a = 0; a < board.Count; ++a)
                 {
-                    int b = board.Layout.Neighbor(a, direction);
-                    if (!board.Layout.Contains(b) || board.IsIntact(b)) continue;
-                    bool horizontal = direction == 2;
-                    if (!HasSideExit(board.Layout, a, horizontal, survivors) ||
-                        !HasSideExit(board.Layout, b, horizontal, survivors)) continue;
-                    if (random.Next(++lanes) != 0) continue;
-                    bool reverse = random.Next(2) != 0;
-                    sliderTile = reverse ? b : a;
-                    otherHole = reverse ? a : b;
+                    if (a == start || !board.IsIntact(a) || survivors[a] || Unavailable(a)) continue;
+                    for (int d = 0; d < 4; ++d)
+                    {
+                        bool horizontal = d == 1 || d == 2;
+                        if (!HasSideExit(board.Layout, a, horizontal, survivors)) continue;
+                        int b = a, length = 0;
+                        for (int next = board.Layout.Neighbor(b, d); board.Layout.Contains(next);
+                            next = board.Layout.Neighbor(b, d))
+                        {
+                            if (board.IsIntact(next) || Unavailable(next) || !HasSideExit(board.Layout, next, horizontal, survivors)) break;
+                            b = next;
+                            ++length;
+                        }
+                        if (length == 0 || length < bestLength) continue;
+                        if (length > bestLength) { bestLength = length; ties = 0; }
+                        if (random.Next(++ties) == 0) { source = a; end = b; }
+                    }
                 }
+                if (source < 0) break;
+                var pane = new SlidingPane(board, source, end, now, duration);
+                panes.Add(pane);
+                int stride = (end - source) / bestLength;
+                for (int i = 0; i <= bestLength; ++i) reserved[source + i * stride] = true;
             }
+            return panes.ToArray();
+
+            bool Unavailable(int tile) => reserved[tile] || (jump && TouchesStart(board, start, tile)) ||
+                (row.Length != 0 && WavePlan.RowDistance(board, start, row[0], tile) < row.Length);
         }
 
         private static bool HasSideExit(BoardLayout layout, int tile, bool horizontal, bool[] survivors)
@@ -348,7 +551,7 @@ namespace FloorFracture
                 }
                 value ^= Mix((uint)level) ^ Mix((uint)number * 0x9e3779b9u);
                 value ^= opening ? 0u : Mix((uint)board.Seed);
-                if (board.Slider != null) value ^= Mix((uint)(board.Slider.Tile + 1));
+                for (int i = 0; i < board.Sliders.Count; ++i) value ^= Mix((uint)(board.Sliders[i].Tile + 1));
                 return (int)Mix(value);
             }
         }

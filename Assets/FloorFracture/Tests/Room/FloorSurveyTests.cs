@@ -101,9 +101,9 @@ namespace FloorFracture.Tests
             Assert.That(RoomBoardPlacement.BuildDepthSurface(first, second, 8, 0, 0, out _, out _, objects), Is.Null);
         }
 
-        [TestCase(0f, 0f)]
-        [TestCase(-.08f, -.09f)]
-        public void ReconcilesBroadLowerMeshWithTheTrackedFloor(float trackingOffset, float expectedBoardOffset)
+        [TestCase(0f)]
+        [TestCase(-.08f)]
+        public void BroadMeasuredFloorGroundsBoardEvenWhenTrackingUsesTheLabel(float trackingOffset)
         {
             Surface(-3, -3, .5f, 3, -.09f);
             Surface(.6f, -3, 3, 3, -.09f);
@@ -113,7 +113,7 @@ namespace FloorFracture.Tests
             var floor = new RoomFloor(Box(4, -12, 10, -6), new List<Vector2[]> { Box(8, -9, 8.5f, -8.5f) }, shift.y);
             var aligned = scan.AlignFloor(floor, shift.y + trackingOffset);
             Assert.That(aligned.MeshFloorHeight, Is.EqualTo(shift.y - .09f).Within(.001f));
-            Assert.That(aligned.Height, Is.EqualTo(shift.y + expectedBoardOffset).Within(.001f));
+            Assert.That(aligned.Height, Is.EqualTo(shift.y - .09f).Within(.001f));
             var survey = new FloorSurvey(aligned, scan, 2.2f, null, default);
             Assert.That(survey.ChecksEveryTile(new BoardPlacement(new Vector2(7, -10), aligned.Height, 0, 1, 2, .4f)), Is.True);
             Assert.That(survey.Check(Box(5.95f, -9.1f, 6.05f, -8.9f)), Is.EqualTo(TileClearance.Clear));
@@ -530,6 +530,33 @@ namespace FloorFracture.Tests
             var fit = new BoardPlacement(Vector2.zero, 0, 0, 2, 2, .5f);
             var hit = new EnvironmentRaycastHit { status = status, point = Vector3.zero };
             Assert.That(RoomBoardPlacement.ClassifyFloorRay(hit, fit, 0, Vector3.up), Is.EqualTo(TileClearance.LiveUnknown));
+        }
+
+        [TestCase(false, false, false, -.075f)]
+        [TestCase(true, false, false, 0f)]
+        [TestCase(false, true, false, 0f)]
+        [TestCase(false, false, true, 0f)]
+        public void GroundsOnlyOnBroadRepeatableLiveFloor(bool singlePane, bool transient, bool obstructed, float expectedOffset)
+        {
+            var fit = new BoardPlacement(new Vector2(3, 2), 1.25f, 0, 2, 1, .45f);
+            var eye = new Vector3(3, 2.8f, 0);
+            int passes = 0;
+            var exclusions = new List<Vector2>();
+            Task<EnvironmentRaycastHit?> Sample(Vector3 target)
+            {
+                if (singlePane && target.x >= 2.97f) return Task.FromResult<EnvironmentRaycastHit?>(null);
+                target.y = fit.FloorHeight - ((transient && passes > 0) ? .01f : .075f);
+                // A small object is only clearly raised once the actual floor level is known.
+                if (obstructed && target.x > 3.32f && target.z > 2.13f) target.y = fit.FloorHeight + .06f;
+                return Task.FromResult<EnvironmentRaycastHit?>(new EnvironmentRaycastHit
+                    { status = EnvironmentRaycastHitStatus.Hit, point = target });
+            }
+            var result = RoomBoardPlacement.ProbeGroundedPanes(fit, () => eye, Sample,
+                () => { passes++; return Task.CompletedTask; }, exclusions.Add).GetAwaiter().GetResult();
+            Assert.That(result.clear, Is.EqualTo(!obstructed));
+            Assert.That(exclusions.Count > 0, Is.EqualTo(obstructed));
+            Assert.That(result.grounded.FloorHeight, Is.EqualTo(fit.FloorHeight + expectedOffset).Within(.0001f));
+            Assert.That(result.grounded.Center, Is.EqualTo(fit.Center));
         }
 
         [Test]

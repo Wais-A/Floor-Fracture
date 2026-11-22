@@ -260,7 +260,12 @@ namespace FloorFracture.Editor
                 }
                 else
                 {
-                    Require(height>lastHeight, ending+" stopped sinking after contact.");
+                    // Travel includes an 80 m shaft before the world-space surface is sampled.
+                    // Compare the minimum physical rise over the clamped motion interval at that precision.
+                    float interval=Mathf.Clamp(t,0f,5f)-Mathf.Clamp(lastTime,0f,5f);
+                    float minimumRise=.20f*eyeHeight*interval;
+                    Require(height-lastHeight >= minimumRise-.00003f,
+                        $"{ending} rose {height-lastHeight:F6} m over {interval:F6} s after contact (age {t:F6} s).");
                     if (height>=eyeHeight && crossingsAt<0)
                         crossingsAt = Mathf.Lerp(lastTime,t,Mathf.InverseLerp(lastHeight,height,eyeHeight));
                 }

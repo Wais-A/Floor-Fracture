@@ -184,14 +184,17 @@ namespace FloorFracture
         {
             var state = game.State;
             var wave = state?.ActiveWave;
-            var slider = state?.Slider;
+            int moving = state == null || state.Sliders.Count == 0 ? 0 : 1;
+            if (moving != 0)
+                for (int i=0; i<state.Sliders.Count; ++i)
+                    if (state.Sliders[i].Locked) moving = 2;
             var value = new SampleContext {
                 Stage = game.Stage, Width = state?.Width ?? 0, Height = state?.Height ?? 0,
                 PanePitch = state?.Pitch ?? 0f, PaneCount = state?.Layout.PaneCount ?? 0,
                 EntireFloor = game.Room && game.Room.EntireFloor,
                 Seed = game.SelectedSeed, Level = game.Level, Wave = game.WaveNumber,
                 WaveSeed = wave?.Seed, Mode = wave?.Mode, Fog = wave?.Fog ?? false,
-                Slider = slider == null ? 0 : slider.Locked ? 2 : 1,
+                Slider = moving,
                 Quality = QualitySettings.GetQualityLevel()
             };
             if (game.Stage == GameStage.Fall && game.Ending)

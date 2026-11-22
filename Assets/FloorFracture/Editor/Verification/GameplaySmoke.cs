@@ -184,13 +184,18 @@ namespace FloorFracture.Editor
             Require(!diagnostics.gameObject.activeSelf, "Placement diagnostics must disappear when switched off.");
             Record("The recorded room displayed accepted panes, furniture and mesh obstacles in their diagnostic colors. Switching it off restored the normal view.");
             VerifyGlassAndPassthrough();
+            yield return VerifyStagedPressure();
+            Choose("Start");
+            yield return LevelThree();
+            VerifyBoardLock();
+            yield return VerifyLockedRoomRecovery();
+            Choose("Main menu");
             yield return VerifyLevelPicker();
             yield return VerifyStartCount();
             yield return VerifyMenuRecenter();
             yield return VerifyMenuPauseAndQuit();
             yield return VerifyTrapRotation();
             yield return VerifyTileCracks();
-            yield return VerifyStagedPressure();
             yield return RayChoose(4, false); yield return Stage(GameStage.Settings);
             Require(!outlines.gameObject.activeSelf, "The Welcome board perimeter stayed visible inside Settings.");
             yield return RayChoose(5, true); yield return Stage(GameStage.Welcome);
@@ -310,10 +315,7 @@ namespace FloorFracture.Editor
             yield return VerifyOutsideBoardPreview();
             yield return ObserveSelectedFall("Lava", false, 1);
             yield return ObserveSelectedFall("Water", true, 5);
-            yield return LevelThree();
-
-            VerifyBoardLock();
-            yield return VerifyLockedRoomRecovery();
+            Choose("Main menu");
             game.Room.Retry();
             yield return Wait(() => game.Stage==GameStage.Welcome && game.Room.Status==RoomPlacementStatus.Confirmed,
                 "explicit refit after locked play",55);
@@ -365,8 +367,8 @@ namespace FloorFracture.Editor
             // Its anchors and the game-owned board remain alive throughout.
             // This test interrupts a live wave. A smaller board can already have
             // cleared level three during the preceding moving-pane test.
-            // A jump opens its gap on the first frame. Tracking loss should restore
-            // the board from before that wave, including those provisional panes.
+            // Tracking loss must restore the committed glass from before that wave,
+            // including any panes provisionally opened for a jump or a slide.
             var panes=PlayablePanes.Where(game.State.IsIntact).ToArray();
             yield return Wait(() => game.Stage==GameStage.Ready || game.Stage==GameStage.Countdown,
                 "the next playable wave after the moving-pane check", 8);
@@ -623,10 +625,10 @@ namespace FloorFracture.Editor
                 yield return Stage(GameStage.Countdown, 4);
                 wave = game.State.ActiveWave;
             }
-            var moving = game.BoardView.transform.Find("Sliding pane");
             var ring = game.BoardView.transform.Find("Occupied square").GetComponent<MeshRenderer>();
             var canceled = wave;
             var canceledPane = game.State.Slider;
+            var moving = game.BoardView.transform.Find($"Glass {canceledPane.Tile%game.State.Width}, {canceledPane.Tile/game.State.Width}");
             yield return Frames(2);
             game.gameObject.SendMessage("OnApplicationPause", true);
             Require(game.Stage == GameStage.Paused && !game.BoardView.gameObject.activeInHierarchy &&
@@ -648,8 +650,9 @@ namespace FloorFracture.Editor
             finally { rooms.Add(localizedRoom); }
             Choose("Show board");
             Require(game.Room.IsRoomLocalized && game.Stage == GameStage.Ready && game.BoardView.gameObject.activeInHierarchy &&
-                !moving.gameObject.activeSelf && !ring.enabled && !fog.enabled,
-                "Showing the board exposed the canceled moving pane, ring, fog or countdown.");
+                moving.gameObject.activeSelf && moving.localPosition == GlassGeometry.Ground(game.State.Center(canceledPane.Tile)) &&
+                !ring.enabled && !fog.enabled,
+                "Showing the board must restore the original pane in place and clear transient cues.");
             VerifyFloorVisibility(false);
             StandOn(canceled.StartingTile);
             Choose("Start wave");
@@ -670,16 +673,21 @@ namespace FloorFracture.Editor
                 moving.GetComponentsInChildren<MeshRenderer>(true).Length == ordinary.GetComponentsInChildren<MeshRenderer>(true).Length &&
                 moving.localScale==ordinary.localScale && Mathf.Abs(moving.localPosition.y-ordinary.localPosition.y)<.0001f &&
                 fog.enabled==wave.Fog, "The moving pane must match the ordinary glass height, scale and surfaces.");
-            foreach (string part in new[]{"Smoky pane","Rim","Fissures"})
+            foreach (string part in new[]{"Smoky pane","Glass sides and bottom","Rim","Fissures"})
             {
                 var movingPart=moving.Find(part);
                 var fixedPart=ordinary.Find(part);
-                Require(movingPart.GetComponent<MeshFilter>().sharedMesh==fixedPart.GetComponent<MeshFilter>().sharedMesh &&
+                var a = new MaterialPropertyBlock();
+                var b = new MaterialPropertyBlock();
+                movingPart.GetComponent<Renderer>().GetPropertyBlock(a);
+                fixedPart.GetComponent<Renderer>().GetPropertyBlock(b);
+                Require(a.GetColor("_Color") == b.GetColor("_Color") && a.GetFloat("_Sheen") == b.GetFloat("_Sheen") &&
+                    movingPart.localScale == fixedPart.localScale && movingPart.GetComponent<MeshFilter>().sharedMesh==fixedPart.GetComponent<MeshFilter>().sharedMesh &&
                     movingPart.GetComponent<MeshRenderer>().sharedMaterial==fixedPart.GetComponent<MeshRenderer>().sharedMaterial,
                     "The two glass types use different "+part+" geometry or material.");
             }
 
-            // The pane starts at the other end of its two-hole lane.
+            // Start with a miss at the far end of the lane.
             StandAt(game.State.Center(slide.OtherHole));
             yield return Wait(() => game.State.CurrentSample.Kind == SupportKind.Gap, "projected head missed moving glass", 2);
             StandOn(wave.GuaranteedTile); yield return Frames(2);
@@ -689,6 +697,7 @@ namespace FloorFracture.Editor
             Vector3 oldCenter = moving.localPosition;
             LookAtTile(slide.Tile); yield return Delay(0.2);
             Require((moving.localPosition - oldCenter).sqrMagnitude > 0.00005f, "The glass did not travel along the two-hole lane.");
+            Capture("sliding-and-stationary-glass",SmokeView.BoardObserver);
             Capture("level3-moving-pane-player-view", SmokeView.CenterEye);
             StandAt(slide.CenterAt(game.GameplayTime)); yield return Frames(2);
             Require(slide.Locked && game.State.CurrentSample.IsSlider, "Landing on moving glass did not lock it.");

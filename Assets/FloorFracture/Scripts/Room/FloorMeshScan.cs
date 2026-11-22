@@ -141,14 +141,15 @@ namespace FloorFracture
             const int rangeCm = 15;
             var bins = new int[2 * rangeCm + 1];
             var sums = new float[bins.Length];
-            int observed = 0;
+            int observed = 0, openLocations = 0;
             for (int i = 0; i < heights.Length; i++)
             {
                 float offset = heights[i] - label;
-                if (Mathf.Abs(offset) > HeightSearchRange) continue;
                 var point = min + new Vector2(i % width + .5f, i / width + .5f) * step;
                 if (!FloorGeometry.Contains(floor.Boundary, point) ||
                     floor.Obstacles.Exists(p => p.Length >= 3 && FloorGeometry.Contains(p, point))) continue;
+                openLocations++;
+                if (Mathf.Abs(offset) > HeightSearchRange) continue;
                 int bin = rangeCm + Mathf.RoundToInt(offset * 100);
                 bins[bin]++;
                 sums[bin] += offset;
@@ -158,16 +159,20 @@ namespace FloorFracture
             int Count(int center) => bins[center - 1] + bins[center] + bins[center + 1];
             int best = rangeCm;
             // Only lower the baseline. A raised flat surface can be a real obstacle.
-            for (int i = rangeCm - 4; i >= 1; i--)
+            for (int i = rangeCm - 1; i >= 1; i--)
                 if (Count(i) > Count(best)) best = i;
             int votes = Count(best);
-            if (best == rangeCm || votes * step * step < .8f || votes < observed * .35f ||
-                votes <= Count(rangeCm) * 1.25f) return floor;
+            if (votes * step * step < .8f || votes < observed * .35f) return floor;
             float measured = label + (sums[best - 1] + sums[best] + sums[best + 1]) / votes;
-            // The physical board and live rays use the tracked level when it corroborates
-            // the measured floor. Otherwise the mesh correction affects saved geometry only.
-            float board = Mathf.Abs(trackingHeight - measured) <= .035f &&
-                Mathf.Abs(trackingHeight - measured) < Mathf.Abs(trackingHeight - label) ? measured : label;
+            if (measured >= label - .002f) return floor;
+            // A lower shelf or a small reconstructed patch cannot set the room height.
+            // A consistent level across most of the open room can establish it even
+            // when the tracking origin was calibrated at the labelled height.
+            bool dominant = votes >= observed * .70f && votes >= openLocations * .50f;
+            bool tracked = Mathf.Abs(trackingHeight - measured) <= .035f &&
+                Mathf.Abs(trackingHeight - measured) < Mathf.Abs(trackingHeight - label);
+            if (!dominant && votes <= Count(rangeCm) * 1.25f) return floor;
+            float board = dominant || tracked ? measured : label;
             return new RoomFloor(floor, measured, board);
         }
 

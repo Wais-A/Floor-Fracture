@@ -16,8 +16,7 @@ namespace FloorFracture
 
         private static readonly double[] OpeningSeconds =
             {
-                2.00, 1.75, 1.50, 1.32, 1.16, 1.00,
-                0.93, 0.86, 0.80, 0.70, 0.60, 0.50
+                2.00, 1.75, 1.50, 1.32, 1.16, 1.00
             };
 
         public static double SwitchSeconds(int level, int waveNumber)
@@ -61,12 +60,8 @@ namespace FloorFracture
 
         public static double RecoveryAt(int level) => 1.28 - .68 * (Math.Min(level, 12) - 1) / 11;
 
-        public static double BreakFraction(int level, int group, int count)
-        {
-            if (group == count - 1 || level < 5) return 1;
-            if (level < 7) return .75;
-            double first = .65 - .05 * (Math.Min(level, 12) - 7) / 5;
-            return first + group * .20;
-        }
+        public const double MinimumStep = 1.0;
+        public const double JumpSeconds = 1.85;
+        public static double RowStepSeconds(int step) => step == 0 ? 1.25 : step == 1 ? 1.10 : MinimumStep;
     }
 }

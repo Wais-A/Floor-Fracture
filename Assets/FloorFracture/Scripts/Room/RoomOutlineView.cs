@@ -90,7 +90,7 @@ namespace FloorFracture
             vertices.Clear();
             colors.Clear();
             indices.Clear();
-            float y = fit.FloorHeight + 0.02f;
+            float y = fit.FloorHeight + .001f;
             foreach (var edge in fit.Layout.Perimeter(fit.Pitch))
                 Line(fit.ToWorldXZ(edge.a.x, edge.a.y), fit.ToWorldXZ(edge.b.x, edge.b.y), y, .012f, new Color32(255, 213, 123, 219));
             mesh.Clear();

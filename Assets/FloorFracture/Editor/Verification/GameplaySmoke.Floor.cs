@@ -83,8 +83,8 @@ namespace FloorFracture.Editor
                     .Select(n => Vector3Int.RoundToInt(n)).Distinct().Count() == 5 &&
                     tile.normals.All(n => Vector3.Dot(n,Vector3.up) < .01f) &&
                     Mathf.Approximately(sides.GetComponent<Renderer>().bounds.size.x,sides.GetComponent<Renderer>().bounds.size.y) &&
-                    probe.transform.Find("Sliding pane/Glass sides and bottom").GetComponent<MeshFilter>().sharedMesh == tile,
-                    "The fitted and sliding glass must have four outward sides and a bottom at one block width.");
+                    probe.transform.Find("Glass 8, 8/Glass sides and bottom").GetComponent<MeshFilter>().sharedMesh == tile,
+                    "Fitted glass must have four outward sides and a bottom at one block width.");
                 var wave=state.BeginWave(80,1,1,10);
                 var danger=probe.transform.Find("Glass 8, 8");
                 var safe=probe.transform.Find($"Glass {wave.GuaranteedTile%9}, {wave.GuaranteedTile/9}");
@@ -116,6 +116,18 @@ namespace FloorFracture.Editor
 
         private static void VerifyGlassAndPassthrough()
         {
+            float floorY = game.Room.Placement.FloorHeight;
+            var panes = game.BoardView.GetComponentsInChildren<GlassTile>();
+            Require(panes.Length > 0 && panes.All(pane =>
+                Mathf.Abs(pane.transform.Find("Smoky pane").GetComponent<Renderer>().bounds.center.y - floorY) < .0001f),
+                "A glass face is above or below the fitted floor.");
+            foreach (var mesh in game.BoardView.GetComponentsInChildren<MeshFilter>(true))
+                if (mesh.name == "Rim" || mesh.name == "Fissures" || mesh.name == "Low fog" ||
+                    mesh.name == "Occupied square" || mesh.name == "Perimeter")
+                    foreach (var vertex in mesh.sharedMesh.vertices)
+                        Require(Mathf.Abs(mesh.transform.TransformPoint(vertex).y - floorY) <= .0021f,
+                            "A floor marking is floating above the glass: " + mesh.name);
+            Record($"All {panes.Length} glass faces are flush with the fitted room floor; rim, cracks, fog and stance ring are within 2 mm.");
             VerifyGlassOpenings();
             VerifyFloorVisibility(false);
             Require(FloorSurface.EffectMeshObjects.Count == 0, "The room created decorative floor patches.");

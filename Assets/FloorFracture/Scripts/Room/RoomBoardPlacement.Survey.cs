@@ -123,7 +123,7 @@ namespace FloorFracture
 #endif
                 if (!result.HasValue) break;
                 var fit = result.Value;
-                bool? clear = await CheckVisibleTiles(fit, evidence, cancel);
+                var (clear, grounded) = await CheckVisibleTiles(fit, evidence, cancel);
                 cancel.ThrowIfCancellationRequested();
                 if (!StillLocal(scanRevision))
                     return null;
@@ -147,7 +147,7 @@ namespace FloorFracture
                 {
                     var selectedSurvey = evidence.Find(s => s.ChecksEveryTile(fit));
                     if (selectedSurvey != null && snapshot.Matches(meshSnapshot))
-                        return fit;
+                        return grounded;
                     // World locking can refine anchor poses while placing. Prove the selected footprint
                     // against the latest buffers in this frame so small corrections can settle at Welcome.
                     foreach (var floor in floors)
@@ -157,7 +157,7 @@ namespace FloorFracture
                         var current = selectedSurvey.Refresh(floor, meshSnapshot, headroom, excluded, cancel);
                         if (!current.ChecksEveryTile(fit)) continue;
                         surveys = new List<FloorSurvey> { current };
-                        return fit;
+                        return grounded;
                     }
                 }
                 awaitingSavedFloor = true;
@@ -248,18 +248,18 @@ namespace FloorFracture
             ClassifyFloorRay(hit, fit, pane, eye) == TileClearance.LiveObstacle;
 
 
-        private async Task<bool?> CheckVisibleTiles(BoardPlacement fit, List<FloorSurvey> evidence, CancellationToken cancel)
+        private async Task<(bool? clear, BoardPlacement grounded)> CheckVisibleTiles(BoardPlacement fit, List<FloorSurvey> evidence, CancellationToken cancel)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             if (!EnvironmentRaycastManager.IsSupported)
-                return true; // The native floor and saved obstacles still constrain every pane.
-            if (!liveManager) return null;
+                return (true, fit); // The native floor and saved obstacles still constrain every pane.
+            if (!liveManager) return (null, fit);
             liveManager.gameObject.SetActive(true);
-            if (!liveManager.isActiveAndEnabled) return null;
+            if (!liveManager.isActiveAndEnabled) return (null, fit);
 
             var eye = rig.centerEyeAnchor.GetComponent<Camera>();
             if (!eye)
-                return null;
+                return (null, fit);
             int calls = 0, hits = 0, unseen = 0, warming = 0, exclusions = 0;
             async Task<EnvironmentRaycastHit?> Sample(Vector3 target)
             {
@@ -289,27 +289,75 @@ namespace FloorFracture
             // Allow the newly enabled Meta raycaster to warm up with the same candidate and room.
             double deadline = Time.realtimeSinceStartupAsDouble + 1.5;
             bool? result;
+            var grounded = fit;
             do
             {
-                result = await ProbeLivePanes(fit, () => eye.transform.position, Sample, WaitForDepth, Exclude);
+                (result, grounded) = await ProbeGroundedPanes(fit, () => eye.transform.position, Sample, WaitForDepth, Exclude);
                 if (result.HasValue) break;
                 await WaitForDepth();
             } while (Time.realtimeSinceStartupAsDouble < deadline);
             if (Debug.isDebugBuild)
-                Debug.Log($"[Floor Fracture depth] Candidate panes={fit.Layout.PaneCount}, hits={hits}, unobserved={unseen}, warming={warming}, confirmed obstructions={exclusions}, result={result?.ToString() ?? "using mapped floor"}.", this);
+                Debug.Log($"[Floor Fracture depth] Candidate panes={fit.Layout.PaneCount}, hits={hits}, unobserved={unseen}, warming={warming}, confirmed obstructions={exclusions}, floor adjustment={(grounded.FloorHeight-fit.FloorHeight)*100:F1} cm, result={result?.ToString() ?? "using mapped floor"}.", this);
             // Occlusion, an offscreen pane or a warming sensor is no positive
             // obstruction. The native floor remains valid and monitoring continues.
-            return result ?? true;
+            return (result ?? true, grounded);
 #else
             await Task.CompletedTask;
-            return true;
+            return (true, fit);
 #endif
+        }
+
+        internal static async Task<(bool? clear, BoardPlacement grounded)> ProbeGroundedPanes(BoardPlacement fit,
+            Func<Vector3> eye, Func<Vector3, Task<EnvironmentRaycastHit?>> sample, Func<Task> waitForDepth, Action<Vector2> exclude)
+        {
+            var samples = new List<(int pane, Vector3 point)>();
+            var clear = await ProbeLivePanes(fit, eye, sample, waitForDepth, exclude, samples);
+            if (clear != true || !(LowerFloorHeight(fit, samples) is float height)) return (clear, fit);
+
+            await waitForDepth();
+            var candidate = new BoardPlacement(fit.Center, height, fit.AngleDegrees, fit.Layout, fit.Pitch);
+            samples.Clear();
+            var confirmed = await ProbeLivePanes(candidate, eye, sample, waitForDepth, exclude, samples);
+            if (confirmed == false) return (false, fit);
+            if (confirmed == true && LowerFloorHeight(fit, samples) is float repeat && Mathf.Abs(repeat - height) <= .012f)
+                return (true, candidate);
+            return (true, fit);
+        }
+
+        // One blinded ray or a small low spot cannot pull the board down. Only count
+        // distinct physical locations on the fitted glass, with broad agreement across panes.
+        internal static float? LowerFloorHeight(BoardPlacement fit, List<(int pane, Vector3 point)> samples)
+        {
+            var cells = new HashSet<Vector2Int>();
+            var readings = new List<(int pane, float height)>();
+            foreach (var sample in samples)
+            {
+                var point = sample.point;
+                var cell = new Vector2Int(Mathf.FloorToInt(point.x * 10), Mathf.FloorToInt(point.z * 10));
+                if (cells.Add(cell)) readings.Add((sample.pane, point.y));
+            }
+            if (readings.Count < 12) return null;
+            readings.Sort((a, b) => a.height.CompareTo(b.height));
+            float median = readings[readings.Count / 2].height;
+            if (median >= fit.FloorHeight - .003f || median < fit.FloorHeight - FloorSurvey.DropDepth) return null;
+            var votes = new Dictionary<int, int>();
+            int supportedPanes = 0;
+            int agreeing = 0;
+            foreach (var reading in readings)
+                if (Mathf.Abs(reading.height - median) <= .015f)
+                {
+                    votes.TryGetValue(reading.pane, out int count);
+                    votes[reading.pane] = count + 1;
+                    if (count + 1 == 3) supportedPanes++;
+                    agreeing++;
+                }
+            return supportedPanes >= 2 && agreeing >= 12 && agreeing >= readings.Count * .75f ? median : (float?)null;
         }
 
         // The caller has checked the padded panes against the mapped floor and saved obstacles. Live rays sample
         // the centre, edges and interior of each padded pane for changes since that scan.
         internal static async Task<bool?> ProbeLivePanes(BoardPlacement fit, Func<Vector3> eye,
-            Func<Vector3, Task<EnvironmentRaycastHit?>> sample, Func<Task> waitForDepth, Action<Vector2> exclude)
+            Func<Vector3, Task<EnvironmentRaycastHit?>> sample, Func<Task> waitForDepth, Action<Vector2> exclude, List<(int pane, Vector3 point)> floorSamples = null)
         {
             var possible = new List<(int pane, Vector3 hit)>();
             bool sawFloor = false, needsObservation = false;
@@ -326,7 +374,11 @@ namespace FloorFracture
                         var hit = await sample(new Vector3(p.x, fit.FloorHeight, p.y));
                         if (!hit.HasValue) continue;
                         var kind = ClassifyFloorRay(hit.Value, fit, pane, eye());
-                        if (kind == TileClearance.Clear) sawFloor = true;
+                        if (kind == TileClearance.Clear)
+                        {
+                            sawFloor = true;
+                            floorSamples?.Add((pane, hit.Value.point));
+                        }
                         else if (kind == TileClearance.LiveObstacle) possible.Add((pane, hit.Value.point));
                         // The headset render frustum is wider than the native depth frustum.
                         else if (hit.Value.status != EnvironmentRaycastHitStatus.HitPointOutsideOfCameraFrustum)
