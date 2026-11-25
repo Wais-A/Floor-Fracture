@@ -348,7 +348,7 @@ namespace FloorFracture.Editor
                 if (ending=="Snow") Require(white,"No white frame before the snow fade.");
                 if (ending=="Space") Require(black,"No final black hold in Space.");
                 if (reduced || ending=="Snow" || ending=="Space") return;
-                float expected = ending=="Water" ? 1.2f : ending=="Lava" ? 1.8f : ending=="Sand" ? 2.3f : 2.5f;
+                float expected = ending=="Water" ? .22f : ending=="Lava" ? 1.8f : ending=="Sand" ? 2.3f : 2.5f;
                 Require(Mathf.Abs(crossingsAt-expected)<.06f,$"{ending} crossed the eye at {crossingsAt:F3}s, expected {expected:F2}s.");
             }
         }

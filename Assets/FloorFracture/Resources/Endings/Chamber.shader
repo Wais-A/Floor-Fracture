@@ -11,6 +11,7 @@ Shader "Floor Fracture/Ending chamber"
         _PassDistance("Star travel in metres", Float) = 0
         _Travel("Fall travel in metres", Float) = 0
         _FallSpeed("Fall speed in metres per second", Float) = 0
+        _Impact("Seconds since contact", Float) = 0
         _Age("Seconds", Float) = 0
         _Reveal("Reveal", Float) = 0
         _Level("World surface height", Float) = -20
@@ -45,7 +46,7 @@ Shader "Floor Fracture/Ending chamber"
             SAMPLER(sampler_WaterNormal);
             CBUFFER_START(UnityPerMaterial)
                 half4 _Tint;
-                float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity, _WideningPerMetre, _ThroatDepth, _SurfaceClock, _PassDistance, _Travel, _FallSpeed;
+                float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity, _WideningPerMetre, _ThroatDepth, _SurfaceClock, _PassDistance, _Travel, _FallSpeed, _Impact;
                 float4 _Mouth, _MouthRight;
             CBUFFER_END
             struct Attributes
@@ -104,6 +105,23 @@ Shader "Floor Fracture/Ending chamber"
                     p.y += (frac(seed + _Travel/8) - seed)*8;
                     // Trail the lower tip over roughly one frame of travel.
                     if (v.uv.y < .25) p.y -= _FallSpeed * .014;
+                }
+                if (_Role == 15)
+                {
+                    // Spray: launched outward and up from its ring at contact, then falling back.
+                    float t = max(0, _Impact - .08 * frac(seed * 3.7));
+                    float rise = 2.5 + 5.5 * frac(seed * 13.17);
+                    p.xz += normalize(p.xz + 1e-4) * (.6 + 2.2 * frac(seed * 7.31)) * t;
+                    p.y += rise * t - 4.9 * t * t;
+                    // Trail the lower tip along the current vertical velocity.
+                    if (v.uv.y < .25) p.y -= (rise - 9.8 * t) * .02;
+                }
+                if (_Role == 16)
+                {
+                    // Entry bubbles float up through the water, wobbling as they rise.
+                    float t = max(0, _Impact);
+                    p.y += (1.2 + 2.8 * frac(seed * 11.3)) * t;
+                    p.xz += float2(sin(t * 3.1 + seed * 40), cos(t * 2.7 + seed * 31)) * .06;
                 }
                 if (_Role == 7)
                 {
@@ -227,6 +245,10 @@ Shader "Floor Fracture/Ending chamber"
                     // Brick columns: the walls' running bond, laid in metres around each column.
                     color = ShaftBrickwork(i.uv) * i.color.rgb;
                 }
+                else if (_Role == 15)
+                    clip(i.world.y - _Level + .01); // spray vanishes back into the water
+                else if (_Role == 16)
+                    clip(_Level - i.world.y); // bubbles vanish at the surface
                 else if (_Role == 13)
                 {
                     // Only inside the shaft, never in the room, and faded before a speck wraps.

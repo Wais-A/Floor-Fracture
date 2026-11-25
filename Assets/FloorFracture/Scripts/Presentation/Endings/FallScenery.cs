@@ -11,7 +11,8 @@ internal sealed class FallScenery
         Motion = Shader.PropertyToID("_Motion"), Opacity = Shader.PropertyToID("_Opacity"),
         SurfaceClock = Shader.PropertyToID("_SurfaceClock"), PassDistance = Shader.PropertyToID("_PassDistance"),
         Mouth = Shader.PropertyToID("_Mouth"), MouthRight = Shader.PropertyToID("_MouthRight"),
-        Travel = Shader.PropertyToID("_Travel"), FallSpeed = Shader.PropertyToID("_FallSpeed");
+        Travel = Shader.PropertyToID("_Travel"), FallSpeed = Shader.PropertyToID("_FallSpeed"),
+        Impact = Shader.PropertyToID("_Impact");
     // Four seconds under gravity leaves more than three seconds of walls after a standing eye enters.
     internal const float ShaftDepth = 80f;
     // A near-vertical throat gives an oblique view of the wall from the next pane.
@@ -37,7 +38,8 @@ internal sealed class FallScenery
     readonly Material surfaceMaterial, backgroundMaterial, fadeMaterial, interiorMaterial, bubbleMaterial, dustMaterial;
     readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
     readonly MaterialPropertyBlock waterProperties = new MaterialPropertyBlock();
-    readonly MeshRenderer walls, landmarks, background, floor, nativeWater, pillars, motes, dust, leftColumn, rightColumn;
+    readonly MeshRenderer walls, landmarks, background, floor, nativeWater, pillars, motes, dust, leftColumn, rightColumn,
+        spray, entryBubbles;
     MeshRenderer veil, interior;
     readonly List<Mesh> ownedMeshes = new List<Mesh>();
     readonly Mesh[] moteMeshes = new Mesh[6];
@@ -85,6 +87,9 @@ internal sealed class FallScenery
         }
         pillars = Part("Lava flames", Own(FallMeshes.Flames()), surfaceMaterial);
         motes = Part("Particles", null, surfaceMaterial);
+        spray = Part("Water spray", Own(FallMeshes.Spray()), surfaceMaterial);
+        // Bubbles draw over the underwater view, as the Water particles do.
+        entryBubbles = Part("Entry bubbles", Own(FallMeshes.EntryBubbles()), bubbleMaterial);
         // Drawn after the walls and without depth writes, so faint specks never punch holes in them.
         dustMaterial = new Material(surfaceMaterial) { renderQueue = surfaceMaterial.renderQueue + 1 };
         dustMaterial.SetInt("_DepthWrite",0);
@@ -199,9 +204,9 @@ internal sealed class FallScenery
         int floorRole = 0;
         Color surfaceColor = wallColor*.70f;
         float surfaceAboveEye = world.position.y + surfaceY - head.position.y;
-        if (reduced) surfaceAboveEye = eyeHeight * (FallSequence.Burial(kind,seconds)-1);
+        if (reduced) surfaceAboveEye = eyeHeight * (FallSequence.Burial(kind,seconds,true)-1);
         float immersion = Ease(-.09f,.14f,surfaceAboveEye);
-        DrawInterior(age,seconds,surfaceAboveEye);
+        DrawInterior(age,seconds,surfaceAboveEye,reduced);
         switch (kind)
         {
             case FloorEnding.Water:
@@ -276,6 +281,13 @@ internal sealed class FallScenery
                 nativeWater.SetPropertyBlock(waterProperties);
             }
         }
+        // A hard water entry throws a crown of spray around the fall line, then drags a column of
+        // bubbles under with the player. Both sit on the surface, so they rise with it as the eye sinks.
+        bool plunge = kind == FloorEnding.Water && !reduced && progress > 0;
+        spray.transform.localPosition = entryBubbles.transform.localPosition = new Vector3(entryLocal.x,surfaceY,entryLocal.z);
+        properties.SetFloat(Impact,seconds);
+        Paint(spray,15,new Color(.86f,.96f,1f),plunge && !fullyUnder ? 1 : 0);
+        Paint(entryBubbles,16,new Color(.72f,.93f,1f),plunge && fullyUnder ? .9f*(1-Ease(.9f,1.7f,seconds)) : 0);
         pillars.transform.localPosition = entryLocal + Vector3.up*(kind == FloorEnding.Lava ? surfaceY-.11f : 0);
         Paint(pillars,7,Color.white,fullyUnder ? 0 : pillarsAlpha);
         if (replacementFire)
@@ -293,7 +305,7 @@ internal sealed class FallScenery
         return immersion;
     }
 
-    void DrawInterior(float age, float seconds, float surfaceAboveEye)
+    void DrawInterior(float age, float seconds, float surfaceAboveEye, bool reduced)
     {
         if (seconds <= 0 || kind == FloorEnding.Space || kind == FloorEnding.Snow) return;
         if (!fullyUnder && surfaceAboveEye < -LineWidth-EyeMargin)
@@ -321,7 +333,9 @@ internal sealed class FallScenery
                 brightness = Mathf.Exp(-.5f*depth);
                 break;
             case FloorEnding.Water:
-                color = new Color(.032f,.24f,.29f);
+                // The plunge leaves white water that clears over the first 1.6 s below the surface.
+                float foam = reduced ? 0 : .85f*(1-Ease(.3f,1.6f,seconds));
+                color = Color.Lerp(new Color(.032f,.24f,.29f), new Color(.80f,.92f,.95f), foam);
                 brightness = Mathf.Exp(-.22f*depth);
                 break;
         }

@@ -183,6 +183,47 @@ internal static class FallMeshes
         return result;
     }
 
+    // Droplets resting on a ring around the fall line at the water surface. The shader launches
+    // each one outward and up at contact and drops it back under gravity (Chamber.shader, role 15).
+    internal static Mesh Spray()
+    {
+        var m = new Builder();
+        var random = new System.Random(380);
+        for (int i = 0; i < 420; i++)
+        {
+            float phase = Rand(random), angle = Rand(random) * Mathf.PI * 2;
+            // Small, stretched droplets read as water; large facets read as ice.
+            float size = (.004f + .012f * Rand(random)) * (i % 11 == 0 ? 1.8f : 1);
+            Speck(m, Ring(angle) * (.35f + .5f * Rand(random)), size, 2.2f,
+                Color.Lerp(new Color(.8f,.93f,1f), Color.white, Rand(random)), .75f, phase);
+        }
+        Mesh result = m.Build("Water spray");
+        Bounds bounds = result.bounds;
+        bounds.Expand(new Vector3(8,10,8)); // Flight happens in the vertex shader.
+        result.bounds = bounds;
+        return result;
+    }
+
+    // The air dragged under by the plunge: a column from the surface down past the plunge depth.
+    // The shader floats each bubble up until it reaches the surface (Chamber.shader, role 16).
+    internal static Mesh EntryBubbles()
+    {
+        var m = new Builder();
+        var random = new System.Random(381);
+        for (int i = 0; i < 300; i++)
+        {
+            float phase = Rand(random), angle = Rand(random) * Mathf.PI * 2, r = Rand(random);
+            float size = .004f + .016f * r * r;
+            Speck(m, Ring(angle) * (.12f + 1.1f * Rand(random)) + Vector3.down * 4.5f * Rand(random), size, 1,
+                Color.white, .8f, phase);
+        }
+        Mesh result = m.Build("Entry bubbles");
+        Bounds bounds = result.bounds;
+        bounds.Expand(new Vector3(2,12,2));
+        result.bounds = bounds;
+        return result;
+    }
+
     internal const float ColumnHalfWidth = .8f;
 
     // One square brick column from the bend into the landing. Its uv is in metres around and down

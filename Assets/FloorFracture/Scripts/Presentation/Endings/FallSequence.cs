@@ -333,12 +333,14 @@ public sealed class FallSequence : MonoBehaviour
 
     // Surface displacement in standing eye heights. A short initial compression gives
     // way to a positive sinking speed, including after the surface passes the eye.
-    internal static float Burial(FloorEnding ending, float t)
+    internal static float Burial(FloorEnding ending, float t, bool reduced = false)
     {
         float plunge = .13f * (1-Mathf.Exp(-t/.075f));
         switch (ending)
         {
-            case FloorEnding.Water: return plunge + .87f*t/1.2f;
+            // Full motion enters water at about 40 m/s: the eye goes under 0.22 s after contact,
+            // the plunge slows over the next second, then a steady sink continues.
+            case FloorEnding.Water: return reduced ? plunge + .87f*t/1.2f : 2f*(1-Mathf.Exp(-t/.35f)) + .25f*t;
             case FloorEnding.Lava: return plunge + .87f*t/1.8f;
             case FloorEnding.Sand: return plunge + .87f*t/2.3f;
             case FloorEnding.TarPit:
