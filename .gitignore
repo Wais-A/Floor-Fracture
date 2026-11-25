@@ -116,3 +116,15 @@ InitTestScene*.unity*
 # Meta DevAgent generates these editor connection settings for this machine.
 /Assets/Resources/DevAgentSettings.asset
 /Assets/Resources/DevAgentSettings.asset.meta
+
+# Android/IL2CPP build leftovers Unity writes next to the project
+/TempAssembly.dll
+/*.symbols.zip
+/*_BackUpThisFolder_ButDontShipItWithYourGame/
+
+# Local AI agent folders (skills, settings) for this machine only
+/.claude/
+/.codex/
+
+# macOS
+.DS_Store
