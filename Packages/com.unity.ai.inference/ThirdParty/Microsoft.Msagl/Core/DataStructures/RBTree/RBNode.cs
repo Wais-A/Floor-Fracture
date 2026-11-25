@@ -1,8 +1,7 @@
-using System;
 namespace Microsoft.Msagl.Core.DataStructures {
 
 
-    [Serializable]
+    // Not [Serializable]: Unity can't serialize self-referencing nodes (UAC1005) and nothing serializes this tree.
     internal class RBNode<T> {
 
         public RBColor color;
