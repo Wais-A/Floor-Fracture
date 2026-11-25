@@ -6,7 +6,7 @@ Turn on **Narration** in Settings to audition the voice. It starts off on a fres
 | --- | --- | ---: | ---: |
 | Practice stepping | When your pane cracks, step onto clear glass beside it. | 3.82 s | 168,492 |
 | Stone practice | Drop or gently toss the stone onto an intact pane. | 3.56 s | 157,228 |
-| Run complete | Take a breath. Restart when you're ready. | 2.29 s | 100,908 |
+| Run complete | Take a breath. Restart when you're ready. (caption now reads “Retry when you're ready”; re-record to match) | 2.29 s | 100,908 |
 
 Changing screens, stepping 16 cm horizontally, suspending the app, or disabling narration stops the current line. A skipped fall goes straight to the captioned result. A naturally completed fall plays the results line when enabled. Restart clears it immediately.
 

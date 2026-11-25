@@ -7,7 +7,7 @@ namespace FloorFracture
     {
         public const string StepCaption = "When your pane cracks, step onto clear glass beside it.";
         public const string StoneCaption = "Drop or gently toss the stone onto an intact pane.";
-        public const string ResultsCaption = "Take a breath. Restart when you're ready.";
+        public const string ResultsCaption = "Take a breath. Retry when you're ready.";
         const float StepAwayDistance = .16f;
 
         AudioSource speaker;

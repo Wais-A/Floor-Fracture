@@ -155,6 +155,12 @@ namespace FloorFracture.Editor
                 .Where(t => t.name == "OVRHandVisualLeft" || t.name == "OVRHandVisualRight")
                 .SelectMany(t => t.GetComponentsInChildren<SkinnedMeshRenderer>(true)).ToArray();
             if (hands.Length == 0) throw new InvalidOperationException("The Interactions Rig has no OVRHandVisual hand meshes.");
+            foreach (var renderer in hands)
+            {
+                // URP sorts Order in Layer before render queue: hands must follow the menu (12) and count (30) canvases.
+                renderer.sortingOrder = 100;
+                Record(renderer);
+            }
 
             var effect = InstallEffectMesh(scene, ImmersiveRoomName);
             effect.Labels = MRUKAnchor.SceneLabels.GLOBAL_MESH;

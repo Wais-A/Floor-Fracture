@@ -46,7 +46,7 @@ Across six matched Water runs, loading the splash prefab before descent moved th
 | --- | ---: | ---: | ---: | ---: |
 | Water | 681 | 72.03 | 16.90 ms | 5.99 ms |
 | Lava | 681 | 72.02 | 15.87 ms | 4.44 ms |
-| Crystal | 681 | 72.02 | 16.58 ms | 4.53 ms |
+| Crystal (now Tar Pit) | 681 | 72.02 | 16.58 ms | 4.53 ms |
 | Space | 681 | 72.01 | 16.58 ms | 4.44 ms |
 | Sand | 681 | 72.03 | 17.61 ms | 4.19 ms |
 | Snow | 681 | 72.03 | 16.83 ms | 4.47 ms |

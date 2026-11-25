@@ -17,6 +17,11 @@ namespace FloorFracture.Editor
                 .Where(t => t.name == "OVRHandVisualLeft" || t.name == "OVRHandVisualRight")
                 .SelectMany(t => t.GetComponentsInChildren<SkinnedMeshRenderer>(true)).ToArray();
             var realHand = hands[0].sharedMaterial;
+            // The count canvas (30) is created on first use under the head, so include it explicitly.
+            int topCanvas = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include).Select(c => c.sortingOrder).DefaultIfEmpty(0).Max();
+            topCanvas = Mathf.Max(topCanvas, 30);
+            Require(hands.Length == 4 && hands.All(h => h.sortingOrder > topCanvas),
+                $"Real hands must sort after every menu canvas (highest {topCanvas}) so they appear in front of the panel.");
 
             Choose("Immersive room"); yield return Frames(2);
             Require(PlayerPrefs.GetInt("ff.immersive") == 1 && immersive.On, "Immersive room setting did not persist.");

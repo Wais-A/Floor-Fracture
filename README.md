@@ -6,7 +6,7 @@ A solo mixed-reality survival game for Meta Quest 3. Step off cracking glass bef
 
 ## Open the project
 
-Install Unity `6000.6.9f1` with Android Build Support, the Android SDK and NDK, and OpenJDK. Clone with Git LFS enabled, run `git lfs pull`, and open this directory in Unity Hub. Unity resolves Meta XR `209.0.0` and Unity OpenXR `1.19.0` and Unity OpenXR: Meta `2.7.0` from the package lockfile.
+Install Unity `6000.6.10f1` with Android Build Support, the Android SDK and NDK, and OpenJDK. Clone with Git LFS enabled, run `git lfs pull`, and open this directory in Unity Hub. Unity resolves Meta XR `209.0.0` and Unity OpenXR `1.19.0` and Unity OpenXR: Meta `2.7.0` from the package lockfile.
 
 Open `Assets/FloorFracture/Scenes/FloorFracture.unity`. The Android build list points to this scene. The signed ARM64 package is `com.wa003.floorfracture`. Git `3265e4b` is the earlier template-scene packaging baseline. Game source is under `Assets/FloorFracture/`.
 
@@ -15,14 +15,14 @@ Open `Assets/FloorFracture/Scenes/FloorFracture.unity`. The Android build list p
 1. Open the game and allow spatial data. A saved floor can arrive after the room opens. The game keeps checking and brings up Welcome when it can fit the glass. **Check again** reloads the saved room. Use **Space Setup** to capture or update the floor and furniture. The game compares rectangular and irregular layouts and keeps the one with more playable glass. Each pane and its 8 cm clearance must fit inside Meta’s mapped floor and clear furniture and confirmed obstructions. Small bumps and gaps in the saved mesh can still hold tiles. Welcome shows the fitted board, which can be a strip of connected panes down to 40 cm across. The gold outline follows the playable edges around obstructions. Use **Play area → Refit saved floor** with a hand ray or fingertip poke to check the current floor again.
 2. Press a menu button with a fingertip, point and pinch with a hand, or point and press the controller trigger. Choose **Tutorial** and stand on the glass. When your pane cracks, step onto a clear neighbor. After practicing, choose **Start wave**. **Try the stone (optional)** lets you grab a rock and drop or toss it onto any intact pane.
 3. Choose **Start wave**. After **3, 2, 1, GO!**, watch for amber cracks and listen for the crackle from each marked pane. Every required step gives you at least one second. Ordinary waves open at 2.00 seconds on level one, 1.50 on level three and 1.00 from level six. From level six the marked glass can fall together or in rows. Keep stepping as each row cracks. When a gap opens around you, cross one opening to any clear pane within reach. You have at least 1.85 seconds once the gaps open. From level nine you can get two jump waves in a row. The ring underfoot shows your support. Look through an opening to see the level’s trap 80 metres below.
-4. During a fall, a fresh index pinch with either tracked hand, or A or X on a controller, skips ahead to Results. **Settings** includes reduced-motion falls, warning intensity, volume and an optional offline narrator. Results identifies the actual cause of a loss. **Retry Level N** restarts the level you lost on fresh glass at wave 1 with a new score. **Choose level**, available here and on the main menu, opens every level you have reached. Progress saves on this device as soon as the next level’s Ready screen appears, even if you quit before its first wave. **Start** always begins at Level 1.
+4. During a fall, a fresh index pinch with either tracked hand, or A or X on a controller, skips ahead to Results. **Settings** includes reduced-motion falls, warning intensity, volume, an optional offline narrator and **Immersive room**, which turns passthrough off and draws your scanned room, furniture and a stone floor with Meta’s Effect Mesh. In mixed reality, Meta’s Real Hands block keeps your own hands visible in front of the menu. Results identifies the actual cause of a loss. **Retry Level N** restarts the level you lost on fresh glass at wave 1 with a new score. **Choose level**, available here and on the main menu, opens every level you have reached. Progress saves on this device as soon as the next level’s Ready screen appears, even if you quit before its first wave. **Start** always begins at Level 1.
 
 ## Build and install
 
 In **File → Build Profiles**, select the saved **Meta Quest** profile. It uses Vulkan, ARM64, the project's Mobile URP quality level, Android API 32 minimum and API 34 target. The global scene list contains the playable FloorFracture scene. Choose **Build** or **Build And Run**. For a command-line build on this Mac, run the following from the project directory. Set `FLOOR_FRACTURE_DEV=1` for the development menu and local measurement recording.
 
 ```sh
-/Applications/Unity/Hub/Editor/6000.6.9f1/Unity.app/Contents/MacOS/Unity \
+/Applications/Unity/Hub/Editor/6000.6.10f1/Unity.app/Contents/MacOS/Unity \
   -batchmode -quit -quitTimeout 1200 -projectPath "$PWD" \
   -activeBuildProfile "Assets/Settings/Build Profiles/Meta Quest.asset" \
   -executeMethod FloorFracture.Editor.GameProjectSetup.BuildAndroid \
