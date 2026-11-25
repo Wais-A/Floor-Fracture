@@ -5,8 +5,6 @@ namespace FloorFracture
     [DisallowMultipleComponent]
     public sealed class OfflineNarration : MonoBehaviour
     {
-        public const string StepCaption = "When your pane cracks, step onto clear glass beside it.";
-        public const string StoneCaption = "Drop or gently toss the stone onto an intact pane.";
         public const string ResultsCaption = "Take a breath. Retry when you're ready.";
         const float StepAwayDistance = .16f;
 
@@ -36,7 +34,7 @@ namespace FloorFracture
         {
             Stop();
             if (!requested || !isActiveAndEnabled || !trackedEye || speaker.volume <= 0f) return;
-            if (stage != GameStage.PracticeStep && stage != GameStage.PracticeStone && stage != GameStage.Results) return;
+            if (stage != GameStage.Results) return;
             var clip = Resources.Load<AudioClip>("Narration/" + stage);
             if (!clip) return;
             eye = trackedEye;
@@ -64,7 +62,7 @@ namespace FloorFracture
         }
 
         void OnApplicationPause(bool paused) { if (paused) Stop(); }
-        void OnApplicationFocus(bool focused) { if (!focused) Stop(); }
+        void OnApplicationFocus(bool focused) { if (!focused && !Application.isEditor) Stop(); }
         void OnDisable() => Stop();
     }
 }

@@ -28,8 +28,12 @@ namespace FloorFracture
 
         internal static bool HeadTracked()
         {
-            if (!Application.isFocused || !OVRManager.instance || !OVRManager.hasInputFocus ||
-                !OVRManager.instance.isUserPresent) return false;
+            // Window focus only means headset focus on the Quest. In the Editor the Meta XR Simulator's
+            // own window holds focus while it drives the head, so require it only on the device.
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (!Application.isFocused) return false;
+#endif
+            if (!OVRManager.instance || !OVRManager.hasInputFocus || !OVRManager.instance.isUserPresent) return false;
             var head = InputDevices.GetDeviceAtXRNode(XRNode.Head);
             bool positioned = head.TryGetFeatureValue(CommonUsages.trackingState, out InputTrackingState state) &&
                 (state & InputTrackingState.Position) != 0;

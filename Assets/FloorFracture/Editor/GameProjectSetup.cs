@@ -84,7 +84,6 @@ namespace FloorFracture.Editor
                 }
                 if(!flow.Rig) throw new InvalidOperationException("Room setup produced no tracked rig.");
                 MenuSceneSetup.Install(flow.transform);
-                StoneSceneSetup.Install();
                 SpatialAudioSceneSetup.Install();
                 Light keyLight=null;
                 foreach(var root in scene.GetRootGameObjects())

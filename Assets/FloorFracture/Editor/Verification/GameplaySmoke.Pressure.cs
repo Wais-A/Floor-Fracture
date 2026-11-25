@@ -6,69 +6,6 @@ namespace FloorFracture.Editor
 {
     public static partial class GameplaySmoke
     {
-        private static IEnumerator VerifyOpeningDraft()
-        {
-            var sound = game.GetComponent<GameSound>();
-            var draft = sound.transform.Find("Opening draft").GetComponent<AudioSource>();
-            var music = sound.transform.Find("Background music").GetComponent<AudioSource>();
-            float master = PlayerPrefs.GetInt("ff.volume", 3) / 4f;
-            yield return Wait(() => Mathf.Approximately(music.volume, master * .12f),
-                "background music to fade back to the selected gain after a fall", 1);
-            Require(draft.clip && draft.clip.name == "HoleDraft" && draft.clip.channels == 1 && draft.loop &&
-                draft.spatialize && draft.spatialBlend == 1f && draft.GetComponent<MetaXRAudioSource>().EnableSpatialization,
-                "The opening needs its own mono clip and Meta spatial voice.");
-
-            // Keep a collapsed board visible in stone practice so both openings last beyond a complete loop.
-            var state = game.State;
-            var wave = state.BeginWave(CornerPane, 1, 1, game.GameplayTime - 5);
-            int stance = wave.StationarySafe.OrderByDescending(i => (state.Center(i) - state.Center(CornerPane)).sqrMagnitude).First();
-            state.Tick(state.Center(stance), true, wave.Deadline);
-            int far = PlayablePanes.Where(i => !state.IsIntact(i)).OrderByDescending(i =>
-                (state.Center(i) - state.Center(stance)).sqrMagnitude).First();
-            int near = PlayablePanes.Where(i => i != stance && i != far).OrderBy(i =>
-                (state.Center(i) - state.Center(stance)).sqrMagnitude).First();
-            StandOn(stance); Choose("Tutorial"); Choose("Try the stone");
-            game.BoardView.PracticeBreak(near);
-            Vector3 Rim(int i) => game.BoardView.Board.TransformPoint(GlassGeometry.Ground(state.Center(i), -.16f));
-            yield return Delay(.32);
-            Require(!draft.isPlaying, "Looking across a hole triggered a draft.");
-            LookAtTile(stance);
-            yield return Delay(.25);
-            Require(!draft.isPlaying, "Looking into intact glass triggered a draft.");
-            LookAtTile(near);
-            yield return Wait(() => draft.isPlaying, "draft from neighboring hole", 1);
-            Require(Vector3.Distance(Rim(near), draft.transform.position) < .01f && draft.volume > 0f,
-                "Draft did not play from just below the opening.");
-            float onset = draft.volume;
-            yield return Delay(.4);
-            float full = draft.volume;
-            Require(full > onset && draft.time > .25f, "The opening draft did not fade in.");
-            float beforeTurn = draft.time;
-            LookAtTile(far);
-            yield return Wait(() => Vector3.Distance(Rim(far), draft.transform.position) < .02f,
-                "continuous draft to follow a direct look at another opening", 1);
-            Require(draft.isPlaying && draft.time >= beforeTurn && Mathf.Approximately(draft.volume, full),
-                "Looking directly between openings restarted or silenced the breeze.");
-            yield return Wait(() => draft.time < beforeTurn, "wind recording to wrap during a held look", draft.clip.length + 2);
-            Require(draft.isPlaying && draft.volume > 0f, "Wind ended during a held look.");
-            LookAtTile(stance);
-            yield return Wait(() => draft.isPlaying && draft.volume < full && draft.volume > 0f,
-                "audible fade while looking away", .4);
-            yield return Wait(() => !draft.isPlaying, "draft to finish fading out", 1);
-            LookAtTile(far);
-            yield return Wait(() => draft.isPlaying, "draft after looking back", 1);
-            sound.SetVolume(0);
-            yield return Delay(.25);
-            Require(!draft.isPlaying, "Master mute left the opening audible.");
-            sound.SetVolume(master);
-            yield return Wait(() => draft.isPlaying, "unmuted draft", 1);
-            MenuInput(new OVRInput.OVRControllerTouch());
-            Require(game.Stage == GameStage.Paused && !draft.isPlaying, "The opening played through the pause menu.");
-            Choose("Main menu");
-            float distance = Vector2.Distance(state.Center(stance), state.Center(far));
-            Record($"The spatial breeze followed a direct look from a nearby hole to another {distance:F2} m away, played through the loop seam, faded in and out, and respected mute and pause.");
-        }
-
         private static IEnumerator VerifyTileCracks()
         {
             var music = game.transform.Find("Background music").GetComponent<AudioSource>();

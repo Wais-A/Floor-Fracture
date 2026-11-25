@@ -77,25 +77,6 @@ namespace FloorFracture.Editor
             Record("The gameplay scene keeps the wall and furniture overlay inactive, gates the shared depth provider on runtime support, and contains no SDK demonstration objects.");
         }
 
-        private static void VerifyStoneOcclusion(PracticeStone tutorial)
-        {
-            var river = tutorial.Body.transform.Find("River stone");
-            var renderer = river ? river.GetComponent<MeshRenderer>() : null;
-            var stock = AssetDatabase.LoadAssetAtPath<Material>(StockDepthMaterial);
-            Require(renderer && renderer.enabled && stock && renderer.sharedMaterial == stock && stock.shader.name == "EnvironmentDepth/OcclusionLit",
-                "The river stone did not render with Meta's installed EnvironmentDepth/OcclusionLit material.");
-            var marker = renderer.GetComponent<BuildingBlock>();
-            Require(marker && marker.BlockId == MetaRoomBlocks.OcclusionId && !string.IsNullOrEmpty(marker.InstanceId),
-                "The river stone surface did not retain its real Occlusion block marker.");
-            var properties = new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(properties);
-            int colorId = Shader.PropertyToID("_Color");
-            var tint = properties.GetColor(colorId);
-            Require(properties.HasColor(colorId) && tint.a > 0.5f && tint.maxColorComponent > 0.2f && tint != Color.white,
-                "The practice stone's runtime _Color tint was absent from the stock occlusion shader.");
-            Record("The actual tutorial stone kept the stock Meta occlusion material and its individual visible _Color tint at runtime.");
-        }
-
         private static void VerifyMenuAndSpatialAudio()
         {
             var canvas = game.Panel.transform.Find(GamePanel.CanvasName).GetComponent<Canvas>();
