@@ -31,7 +31,8 @@ public sealed class FallSequence : MonoBehaviour
     Action finished;
     FloorEnding kind;
     int visiblePreview = -1;
-    bool reduced, hasOpening, impactPlayed, entryReported;
+    bool reduced, hasOpening, impactPlayed, entryReported, releasePulsed;
+    FloorFracture.PanelController leftHand, rightHand;
     int tarPulls;
     Vector3 opening;
     float width, yaw;
@@ -182,6 +183,7 @@ public sealed class FallSequence : MonoBehaviour
             pausedAt = null;
         }
         scenery.SetTrackingPaused(paused);
+        if (paused) StopHaptics();
         sound.SetFallPaused(paused, ContactTime - (float)((pausedAt ?? now) - startedAt));
         if (!paused && blackFrame >= 0) blackFrame = Time.frameCount;
     }
@@ -212,11 +214,14 @@ public sealed class FallSequence : MonoBehaviour
         float travel = age >= contact ? FallScenery.ShaftDepth : .5f * Gravity * fallingTime * fallingTime;
         if (!reduced && age >= contact)
             travel += kind == FloorEnding.Space ? Gravity * FreeFallTime * seconds : scenery.EyeHeight * Burial(kind,seconds);
-        float immersion = scenery.Draw(age, p, seconds, reduced, travel, out bool entered);
+        // Free-fall speed past the shaft's still air. Space keeps falling after contact, so fade it out there too.
+        float dustSpeed = reduced ? 0 : Gravity * fallingTime * (1 - FallScenery.Ease(0, .25f, age - contact));
+        float immersion = scenery.Draw(age, p, seconds, reduced, travel, out bool entered, fallSpeed: dustSpeed);
         arena?.Draw(travel,entered);
         float fade = FallScenery.Ease(3f,5f,seconds);
         // At constant acceleration, speed as a fraction of impact speed is t / tImpact.
         float air = reduced ? .34f * Mathf.Clamp01(age / contact) : fallingTime / FreeFallTime;
+        Haptics(age, contact, air);
         if (age >= contact && kind != FloorEnding.Space)
         {
             if (!impactPlayed)
@@ -225,6 +230,8 @@ public sealed class FallSequence : MonoBehaviour
                 Vector3 point = scenery.SplashPosition();
                 if (kind == FloorEnding.Water) scenery.Splash(point,reduced);
                 sound.Land(kind,point);
+                // Snow is a soft landing; every other surface hits hard.
+                Pulse((kind == FloorEnding.Snow ? .45f : 1f) * (reduced ? .5f : 1f), .22f);
             }
             air *= 1 - FallScenery.Ease(0, .08f, age - contact);
         }
@@ -293,6 +300,35 @@ public sealed class FallSequence : MonoBehaviour
         if (p >= 1) Blackout();
     }
 
+    void Haptics(float age, float contact, float air)
+    {
+        leftHand ??= new FloorFracture.PanelController(transform, true);
+        rightHand ??= new FloorFracture.PanelController(transform, false);
+        leftHand.EndPulse(); rightHand.EndPulse();
+        float strength = reduced ? .5f : 1f;
+        if (!releasePulsed && age >= RimHold)
+        {
+            // The glass gives way under the feet.
+            releasePulsed = true;
+            Pulse(.55f * strength, .07f);
+        }
+        // A rumble that builds with airspeed until the impact pulse takes over.
+        else if (age > RimHold + .07f && age < contact)
+            Pulse((.06f + .34f * air * air) * strength, .1f);
+    }
+
+    void Pulse(float amplitude, float duration)
+    {
+        leftHand?.Pulse(amplitude, duration);
+        rightHand?.Pulse(amplitude, duration);
+    }
+
+    void StopHaptics()
+    {
+        leftHand?.EndPulse(true);
+        rightHand?.EndPulse(true);
+    }
+
     internal const float FirstPull = .47f, SecondPull = 1.57f;
 
     // Surface displacement in standing eye heights. A short initial compression gives
@@ -327,6 +363,7 @@ public sealed class FallSequence : MonoBehaviour
     void Blackout()
     {
         sound.StopFall();
+        StopHaptics();
         scenery.SetVeil(Color.black,1);
         blackFrame = Time.frameCount;
     }
@@ -342,7 +379,8 @@ public sealed class FallSequence : MonoBehaviour
     {
         pausedAt = null;
         generation++; IsPlaying = false; visiblePreview = -1; finished = null; head = null;
-        blackFrame = -1; tarPulls = 0; hasOpening = impactPlayed = entryReported = false;
+        blackFrame = -1; tarPulls = 0; hasOpening = impactPlayed = entryReported = releasePulsed = false;
+        StopHaptics();
         arena?.Restore(); arena = null;
         if (sound) sound.StopFall();
         scenery?.Hide();

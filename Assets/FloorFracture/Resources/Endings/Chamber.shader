@@ -9,6 +9,8 @@ Shader "Floor Fracture/Ending chamber"
         _Theme("Ending", Float) = 0
         _SurfaceClock("Surface animation time", Float) = -1
         _PassDistance("Star travel in metres", Float) = 0
+        _Travel("Fall travel in metres", Float) = 0
+        _FallSpeed("Fall speed in metres per second", Float) = 0
         _Age("Seconds", Float) = 0
         _Reveal("Reveal", Float) = 0
         _Level("World surface height", Float) = -20
@@ -43,7 +45,7 @@ Shader "Floor Fracture/Ending chamber"
             SAMPLER(sampler_WaterNormal);
             CBUFFER_START(UnityPerMaterial)
                 half4 _Tint;
-                float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity, _WideningPerMetre, _ThroatDepth, _SurfaceClock, _PassDistance;
+                float _Role, _Theme, _Age, _Reveal, _Level, _Motion, _Opacity, _WideningPerMetre, _ThroatDepth, _SurfaceClock, _PassDistance, _Travel, _FallSpeed;
                 float4 _Mouth, _MouthRight;
             CBUFFER_END
             struct Attributes
@@ -95,6 +97,14 @@ Shader "Floor Fracture/Ending chamber"
                     p.x += (_Theme == 5 ? drift * 5.2 : sin(_Age*.93+seed*40)*.075) * _Motion;
                     p.z += sin(_Age+seed*25) * .05 * _Motion;
                 }
+                if (_Role == 13)
+                {
+                    // Dust hangs in still air: as the shaft rises past the eye, each speck rises
+                    // with it and wraps through an 8 m column (FallMeshes.DustColumn).
+                    p.y += (frac(seed + _Travel/8) - seed)*8;
+                    // Trail the lower tip over roughly one frame of travel.
+                    if (v.uv.y < .25) p.y -= _FallSpeed * .014;
+                }
                 if (_Role == 7)
                 {
                     float licks = sin(_Age*3.9+seed*35)*.5 + sin(_Age*6.3+seed*21)*.24;
@@ -119,6 +129,7 @@ Shader "Floor Fracture/Ending chamber"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 half3 color = i.color.rgb * _Tint.rgb;
+                half alpha = _Opacity;
                 float2 xz = i.world.xz;
                 if (_MouthRight.w > .5)
                 {
@@ -211,6 +222,17 @@ Shader "Floor Fracture/Ending chamber"
                 }
                 else if (_Role == 7)
                     color *= .86+.14*sin(i.seed*37+_Age*6.2);
+                else if (_Role == 14)
+                {
+                    // Brick columns: the walls' running bond, laid in metres around each column.
+                    color = ShaftBrickwork(i.uv) * i.color.rgb;
+                }
+                else if (_Role == 13)
+                {
+                    // Only inside the shaft, never in the room, and faded before a speck wraps.
+                    clip(_Mouth.y - i.world.y);
+                    alpha *= 1 - smoothstep(2.6, 3.9, abs(i.world.y - GetCameraPositionWS().y));
+                }
                 else if (_Role == 8)
                 {
                     // The far sky stays fixed in the chamber while closer stars retain parallax.
@@ -270,11 +292,11 @@ Shader "Floor Fracture/Ending chamber"
                     float drift = .5+.5*sin(xz.x*1.2+sin(xz.y*.41+_Time.y*.12));
                     color = lerp(half3(.36,.59,.78),half3(.84,.93,.99),smoothstep(.1,.93,drift));
                 }
-                if (_Role == 1 || _Role == 9)
+                if (_Role == 1 || _Role == 9 || _Role == 14)
                 {
                     color *= lerp(1.0, .28, smoothstep(3, 35, belowEye));
                 }
-                return half4(color, _Opacity);
+                return half4(color, alpha);
             }
             ENDHLSL
         }

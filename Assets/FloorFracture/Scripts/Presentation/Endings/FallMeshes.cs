@@ -152,22 +152,74 @@ internal static class FallMeshes
             }
             else if (ending == FloorEnding.Snow)
                 color = Color.Lerp(new Color(.59f,.76f,.87f), Color.white, phase);
-            var center = Ring(angle)*radius + Vector3.up*y;
-            int top = m.Vertex(center+Vector3.up*size*elongation, color, Vector2.up, phase);
-            int bottom = m.Vertex(center-Vector3.up*size*elongation, color*.82f, Vector2.zero, phase);
-            int first = top+2;
-            for (int j=0; j<4; j++)
-                m.Vertex(center+Ring(j*Mathf.PI*.5f)*size,color,new Vector2(.5f,.5f),phase);
-            for (int j=0; j<4; j++)
-            {
-                int a=first+j, b=first+(j+1)%4; m.Triangle(top,a,b); m.Triangle(bottom,b,a);
-            }
+            Speck(m, Ring(angle)*radius + Vector3.up*y, size, elongation, color, .82f, phase);
         }
         Mesh result = m.Build(ending + " particles");
         Bounds bounds = result.bounds;
         bounds.Expand(ending == FloorEnding.Space ? new Vector3(0,144,0) : new Vector3(9,9,5)); // Motion happens in the vertex shader.
         result.bounds = bounds;
         return result;
+    }
+
+    // Height of the still-air column the shader wraps around the eye (Chamber.shader, role 13).
+    internal const float DustColumn = 8f;
+
+    internal static Mesh Dust()
+    {
+        var m = new Builder();
+        var random = new System.Random(379);
+        for (int i = 0; i < 150; i++)
+        {
+            float phase = Rand(random), angle = Rand(random) * Mathf.PI * 2;
+            // Beyond arm's reach so nothing crosses the face. Walls hide any speck past a narrow shaft.
+            float radius = .6f + .8f * Rand(random);
+            float size = .005f + .009f * Rand(random);
+            Speck(m, Ring(angle)*radius + Vector3.up*(phase-.5f)*DustColumn, size, 1, Gray(.6f + .4f*Rand(random)), .5f, phase);
+        }
+        Mesh result = m.Build("Fall dust");
+        Bounds bounds = result.bounds;
+        bounds.Expand(new Vector3(0,DustColumn,0)); // Wrapping and streaks happen in the vertex shader.
+        result.bounds = bounds;
+        return result;
+    }
+
+    internal const float ColumnHalfWidth = .8f;
+
+    // One square brick column from the bend into the landing. Its uv is in metres around and down
+    // the column, so the shared running bond matches the walls. The top starts half a metre above
+    // the bend, inside the wall, so no top face or seam can show.
+    internal static Mesh Column()
+    {
+        var m = new Builder();
+        const float h = ColumnHalfWidth, top = -FallScenery.ThroatDepth + .5f, bottom = -FallScenery.ShaftDepth - 1f;
+        Vector3[] corners = { new Vector3(-h,0,-h), new Vector3(h,0,-h), new Vector3(h,0,h), new Vector3(-h,0,h) };
+        for (int side = 0; side < 4; side++)
+        {
+            Vector3 a = corners[side], b = corners[(side+1)%4];
+            float u = side * 2*h;
+            // Alternate face shades read as corners under the unlit shader, as the wall facets do.
+            Color shade = Gray(side % 2 == 0 ? .86f : .68f);
+            int first = m.Vertex(a + Vector3.up*bottom, shade, new Vector2(u, -bottom), 0);
+            m.Vertex(b + Vector3.up*bottom, shade, new Vector2(u + 2*h, -bottom), 0);
+            m.Vertex(b + Vector3.up*top, shade, new Vector2(u + 2*h, -top), 0);
+            m.Vertex(a + Vector3.up*top, shade, new Vector2(u, -top), 0);
+            m.Triangle(first,first+1,first+2); m.Triangle(first,first+2,first+3);
+        }
+        return m.Build("Brick column");
+    }
+
+    // A small double pyramid. Its top vertex has uv.y = 1 and its bottom vertex uv = 0, which the shader can stretch.
+    static void Speck(Builder m, Vector3 center, float size, float elongation, Color color, float bottomShade, float phase)
+    {
+        int top = m.Vertex(center+Vector3.up*size*elongation, color, Vector2.up, phase);
+        int bottom = m.Vertex(center-Vector3.up*size*elongation, color*bottomShade, Vector2.zero, phase);
+        int first = top+2;
+        for (int j=0; j<4; j++)
+            m.Vertex(center+Ring(j*Mathf.PI*.5f)*size,color,new Vector2(.5f,.5f),phase);
+        for (int j=0; j<4; j++)
+        {
+            int a=first+j, b=first+(j+1)%4; m.Triangle(top,a,b); m.Triangle(bottom,b,a);
+        }
     }
 
     static float Rand(System.Random random) => (float)random.NextDouble();

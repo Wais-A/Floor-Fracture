@@ -10,11 +10,13 @@ internal sealed class FallScenery
         Reveal = Shader.PropertyToID("_Reveal"), Level = Shader.PropertyToID("_Level"),
         Motion = Shader.PropertyToID("_Motion"), Opacity = Shader.PropertyToID("_Opacity"),
         SurfaceClock = Shader.PropertyToID("_SurfaceClock"), PassDistance = Shader.PropertyToID("_PassDistance"),
-        Mouth = Shader.PropertyToID("_Mouth"), MouthRight = Shader.PropertyToID("_MouthRight");
+        Mouth = Shader.PropertyToID("_Mouth"), MouthRight = Shader.PropertyToID("_MouthRight"),
+        Travel = Shader.PropertyToID("_Travel"), FallSpeed = Shader.PropertyToID("_FallSpeed");
     // Four seconds under gravity leaves more than three seconds of walls after a standing eye enters.
     internal const float ShaftDepth = 80f;
     // A near-vertical throat gives an oblique view of the wall from the next pane.
-    // Below it the chamber opens out, preserving the view of the landing in flight.
+    // Below it the chamber opens out, preserving the view of the landing in flight and from the
+    // next pane (a narrow .05 flare hid it). Two brick columns under the bend keep nearer surfaces passing.
     internal const float ThroatDepth = 18f;
     const float WideningPerMetre = .72f;
     static readonly Color SandColor = new Color(.72f,.49f,.24f);
@@ -32,10 +34,10 @@ internal sealed class FallScenery
     };
 
     readonly Transform world;
-    readonly Material surfaceMaterial, backgroundMaterial, fadeMaterial, interiorMaterial, bubbleMaterial;
+    readonly Material surfaceMaterial, backgroundMaterial, fadeMaterial, interiorMaterial, bubbleMaterial, dustMaterial;
     readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
     readonly MaterialPropertyBlock waterProperties = new MaterialPropertyBlock();
-    readonly MeshRenderer walls, landmarks, background, floor, nativeWater, pillars, motes;
+    readonly MeshRenderer walls, landmarks, background, floor, nativeWater, pillars, motes, dust, leftColumn, rightColumn;
     MeshRenderer veil, interior;
     readonly List<Mesh> ownedMeshes = new List<Mesh>();
     readonly Mesh[] moteMeshes = new Mesh[6];
@@ -68,6 +70,9 @@ internal sealed class FallScenery
         Mesh disk = Own(FallMeshes.Disk());
         walls = Part("Shaft walls", Own(FallMeshes.Shaft(ShaftDepth)), surfaceMaterial);
         landmarks = Part("Shaft landmarks", Own(FallMeshes.Landmarks(ShaftDepth)), surfaceMaterial);
+        Mesh column = Own(FallMeshes.Column());
+        leftColumn = Part("Left brick column", column, surfaceMaterial);
+        rightColumn = Part("Right brick column", column, surfaceMaterial);
         background = Part("Chamber darkness", boxMesh, backgroundMaterial);
         floor = Part("Hazard surface", disk, surfaceMaterial);
         var native = waterOverride ? waterOverride : Resources.Load<Material>("Endings/MetaFloorZone/materials/Water");
@@ -80,6 +85,10 @@ internal sealed class FallScenery
         }
         pillars = Part("Lava flames", Own(FallMeshes.Flames()), surfaceMaterial);
         motes = Part("Particles", null, surfaceMaterial);
+        // Drawn after the walls and without depth writes, so faint specks never punch holes in them.
+        dustMaterial = new Material(surfaceMaterial) { renderQueue = surfaceMaterial.renderQueue + 1 };
+        dustMaterial.SetInt("_DepthWrite",0);
+        dust = Part("Fall dust", Own(FallMeshes.Dust()), dustMaterial);
         CreateView();
         splashPrefab = splashOverride ? splashOverride : Resources.Load<GameObject>("Endings/MetaFloorZone/prefabs/Splash");
         if (fireOverride)
@@ -146,6 +155,8 @@ internal sealed class FallScenery
         pillars.transform.localScale = new Vector3(ringScale,1,ringScale);
         motes.transform.localScale = kind == FloorEnding.Sand ? pillars.transform.localScale : Vector3.one;
         motes.transform.localPosition = entryLocal;
+        // The dust column hangs still around the starting eye; only the shader wraps it upward.
+        dust.transform.localPosition = entryLocal + Vector3.up*eyeHeight;
         if (kind != FloorEnding.TarPit)
         {
             if (!moteMeshes[(int)kind]) moteMeshes[(int)kind] = Own(FallMeshes.Motes(kind));
@@ -162,7 +173,8 @@ internal sealed class FallScenery
     }
 
     // Returns the submersion factor at the viewer's actual height.
-    internal float Draw(float age, float progress, float seconds, bool reduced, float travel, out bool entered, bool preview = false)
+    internal float Draw(float age, float progress, float seconds, bool reduced, float travel, out bool entered,
+        bool preview = false, float fallSpeed = 0)
     {
         // In reduced motion, hold the preview in place until the comfort fade reaches black.
         bool tableau = reduced && age >= .32f;
@@ -177,6 +189,7 @@ internal sealed class FallScenery
         {
             stencilEnabled = useStencil;
             surfaceMaterial.SetInt("_PortalComparison",(int)(useStencil ? CompareFunction.Equal : CompareFunction.Always));
+            dustMaterial.SetInt("_PortalComparison",(int)(useStencil ? CompareFunction.Equal : CompareFunction.Always));
         }
         float mouthRadius = Mathf.Lerp(startRadius,Mathf.Max(startRadius,Mathf.Min(radius,.77f)),Ease(0,1.35f,top));
         float surfaceY = tableau ? 0f : travel-ShaftDepth;
@@ -227,6 +240,7 @@ internal sealed class FallScenery
         properties.SetFloat(PassDistance,reduced ? 0 : Mathf.Max(0,travel-ShaftDepth+12f));
         properties.SetFloat(Theme,(int)kind); properties.SetFloat(Age,age);
         properties.SetFloat(Reveal,progress); properties.SetFloat(Level,level); properties.SetFloat(Motion,motion);
+        properties.SetFloat(Travel,travel); properties.SetFloat(FallSpeed,fallSpeed);
         entered = reduced ? tableau : rimY >= head.position.y;
         properties.SetVector(Mouth,new Vector4(entryWorld.x,rimY,entryWorld.z,mouthRadius));
         properties.SetVector(MouthRight,new Vector4(mouthRight.x,mouthRight.z,0,tableau || hasFloorApertures ? 0 : 1));
@@ -237,6 +251,15 @@ internal sealed class FallScenery
         Paint(walls,1,wallColor,fullyUnder ? 0 : wallAlpha);
         Color ledgeColor = Color.Lerp(wallColor,new Color(.84f,.88f,.85f),.64f);
         Paint(landmarks,9,ledgeColor,fullyUnder ? 0 : wallAlpha);
+        // The columns carry the narrow tunnel where it ends. Each inner face lines up with the flat
+        // side wall at the bend (Chamber.shader widens .08 m per metre down to it), so the whole
+        // column stays outside the tunnel's footprint: nothing stands under a hole, and the tunnel
+        // wall hides the top from above. Below the bend the flare uncovers it. They rise with the walls.
+        float columnX = radius + .08f*ThroatDepth + FallMeshes.ColumnHalfWidth + .01f;
+        leftColumn.transform.localPosition = new Vector3(-columnX,top,0);
+        rightColumn.transform.localPosition = new Vector3(columnX,top,0);
+        Paint(leftColumn,14,Color.white,fullyUnder ? 0 : wallAlpha);
+        Paint(rightColumn,14,Color.white,fullyUnder ? 0 : wallAlpha);
         floor.transform.localPosition = new Vector3(0,surfaceY,0);
         Paint(floor,floorRole,surfaceColor,fullyUnder ? 0 : floorAlpha);
         if (nativeWater)
@@ -264,6 +287,9 @@ internal sealed class FallScenery
         if (fullyUnder && splash && splash.activeSelf) splash.SetActive(false);
         if (kind == FloorEnding.TarPit || (fullyUnder && kind != FloorEnding.Water)) particleAlpha = 0;
         Paint(motes,6,Color.white,particleAlpha);
+        // Near specks streaming past the periphery carry the sense of speed the flaring walls lose.
+        Paint(dust,13,Color.Lerp(wallColor,Color.white,.55f),
+            reduced || fullyUnder || preview ? 0 : .85f*Ease(1.5f,9f,fallSpeed));
         return immersion;
     }
 
@@ -381,7 +407,7 @@ internal sealed class FallScenery
         if (world) Object.Destroy(world.gameObject);
         else if (veil) Object.Destroy(veil.gameObject);
         Object.Destroy(surfaceMaterial); Object.Destroy(backgroundMaterial); Object.Destroy(fadeMaterial);
-        Object.Destroy(interiorMaterial); Object.Destroy(bubbleMaterial);
+        Object.Destroy(interiorMaterial); Object.Destroy(bubbleMaterial); Object.Destroy(dustMaterial);
         foreach (Mesh owned in ownedMeshes) Object.Destroy(owned);
     }
 
