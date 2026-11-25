@@ -121,6 +121,9 @@ InitTestScene*.unity*
 /TempAssembly.dll
 /*.symbols.zip
 /*_BackUpThisFolder_ButDontShipItWithYourGame/
+# Meta SDK rewrites this before every build (OVRDumpBuildInfo)
+/Assets/StreamingAssets/RuntimeActionBindings.json
+/Assets/StreamingAssets/RuntimeActionBindings.json.meta
 
 # Local AI agent folders (skills, settings) for this machine only
 /.claude/

@@ -133,14 +133,62 @@ namespace FloorFracture.Editor
             if (interaction.InstallationRoutineCheckpoint?.InstallationRoutineId != MetaRoomBlocks.OvrInteractionsRoutineId)
                 throw new InvalidOperationException("The Interactions Rig block did not use the OVR comprehensive rig routine.");
             ConfigureInteractions(rig, interaction.gameObject);
+            InstallImmersiveRoom(scene);
             EditorSceneManager.MarkSceneDirty(scene);
             return placement;
         }
 
-        private static EffectMesh InstallFloorSurface(Scene scene)
+        private const string RoomMeshMaterial = "Packages/com.meta.xr.mrutilitykit/Core/Materials/GRAY_Wall.mat";
+        private const string VirtualHandMaterial = "Packages/com.meta.xr.sdk.interaction/Runtime/Materials/OculusHand.mat";
+
+        // Optional VR mode: Meta's Effect Mesh draws the scanned room while passthrough is off.
+        public static ImmersiveRoom InstallImmersiveRoom(Scene scene)
+        {
+            var placement = Single<RoomBoardPlacement>(scene);
+            var layer = Single<OVRPassthroughLayer>(scene);
+            var rig = Single<OVRCameraRig>(scene);
+            var material = AssetDatabase.LoadAssetAtPath<Material>(RoomMeshMaterial);
+            var hand = AssetDatabase.LoadAssetAtPath<Material>(VirtualHandMaterial);
+            if (!placement || !layer || !rig || !material || !hand)
+                throw new InvalidOperationException("Immersive room needs the room owner, Meta passthrough, the camera rig, MRUK's grey material and the stock hand material.");
+            var hands = rig.GetComponentsInChildren<Transform>(true)
+                .Where(t => t.name == "OVRHandVisualLeft" || t.name == "OVRHandVisualRight")
+                .SelectMany(t => t.GetComponentsInChildren<SkinnedMeshRenderer>(true)).ToArray();
+            if (hands.Length == 0) throw new InvalidOperationException("The Interactions Rig has no OVRHandVisual hand meshes.");
+
+            var effect = InstallEffectMesh(scene, ImmersiveRoomName);
+            effect.Labels = MRUKAnchor.SceneLabels.GLOBAL_MESH;
+            effect.SpawnOnStart = MRUK.RoomFilter.None;
+            effect.MeshMaterial = material;
+            effect.Colliders = false;
+            effect.CastShadow = false;
+            effect.HideMesh = true;
+            Record(effect);
+
+            var immersive = placement.GetComponent<ImmersiveRoom>();
+            if (!immersive) immersive = Undo.AddComponent<ImmersiveRoom>(placement.gameObject);
+            var data = new SerializedObject(immersive);
+            data.FindProperty("passthrough").objectReferenceValue = layer;
+            data.FindProperty("roomEffect").objectReferenceValue = effect;
+            data.FindProperty("virtualHand").objectReferenceValue = hand;
+            var list = data.FindProperty("hands");
+            list.arraySize = hands.Length;
+            for (int i = 0; i < hands.Length; i++) list.GetArrayElementAtIndex(i).objectReferenceValue = hands[i];
+            data.ApplyModifiedPropertiesWithoutUndo();
+            Record(immersive);
+            return immersive;
+        }
+
+        private const string FloorSurfaceName = "[BuildingBlock] Effect Mesh - Surrounding Floor";
+        private const string ImmersiveRoomName = "[BuildingBlock] Effect Mesh - Immersive Room";
+
+        private static EffectMesh InstallFloorSurface(Scene scene) => ConfigureFloorSurface(InstallEffectMesh(scene, FloorSurfaceName));
+
+        // Two Effect Mesh blocks share Meta's block id, so each is found by the name this setup gives it.
+        private static EffectMesh InstallEffectMesh(Scene scene, string name)
         {
             var marker = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<BuildingBlock>(true))
-                .SingleOrDefault(block => block.BlockId == MetaRoomBlocks.EffectMeshId);
+                .SingleOrDefault(block => block.BlockId == MetaRoomBlocks.EffectMeshId && block.name == name);
             if (!marker)
             {
                 // Choose Meta's semantic-surface variant. The global-mesh variant includes walls and objects.
@@ -152,14 +200,19 @@ namespace FloorFracture.Editor
                 var objects = routine.Install(definition, null);
                 MetaRoomBlocks.RecordInstallation(definition, routine, objects);
                 marker = objects.Single().GetComponent<BuildingBlock>();
+                marker.name = name;
             }
-
             var effect = marker.GetComponent<EffectMesh>();
+            if (!effect) throw new InvalidOperationException("Meta's Effect Mesh block has no EffectMesh component.");
+            return effect;
+        }
+
+        private static EffectMesh ConfigureFloorSurface(EffectMesh effect)
+        {
             var shader = AssetDatabase.LoadAssetAtPath<Shader>(RoomAssets + "SurroundingBrick.shader");
             var material = AssetDatabase.LoadAssetAtPath<Material>(RoomAssets + "SurroundingBrick.mat");
             if (!effect || !shader || !material || material.shader != shader)
                 throw new InvalidOperationException("The floor Effect Mesh needs the surrounding brick material and its shader.");
-            effect.name = "[BuildingBlock] Effect Mesh - Surrounding Floor";
             effect.Labels = MRUKAnchor.SceneLabels.FLOOR;
             effect.SpawnOnStart = MRUK.RoomFilter.None;
             effect.MeshMaterial = material;

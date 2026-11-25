@@ -37,6 +37,7 @@ namespace FloorFracture
         public BoardPlacement Placement { get; private set; }
         public int ScannedSpawnCount { get; private set; }
         public EffectMesh FloorEffect => floorEffect;
+        public MRUKRoom CurrentRoom => room;
         private const string EntireFloorKey = "ff.entireFloor";
         public bool EntireFloor { get; private set; }
         public event Action Changed;

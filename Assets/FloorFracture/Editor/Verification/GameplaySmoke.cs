@@ -20,7 +20,7 @@ namespace FloorFracture.Editor
         private const string Key = "FloorFracture.GameplaySmoke.";
         private const string ScenePath = "Assets/FloorFracture/Scenes/FloorFracture.unity";
         private const string ProgressKey = "ff.highestLevel";
-        private static readonly string[] Preferences = { "ff.reduced", "ff.gentle", "ff.volume", "ff.narration", "ff.entireFloor", ProgressKey };
+        private static readonly string[] Preferences = { "ff.reduced", "ff.gentle", "ff.volume", "ff.narration", "ff.entireFloor", "ff.immersive", ProgressKey };
         private static readonly Stack<IEnumerator> Steps = new Stack<IEnumerator>();
         private static GameFlow game;
         private static Pose head, left, right;
@@ -57,6 +57,7 @@ namespace FloorFracture.Editor
             PlayerPrefs.DeleteKey("ff.volume");
             PlayerPrefs.DeleteKey("ff.narration");
             PlayerPrefs.DeleteKey("ff.entireFloor");
+            PlayerPrefs.DeleteKey("ff.immersive");
             PlayerPrefs.DeleteKey(ProgressKey);
             report = new SmokeReport { startedUtc = DateTime.UtcNow.ToString("O"), unityVersion = Application.unityVersion, scene = ScenePath };
             report.depthProviderReadyInAuthoredScene = AuthoredDepthReady();
@@ -198,12 +199,13 @@ namespace FloorFracture.Editor
             yield return VerifyTileCracks();
             yield return RayChoose(4, false); yield return Stage(GameStage.Settings);
             Require(!outlines.gameObject.activeSelf, "The Welcome board perimeter stayed visible inside Settings.");
-            yield return RayChoose(5, true); yield return Stage(GameStage.Welcome);
+            yield return RayChoose(6, true); yield return Stage(GameStage.Welcome);
             Record("The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.");
             Choose("Settings"); yield return Stage(GameStage.Settings);
             int oldMotion = PlayerPrefs.GetInt("ff.reduced",0);
             Choose("Fall motion"); Require(PlayerPrefs.GetInt("ff.reduced") != oldMotion, "Fall setting did not persist.");
             if (PlayerPrefs.GetInt("ff.reduced") != 0) Choose("Fall motion");
+            yield return VerifyImmersiveRoom();
             yield return VerifySettingsPreviewAndVolume();
             Choose("Development"); Choose("Seed 379 · level 1"); yield return Stage(GameStage.Ready);
             Choose("Main menu"); yield return Stage(GameStage.Welcome);

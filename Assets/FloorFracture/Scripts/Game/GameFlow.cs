@@ -50,7 +50,8 @@ namespace FloorFracture
         PracticeStone tutorial;
         OVRHand[] trackedHands;
         bool skipPinchHeld;
-        bool reduced, gentle, narrated, levelFinished, appPaused;
+        bool reduced, gentle, narrated, immersive, levelFinished, appPaused;
+        ImmersiveRoom immersiveRoom;
         int volume, practiceStart=-1, endingIndex=-1;
         double waitUntil;
         double countInStartedAt;
@@ -85,6 +86,8 @@ namespace FloorFracture
             sound=gameObject.AddComponent<GameSound>(); sound.SetVolume(volume/4f);
             narrated=PlayerPrefs.GetInt("ff.narration",0)!=0;
             narration=gameObject.AddComponent<OfflineNarration>(); narration.Configure(narrated,volume/4f);
+            immersiveRoom=Room.GetComponent<ImmersiveRoom>();
+            immersive=PlayerPrefs.GetInt("ff.immersive",0)!=0; if(immersiveRoom) immersiveRoom.Apply(immersive);
             Ending=gameObject.AddComponent<FallSequence>(); tutorial=gameObject.AddComponent<PracticeStone>();
             Panel=gameObject.AddComponent<GamePanel>(); Panel.Initialize(Rig,sound);
 #if DEBUG && UNITY_ANDROID && !UNITY_EDITOR
@@ -200,6 +203,7 @@ namespace FloorFracture
                 Choice("Warning  ·  "+(gentle?"Gentle":"Standard"),()=>{gentle=!gentle; SaveSettings(); Settings();}),
                 Choice("Volume  ·  "+volume*25+"%",()=>{volume=(volume+1)%5; SaveSettings(); sound.SetVolume(volume/4f); Settings();}),
                 Choice("Narration  ·  "+(narrated?"On":"Off"),()=>{narrated=!narrated; SaveSettings(); Settings();}),
+                Choice("Immersive room  ·  "+(immersive?"On":"Off"),immersiveRoom?()=>{immersive=!immersive; SaveSettings(); Settings();}:null),
                 Choice("Back",Home));
             Panel.ShowWarningPreview(gentle);
         }
@@ -207,6 +211,7 @@ namespace FloorFracture
         {
             PlayerPrefs.SetInt("ff.reduced",reduced?1:0); PlayerPrefs.SetInt("ff.gentle",gentle?1:0);
             PlayerPrefs.SetInt("ff.narration",narrated?1:0); narration.Configure(narrated,volume/4f);
+            PlayerPrefs.SetInt("ff.immersive",immersive?1:0); if(immersiveRoom) immersiveRoom.Apply(immersive);
             PlayerPrefs.SetInt("ff.volume",volume); PlayerPrefs.Save();
         }
         void StartPractice()
