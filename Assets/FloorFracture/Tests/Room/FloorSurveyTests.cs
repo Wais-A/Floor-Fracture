@@ -469,6 +469,20 @@ namespace FloorFracture.Tests
         }
 
         [Test]
+        public void FragmentedLowerSurfaceStillBlocksWhereTheMappedFloorHasNoMesh()
+        {
+            // Interleaved half-millimetre strips leave more than 64 gaps in each cell before any fill.
+            const float width = .0005f;
+            for (int pass = 0; pass < 2; pass++)
+                for (int i = pass; i < 2000; i += 2)
+                    Surface(.5f + i * width, -1, .5f + (i + 1) * width, 1, -.28f);
+            Surface(-2, -2, 0, 2);
+            var survey = Survey();
+            Assert.That(survey.Check(Box(-1.2f, -.5f, -.9f, -.2f)), Is.EqualTo(TileClearance.Clear));
+            Assert.That(survey.Check(Box(.8f, -.5f, 1.1f, -.2f)), Is.EqualTo(TileClearance.MeshObstacle));
+        }
+
+        [Test]
         public void RefinedGlobalAnchorKeepsObservedGlassAndRejectsANewObstacle()
         {
             Surface(-2, -2, 2, 2);

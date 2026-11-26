@@ -153,7 +153,8 @@ namespace FloorFracture
                 if (Cells[i] != TileClearance.Clear || below[i] == null) continue;
                 var corner = Corner(i % Width, i / Width);
                 var far = Corner(i % Width + 1, i / Width + 1);
-                if (Covered(corner, far, below[i]) && !Covered(corner, far, level[i]))
+                // A lower surface too fragmented to measure may still be a drop, so it blocks like one.
+                if (Covered(corner, far, below[i]) != false && Covered(corner, far, level[i]) != true)
                     Cells[i] = TileClearance.MeshObstacle;
             }
         }
@@ -346,8 +347,8 @@ namespace FloorFracture
         }
 
         // Subtract each observed triangle from the pieces still missing. Duplicate triangles cannot
-        // fill a hole by double-counting area. Excessive fragmentation is an uncertain measurement.
-        private static bool Covered(Vector2 lo, Vector2 hi, List<Triangle> triangles)
+        // fill a hole by double-counting area. Excessive fragmentation is an uncertain measurement (null).
+        private static bool? Covered(Vector2 lo, Vector2 hi, List<Triangle> triangles)
         {
             if (triangles == null)
                 return false;
@@ -374,7 +375,7 @@ namespace FloorFracture
                     Split(ref inside, b, c, next);
                     Split(ref inside, c, a, next);
                     if (next.Count > 64)
-                        return false;
+                        return null;
                 }
 
                 if (next.Count == 0)
