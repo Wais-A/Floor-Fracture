@@ -18,7 +18,7 @@ namespace FloorFracture
         // Big panes win when they keep 3/4 of the most panes a comfortable pitch offers (the
         // reference). Otherwise the largest comfortable pitch that keeps 3/4 wins. Only try compact
         // panes when no comfortable pitch produces four. Two edge-neighbors still suffice.
-        // Reference 0 turns the rule off: big panes beat any smaller pitch.
+        // Both modes use the rule. Reference 0 turns it off when comparing fits of one pitch.
         private readonly struct FitScore
         {
             private readonly int tier, area;
@@ -92,7 +92,7 @@ namespace FloorFracture
 
             private int Chosen()
             {
-                int reference = entireFloor ? 0 : MostPanes(ComfortMinPitch), best = -1;
+                int reference = MostPanes(ComfortMinPitch), best = -1;
                 for (int p = 0; p < fits.Length; p++)
                     if (fits[p] != null && (best < 0 ||
                         scores[p].Against(reference).Beats(scores[best].Against(reference), entireFloor)))
@@ -164,11 +164,11 @@ namespace FloorFracture
                 for (int p = 0; p < ConnectedPitches.Length; p++)
                 {
                     float pitch = ConnectedPitches[p];
-                    int big = MostPanes(PreferredMinPitch);
-                    // Nine or more big panes always keep 3/4 of a count capped at 12.
-                    if (pitch < PreferredMinPitch && big >= 4 && (entireFloor || big * 4 >= DefaultPaneLimit * 3)) break;
+                    // Nine or more big panes always keep 3/4 of a count capped at 12. The entire floor
+                    // has no cap, so its reference needs the .65 and .60 counts first.
+                    if (!entireFloor && pitch < PreferredMinPitch && MostPanes(PreferredMinPitch) * 4 >= DefaultPaneLimit * 3) break;
                     // The reference is complete, and a comfortable four always outranks compact panes.
-                    if (!entireFloor && pitch < ComfortMinPitch && MostPanes(ComfortMinPitch) >= 4) break;
+                    if (pitch < ComfortMinPitch && MostPanes(ComfortMinPitch) >= 4) break;
                     float half = pitch * .5f + FootMargin;
                     var firstCenter = low + Vector2.one * half;
                     var span = high - Vector2.one * half - firstCenter;

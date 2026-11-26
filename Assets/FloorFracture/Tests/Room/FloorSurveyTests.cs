@@ -377,10 +377,19 @@ namespace FloorFracture.Tests
             Surface(0, 0, x, z);
             Assert.That(FloorMeshScan.TryCreate(vertices.ToArray(), indices.ToArray(), Matrix4x4.identity, out var scan), Is.True);
             var survey = new FloorSurvey(new RoomFloor(Box(0, 0, x, z), new List<Vector2[]>()), scan, 2.2f, null, default);
-            var fit = FloorSurvey.FindConnected(new[] { survey }, new Vector2(x / 2, z / 2), default, out _).Value;
+            var center = new Vector2(x / 2, z / 2);
+            var fit = FloorSurvey.FindConnected(new[] { survey }, center, default, out _).Value;
             Assert.That(Mathf.Min(fit.Columns, fit.Rows), Is.GreaterThanOrEqualTo(2));
             Assert.That(fit.Layout.PaneCount, Is.GreaterThanOrEqualTo(panes));
             Assert.That(survey.ChecksEveryTile(fit), Is.True);
+
+            // The entire floor never offers fewer panes or less glass than the default board.
+            var full = FloorSurvey.FindConnected(new[] { survey }, center, default, out _, entireFloor: true).Value;
+            Assert.That(Mathf.Min(full.Columns, full.Rows), Is.GreaterThanOrEqualTo(2));
+            Assert.That(full.Layout.PaneCount, Is.GreaterThanOrEqualTo(Mathf.Max(panes, fit.Layout.PaneCount)));
+            Assert.That(full.Layout.PaneCount * full.Pitch * full.Pitch,
+                Is.GreaterThanOrEqualTo(fit.Layout.PaneCount * fit.Pitch * fit.Pitch - .0001f));
+            Assert.That(survey.ChecksEveryTile(full), Is.True);
         }
 
         [TestCase(false)]
