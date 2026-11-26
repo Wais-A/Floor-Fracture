@@ -190,7 +190,7 @@ namespace FloorFracture
             nextFloorCheck = Time.unscaledTimeAsDouble + 1;
             if (!CheckCurrentPermission()) { awaitingSavedFloor = false; return; }
             SetRoom(CurrentTrackedRoom());
-            if (room && TryReadFloors()) LoadRoom(false, true);
+            if (room && TryReadFloors()) LoadRoom(false, true, floorsRead: true);
         }
 
 #if UNITY_EDITOR_OSX
@@ -314,7 +314,7 @@ namespace FloorFracture
 #endif
         }
 
-        private async void LoadRoom(bool capture, bool reuseRoom, bool measureView = false)
+        private async void LoadRoom(bool capture, bool reuseRoom, bool measureView = false, bool floorsRead = false)
         {
             busy = true;
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -323,7 +323,7 @@ namespace FloorFracture
             awaitingSavedFloor = false;
             ScannedSpawnCount = 0;
             surveys = null;
-            meshSnapshot = null;
+            if (!floorsRead) meshSnapshot = null;
             CancellationToken lifetime = destroyCancellationToken;
             SetState(RoomPlacementStatus.Loading, capture ? "Opening Space Setup…" : "Loading your room…");
             try
@@ -400,11 +400,10 @@ namespace FloorFracture
                     {
                         var current = CurrentTrackedRoom();
                         if (!reuseRoom) SetRoom(current);
-                        if (current && current == room && TryReadFloors())
-                        {
-                            ready = true;
-                            break;
-                        }
+                        // Update may have just read this room's floors in the same frame; reuse them once.
+                        ready = current && current == room && (floorsRead || TryReadFloors());
+                        floorsRead = false;
+                        if (ready) break;
                         nextFloorCheck = Time.unscaledTimeAsDouble + 0.35;
                     }
                     if (HasPlacementFocus) focusedSeconds += Mathf.Min(Time.unscaledDeltaTime, 0.1f);

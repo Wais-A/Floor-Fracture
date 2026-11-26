@@ -59,6 +59,8 @@ namespace FloorFracture
         {
             if (!isActiveAndEnabled || !CheckCurrentPermission())
                 return false;
+            // An Entire Floor toggle restarts the fit in LoadRoom's finally; it is not a tracking change.
+            if (refitRequested) return false;
             if (scanRevision == revision && IsRoomLocalized && HasPlacementFocus)
                 return true;
             awaitingSavedFloor = true;
@@ -149,13 +151,23 @@ namespace FloorFracture
                     if (selectedSurvey != null && snapshot.Matches(meshSnapshot))
                         return grounded;
                     // World locking can refine anchor poses while placing. Prove the selected footprint
-                    // against the latest buffers in this frame so small corrections can settle at Welcome.
-                    foreach (var floor in floors)
+                    // against the latest buffers off the main thread, then accept only if they did not move again.
+                    var latestFloors = floors;
+                    var latest = meshSnapshot;
+                    var current = selectedSurvey == null ? null : await Task.Run(() =>
                     {
-                        if (!BoardFitter.Fits(floor, fit, FloorSurvey.FootMargin)) continue;
-                        if (selectedSurvey == null) break;
-                        var current = selectedSurvey.Refresh(floor, meshSnapshot, headroom, excluded, cancel);
-                        if (!current.ChecksEveryTile(fit)) continue;
+                        foreach (var floor in latestFloors)
+                        {
+                            if (!BoardFitter.Fits(floor, fit, FloorSurvey.FootMargin)) continue;
+                            var refreshed = selectedSurvey.Refresh(floor, latest, headroom, excluded, cancel);
+                            if (refreshed.ChecksEveryTile(fit)) return refreshed;
+                        }
+                        return null;
+                    }, cancel);
+                    cancel.ThrowIfCancellationRequested();
+                    if (!StillLocal(scanRevision)) return null;
+                    if (current != null && TryReadFloors() && latest.Matches(meshSnapshot))
+                    {
                         surveys = new List<FloorSurvey> { current };
                         return grounded;
                     }
