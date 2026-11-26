@@ -185,10 +185,10 @@ namespace FloorFracture
         // Spotlights and lightning: a set with any replaces the shown one and fades in. An empty set fades it out.
         public void SetHazards(WaveHazards next, double now)
         {
+            lights.Show(next,now); // per lamp, so lamps both sets light stay lit and humming
             if (next.Any)
             {
                 hazards=next; hazardsShownAt=now; hazardsHiddenAt=double.PositiveInfinity;
-                lights.Show(next);
                 lightning.Show(next);
             }
             else if (hazards!=null && double.IsPositiveInfinity(hazardsHiddenAt)) hazardsHiddenAt=now;
@@ -213,7 +213,7 @@ namespace FloorFracture
             if (fogFade<=0 && !double.IsPositiveInfinity(fogHiddenAt)) Fog=WaveHazards.None;
             if (hazards==null) return;
             float fade=WaveHazards.Fade(now,hazardsShownAt,hazardsHiddenAt);
-            lights.Tick(now,fade);
+            lights.Tick(now);
             // Once withdrawn, nothing flashes: strikes that come due during the fade-out pass silently.
             lightning.Tick(now,double.IsPositiveInfinity(hazardsHiddenAt) ? fade : 0,ReducedMotion);
             if (fade<=0 && !double.IsPositiveInfinity(hazardsHiddenAt)) { hazards=null; lightning.Withdraw(); }

@@ -22,12 +22,15 @@ namespace FloorFracture
         Vector2 extents;
         float radius;
         bool zIsLonger;
-        WaveHazards hazards = WaveHazards.None;
+        // Each lamp fades on its own, so a lamp lit by two waves in a row stays lit. A lamp is lit while dimAt is +∞.
+        readonly double[] litAt = new double[MaxLamps], dimAt = { double.NegativeInfinity, double.NegativeInfinity, double.NegativeInfinity };
+        MaterialPropertyBlock block;
 
         // renderQueue is the fog's queue + 1, so the pools draw over the fog and the fissures.
         public void Build(BoardState board, float lampHeightLocal, GameSound gameSound, int renderQueue)
         {
             sound = gameSound;
+            block = new MaterialPropertyBlock();
             float halfX = board.Width*board.Pitch*.5f, halfZ = board.Height*board.Pitch*.5f;
             // Pool centres stay over the outer pane centres.
             extents = new Vector2((board.Width-1)*board.Pitch*.5f, (board.Height-1)*board.Pitch*.5f);
@@ -68,30 +71,35 @@ namespace FloorFracture
             }
         }
 
-        public void Show(WaveHazards shown)
+        // Lamps that stay lit keep their sweep, fade and hum. New lamps fade in, and lamps no longer wanted fade out.
+        public void Show(WaveHazards shown, double now)
         {
-            hazards = shown;
             var random = new System.Random(unchecked(shown.VisualSeed*31+7)); // apart from the fog's stream
             float R() => (float)random.NextDouble();
             for (int k = 0; k < paths.Length; ++k)
             {
                 // Half a period crosses the longer side in 3-5 s. That side moves at ω, or at 1.3ω along z.
                 float omega = Mathf.PI/(3+2*R())/(zIsLonger ? 1.3f : 1f);
-                paths[k] = new Vector4(omega, 2*Mathf.PI*R(), 2*Mathf.PI*R(), 0);
+                var path = new Vector4(omega, 2*Mathf.PI*R(), 2*Mathf.PI*R(), 0);
+                bool lit = double.IsPositiveInfinity(dimAt[k]);
+                if (k >= shown.Spotlights) { if (lit) dimAt[k] = now; }
+                else if (!lit) { paths[k] = path; litAt[k] = now; dimAt[k] = double.PositiveInfinity; }
             }
         }
 
-        public void Tick(double now, float fade)
+        public void Tick(double now)
         {
-            beamMaterial.SetFloat(FadeId, fade);
-            poolMaterial.SetFloat(FadeId, fade);
             for (int k = 0; k < MaxLamps; ++k)
             {
-                bool on = fade > 0 && k < hazards.Spotlights;
+                float fade = WaveHazards.Fade(now, litAt[k], dimAt[k]);
+                bool on = fade > 0;
                 if (lamps[k].gameObject.activeSelf != on) lamps[k].gameObject.SetActive(on);
                 beams[k].enabled = pools[k].enabled = on;
-                if (hums[k]) sound.SetLampLevel(hums[k], on ? fade : 0);
+                if (hums[k]) sound.SetLampLevel(hums[k], fade);
                 if (!on) continue;
+                block.SetFloat(FadeId, fade);
+                beams[k].SetPropertyBlock(block);
+                pools[k].SetPropertyBlock(block);
                 var path = paths[k];
                 var center = new Vector2(extents.x*(float)Math.Sin(path.x*now+path.y),
                     extents.y*(float)Math.Sin(1.3*path.x*now+path.z));

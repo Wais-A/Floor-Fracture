@@ -107,10 +107,21 @@ namespace FloorFracture.Editor
                 sound.SetVolume(0);
                 Require(hums.All(h => !h.isPlaying), "Lamp hums kept playing at zero volume.");
                 sound.SetVolume(volume);
+
+                // A wave change: the lamp both sets light stays at full strength and humming, the other fades out.
+                var block = new MaterialPropertyBlock();
+                float BeamFade(int k) { lights.Find("Spotlight beam " + k).GetComponent<MeshRenderer>().GetPropertyBlock(block); return block.GetFloat("_Fade"); }
+                view.SetHazards(new WaveHazards(0, 0, 1, Array.Empty<double>(), 12), game.GameplayTime);
+                Require(hums[0].isPlaying && BeamFade(0) == 1, "A lamp both waves light dimmed or stopped humming at the wave change.");
+                yield return Delay(.3);
+                float leaving = BeamFade(1);
+                Require(hums[0].isPlaying && BeamFade(0) == 1 && leaving > 0 && leaving < 1,
+                    $"After 0.3 s the kept lamp must stay at 1 and humming, and the dropped one must be fading, not {BeamFade(0):F2} and {leaving:F2}.");
+
                 view.SetHazards(WaveHazards.None, game.GameplayTime);
                 yield return Delay(.7);
                 Require(lit.All(r => !r.enabled) && hums.All(h => !h.isPlaying), "Spotlights stayed on 0.7 s after the hazards were withdrawn.");
-                Record($"Two forced spotlights hung at {lampY:F2} m, brightened the board's brightest pixel by {brightest:F0}/255 and swept their pools {swept.Min():F2} m or more in 2 s. Each lamp hummed spatially, went silent at zero volume and switched off 0.7 s after withdrawal.");
+                Record($"Two forced spotlights hung at {lampY:F2} m, brightened the board's brightest pixel by {brightest:F0}/255 and swept their pools {swept.Min():F2} m or more in 2 s. Each lamp hummed spatially and went silent at zero volume. Across a wave change the kept lamp stayed at full strength and humming while the dropped one faded ({leaving:F2} after 0.3 s). All switched off 0.7 s after withdrawal.");
 
                 // Level-one Ready asks for no fog, so the forced fog stays through each 3 s roll-in.
                 view.SetFog(new WaveHazards(1f, 0, 0, Array.Empty<double>(), 7), game.GameplayTime);
