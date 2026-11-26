@@ -109,6 +109,8 @@ namespace FloorFracture
             }
             if(Ending&&Ending.IsPlaying) Ending.ResetSequence();
             if(State!=null) { State.Pause(); if(BoardView) BoardView.gameObject.SetActive(false); }
+            // Leaving play or a menu for the room screens: no thunder or lamp hum may carry over "Reading your room".
+            if(Stage!=GameStage.Room) sound.ResetSounds();
             Stage=GameStage.Room;
             switch(Room.Status)
             {
