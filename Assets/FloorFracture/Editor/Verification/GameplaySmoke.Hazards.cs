@@ -84,6 +84,9 @@ namespace FloorFracture.Editor
                 float lampY = WaveHazards.LampHeight(floorY, ceiling);
                 Require(lamps.All(l => Mathf.Abs(l.position.y - lampY) <= .01f),
                     $"Lamps must hang at {lampY:F2} m, not {string.Join(", ", lamps.Select(l => l.position.y.ToString("F2")))}.");
+                var overhead = lamps.Select(l => board.InverseTransformPoint(l.position)).ToArray();
+                Require(overhead.All(p => Mathf.Abs(p.x) <= halfX && Mathf.Abs(p.z) <= halfZ),
+                    $"Lamps must hang over the board: {string.Join(", ", overhead.Select(p => $"({p.x:F2}, {p.z:F2})"))} vs half extents {halfX:F2} x {halfZ:F2}.");
                 var lit = lights.GetComponentsInChildren<MeshRenderer>().Where(r => r.enabled).ToArray();
                 Require(lit.Length == 4, $"Two spotlights must draw two beams and two pools, not {lit.Length} renderers.");
                 var spot = Render(lit);

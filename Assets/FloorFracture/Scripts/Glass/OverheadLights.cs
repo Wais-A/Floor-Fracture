@@ -3,11 +3,11 @@ using UnityEngine;
 
 namespace FloorFracture
 {
-    // Up to three lamps beside the board. Each beam sweeps a warm pool across the glass and each lamp hums.
+    // Up to three lamps above the board's outer panes. Each beam sweeps a warm pool across the glass and each lamp hums.
     internal sealed class OverheadLights : MonoBehaviour
     {
         const int MaxLamps = 3, Segments = 24;
-        const float Outside = .8f, PoolHeight = .004f;
+        const float PoolHeight = .004f;
         static readonly int FadeId = Shader.PropertyToID("_Fade"), PoolId = Shader.PropertyToID("_Pool"),
             MappedFloorId = Shader.PropertyToID("_MappedFloorY");
         readonly Transform[] lamps = new Transform[MaxLamps];
@@ -31,7 +31,6 @@ namespace FloorFracture
         {
             sound = gameSound;
             block = new MaterialPropertyBlock();
-            float halfX = board.Width*board.Pitch*.5f, halfZ = board.Height*board.Pitch*.5f;
             // Pool centres stay over the outer pane centres.
             extents = new Vector2((board.Width-1)*board.Pitch*.5f, (board.Height-1)*board.Pitch*.5f);
             radius = .55f*board.Pitch;
@@ -52,8 +51,8 @@ namespace FloorFracture
             {
                 triangles[3*i] = i; triangles[3*i+1] = Segments+2+i; triangles[3*i+2] = Segments+1+i;
             }
-            // Alternate sides: left, right, then far.
-            var sides = new[] {new Vector2(-halfX-Outside,0), new Vector2(halfX+Outside,0), new Vector2(0,halfZ+Outside)};
+            // Over the left, right, then far outer panes. The panes lie on the floor, so no lamp can hang inside a wall.
+            var sides = new[] {new Vector2(-extents.x,0), new Vector2(extents.x,0), new Vector2(0,extents.y)};
             for (int k = 0; k < MaxLamps; ++k)
             {
                 lamps[k] = new GameObject("Lamp "+k).transform;
