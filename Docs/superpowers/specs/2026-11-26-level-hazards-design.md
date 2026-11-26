@@ -54,3 +54,7 @@ play (Ready, Paused, Fall, Results, menus). They run on the pause-aware gameplay
 
 Both clips are spatial through the existing Meta XR Audio voice prefab, and both follow the
 game volume setting.
+
+## Rulings during execution
+- Ride finale: under the frozen 1.00 s finale timing, a pane that starts away from the player can never pass in time. The ride pane may now start next to the player's starting pane and slide away along its lane. The catch window counts time the pane is over any neighbour of the starting pane: at least 0.35 s, ending at least 0.3 s before the deadline.
+- Patrol panes: corners need standing glass on both outer sides. A patrol wave may keep up to 2 extra panes standing to give its corners exits (~11% of moving panes turn from level 7).
