@@ -613,9 +613,9 @@ namespace FloorFracture.Editor
             StandOn(startingTile); Choose("Start wave"); yield return Stage(GameStage.Countdown);
             var wave = game.State.ActiveWave;
             var fog = game.BoardView.transform.Find("Low fog").GetComponent<MeshRenderer>();
-            Require(wave.Level == 3 && wave.Fog, "The level-three fixture did not open with the planned fog wave.");
+            Require(wave.Level == 3, "The level-three fixture did not open on level three.");
             LookAtTile(wave.GuaranteedTile); yield return Frames(2);
-            Require(fog.enabled && fog.gameObject.activeInHierarchy, "The level-three fog renderer stayed off during the fog wave.");
+            Require(fog.enabled == wave.Fog, "The level-three fog renderer must follow the rolled fog.");
             Capture("level3-fog-player-view", SmokeView.CenterEye);
             while (game.State.Slider == null)
             {

@@ -42,7 +42,8 @@ namespace FloorFracture
         public double Duration { get; }
         public double Deadline => StartsAt + Duration;
         public double RevealEndsAt { get; }
-        public bool Fog { get; }
+        public WaveHazards Hazards { get; }
+        public bool Fog => Hazards.FogDensity > 0 || Hazards.FogPatches > 0;
         public double RecoverySeconds { get; }
         public IReadOnlyList<WaveBreakGroup> BreakGroups { get; }
         public IReadOnlyList<int> BreakingTiles { get; }
@@ -81,8 +82,7 @@ namespace FloorFracture
             }
             else Duration = switchSeconds;
             RecoverySeconds = WavePacing.RecoveryAt(level);
-            Fog = !IsJump && RowRoute.Count == 0 && mode != WaveMode.LastTile && level >= 2 &&
-                (level >= 9 ? number % 3 != 0 : (number - 1) % (level >= 5 ? 2 : 3) == 0);
+            Hazards = WaveHazards.Roll(level, number, seed, now, Duration);
             Mode = mode;
             Stationary = stationary;
             OfferedSliders = sliders;
@@ -569,7 +569,7 @@ namespace FloorFracture
             }
         }
 
-        private struct Generator
+        internal struct Generator
         {
             private uint state;
             public Generator(int seed) { state = unchecked((uint)seed); }

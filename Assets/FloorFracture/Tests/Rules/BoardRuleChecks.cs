@@ -503,7 +503,6 @@ namespace FloorFracture.Tests
             var other = new BoardState(4, 4, -146);
             var baseline = other.BeginWave(0, 1, 1, 27);
             var modes = new List<WaveMode>();
-            bool sawFog = false;
             for (int level = 1; level <= 4; ++level)
             {
                 int start = 0;
@@ -515,7 +514,7 @@ namespace FloorFracture.Tests
                             plan.Seed == baseline.Seed, "Opening pattern must be independent of run seed and wall clock.");
                     if (level == 1) Check(!plan.Fog && plan.Mode != WaveMode.Memory && board.Slider == null,
                         "The first level must introduce only stationary glass and the finale.");
-                    if (level == 2 && number == 1) sawFog = plan.Fog;
+                    Check(plan.Fog == (plan.Hazards.FogDensity > 0 || plan.Hazards.FogPatches > 0), "Fog must follow the rolled hazards.");
                     if (level < 3) Check(board.Slider == null, "Moving glass was introduced before level three.");
                     Check(plan.ShowsWarnings(plan.StartsAt) && plan.ShowsWarnings(plan.RevealEndsAt - .0001) &&
                         !plan.ShowsWarnings(plan.StartsAt - .0001) && !plan.ShowsWarnings(plan.RevealEndsAt) &&
@@ -529,13 +528,32 @@ namespace FloorFracture.Tests
                 Check(IntactMask(board) == 65535 && board.Slider == null && board.WavesSurvived == score,
                     "Clearing must restore the original footprint and retain run score.");
             }
-            Check(sawFog && modes[0] == WaveMode.Classic && modes[1] == WaveMode.Memory, "Base and fog introductions failed.");
+            Check(modes[0] == WaveMode.Classic && modes[1] == WaveMode.Memory, "Base introduction failed.");
             for (int i = 0; i + 2 < modes.Count; i += 3)
                 Check(modes.GetRange(i, 3).FindAll(mode => mode == WaveMode.Memory).Count == 1,
                     "Each group of three regular advanced waves must offer one Memory round.");
             board.Reset(2, 3, -55);
             Check(board.WavesSurvived == 0 && board.Slider == null && board.ActiveWave == null &&
                 board.CurrentSample.Kind == SupportKind.Untracked && IntactMask(board) == 63, "Restart must clear the run.");
+        }
+
+        public static void PlansCarryHazards()
+        {
+            foreach (int seed in new[] {0, 379, -17})
+            for (int level = 1; level <= 16; ++level)
+            {
+                var board = new BoardState(BoardLayout.Rectangle(4, 4), seed, .5f);
+                int start = 0;
+                for (int number = 1; number <= 16; ++number)
+                {
+                    var plan = board.BeginWave(start, level, number, number * 10);
+                    Check(plan.Hazards != null && plan.Fog == (plan.Hazards.FogDensity > 0 || plan.Hazards.FogPatches > 0),
+                        "Fog must follow the rolled hazards.");
+                    if (level == 1) Check(!plan.Hazards.Any, "Level one must have no hazards.");
+                    start = plan.GuaranteedTile;
+                    if (Resolve(board, plan, new Step(start, false)) == WaveResult.LevelCleared) break;
+                }
+            }
         }
 
         public static void ProgressiveWaves()
