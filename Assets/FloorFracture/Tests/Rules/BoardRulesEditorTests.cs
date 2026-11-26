@@ -223,6 +223,122 @@ namespace FloorFracture.Tests
                 }
             }
         }
+        static SlidingPane[] Offered(BoardState board,WavePlan wave)=>board.Sliders.Where(p=>wave.IsSafe(p.Tile)).ToArray();
+        static int IntactTiles(BoardState board)=>Enumerable.Range(0,board.Count).Count(board.IsIntact);
+
+        [Test]
+        public void SlidersAppearOnMostEligibleAdvancedWaves()
+        {
+            int eligible=0,offered=0,withHoles=0,offeredWithHoles=0;
+            for(int level=6;level<=12;++level)
+            for(int seed=0;seed<40;++seed)
+            {
+                var board=new BoardState(6,6,seed);
+                int start=0;
+                for(int number=1;;++number)
+                {
+                    Assert.That(number,Is.LessThanOrEqualTo(board.Count),"A level must finish.");
+                    // A fresh board has no hole for a slider to cross, so those waves cannot offer one.
+                    bool holes=Enumerable.Range(0,board.Count).Any(i=>board.Layout.Contains(i) && !board.IsIntact(i));
+                    var wave=board.BeginWave(start,level,number,number*10);
+                    if(wave.Mode!=WaveMode.LastTile && !wave.IsJump && wave.RowRoute.Count==0)
+                    {
+                        bool some=Offered(board,wave).Length>0;
+                        ++eligible;
+                        if(some) ++offered;
+                        if(holes) { ++withHoles; if(some) ++offeredWithHoles; }
+                    }
+                    start=wave.GuaranteedTile;
+                    var result=board.Tick(board.Center(start),true,wave.Deadline);
+                    Assert.That(result,Is.EqualTo(WaveResult.Survived).Or.EqualTo(WaveResult.LevelCleared));
+                    if(result!=WaveResult.Survived) break;
+                }
+            }
+            TestContext.WriteLine($"Sliders offered on {offered}/{eligible} eligible waves ({(double)offered/eligible:P1}).");
+            double fraction=(double)offeredWithHoles/withHoles;
+            TestContext.WriteLine($"Sliders offered on {offeredWithHoles}/{withHoles} eligible waves with a hole ({fraction:P1}).");
+            Assert.That(fraction,Is.GreaterThanOrEqualTo(.5));
+        }
+
+        // Each case catches a slider mid-lane in wave N and survives on it; the caller starts wave N+1.
+        static IEnumerable<(BoardState board,SlidingPane old,Vector2 stance,int level,int number)> CaughtSliders()
+        {
+            foreach(int level in new[]{6,9})
+            for(int seed=0;seed<40;++seed)
+            {
+                var board=new BoardState(6,6,seed);
+                int start=0;
+                for(int number=1;number<board.Count;++number)
+                {
+                    var wave=board.BeginWave(start,level,number,number*10);
+                    var pane=Offered(board,wave).FirstOrDefault();
+                    double t=pane==null ? 0 : pane.MotionStartsAt+pane.OneWaySeconds/2;
+                    if(pane!=null && t<wave.Deadline)
+                    {
+                        var stance=pane.CenterAt(t);
+                        Assert.That(board.Sample(stance,true,t).IsSlider && pane.Locked);
+                        Assert.That(board.Tick(stance,true,wave.Deadline),Is.EqualTo(WaveResult.Survived));
+                        yield return (board,pane,stance,level,number+1);
+                        break;
+                    }
+                    start=wave.GuaranteedTile;
+                    if(board.Tick(board.Center(start),true,wave.Deadline)!=WaveResult.Survived) break;
+                }
+            }
+        }
+
+        [Test]
+        public void OldSliderKeepsAPlayerWhileNewOnesAreOffered()
+        {
+            int cases=0,offers=0;
+            foreach(var (board,old,stance,level,number) in CaughtSliders())
+            {
+                ++cases;
+                var wave=board.BeginWave(old.Tile,level,number,number*10);
+                var sample=board.Sample(stance,true,number*10);
+                Assert.That(sample.Kind==SupportKind.Glass && sample.IsSlider && sample.Index==old.Tile && old.Locked);
+                Assert.That(board.Sliders.Contains(old) && wave.IsBreaking(old.Tile));
+                Assert.That(wave.StationarySafe.Any(tile=>board.CanStepFrom(old.Tile,tile)),Is.True);
+                var fresh=Offered(board,wave);
+                Assert.That(fresh.Length,Is.LessThanOrEqualTo(level>=9 ? 3 : 2));
+                if(fresh.Length>0) ++offers;
+                foreach(var pane in fresh)
+                {
+                    int stride=(pane.OtherHole-pane.Tile)/pane.TravelCells;
+                    for(int step=0;step<=pane.TravelCells;++step)
+                        Assert.That(pane.Tile+stride*step,Is.Not.EqualTo(board.IndexAt(stance)),"A new lane ran under the held pane.");
+                }
+            }
+            TestContext.WriteLine($"{offers}/{cases} waves started on a held slider offered new ones.");
+            Assert.That(cases,Is.GreaterThan(0));
+            Assert.That(offers,Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void PausingRestoresOldAndNewSliderLocks()
+        {
+            int tested=0;
+            foreach(var (board,old,stance,level,number) in CaughtSliders())
+            {
+                int intact=IntactTiles(board);
+                var before=board.Sliders.ToArray();
+                var wave=board.BeginWave(old.Tile,level,number,number*10);
+                var fresh=Offered(board,wave);
+                if(fresh.Length==0) continue;
+                ++tested;
+                var caught=fresh[0];
+                double t=caught.MotionStartsAt+caught.OneWaySeconds/2;
+                if(t<wave.Deadline)
+                    Assert.That(board.Sample(caught.CenterAt(t),true,t).IsSlider && caught.Locked);
+                board.Pause();
+                Assert.That(board.Sliders,Is.EqualTo(before));
+                Assert.That(old.Locked && board.Sample(stance,true,t+1).IsSlider);
+                Assert.That(board.Sliders.Intersect(fresh),Is.Empty);
+                Assert.That(IntactTiles(board),Is.EqualTo(intact));
+            }
+            Assert.That(tested,Is.GreaterThan(0));
+        }
+
         [Test] public void EarlyBreakDeadlinesAndTrackingRollback() => BoardRuleChecks.TimedBreaksAndRollback();
         [Test] public void SlidersAndGrace() => BoardRuleChecks.SlidingAndGrace();
         [Test] public void PausingRollsBackOnlyTheCurrentWavesSlider() => BoardRuleChecks.CancelledSlidingWave();

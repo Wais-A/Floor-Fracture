@@ -7,6 +7,10 @@ Shader "Floor Fracture/Hole Mask"
         [HideInInspector] _MappedFloorY("Mapped floor height", Float) = -10000
         [HideInInspector] _CoveredPane0("First moving glass footprint", Vector) = (0,0,0,0)
         [HideInInspector] _CoveredPane1("Second moving glass footprint", Vector) = (0,0,0,0)
+        [HideInInspector] _CoveredPane2("Moving glass footprint 2", Vector) = (0,0,0,0)
+        [HideInInspector] _CoveredPane3("Moving glass footprint 3", Vector) = (0,0,0,0)
+        [HideInInspector] _CoveredPane4("Moving glass footprint 4", Vector) = (0,0,0,0)
+        [HideInInspector] _CoveredPane5("Moving glass footprint 5", Vector) = (0,0,0,0)
     }
     SubShader
     {
@@ -24,7 +28,7 @@ Shader "Floor Fracture/Hole Mask"
             #include "Assets/FloorFracture/Scripts/Glass/GlassFloorOcclusion.hlsl"
             CBUFFER_START(UnityPerMaterial)
                 float _MappedFloorY;
-                float4 _CoveredPane0, _CoveredPane1;
+                float4 _CoveredPane0, _CoveredPane1, _CoveredPane2, _CoveredPane3, _CoveredPane4, _CoveredPane5;
             CBUFFER_END
             struct V { float4 vertex:POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct F { float4 position:SV_POSITION; float3 world:TEXCOORD0; float2 boardXZ:TEXCOORD1; UNITY_VERTEX_OUTPUT_STEREO };
@@ -32,8 +36,15 @@ Shader "Floor Fracture/Hole Mask"
             half4 frag(F i):SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
-                float2 a = abs(i.boardXZ - _CoveredPane0.xy), b = abs(i.boardXZ - _CoveredPane1.xy);
-                clip(min(max(a.x,a.y) - _CoveredPane0.z, max(b.x,b.y) - _CoveredPane1.z));
+                // Up to two waves of sliders share the board: last wave's breaking ones and this wave's offers.
+                float4 panes[6] = { _CoveredPane0, _CoveredPane1, _CoveredPane2, _CoveredPane3, _CoveredPane4, _CoveredPane5 };
+                float covered = 1;
+                [unroll] for (int k = 0; k < 6; ++k)
+                {
+                    float2 d = abs(i.boardXZ - panes[k].xy);
+                    covered = min(covered, max(d.x,d.y) - panes[k].z);
+                }
+                clip(covered);
                 half visibility = GlassFloorVisibility(i.world, _MappedFloorY);
                 clip(visibility - .5h);
                 return 0;

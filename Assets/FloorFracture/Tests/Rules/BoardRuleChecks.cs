@@ -584,7 +584,9 @@ namespace FloorFracture.Tests
                         "Movement and recovery must follow the level curve.");
                     jumpCount = wave.IsJump ? jumpCount + 1 : 0;
                     Check(jumpCount <= (level >= 9 ? 2 : 1), "Too many consecutive jumps.");
-                    Check(board.Sliders.Count <= (level < 3 ? 0 : level < 6 ? 1 : 2), "Too many sliding panes.");
+                    int offered = 0;
+                    foreach (var pane in board.Sliders) if (wave.IsSafe(pane.Tile)) ++offered;
+                    Check(offered <= (level < 3 ? 0 : level < 6 ? 1 : level < 9 ? 2 : 3), "Too many sliding panes.");
                     if (!wave.IsJump && rows == 0 && board.Sliders.Count == 0)
                     {
                         int target = Math.Max(1,(int)Math.Floor(intact * fractions[column] + .500000001));
@@ -806,7 +808,7 @@ namespace FloorFracture.Tests
                     (board.Center(onward.GuaranteedTile)-fixedCenter).sqrMagnitude <= pitch*pitch*1.2501f,
                     "The next wave must force a legal ordinary step off the locked pane.");
                 Resolve(board, onward, new Step(onward.GuaranteedTile, false));
-                Check(board.Slider == null, "A scheduled locked pane must shatter at zero.");
+                Check(board.SliderFor(pane.Tile) == null, "A scheduled locked pane must shatter at zero.");
             }
             foreach (int outcome in new[] { 0, 1, 2, 3 })
             {
@@ -916,7 +918,7 @@ namespace FloorFracture.Tests
             Check(resumed.IsBreaking(locked.Tile) && earned.Tick(position, true, closing.Deadline) == WaveResult.Pending &&
                 !earned.BreaksApplied && earned.Slider == locked, "A canceled shatter removed previously earned glass too early.");
             Resolve(earned, resumed, new Step(resumed.GuaranteedTile, false));
-            Check(earned.Slider == null, "The earned pane must still shatter on the replacement wave's deadline.");
+            Check(earned.SliderFor(locked.Tile) == null, "The earned pane must still shatter on the replacement wave's deadline.");
         }
 
         private static BoardState SlidingFixture(float pitch = 0.5f)

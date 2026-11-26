@@ -287,8 +287,8 @@ namespace FloorFracture
             foreach (bool safe in survivors) if (safe) ++remaining;
             WaveMode mode = remaining == 1 ? WaveMode.LastTile : landings.Count != 0 ? WaveMode.Jump :
                 level == 1 ? WaveMode.Classic : ChooseMode(board.Seed, advancedWavesSurvived, level);
-            var sliders = level >= 3 && remaining > 1 && board.Sliders.Count == 0 ?
-                ChooseSliders(board, start, survivors, route, landings.Count != 0, level >= 6 ? 2 : 1,
+            var sliders = level >= 3 && remaining > 1 ?
+                ChooseSliders(board, start, survivors, route, landings.Count != 0, level >= 9 ? 3 : level >= 6 ? 2 : 1,
                     now, WavePacing.SwitchSeconds(level, number), ref random) : Array.Empty<SlidingPane>();
             return new WavePlan(board, level, number, seed, start, guaranteed, survivors, sliders,
                 mode, pacing, now, landings.AsReadOnly(), route);
@@ -478,6 +478,13 @@ namespace FloorFracture
         {
             var panes = new List<SlidingPane>(limit);
             var reserved = new bool[board.Count];
+            // Last wave's panes keep shuttling (or holding the player) until they break this wave.
+            // A pane's center never leaves its own lane, so the lane also covers the cell under it.
+            foreach (var old in board.Sliders)
+            {
+                int step = (old.OtherHole - old.Tile) / old.TravelCells;
+                for (int i = 0; i <= old.TravelCells; ++i) reserved[old.Tile + i * step] = true;
+            }
             while (panes.Count < limit)
             {
                 int source = -1, end = -1, bestLength = 0, ties = 0;

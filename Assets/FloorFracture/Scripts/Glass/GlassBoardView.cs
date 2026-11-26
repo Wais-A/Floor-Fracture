@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace FloorFracture
@@ -135,8 +136,8 @@ namespace FloorFracture
             if(openingsChanged) RebuildHoles();
             if (sliders.Count != 0 || displayedSliders != sliders)
             {
-                maskMaterial.SetVector(CoveredPane0, CoveredPane(0,now));
-                maskMaterial.SetVector(CoveredPane1, CoveredPane(1,now));
+                for (int i = 0; i < CoveredPanes.Length; ++i)
+                    maskMaterial.SetVector(CoveredPanes[i], CoveredPane(i,now));
             }
             displayedSliders = sliders;
             var slide = sample.IsSlider ? model.SliderFor(sample.Index) : null;
@@ -164,8 +165,9 @@ namespace FloorFracture
                     warned ? group.RevealEndsAt-now : double.PositiveInfinity);
             }
         }
-        static readonly int CoveredPane0 = Shader.PropertyToID("_CoveredPane0");
-        static readonly int CoveredPane1 = Shader.PropertyToID("_CoveredPane1");
+        // Last wave's sliders (up to 3) plus this wave's offers (up to 3).
+        static readonly int[] CoveredPanes = Enumerable.Range(0,6)
+            .Select(i => Shader.PropertyToID("_CoveredPane"+i)).ToArray();
         Vector4 CoveredPane(int index, double now)
         {
             if (index >= model.Sliders.Count) return Vector4.zero;

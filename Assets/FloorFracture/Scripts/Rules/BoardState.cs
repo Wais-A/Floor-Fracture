@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace FloorFracture
@@ -164,8 +165,9 @@ namespace FloorFracture
             if (plan.OfferedSliders.Length != 0)
             {
                 CopyStationary();
-                sliders = plan.OfferedSliders;
-                foreach (var pane in sliders)
+                // Last wave's sliders stay until this wave breaks them; Pause restores waveStartSliders.
+                sliders = waveStartSliders.Concat(plan.OfferedSliders).ToArray();
+                foreach (var pane in plan.OfferedSliders)
                 {
                     stationary[pane.Tile] = false;
                     --IntactCount;

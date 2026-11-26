@@ -729,7 +729,7 @@ namespace FloorFracture.Editor
             int verticesPerPane=GlassGeometry.Pieces.Sum(face=>face.Length);
             int paneIndex=closing.BreakGroups.SelectMany(group=>group.Tiles).Reverse().ToList().IndexOf(slide.Tile);
             var paneVertices=pieces.Skip(paneIndex*verticesPerPane).Take(verticesPerPane).ToArray();
-            Require(paneVertices.Length==verticesPerPane && !moving.gameObject.activeSelf && game.State.Slider==null,
+            Require(paneVertices.Length==verticesPerPane && !moving.gameObject.activeSelf && game.State.SliderFor(slide.Tile)==null,
                 "The moving glass must turn into the same sixteen fragments as the stationary glass.");
             var bounds=new Bounds(paneVertices[0],Vector3.zero);
             foreach(var vertex in paneVertices) bounds.Encapsulate(vertex);
