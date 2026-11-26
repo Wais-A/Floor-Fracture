@@ -198,6 +198,7 @@ namespace FloorFracture.Editor
             yield return VerifyTrapRotation();
             yield return VerifyTileCracks();
             yield return VerifyHazardVisuals();
+            yield return VerifyFogBelongsToTheLevel();
             yield return VerifyLightning();
             yield return VerifyHazardPauseAndExit(); // continues from Ready
             yield return RayChoose(3, false); yield return Stage(GameStage.Settings);
@@ -618,7 +619,7 @@ namespace FloorFracture.Editor
             var fog = game.BoardView.transform.Find("Floor fog/Floor fog 0").GetComponent<MeshRenderer>();
             Require(wave.Level == 3, "The level-three fixture did not open on level three.");
             LookAtTile(wave.GuaranteedTile); yield return Frames(2);
-            Require(fog.enabled == wave.Fog, "The level-three fog renderer must follow the rolled fog.");
+            Require(fog.enabled, "Level three must show its floor fog from Ready onward.");
             Capture("level3-fog-player-view", SmokeView.CenterEye);
             while (game.State.Slider == null)
             {
@@ -658,7 +659,7 @@ namespace FloorFracture.Editor
                 !ring.enabled,
                 "Showing the board must restore the original pane in place and clear transient cues.");
             yield return Delay(.7);
-            Require(!fog.enabled, "The canceled wave's fog did not fade out after Show board.");
+            Require(fog.enabled, "The level's fog must stay on through the pause and Show board.");
             VerifyFloorVisibility(false);
             StandOn(canceled.StartingTile);
             Choose("Start wave");
@@ -678,7 +679,7 @@ namespace FloorFracture.Editor
             Require(moving.gameObject.activeInHierarchy &&
                 moving.GetComponentsInChildren<MeshRenderer>(true).Length == ordinary.GetComponentsInChildren<MeshRenderer>(true).Length &&
                 moving.localScale==ordinary.localScale && Mathf.Abs(moving.localPosition.y-ordinary.localPosition.y)<.0001f &&
-                fog.enabled==wave.Fog, "The moving pane must match the ordinary glass height, scale and surfaces.");
+                fog.enabled, "The moving pane must match the ordinary glass height, scale and surfaces, under the level's fog.");
             foreach (string part in new[]{"Smoky pane","Glass sides and bottom","Rim","Fissures"})
             {
                 var movingPart=moving.Find(part);

@@ -14,7 +14,7 @@ namespace FloorFracture.Tests
         [Test] public void PlantedStanceAndGapEdges() => BoardRuleChecks.PlantedStanceAndGapEdges();
         [Test] public void DeadlinesAndPause() => BoardRuleChecks.DeadlinesAndPause();
         [Test] public void ModesAndReset() => BoardRuleChecks.ModesAndReset();
-        [Test] public void EveryPlanCarriesHazardsAndFogMatchesThem() => BoardRuleChecks.PlansCarryHazards();
+        [Test] public void EveryPlanCarriesHazardsWithoutFog() => BoardRuleChecks.PlansCarryHazards();
         [Test] public void SeededLevelCurveAndSingleClueWindows() => BoardRuleChecks.ProgressiveWaves();
         [TestCase(.40f)]
         [TestCase(.67f)]

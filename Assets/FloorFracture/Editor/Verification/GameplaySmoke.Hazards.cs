@@ -112,29 +112,25 @@ namespace FloorFracture.Editor
                 Require(lit.All(r => !r.enabled) && hums.All(h => !h.isPlaying), "Spotlights stayed on 0.7 s after the hazards were withdrawn.");
                 Record($"Two forced spotlights hung at {lampY:F2} m, brightened the board's brightest pixel by {brightest:F0}/255 and swept their pools {swept.Min():F2} m or more in 2 s. Each lamp hummed spatially, went silent at zero volume and switched off 0.7 s after withdrawal.");
 
-                Choose("Start wave");
-                yield return Stage(GameStage.Countdown);
-                var plan = game.State.ActiveWave;
-                StandOn(plan.GuaranteedTile);
-                view.SetHazards(new WaveHazards(1f, 0, 0, Array.Empty<double>(), 7), game.GameplayTime);
-                yield return Delay(.5);
+                // Level-one Ready asks for no fog, so the forced fog stays through each 3 s roll-in.
+                view.SetFog(new WaveHazards(1f, 0, 0, Array.Empty<double>(), 7), game.GameplayTime);
+                yield return Delay(3.2);
                 var fog = Render(slices);
                 float rise = fog.with.Average() - fog.without.Average();
                 Require(rise >= 8f, $"Floor fog raised the board's mean luminance by only {rise:F1}/255.");
 
-                view.SetHazards(new WaveHazards(0f, 1, 0, Array.Empty<double>(), 7), game.GameplayTime);
-                yield return Delay(.5);
+                view.SetFog(new WaveHazards(0f, 1, 0, Array.Empty<double>(), 7), game.GameplayTime);
+                yield return Delay(3.2);
                 var patch = Render(slices);
                 var panes = PlayablePanes.Select(p => PaneRise(patch, p)).ToArray();
                 Require(panes.Max() - panes.Min() >= 12f,
                     $"A fog patch must stand out over a pane: brightest {panes.Max():F1}, dimmest {panes.Min():F1} (/255 added).");
                 Capture("hazard-fog", SmokeView.CenterEye);
-                Require(game.Stage != GameStage.Countdown || game.State.ActiveWave == plan, "A new wave replaced the forced hazards mid-check.");
 
-                view.SetHazards(WaveHazards.None, game.GameplayTime);
-                yield return Delay(.7);
-                Require(slices.All(s => !s.enabled), "Fog renderers stayed on 0.7 s after the hazards were withdrawn.");
-                Record($"Forced floor fog raised the board's mean luminance by {rise:F0}/255. One patch added {panes.Max():F0}/255 over its pane against {panes.Min():F0}/255 elsewhere. Fog stays within 35 cm and was gone 0.7 s after withdrawal.");
+                view.SetFog(WaveHazards.None, game.GameplayTime);
+                yield return Delay(1.6);
+                Require(slices.All(s => !s.enabled), "Fog renderers stayed on 1.6 s after the fog was withdrawn.");
+                Record($"Forced floor fog raised the board's mean luminance by {rise:F0}/255. One patch added {panes.Max():F0}/255 over its pane against {panes.Min():F0}/255 elsewhere. Fog stays within 35 cm and was gone 1.6 s after withdrawal.");
 
             }
             finally
@@ -146,6 +142,54 @@ namespace FloorFracture.Editor
             }
             MenuInput(new OVRInput.OVRControllerTouch());
             Choose("Main menu");
+        }
+
+        private static IEnumerator VerifyFogBelongsToTheLevel()
+        {
+            // Full fall motion, so the fall lifts the board and its fog.
+            Choose("Settings");
+            if (PlayerPrefs.GetInt("ff.reduced", 0) != 0) Choose("Fall motion");
+            Choose("Back");
+            Choose("Development"); Choose("Seed 379 · level 3");
+            yield return Stage(GameStage.Ready);
+            double ready = game.GameplayTime;
+            var view = game.BoardView;
+            var board = view.Board;
+            var slices = Enumerable.Range(0, 4).Select(i => board.Find("Floor fog/Floor fog " + i).GetComponent<MeshRenderer>()).ToArray();
+            var material = slices[0].sharedMaterial;
+            int seed = view.Fog.VisualSeed;
+            Require(view.Fog.FogDensity > 0 && view.Fog.FogPatches == 1, "Level three's Ready must bring in fog with one patch.");
+            yield return Wait(() => game.GameplayTime >= ready + 3.2, "the level fog to roll in", 8);
+            float rolledIn = material.GetFloat("_Fade");
+            Require(rolledIn >= .99f && slices.All(s => s.enabled), $"The level fog must be in 3.2 s after Ready, not at {rolledIn:F2}.");
+            bool Steady(string when) // checked on every sampled frame
+            {
+                float fade = material.GetFloat("_Fade");
+                Require(slices.All(s => s.enabled) && fade >= .99f && view.Fog.VisualSeed == seed,
+                    $"The level fog faded or changed {when}: fade {fade:F2}, seed {view.Fog.VisualSeed} (was {seed}).");
+                return true;
+            }
+            StandOn(MiddlePane); Choose("Start wave");
+            yield return Wait(() => Steady("in the count-in") && game.Stage == GameStage.Countdown, "the first wave", 6);
+            for (int survived = 0; survived < 2; ++survived)
+            {
+                var wave = game.State.ActiveWave;
+                Require(wave.Mode != WaveMode.LastTile, "Level three reached its finale within three waves.");
+                StandOn(wave.GuaranteedTile);
+                yield return Wait(() => Steady("during a wave") && game.Stage == GameStage.BetweenWaves, "the wave to resolve", 10);
+                yield return Wait(() => Steady("between waves") && game.Stage == GameStage.Countdown, "the next wave", 8);
+            }
+            // Staying on the starting pane, which always breaks, loses the third wave.
+            float restY = board.position.y;
+            yield return Wait(() => Steady("in the losing wave") && game.Stage == GameStage.Fall, "the fall", 12);
+            double fell = Now;
+            yield return Wait(() => Steady("in the fall") && Now >= fell + 1.5, "1.5 s of the fall", 8);
+            float lift = board.position.y - restY;
+            Require(lift >= 1f, $"The fall must lift the board, not move it {lift:F2} m.");
+            game.Ending.Skip(); yield return Stage(GameStage.Results);
+            yield return Wait(() => slices.All(s => !s.enabled), "the level fog to fade on Results", 1.6);
+            Choose("Main menu"); yield return Stage(GameStage.Welcome);
+            Record($"Level three's fog rolled in to {rolledIn:F2} 3.2 s after Ready and stayed at full strength with one visual seed through the count-in, two waves, the losing wave and the first 1.5 s of the fall, while the board rose {lift:F1} m. It was gone within 1.6 s of Results.");
         }
 
         private static float Flash => Shader.GetGlobalFloat("_FloorFractureFlash");

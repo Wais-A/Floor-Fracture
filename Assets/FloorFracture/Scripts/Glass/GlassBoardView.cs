@@ -16,6 +16,8 @@ namespace FloorFracture
         Lightning lightning;
         WaveHazards hazards;
         double hazardsShownAt, hazardsHiddenAt;
+        double fogShownAt, fogHiddenAt=double.NegativeInfinity;
+        public WaveHazards Fog { get; private set; } = WaveHazards.None;
         ShardPool shards;
         Mesh cutouts, boundary;
         Material bodyMaterial, paneMaterial, maskMaterial, fogMaterial, shardMaterial;
@@ -178,13 +180,12 @@ namespace FloorFracture
             return new Vector4(center.x, center.y, pane.HalfSize, 0);
         }
 
-        // A set with any hazard replaces the shown one and fades in. An empty set fades the shown one out.
+        // Spotlights and lightning: a set with any replaces the shown one and fades in. An empty set fades it out.
         public void SetHazards(WaveHazards next, double now)
         {
             if (next.Any)
             {
                 hazards=next; hazardsShownAt=now; hazardsHiddenAt=double.PositiveInfinity;
-                fog.Show(next);
                 lights.Show(next);
                 lightning.Show(next);
             }
@@ -192,12 +193,22 @@ namespace FloorFracture
             DrawHazards(now);
         }
 
+        // The level's fog: new fog rolls in, the fog already shown carries on, and a set without fog fades it out.
+        public void SetFog(WaveHazards next, double now)
+        {
+            bool shown=double.IsPositiveInfinity(fogHiddenAt);
+            if (next.FogDensity<=0 && next.FogPatches<=0) { if (shown) fogHiddenAt=now; return; }
+            if (shown && next.FogDensity==Fog.FogDensity && next.FogPatches==Fog.FogPatches && next.VisualSeed==Fog.VisualSeed) return;
+            Fog=next; fogShownAt=now; fogHiddenAt=double.PositiveInfinity;
+            fog.Show(next);
+        }
+
         // Runs every frame on the gameplay clock, including stages that do not Draw the board.
         public void DrawHazards(double now)
         {
+            fog.Tick(now,WaveHazards.FogFade(now,fogShownAt,fogHiddenAt));
             if (hazards==null) return;
             float fade=WaveHazards.Fade(now,hazardsShownAt,hazardsHiddenAt);
-            fog.Tick(now,fade);
             lights.Tick(now,fade);
             // Once withdrawn, nothing flashes: strikes that come due during the fade-out pass silently.
             lightning.Tick(now,double.IsPositiveInfinity(hazardsHiddenAt) ? fade : 0,ReducedMotion);

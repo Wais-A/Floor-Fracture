@@ -193,7 +193,7 @@ namespace FloorFracture
                 PanePitch = state?.Pitch ?? 0f, PaneCount = state?.Layout.PaneCount ?? 0,
                 EntireFloor = game.Room && game.Room.EntireFloor,
                 Seed = game.SelectedSeed, Level = game.Level, Wave = game.WaveNumber,
-                WaveSeed = wave?.Seed, Mode = wave?.Mode, Fog = wave?.Fog ?? false,
+                WaveSeed = wave?.Seed, Mode = wave?.Mode, Fog = wave != null && wave.Level >= 2, // fog belongs to every level from 2 (WaveHazards.LevelFog)
                 Slider = moving,
                 Quality = QualitySettings.GetQualityLevel()
             };

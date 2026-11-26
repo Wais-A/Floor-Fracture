@@ -43,7 +43,6 @@ namespace FloorFracture
         public double Deadline => StartsAt + Duration;
         public double RevealEndsAt { get; }
         public WaveHazards Hazards { get; }
-        public bool Fog => Hazards.FogDensity > 0 || Hazards.FogPatches > 0;
         public double RecoverySeconds { get; }
         public IReadOnlyList<WaveBreakGroup> BreakGroups { get; }
         public IReadOnlyList<int> BreakingTiles { get; }

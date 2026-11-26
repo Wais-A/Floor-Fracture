@@ -22,7 +22,7 @@ Shader "Floor Fracture/Floor fog"
             #include "Assets/FloorFracture/Scripts/Glass/GlassFloorOcclusion.hlsl"
             TEXTURE2D(_Noise); SAMPLER(sampler_Noise);
             CBUFFER_START(UnityPerMaterial)
-                float _MappedFloorY, _Density, _Fade, _FogTime;
+                float _MappedFloorY, _BoardY, _Density, _Fade, _FogTime;
                 float4 _Extent, _Drift;
             CBUFFER_END
             float _FloorFractureFlash; // global lightning brightness, kept out of UnityPerMaterial
@@ -41,7 +41,7 @@ Shader "Floor Fracture/Floor fog"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 half visibility = GlassFloorVisibility(i.world, _MappedFloorY);
-                float height = i.world.y - _MappedFloorY;
+                float height = i.world.y - _BoardY; // from the glass, which the fall lifts off the floor
                 float2 p = i.local;
                 float t = _FogTime;
                 float a = SAMPLE_TEXTURE2D(_Noise, sampler_Noise, p * .45 + _Drift.xy + float2(.031, .017) * t + height * 3.1).r;
@@ -54,7 +54,9 @@ Shader "Floor Fracture/Floor fog"
                     alpha += patch.w * (1 - smoothstep(.25 * patch.z, patch.z, distance(p, patch.xy))) * (.7 + .6 * noise);
                 }
                 float2 edge = _Extent.xy - abs(p);
-                alpha *= _Fade * smoothstep(0, .30, min(edge.x, edge.y));
+                float inward = min(edge.x, edge.y);
+                // _Fade moves a ragged front in from the board edges, so the fog rolls in rather than popping.
+                alpha *= saturate((_Fade * (min(_Extent.x, _Extent.y) + .5) - inward + .3 * (noise - .5)) / .5) * smoothstep(0, .30, inward);
                 // Four slices at 0.26 combine to at most 1 - 0.74^4 = 0.70. A full lightning flash lifts
                 // each slice to 0.39, so the stack briefly reaches 1 - 0.61^4 = 0.86.
                 // Lightning lifts the fog toward white and thickens it by up to half.

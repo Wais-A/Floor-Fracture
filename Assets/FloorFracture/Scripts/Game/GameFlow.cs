@@ -31,6 +31,10 @@ namespace FloorFracture
                 // Hazards stay up between waves and through a menu pause, and fade when the run leaves play.
                 if (BoardView && value != GameStage.Countdown && value != GameStage.BetweenWaves && value != GameStage.Paused)
                     BoardView.SetHazards(WaveHazards.None, GameplayTime);
+                // The level's fog also stays through Ready, the count-in and the fall, and fades on Results and the menus.
+                if (BoardView && value is not (GameStage.Ready or GameStage.CountIn or GameStage.Countdown or
+                    GameStage.BetweenWaves or GameStage.Paused or GameStage.Fall))
+                    BoardView.SetFog(WaveHazards.None, GameplayTime);
                 if (sound)
                 {
                     sound.SetMusicAudible(value != GameStage.Fall);
@@ -222,6 +226,8 @@ namespace FloorFracture
             Unlock(Level);
             Room.ShowClearance(false);
             Stage=GameStage.Ready; BoardView.gameObject.SetActive(true);
+            // A mid-level Ready asks for the fog already shown, which carries on unchanged.
+            BoardView.SetFog(WaveHazards.LevelFog(Level,State.Seed),GameplayTime);
             var start=Choice("Start wave",StartCountIn);
             var menu=Choice("Main menu",ReturnToMainMenu);
             if (Level==5 && WaveNumber==1)
@@ -357,7 +363,7 @@ namespace FloorFracture
             if(result==WaveResult.Lost) { BeginFall(); return; }
             levelFinished=result==WaveResult.LevelCleared;
             // Save the unlock now: the player may pause or quit during the 1.8 s celebration.
-            if(levelFinished) { Unlock(Level+1); sound.Completion(); } else ++WaveNumber;
+            if(levelFinished) { Unlock(Level+1); sound.Completion(); BoardView.SetFog(WaveHazards.None,now); } else ++WaveNumber;
             Stage=GameStage.BetweenWaves; waitUntil=now+(levelFinished?1.8:plan.RecoverySeconds);
         }
         void ShatterGroup(WaveBreakGroup group, IReadOnlyList<SlidingPane> sliders,double now)

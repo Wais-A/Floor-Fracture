@@ -548,9 +548,8 @@ namespace FloorFracture.Tests
                     if (level == 1 && number == 1)
                         Check(Same(plan.BreakingTiles, baseline.BreakingTiles) && plan.Duration == baseline.Duration &&
                             plan.Seed == baseline.Seed, "Opening pattern must be independent of run seed and wall clock.");
-                    if (level == 1) Check(!plan.Fog && plan.Mode != WaveMode.Memory && board.Slider == null,
+                    if (level == 1) Check(!plan.Hazards.Any && plan.Mode != WaveMode.Memory && board.Slider == null,
                         "The first level must introduce only stationary glass and the finale.");
-                    Check(plan.Fog == (plan.Hazards.FogDensity > 0 || plan.Hazards.FogPatches > 0), "Fog must follow the rolled hazards.");
                     if (level < 3) Check(board.Slider == null, "Moving glass was introduced before level three.");
                     Check(plan.ShowsWarnings(plan.StartsAt) && plan.ShowsWarnings(plan.RevealEndsAt - .0001) &&
                         !plan.ShowsWarnings(plan.StartsAt - .0001) && !plan.ShowsWarnings(plan.RevealEndsAt) &&
@@ -583,9 +582,9 @@ namespace FloorFracture.Tests
                 for (int number = 1; number <= 16; ++number)
                 {
                     var plan = board.BeginWave(start, level, number, number * 10);
-                    Check(plan.Hazards != null && plan.Fog == (plan.Hazards.FogDensity > 0 || plan.Hazards.FogPatches > 0),
-                        "Fog must follow the rolled hazards.");
-                    if (level == 1) Check(!plan.Hazards.Any, "Level one must have no hazards.");
+                    Check(plan.Hazards != null && plan.Hazards.FogDensity == 0 && plan.Hazards.FogPatches == 0,
+                        "Waves must not roll fog; it belongs to the level.");
+                    if (level <= 3) Check(!plan.Hazards.Any, "Levels one to three must have no per-wave hazards.");
                     start = plan.GuaranteedTile;
                     if (Resolve(board, plan, new Step(start, false)) == WaveResult.LevelCleared) break;
                 }

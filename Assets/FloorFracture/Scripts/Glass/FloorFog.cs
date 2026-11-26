@@ -9,7 +9,8 @@ namespace FloorFracture
         static readonly float[] Heights = {.02f,.10f,.20f,.32f};
         static readonly int NoiseId = Shader.PropertyToID("_Noise"), ExtentId = Shader.PropertyToID("_Extent"),
             DriftId = Shader.PropertyToID("_Drift"), DensityId = Shader.PropertyToID("_Density"),
-            FadeId = Shader.PropertyToID("_Fade"), TimeId = Shader.PropertyToID("_FogTime"), PatchesId = Shader.PropertyToID("_Patches");
+            FadeId = Shader.PropertyToID("_Fade"), TimeId = Shader.PropertyToID("_FogTime"), PatchesId = Shader.PropertyToID("_Patches"),
+            BoardYId = Shader.PropertyToID("_BoardY");
         static readonly Vector4 NoPatch = new(0,0,1,0);
         readonly Vector4[] patches = {NoPatch,NoPatch,NoPatch};
         readonly Vector4[] paths = new Vector4[3]; // x period, z period, x phase, z phase
@@ -71,6 +72,8 @@ namespace FloorFracture
             if (!on) return;
             material.SetFloat(FadeId, fade);
             material.SetFloat(TimeId, (float)now);
+            // The fall lifts the board, so the fog measures its height from the glass, not the room floor.
+            material.SetFloat(BoardYId, transform.position.y);
             // Ease toward the target so a hop across a missing cell glides instead of jumping.
             float follow = placed ? 1-Mathf.Exp(-(float)Math.Min(.1, Math.Max(0, now-lastTick))/.5f) : 1;
             placed = true; lastTick = now;

@@ -11,29 +11,61 @@ namespace FloorFracture.Tests
                 Assert.That(WaveHazards.Roll(1, n, s, 10, 2).Any, Is.False);
         }
 
+        static int Kinds(WaveHazards h) => (h.Spotlights > 0 ? 1 : 0) + (h.Strikes.Count > 0 ? 1 : 0);
+
         [Test] public void HazardsUnlockByLevel()
         {
             for (int s = 0; s < 500; s++)
             {
-                var l2 = WaveHazards.Roll(2, 3, s, 10, 2); var l3 = WaveHazards.Roll(3, 3, s, 10, 2); var l4 = WaveHazards.Roll(4, 3, s, 10, 2);
-                Assert.That(l2.FogPatches + l2.Spotlights + l2.Strikes.Count, Is.Zero);
-                Assert.That(l3.Spotlights + l3.Strikes.Count, Is.Zero);
-                Assert.That(l4.Strikes.Count, Is.Zero);
+                Assert.That(WaveHazards.Roll(3, 3, s, 10, 2).Any, Is.False);
+                Assert.That(WaveHazards.Roll(4, 3, s, 10, 2).Strikes.Count, Is.Zero);
+                Assert.That(Kinds(WaveHazards.Roll(6, 3, s, 10, 2)), Is.InRange(0, 1));
+                Assert.That(Kinds(WaveHazards.Roll(8, 3, s, 10, 2)), Is.EqualTo(1));
             }
         }
 
         [Test] public void HigherLevelsCombineHazards()
         {
-            int combined = 0, fog = 0, patches = 0, lights = 0, strikes = 0;
+            int lights = 0, strikes = 0;
             for (int s = 0; s < 1000; s++)
             {
                 var h = WaveHazards.Roll(12, 2, s, 10, 1);
-                int kinds = (h.FogDensity > 0 ? 1 : 0) + (h.FogPatches > 0 ? 1 : 0) + (h.Spotlights > 0 ? 1 : 0) + (h.Strikes.Count > 0 ? 1 : 0);
-                if (kinds >= 2) combined++;
-                if (h.FogDensity > 0) fog++; if (h.FogPatches > 0) patches++; if (h.Spotlights > 0) lights++; if (h.Strikes.Count > 0) strikes++;
+                Assert.That(Kinds(h), Is.GreaterThanOrEqualTo(1));
+                if (h.Spotlights > 0) lights++; if (h.Strikes.Count > 0) strikes++;
             }
-            Assert.That(combined, Is.EqualTo(1000));
-            Assert.That(new[] { fog, patches, lights, strikes }, Has.All.GreaterThan(200));
+            Assert.That(new[] { lights, strikes }, Has.All.GreaterThan(300));
+        }
+
+        [Test] public void LevelFogIsStableAndUnlocksByLevel()
+        {
+            Assert.That(WaveHazards.LevelFog(1, 7).FogDensity, Is.Zero);
+            Assert.That(WaveHazards.LevelFog(2, 7).FogDensity, Is.EqualTo(.35f).Within(1e-4f));
+            Assert.That(WaveHazards.LevelFog(2, 7).FogPatches, Is.Zero);
+            Assert.That(WaveHazards.LevelFog(3, 7).FogPatches, Is.EqualTo(1));
+            Assert.That(WaveHazards.LevelFog(7, 7).FogPatches, Is.EqualTo(2));
+            Assert.That(WaveHazards.LevelFog(10, 7).FogPatches, Is.EqualTo(3));
+            Assert.That(WaveHazards.LevelFog(6, 7).VisualSeed, Is.EqualTo(WaveHazards.LevelFog(6, 7).VisualSeed));
+            Assert.That(WaveHazards.LevelFog(6, 7).Spotlights + WaveHazards.LevelFog(6, 7).Strikes.Count, Is.Zero);
+        }
+
+        [Test] public void WavesNoLongerRollFog()
+        {
+            for (int level = 1; level <= 14; level++) for (int n = 1; n <= 8; n++) for (int s = 0; s < 200; s++)
+            {
+                var h = WaveHazards.Roll(level, n, s, 10, 2);
+                Assert.That(h.FogDensity, Is.Zero);
+                Assert.That(h.FogPatches, Is.Zero);
+                if (level <= 3) Assert.That(h.Any, Is.False);
+            }
+        }
+
+        [Test] public void FogFadesInSlowlyAndOutWithinTheLevelClear()
+        {
+            Assert.That(WaveHazards.FogFade(0, 0, double.PositiveInfinity), Is.Zero);
+            Assert.That(WaveHazards.FogFade(1.5, 0, double.PositiveInfinity), Is.InRange(.4f, .6f));
+            Assert.That(WaveHazards.FogFade(3.0, 0, double.PositiveInfinity), Is.EqualTo(1f));
+            Assert.That(WaveHazards.FogFade(10.0, 0, 10.0), Is.EqualTo(1f));
+            Assert.That(WaveHazards.FogFade(11.5, 0, 10.0), Is.Zero); // 1.5 s < the 1.8 s level-clear pause
         }
 
         [Test] public void RollIsDeterministic() =>
