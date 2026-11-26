@@ -37,7 +37,9 @@ namespace FloorFracture
             sky.transform.localPosition = new Vector3(0, lampHeightLocal+SkyAbove, 0);
             sky.enabled = false;
             // A full-view white wash, so a strike lights the view even when the player looks at the floor.
-            veilMaterial = new Material(Resources.Load<Shader>("Endings/ViewFade")) { renderQueue = 4190 };
+            var wash = Resources.Load<Shader>("Endings/ViewFade");
+            if (!wash) { Debug.LogError("[Floor Fracture] Missing Resources/Endings/ViewFade; lightning flashes without its view wash."); return; }
+            veilMaterial = new Material(wash) { renderQueue = 4190, hideFlags = HideFlags.DontSave };
             veilMesh = FallMeshes.Box();
             veilBlock = new MaterialPropertyBlock();
             veil = GlassTile.Part(transform, "Flash veil", veilMesh, veilMaterial);
@@ -75,16 +77,16 @@ namespace FloorFracture
                         Math.Max(0, WaveHazards.ThunderDelay(hazards.VisualSeed, next) - late), pitch);
             }
             float flash = visible ? WaveHazards.FlashIntensity(now - shownStrike, reduced)*fade : 0;
-            bool wash = flash > 0 && !reduced;
+            bool wash = flash > 0 && !reduced && veil;
             var head = wash ? Camera.main : null;
             bool veiled = head != null;
             if (head) veil.transform.SetPositionAndRotation(head.transform.position, head.transform.rotation);
-            if (flash == shownFlash && veil.enabled == veiled) return;
+            if (flash == shownFlash && (veil && veil.enabled) == veiled) return;
             shownFlash = flash;
             Shader.SetGlobalFloat(FlashId, flash);
             sky.enabled = flash > 0;
-            veil.enabled = veiled;
-            if (veil.enabled)
+            if (veil) veil.enabled = veiled;
+            if (veiled)
             {
                 veilBlock.SetColor(TintId, new Color(.85f, .9f, 1, .5f*flash));
                 veil.SetPropertyBlock(veilBlock);

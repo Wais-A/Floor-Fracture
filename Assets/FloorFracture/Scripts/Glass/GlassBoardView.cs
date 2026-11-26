@@ -143,6 +143,8 @@ namespace FloorFracture
             if(openingsChanged) RebuildHoles();
             if (sliders.Count != 0 || displayedSliders != sliders)
             {
+                // The loop never writes past the shader's six slots; a seventh pane would go unmasked, so dev builds flag it.
+                Debug.Assert(sliders.Count <= CoveredPanes.Length, "More moving panes than hole-mask slots.");
                 for (int i = 0; i < CoveredPanes.Length; ++i)
                     maskMaterial.SetVector(CoveredPanes[i], CoveredPane(i,now));
             }
