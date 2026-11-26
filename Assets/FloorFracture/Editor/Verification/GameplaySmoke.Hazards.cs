@@ -60,8 +60,11 @@ namespace FloorFracture.Editor
                     { sum += frame.with[y * size + x] - frame.without[y * size + x]; ++count; }
                 return count == 0 ? 0 : sum / count;
             }
+            var sound = game.GetComponent<GameSound>();
+            float oldVolume = sound.MasterVolume;
             try
             {
+                sound.SetVolume(1); // a muted mix plays no hum
                 camera.enabled = false;
                 camera.GetUniversalAdditionalCameraData().allowXRRendering = false;
                 camera.clearFlags = CameraClearFlags.SolidColor;
@@ -103,7 +106,6 @@ namespace FloorFracture.Editor
                     return Now >= sweepEnds;
                 }, "spotlight pools to sweep", 10);
                 Require(swept.All(d => d >= .3f), $"Each spotlight pool must sweep 0.3 m in 2 s: {string.Join(", ", swept.Select(d => d.ToString("F2")))} m.");
-                var sound = game.GetComponent<GameSound>();
                 var hums = lamps.Select(l => l.GetComponentInChildren<AudioSource>()).ToArray();
                 Require(hums.All(h => h && h.isPlaying && h.spatialize && h.volume > 0), "Each lit lamp must play its spatial hum.");
                 float volume = sound.MasterVolume;
@@ -150,6 +152,7 @@ namespace FloorFracture.Editor
             finally
             {
                 RenderTexture.active = old;
+                sound.SetVolume(oldVolume);
                 Object.DestroyImmediate(image);
                 Object.DestroyImmediate(go);
                 RenderTexture.ReleaseTemporary(target);
@@ -160,9 +163,10 @@ namespace FloorFracture.Editor
 
         private static IEnumerator VerifyFogBelongsToTheLevel()
         {
-            // Full fall motion, so the fall lifts the board and its fog.
+            // Full fall motion, so the fall lifts the board and its fog. The saved setting is put back at the end.
+            bool reduced = PlayerPrefs.GetInt("ff.reduced", 0) != 0;
             Choose("Settings");
-            if (PlayerPrefs.GetInt("ff.reduced", 0) != 0) Choose("Fall motion");
+            if (reduced) Choose("Fall motion");
             Choose("Back");
             Choose("Development"); Choose("Seed 379 · level 3");
             yield return Stage(GameStage.Ready);
@@ -214,6 +218,8 @@ namespace FloorFracture.Editor
             game.Ending.Skip(); yield return Stage(GameStage.Results);
             yield return Wait(() => slices.All(s => !s.enabled), "the level fog to fade on Results", 1.6);
             Choose("Main menu"); yield return Stage(GameStage.Welcome);
+            if (reduced) { Choose("Settings"); Choose("Fall motion"); Choose("Back"); }
+            Require((PlayerPrefs.GetInt("ff.reduced", 0) != 0) == reduced, "The fog check did not restore the Fall motion setting.");
             Record($"Level three's fog rolled in to {rolledIn:F2} 3.2 s after Ready and stayed at full strength with one visual seed through the count-in, two waves, the losing wave and the first 1.5 s of the fall, while the board rose {lift:F1} m. It was gone within 1.6 s of Results.");
         }
 
