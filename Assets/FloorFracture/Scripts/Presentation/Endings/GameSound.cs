@@ -15,7 +15,7 @@ public sealed class GameSound : MonoBehaviour
     AudioSource holeDraft;
     const float DraftGain = .40f;
     float draftFade;
-    const float LampGain = .5f;
+    const float LampGain = .135f; // clip +24 dB (-22.95 LUFS) x .135 = music at the ear (-40.3 LUFS), measured, inside minDistance
     readonly List<AudioSource> lampVoices = new();
     readonly List<float> lampLevels = new();
     // Two strikes per wave at most, each 7 s of thunder, plus one spare so a new wave's strike never cuts one off.
@@ -133,7 +133,7 @@ public sealed class GameSound : MonoBehaviour
         emitter.name = "Lamp hum";
         var voice = emitter.GetComponent<AudioSource>();
         voice.clip = beamHum;
-        voice.minDistance = 2f;
+        voice.minDistance = 1.3f;
         voice.loop = true;
         voice.volume = 0f;
         lampVoices.Add(voice);
