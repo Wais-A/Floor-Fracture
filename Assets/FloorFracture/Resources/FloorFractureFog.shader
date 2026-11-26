@@ -25,6 +25,7 @@ Shader "Floor Fracture/Floor fog"
                 float _MappedFloorY, _Density, _Fade, _FogTime;
                 float4 _Extent, _Drift;
             CBUFFER_END
+            float _FloorFractureFlash; // global lightning brightness, kept out of UnityPerMaterial
             // Board-local x, z, radius, strength. Unused patches carry radius 1 and strength 0.
             float4 _Patches[3];
             struct V { float4 p:POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -55,7 +56,8 @@ Shader "Floor Fracture/Floor fog"
                 float2 edge = _Extent.xy - abs(p);
                 alpha *= _Fade * smoothstep(0, .30, min(edge.x, edge.y));
                 // Four slices at 0.26 combine to at most 1 - 0.74^4 = 0.70.
-                return half4(.80, .84, .86, min(alpha, .26) * visibility);
+                // Lightning lifts the fog toward white and thickens it by up to half.
+                return half4(half3(.80, .84, .86) + .16 * _FloorFractureFlash, min(alpha, .26) * (1 + .5 * _FloorFractureFlash) * visibility);
             }
             ENDHLSL
         }

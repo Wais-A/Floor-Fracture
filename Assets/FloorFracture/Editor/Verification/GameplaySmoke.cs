@@ -198,6 +198,8 @@ namespace FloorFracture.Editor
             yield return VerifyTrapRotation();
             yield return VerifyTileCracks();
             yield return VerifyHazardVisuals();
+            yield return VerifyLightning();
+            yield return VerifyHazardPauseAndExit(); // continues from Ready
             yield return RayChoose(3, false); yield return Stage(GameStage.Settings);
             Require(!outlines.gameObject.activeSelf, "The Welcome board perimeter stayed visible inside Settings.");
             yield return RayChoose(5, true); yield return Stage(GameStage.Welcome);

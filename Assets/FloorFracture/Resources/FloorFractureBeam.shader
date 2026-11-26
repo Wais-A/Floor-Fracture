@@ -23,6 +23,7 @@ Shader "Floor Fracture/Overhead beam"
             CBUFFER_START(UnityPerMaterial)
                 float _MappedFloorY, _Fade, _Pool;
             CBUFFER_END
+            float _FloorFractureFlash; // global lightning brightness, kept out of UnityPerMaterial
             struct V { float4 p:POSITION; float3 n:NORMAL; float2 uv:TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct F { float4 p:SV_POSITION; float3 world:TEXCOORD0; float3 normal:TEXCOORD1; float2 uv:TEXCOORD2; UNITY_VERTEX_OUTPUT_STEREO };
             F vert(V v)
@@ -47,7 +48,8 @@ Shader "Floor Fracture/Overhead beam"
                     float facing = abs(dot(normalize(i.normal), GetWorldSpaceNormalizeViewDir(i.world)));
                     alpha = .0945 * facing * facing;
                 }
-                return half4(1, .96, .88, alpha * _Fade * visibility);
+                // The beam is already near white, so lightning brightens it through opacity.
+                return half4(half3(1, .96, .88) + half3(0, .04, .12) * _FloorFractureFlash, alpha * _Fade * (1 + .8 * _FloorFractureFlash) * visibility);
             }
             ENDHLSL
         }

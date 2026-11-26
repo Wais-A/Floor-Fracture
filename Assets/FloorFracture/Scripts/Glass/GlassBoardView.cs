@@ -13,6 +13,7 @@ namespace FloorFracture
         MeshRenderer occupancy, holes;
         FloorFog fog;
         OverheadLights lights;
+        Lightning lightning;
         WaveHazards hazards;
         double hazardsShownAt, hazardsHiddenAt;
         ShardPool shards;
@@ -101,6 +102,8 @@ namespace FloorFracture
             lights=new GameObject("Overhead lights").AddComponent<OverheadLights>();
             lights.transform.SetParent(transform,false);
             lights.Build(board,lampHeight-pose.position.y,sound,fogMaterial.renderQueue+1);
+            lightning=new GameObject("Lightning").AddComponent<Lightning>();
+            lightning.Build(transform,sound,lampHeight-pose.position.y);
             holes.enabled=false;
         }
 
@@ -183,6 +186,7 @@ namespace FloorFracture
                 hazards=next; hazardsShownAt=now; hazardsHiddenAt=double.PositiveInfinity;
                 fog.Show(next);
                 lights.Show(next);
+                lightning.Show(next);
             }
             else if (hazards!=null && double.IsPositiveInfinity(hazardsHiddenAt)) hazardsHiddenAt=now;
             DrawHazards(now);
@@ -195,6 +199,7 @@ namespace FloorFracture
             float fade=WaveHazards.Fade(now,hazardsShownAt,hazardsHiddenAt);
             fog.Tick(now,fade);
             lights.Tick(now,fade);
+            lightning.Tick(now,fade,ReducedMotion);
             if (fade<=0 && !double.IsPositiveInfinity(hazardsHiddenAt)) hazards=null;
         }
 

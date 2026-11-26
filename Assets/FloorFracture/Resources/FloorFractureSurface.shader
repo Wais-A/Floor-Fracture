@@ -33,6 +33,7 @@ Shader "Floor Fracture/Surface"
                 half4 _Color;
                 half _Fade, _Sheen;
             CBUFFER_END
+            float _FloorFractureFlash; // global lightning brightness, kept out of UnityPerMaterial
             struct V { float4 vertex:POSITION; half3 normal:NORMAL; half4 color:COLOR; float2 uv:TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct F { float4 position:SV_POSITION; half4 color:COLOR; float3 world:TEXCOORD0; half2 uv:TEXCOORD1; half3 normal:TEXCOORD2; UNITY_VERTEX_OUTPUT_STEREO };
             F vert(V v)
@@ -80,6 +81,7 @@ Shader "Floor Fracture/Surface"
                         samplePoint = lerp(eye, i.world, (eye.y - _MappedFloorY) / (eye.y - i.world.y));
                     visibility = GlassFloorVisibility(samplePoint, _MappedFloorY);
                 }
+                tint += _FloorFractureFlash*half3(.34,.37,.42);
                 return half4(tint,i.color.a*_Fade*visibility);
             }
             ENDHLSL

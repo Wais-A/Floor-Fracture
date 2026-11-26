@@ -18,6 +18,9 @@ public sealed class GameSound : MonoBehaviour
     const float LampGain = .18f;
     readonly List<AudioSource> lampVoices = new();
     readonly List<float> lampLevels = new();
+    // Two strikes per wave at most, each 7 s of thunder.
+    readonly AudioSource[] thunder = new AudioSource[2];
+    int nextThunder;
     AudioLowPassFilter tarFilter;
     readonly AudioSource[,] glass = new AudioSource[3, 3];
     readonly float[,] glassGains = new float[3, 3];
@@ -35,6 +38,8 @@ public sealed class GameSound : MonoBehaviour
     public int EditorStartKnocks { get; private set; }
     public int EditorGoCues { get; private set; }
     public int EditorLandingCueCount { get; private set; }
+    public int EditorThunderCues { get; private set; }
+    public AudioSource EditorLastThunder { get; private set; }
 #endif
 
     void Awake()
@@ -77,6 +82,14 @@ public sealed class GameSound : MonoBehaviour
             glass[i, 0] = Voice("Pane impact " + i, true);
             glass[i, 1] = Voice("Glass fragments " + i, true);
             glass[i, 2] = Voice("Shaft echo " + i, true);
+        }
+        var thunderClip = Clip("Thunder");
+        for (int i = 0; i < thunder.Length; i++)
+        {
+            thunder[i] = Voice("Thunder " + i, true);
+            thunder[i].clip = thunderClip;
+            thunder[i].minDistance = 6f;
+            thunder[i].maxDistance = 40f;
         }
         SetVolume(volume);
     }
@@ -159,6 +172,7 @@ public sealed class GameSound : MonoBehaviour
             ui.Stop();
             accent.Stop();
             ClearHoleDraft();
+            StopThunder();
         }
         ui.volume = volume;
         ApplyMusicVolume();
@@ -171,6 +185,31 @@ public sealed class GameSound : MonoBehaviour
             for (int j = 0; j < glass.GetLength(1); j++)
                 glass[i, j].volume = glassGains[i, j] * volume;
         for (int i = 0; i < lampVoices.Count; i++) ApplyLamp(i);
+        foreach (var voice in thunder) voice.volume = volume; // thunder plays at gain 1
+    }
+
+    // A pooled spatial one-shot from the strike's direction, `delaySeconds` after the flash.
+    public void PlayThunder(Vector3 worldPosition, double delaySeconds, float pitch)
+    {
+        if (!isActiveAndEnabled || volume == 0f) return;
+        var voice = thunder[nextThunder];
+        nextThunder = (nextThunder + 1) % thunder.Length;
+        if (!voice.clip) return;
+        voice.Stop();
+        voice.transform.position = worldPosition;
+        voice.pitch = pitch;
+        voice.volume = volume;
+        voice.PlayScheduled(AudioSettings.dspTime + delaySeconds);
+#if UNITY_EDITOR
+        ++EditorThunderCues;
+        EditorLastThunder = voice;
+#endif
+    }
+
+    // Stopping also cancels thunder that is scheduled but not yet audible.
+    void StopThunder()
+    {
+        foreach (var voice in thunder) if (voice) voice.Stop();
     }
 
     public void Click() => Cue(click, .38f);
@@ -410,6 +449,7 @@ public sealed class GameSound : MonoBehaviour
         StopFall(); StopGlass();
         ui.Stop();
         foreach (var lamp in lampVoices) if (lamp) lamp.Stop();
+        StopThunder();
     }
 
     void OnEnable()
