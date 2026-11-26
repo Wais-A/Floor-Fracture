@@ -10,7 +10,7 @@ namespace FloorFracture
         internal const float PreferredMinPitch = .69f;
         // The smallest comfortable pane. The most panes from here up is the 3/4 rule's reference.
         internal const float ComfortMinPitch = .60f;
-        private static readonly float[] ConnectedPitches = { .75f, .72f, PreferredMinPitch, .65f, ComfortMinPitch, .55f, .50f, .45f, .40f };
+        private static readonly float[] ConnectedPitches = { .75f, .72f, PreferredMinPitch, .65f, .625f, ComfortMinPitch, .55f, .50f, .45f, .40f };
         private static readonly Vector2Int[] Directions = {
             Vector2Int.right, Vector2Int.up, Vector2Int.left, Vector2Int.down
         };
@@ -91,15 +91,15 @@ namespace FloorFracture
                 return most;
             }
 
-            // The default board chose the most panes. The entire floor chose the most glass, four
-            // panes first and ties to the larger pitch.
+            // The default board chose the most panes. The entire floor chose the most glass from
+            // the comfortable pitches below the big ones, four panes first and ties to the larger pitch.
             private int ReferenceCount()
             {
                 if (!entireFloor) return MostPanes(ComfortMinPitch);
                 int best = -1;
                 for (int p = 0; p < scores.Length && ConnectedPitches[p] >= ComfortMinPitch; p++)
                 {
-                    if (fits[p] == null) continue;
+                    if (fits[p] == null || ConnectedPitches[p] >= PreferredMinPitch) continue;
                     bool four = scores[p].Count >= 4;
                     if (best < 0 || (four != scores[best].Count >= 4 ? four : scores[p].Area > scores[best].Area)) best = p;
                 }

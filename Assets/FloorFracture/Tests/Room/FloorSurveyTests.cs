@@ -368,10 +368,11 @@ namespace FloorFracture.Tests
             Assert.That(survey.ChecksEveryTile(fit), Is.True);
         }
 
-        // At the old 60-65 cm pitch these rooms held 12, 9 and 15 panes.
+        // At the old 60-65 cm pitch these rooms held 12, 9, 15 and 9 panes in both modes.
         [TestCase(1.5f, 4.0f, 9)]
         [TestCase(2.15f, 2.15f, 7)]
-        [TestCase(2.2f, 3.5f, 11)]
+        [TestCase(2.2f, 3.5f, 12)]
+        [TestCase(2.05f, 2.5f, 7)]
         public void NarrowRoomsKeepThreeQuartersOfTheirPanes(float x, float z, int panes)
         {
             Surface(0, 0, x, z);
@@ -383,12 +384,24 @@ namespace FloorFracture.Tests
             Assert.That(fit.Layout.PaneCount, Is.GreaterThanOrEqualTo(panes));
             Assert.That(survey.ChecksEveryTile(fit), Is.True);
 
-            // The entire floor never offers fewer panes or less glass than the default board.
+            // In these rooms the entire floor gives at least the default board's panes and glass.
             var full = FloorSurvey.FindConnected(new[] { survey }, center, default, out _, entireFloor: true).Value;
             Assert.That(Mathf.Min(full.Columns, full.Rows), Is.GreaterThanOrEqualTo(2));
             Assert.That(full.Layout.PaneCount, Is.GreaterThanOrEqualTo(Mathf.Max(panes, fit.Layout.PaneCount)));
             Assert.That(full.Layout.PaneCount * full.Pitch * full.Pitch,
                 Is.GreaterThanOrEqualTo(fit.Layout.PaneCount * fit.Pitch * fit.Pitch - .0001f));
+            Assert.That(survey.ChecksEveryTile(full), Is.True);
+        }
+
+        // The old entire floor chose 36 panes here, so bigger panes must keep 27.
+        [Test]
+        public void EntireFloorKeepsThreeQuartersOfItsPanesInAFourMetreSquare()
+        {
+            Surface(0, 0, 4, 4);
+            Assert.That(FloorMeshScan.TryCreate(vertices.ToArray(), indices.ToArray(), Matrix4x4.identity, out var scan), Is.True);
+            var survey = new FloorSurvey(new RoomFloor(Box(0, 0, 4, 4), new List<Vector2[]>()), scan, 2.2f, null, default);
+            var full = FloorSurvey.FindConnected(new[] { survey }, Vector2.one * 2, default, out _, entireFloor: true).Value;
+            Assert.That(full.Layout.PaneCount, Is.GreaterThanOrEqualTo(27));
             Assert.That(survey.ChecksEveryTile(full), Is.True);
         }
 
