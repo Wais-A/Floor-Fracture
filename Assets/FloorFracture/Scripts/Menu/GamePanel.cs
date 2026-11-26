@@ -563,8 +563,8 @@ namespace FloorFracture
             finally { editorDirectChoice = false; }
         }
 
-        public void EditorSetPose(Pose head, Pose leftGrip, Pose rightGrip, bool leftHeld, bool rightHeld) =>
-            desktop.SetPose(head, leftGrip, rightGrip, leftHeld, rightHeld);
+        public void EditorSetPose(Pose head, Pose leftGrip, Pose rightGrip) =>
+            desktop.SetPose(head, leftGrip, rightGrip);
 
         public void EditorSetTriggers(bool left, bool right) => desktop.SetTriggers(left, right);
 

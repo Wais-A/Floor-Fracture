@@ -298,10 +298,8 @@ namespace FloorFracture
 
             public bool EdgesEnter(Vector2 min, Vector2 max)
             {
-                if (Max.x < min.x || Max.y < min.y || Min.x > max.x || Min.y > max.y) return false;
-                for (int i = 0, j = Points.Length - 1; i < Points.Length; j = i++)
-                    if (FloorGeometry.EntersInterior(Points[j], Points[i], min, max)) return true;
-                return false;
+                return Max.x >= min.x && Max.y >= min.y && Min.x <= max.x && Min.y <= max.y &&
+                    FloorGeometry.EdgesEnter(Points, min, max);
             }
         }
 

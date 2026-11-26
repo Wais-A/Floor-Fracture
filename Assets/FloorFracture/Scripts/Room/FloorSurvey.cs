@@ -82,7 +82,7 @@ namespace FloorFracture
                 for (int x = 0; x < Width; x++)
                 {
                     var cellMin = Corner(x, z);
-                    if (!FloorGeometry.Contains(outline, cellMin + Step * .5f) || EdgesEnter(outline, cellMin, Corner(x + 1, z + 1)))
+                    if (!FloorGeometry.Contains(outline, cellMin + Step * .5f) || FloorGeometry.EdgesEnter(outline, cellMin, Corner(x + 1, z + 1)))
                         Cells[z * Width + x] = TileClearance.OutsideFloor;
                 }
 
@@ -245,15 +245,7 @@ namespace FloorFracture
             hi = new Vector2Int(Mathf.Min(Width - 1, Mathf.FloorToInt((b.x - min.x) / Step.x) + 1), Mathf.Min(Height - 1, Mathf.FloorToInt((b.y - min.y) / Step.y) + 1));
         }
 
-        private static bool EdgesEnter(Vector2[] polygon, Vector2 lo, Vector2 hi)
-        {
-            for (int i = 0, j = polygon.Length - 1; i < polygon.Length; j = i++)
-                if (FloorGeometry.EntersInterior(polygon[j], polygon[i], lo, hi))
-                    return true;
-            return false;
-        }
-
-        private static bool Overlaps(Vector2[] polygon, Vector2 lo, Vector2 hi) => EdgesEnter(polygon, lo, hi) || (polygon.Length >= 3 && FloorGeometry.Contains(polygon, (lo + hi) * .5f));
+        private static bool Overlaps(Vector2[] polygon, Vector2 lo, Vector2 hi) => FloorGeometry.EdgesEnter(polygon, lo, hi) || (polygon.Length >= 3 && FloorGeometry.Contains(polygon, (lo + hi) * .5f));
         internal void MarkWorld(Vector2[] polygon, TileClearance reason) => MarkLocal(Array.ConvertAll(polygon, Local), reason);
         private void MarkLocal(Vector2[] polygon, TileClearance reason)
         {

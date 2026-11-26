@@ -120,7 +120,7 @@ namespace FloorFracture
             }
         }
 
-        internal void SetPose(Pose head, Pose left, Pose right, bool leftHeld, bool rightHeld)
+        internal void SetPose(Pose head, Pose left, Pose right)
         {
             AcquireRig();
             Override = true;

@@ -29,7 +29,7 @@ namespace FloorFracture
         public static Mesh Rim => rim ? rim : rim = Sheet(true);
         public static Mesh SafeRim => safeRim ? safeRim : safeRim = BeveledRim();
         public static Mesh Cracks => cracks ? cracks : cracks = CrackMesh();
-        public static Mesh Ring => ring ? ring : ring = Circle(RingRadius,RingWidth,false,KeylineWidth);
+        public static Mesh Ring => ring ? ring : ring = Circle(RingRadius,RingWidth,KeylineWidth);
         public static Vector3 Ground(Vector2 v,float height=0) => new(v.x,height,v.y);
 
         static int[][] MakePieces()
@@ -145,14 +145,13 @@ namespace FloorFracture
             return b.Create("Fitted fracture lines");
         }
 
-        public static Mesh Circle(float radius,float width,bool dashed,float keylineWidth=0f)
+        private static Mesh Circle(float radius,float width,float keylineWidth)
         {
             var b=new Builder();
             float brightEdge=radius+width*.5f, outerEdge=brightEdge+keylineWidth;
             var charcoal=new Color(.012f,.018f,.022f,1f);
             for(int i=0;i<40;i++)
             {
-                if(dashed && i%5==0) continue;
                 float a=i*Mathf.PI/20, z=(i+1)*Mathf.PI/20;
                 var start=new Vector2(Mathf.Cos(a),Mathf.Sin(a));
                 var end=new Vector2(Mathf.Cos(z),Mathf.Sin(z));

@@ -20,7 +20,6 @@ namespace FloorFracture
         [SerializeField] private OVRCameraRig rig;
         [SerializeField] private EnvironmentDepthManager depthProvider;
         [SerializeField] private FindSpawnPositions floorSpawns;
-        [UnityEngine.Serialization.FormerlySerializedAs("floorWaterMesh")]
         [SerializeField] private EffectMesh floorEffect;
         [SerializeField] private Shader outlineShader = null;
 #if UNITY_EDITOR
@@ -36,7 +35,6 @@ namespace FloorFracture
         public string Message { get; private set; } = "Loading your room…";
         public BoardPlacement Placement { get; private set; }
         public int ScannedSpawnCount { get; private set; }
-        public EffectMesh FloorEffect => floorEffect;
         public MRUKRoom CurrentRoom => room;
         private const string EntireFloorKey = "ff.entireFloor";
         public bool EntireFloor { get; private set; }

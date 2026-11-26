@@ -103,7 +103,7 @@ namespace FloorFracture
             holes.enabled=false;
         }
 
-        public void Draw(WavePlan wave,TileSample sample,double now,bool gentle,int practiceWarning=-1)
+        public void Draw(WavePlan wave,TileSample sample,double now,bool gentle)
         {
             if(tiles==null) return;
             bool openingsChanged=false;
@@ -157,9 +157,9 @@ namespace FloorFracture
             {
                 var group=wave?.BreakGroupFor(cell);
                 bool warned=group!=null && group.ShowsWarning(now);
-                tile.ShowWarning(warned || cell==practiceWarning, warned ? now-group.RevealStartsAt : 0, gentle,
+                tile.ShowWarning(warned, warned ? now-group.RevealStartsAt : 0, gentle,
                     warned ? group.RevealEndsAt-group.RevealStartsAt : .36);
-                if (sound) tile.SoundWarning(sound, warned || cell==practiceWarning, cell,
+                if (sound) tile.SoundWarning(sound, warned, cell,
                     warned ? group.Tiles.Count : 1, warned ? now-group.RevealStartsAt : 0,
                     warned ? group.RevealEndsAt-now : double.PositiveInfinity);
             }

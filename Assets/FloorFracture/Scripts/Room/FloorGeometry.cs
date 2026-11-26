@@ -116,6 +116,13 @@ namespace FloorFracture
             return Math.Abs(twiceArea) > Epsilon;
         }
 
+        internal static bool EdgesEnter(Vector2[] polygon, Vector2 min, Vector2 max)
+        {
+            for (int i = 0, j = polygon.Length - 1; i < polygon.Length; j = i++)
+                if (EntersInterior(polygon[j], polygon[i], min, max)) return true;
+            return false;
+        }
+
         // Clip to the rectangle interior. Testing only board corners misses an inward
         // notch, a thin wall across the middle, or a chair wholly inside the board.
         internal static bool EntersInterior(Vector2 a, Vector2 b, Vector2 min, Vector2 max)

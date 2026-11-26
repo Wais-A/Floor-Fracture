@@ -552,6 +552,7 @@ namespace FloorFracture.Editor
             var canvas = game.Panel.transform.Find(GamePanel.CanvasName);
             var setStatus = typeof(RoomBoardPlacement).GetMethod("SetState",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Require(setStatus != null, "RoomBoardPlacement.SetState not found.");
             Vector3[] firstPositions = null;
             var statuses = new[] { RoomPlacementStatus.NoRoom, RoomPlacementStatus.UnsafeRoom, RoomPlacementStatus.NoFit };
             foreach (var status in statuses)
@@ -841,12 +842,7 @@ namespace FloorFracture.Editor
             head = value;
             left = new Pose(head.position + head.rotation * new Vector3(-0.22f,-0.27f,0.32f), head.rotation);
             right = new Pose(head.position + head.rotation * new Vector3(0.22f,-0.27f,0.32f), head.rotation);
-            game.Panel.EditorSetPose(head,left,right,false,false);
-        }
-
-        private static void SetHands(Pose value, bool held)
-        {
-            left = value; game.Panel.EditorSetPose(head,left,right,held,false);
+            game.Panel.EditorSetPose(head,left,right);
         }
 
         private static IEnumerator RayChoose(int rowNumber, bool leftHand)
@@ -859,7 +855,7 @@ namespace FloorFracture.Editor
             var grip = leftHand ? left : right;
             grip.rotation = Quaternion.LookRotation(point - grip.position, Vector3.up);
             if (leftHand) left = grip; else right = grip;
-            game.Panel.EditorSetPose(head, left, right, false, false);
+            game.Panel.EditorSetPose(head, left, right);
             yield return Frames(2);
             game.Panel.EditorSetTriggers(leftHand, !leftHand);
             yield return Frames(2);
