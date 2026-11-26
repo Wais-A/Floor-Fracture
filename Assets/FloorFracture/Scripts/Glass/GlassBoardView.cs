@@ -12,6 +12,7 @@ namespace FloorFracture
         IReadOnlyList<SlidingPane> displayedSliders;
         MeshRenderer occupancy, holes;
         FloorFog fog;
+        OverheadLights lights;
         WaveHazards hazards;
         double hazardsShownAt, hazardsHiddenAt;
         ShardPool shards;
@@ -54,7 +55,7 @@ namespace FloorFracture
             return true;
         }
 
-        public void Build(BoardState board,Pose pose,GameSound gameSound = null)
+        public void Build(BoardState board,Pose pose,GameSound gameSound,float lampHeight)
         {
             sound=gameSound;
             model=board; transform.SetPositionAndRotation(pose.position,pose.rotation);
@@ -97,6 +98,9 @@ namespace FloorFracture
             fog=new GameObject("Floor fog").AddComponent<FloorFog>();
             fog.transform.SetParent(transform,false);
             fog.Build(board,fogMaterial);
+            lights=new GameObject("Overhead lights").AddComponent<OverheadLights>();
+            lights.transform.SetParent(transform,false);
+            lights.Build(board,lampHeight-pose.position.y,sound,fogMaterial.renderQueue+1);
             holes.enabled=false;
         }
 
@@ -178,6 +182,7 @@ namespace FloorFracture
             {
                 hazards=next; hazardsShownAt=now; hazardsHiddenAt=double.PositiveInfinity;
                 fog.Show(next);
+                lights.Show(next);
             }
             else if (hazards!=null && double.IsPositiveInfinity(hazardsHiddenAt)) hazardsHiddenAt=now;
             DrawHazards(now);
@@ -189,6 +194,7 @@ namespace FloorFracture
             if (hazards==null) return;
             float fade=WaveHazards.Fade(now,hazardsShownAt,hazardsHiddenAt);
             fog.Tick(now,fade);
+            lights.Tick(now,fade);
             if (fade<=0 && !double.IsPositiveInfinity(hazardsHiddenAt)) hazards=null;
         }
 

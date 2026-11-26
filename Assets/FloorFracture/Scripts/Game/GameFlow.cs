@@ -132,12 +132,19 @@ namespace FloorFracture
             menuPauseSeconds=cueDelaySeconds=0;
             if(BoardView) { BoardView.gameObject.SetActive(false); Destroy(BoardView.gameObject); }
             var fit=Room.Placement; State=new BoardState(fit.Layout,SelectedSeed,fit.Pitch);
-            var board=new GameObject("Confirmed glass board"); BoardView=board.AddComponent<GlassBoardView>(); BoardView.Build(State,fit.Pose,sound);
+            var board=new GameObject("Confirmed glass board"); BoardView=board.AddComponent<GlassBoardView>(); BoardView.Build(State,fit.Pose,sound,LampHeight(fit.FloorHeight));
             BoardView.ReducedMotion=reduced;
             Ending.SetBoard(BoardView);
             Level=WaveNumber=1; levelFinished=false;
             developmentRun=false;
             return true;
+        }
+        float LampHeight(float floorY)
+        {
+            var ceilings=Room.CurrentRoom ? Room.CurrentRoom.CeilingAnchors : null;
+            float? lowest=null;
+            if (ceilings!=null) foreach (var anchor in ceilings) if (anchor) lowest=Math.Min(lowest ?? float.PositiveInfinity,anchor.transform.position.y);
+            return WaveHazards.LampHeight(floorY,lowest);
         }
         void Home()
         {

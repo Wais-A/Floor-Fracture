@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>Centered start cues and shaft audio, with positional glass and landing cues.</summary>
@@ -14,13 +15,16 @@ public sealed class GameSound : MonoBehaviour
     AudioSource holeDraft;
     const float DraftGain = .40f;
     float draftFade;
+    const float LampGain = .18f;
+    readonly List<AudioSource> lampVoices = new();
+    readonly List<float> lampLevels = new();
     AudioLowPassFilter tarFilter;
     readonly AudioSource[,] glass = new AudioSource[3, 3];
     readonly float[,] glassGains = new float[3, 3];
     int nextGlass, pendingCount;
     Vector3 weightedPosition;
     AudioClip paneStress, click, startKnock, startGo, impact, fragments, echo, clear, wind, lowWind;
-    AudioClip submerged, heat, tarBubbles, tarImpact, tarPull, sand, snow, splash, lavaImpact, sandImpact, snowImpact;
+    AudioClip beamHum, submerged, heat, tarBubbles, tarImpact, tarPull, sand, snow, splash, lavaImpact, sandImpact, snowImpact;
     float fallGain, roarGain, ambienceGain, accentGain;
     double spaceExitDsp = double.PositiveInfinity;
     bool inSpace, spaceSilent;
@@ -39,7 +43,7 @@ public sealed class GameSound : MonoBehaviour
         if (!spatialVoicePrefab)
             throw new InvalidOperationException("Prepare the game scene to create the Meta Spatial Audio prefab.");
         click = Clip("Click"); startKnock = Clip("ClockTick"); startGo = Clip("StartGo");
-        paneStress = Clip("PaneStress");
+        paneStress = Clip("PaneStress"); beamHum = Clip("BeamHum");
         impact = Clip("Impact"); fragments = Clip("Fragments"); echo = Clip("Echo"); clear = Clip("Clear");
         wind = Clip("Air"); lowWind = Clip("ShaftRoar"); submerged = Clip("Submerged"); heat = Clip("Heat");
         tarBubbles = Clip("TarBubbles"); tarImpact = Clip("TarImpact"); tarPull = Clip("TarPull");
@@ -94,7 +98,7 @@ public sealed class GameSound : MonoBehaviour
         return source;
     }
 
-    internal float MasterVolume => volume;
+    public float MasterVolume => volume;
 
     internal AudioSource CreateCrackVoice(Transform pane, int cell)
     {
@@ -105,6 +109,44 @@ public sealed class GameSound : MonoBehaviour
         voice.pitch = .94f + .025f * (cell % 5);
         voice.priority = 160;
         return voice;
+    }
+
+    // Parented to the lamp, so the hum comes from its direction. Silent until SetLampLevel.
+    public AudioSource CreateLampVoice(Transform lamp)
+    {
+        for (int i = lampVoices.Count - 1; i >= 0; --i)
+            if (!lampVoices[i]) { lampVoices.RemoveAt(i); lampLevels.RemoveAt(i); }
+        var emitter = Instantiate(spatialVoicePrefab, lamp, false);
+        emitter.name = "Lamp hum";
+        var voice = emitter.GetComponent<AudioSource>();
+        voice.clip = beamHum;
+        voice.loop = true;
+        voice.volume = 0f;
+        lampVoices.Add(voice);
+        lampLevels.Add(0f);
+        return voice;
+    }
+
+    public void SetLampLevel(AudioSource voice, float level)
+    {
+        int index = lampVoices.IndexOf(voice);
+        if (index < 0) return;
+        lampLevels[index] = level;
+        ApplyLamp(index);
+    }
+
+    void ApplyLamp(int index)
+    {
+        var voice = lampVoices[index];
+        if (!voice) return;
+        voice.volume = LampGain * lampLevels[index] * volume;
+        if (voice.volume <= 0f) { if (voice.isPlaying) voice.Stop(); }
+        else if (!voice.isPlaying && voice.isActiveAndEnabled && voice.clip)
+        {
+            // Lamps start at different points in the loop so two hums never sound in unison.
+            voice.time = index * 6.7f % voice.clip.length;
+            voice.Play();
+        }
     }
 
     public void SetVolume(float value)
@@ -128,6 +170,7 @@ public sealed class GameSound : MonoBehaviour
         for (int i = 0; i < glass.GetLength(0); i++)
             for (int j = 0; j < glass.GetLength(1); j++)
                 glass[i, j].volume = glassGains[i, j] * volume;
+        for (int i = 0; i < lampVoices.Count; i++) ApplyLamp(i);
     }
 
     public void Click() => Cue(click, .38f);
@@ -366,6 +409,7 @@ public sealed class GameSound : MonoBehaviour
         ClearHoleDraft();
         StopFall(); StopGlass();
         ui.Stop();
+        foreach (var lamp in lampVoices) if (lamp) lamp.Stop();
     }
 
     void OnEnable()

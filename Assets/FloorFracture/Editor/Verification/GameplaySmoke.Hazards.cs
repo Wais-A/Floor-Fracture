@@ -12,10 +12,9 @@ namespace FloorFracture.Editor
     {
         private static IEnumerator VerifyHazardVisuals()
         {
-            Choose("Start"); StandOn(MiddlePane); Choose("Start wave");
-            yield return Stage(GameStage.Countdown);
-            var plan = game.State.ActiveWave;
-            StandOn(plan.GuaranteedTile);
+            // Spotlights first, in Ready, where no wave start replaces the forced set during the 3 s check.
+            Choose("Start"); StandOn(MiddlePane);
+            yield return Stage(GameStage.Ready);
             var view = game.BoardView;
             var board = view.Board;
             var slices = Enumerable.Range(0, 4).Select(i => board.Find("Floor fog/Floor fog " + i)?.GetComponent<MeshRenderer>()).ToArray();
@@ -32,8 +31,8 @@ namespace FloorFracture.Editor
             var old = RenderTexture.active;
             float halfX = game.State.Width * game.State.Pitch * .5f, halfZ = game.State.Height * game.State.Pitch * .5f;
             float extent = Mathf.Max(halfX, halfZ);
-            // Fog with its renderers on, then the same frame without them, as luminance.
-            (float[] with, float[] without) Render()
+            // Hazard renderers on, then the same frame without them, as luminance.
+            (float[] with, float[] without) Render(MeshRenderer[] parts)
             {
                 var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
                 float[] Read()
@@ -43,11 +42,11 @@ namespace FloorFracture.Editor
                     image.ReadPixels(new Rect(0, 0, size, size), 0, 0); image.Apply();
                     return image.GetPixels32().Select(p => (21 * p.r + 72 * p.g + 7 * p.b) / 100f).ToArray();
                 }
-                Require(slices.All(s => s.enabled), "Forced fog did not enable its slices.");
+                Require(parts.All(s => s.enabled), "Forced hazards did not enable their renderers.");
                 var lit = Read();
-                foreach (var s in slices) s.enabled = false;
+                foreach (var s in parts) s.enabled = false;
                 var clear = Read();
-                foreach (var s in slices) s.enabled = true;
+                foreach (var s in parts) s.enabled = true;
                 return (lit, clear);
             }
             float PaneRise((float[] with, float[] without) frame, int pane)
@@ -75,15 +74,57 @@ namespace FloorFracture.Editor
                 // Straight down from below a real ceiling, with board +z at the top of the image.
                 camera.transform.SetPositionAndRotation(board.TransformPoint(new Vector3(0, 1.5f, 0)), Quaternion.LookRotation(-board.up, board.forward));
 
+                view.SetHazards(new WaveHazards(0, 0, 2, Array.Empty<double>(), 11), game.GameplayTime);
+                yield return Delay(.5);
+                var lights = board.Find("Overhead lights");
+                var lamps = Enumerable.Range(0, 3).Select(i => lights.Find("Lamp " + i)).Where(l => l.gameObject.activeSelf).ToArray();
+                Require(lamps.Length == 2, $"Two spotlights must light two lamps, not {lamps.Length}.");
+                var room = game.Room.CurrentRoom;
+                float? ceiling = room && room.CeilingAnchors.Count > 0 ? room.CeilingAnchors.Min(a => a.transform.position.y) : null;
+                float lampY = WaveHazards.LampHeight(floorY, ceiling);
+                Require(lamps.All(l => Mathf.Abs(l.position.y - lampY) <= .01f),
+                    $"Lamps must hang at {lampY:F2} m, not {string.Join(", ", lamps.Select(l => l.position.y.ToString("F2")))}.");
+                var lit = lights.GetComponentsInChildren<MeshRenderer>().Where(r => r.enabled).ToArray();
+                Require(lit.Length == 4, $"Two spotlights must draw two beams and two pools, not {lit.Length} renderers.");
+                var spot = Render(lit);
+                float brightest = Enumerable.Range(0, spot.with.Length).Max(i => spot.with[i] - spot.without[i]);
+                Require(brightest >= 25f, $"Spotlights brightened the board's brightest pixel by only {brightest:F1}/255.");
+                Capture("hazard-spotlights", SmokeView.CenterEye);
+                var pools = Enumerable.Range(0, 2).Select(i => lights.Find("Spotlight pool " + i)).ToArray();
+                var last = pools.Select(p => p.localPosition).ToArray();
+                var swept = new float[pools.Length];
+                double sweepEnds = Now + 2;
+                yield return Wait(() =>
+                {
+                    for (int k = 0; k < pools.Length; ++k) { swept[k] += Vector3.Distance(last[k], pools[k].localPosition); last[k] = pools[k].localPosition; }
+                    return Now >= sweepEnds;
+                }, "spotlight pools to sweep", 10);
+                Require(swept.All(d => d >= .3f), $"Each spotlight pool must sweep 0.3 m in 2 s: {string.Join(", ", swept.Select(d => d.ToString("F2")))} m.");
+                var sound = game.GetComponent<GameSound>();
+                var hums = lamps.Select(l => l.GetComponentInChildren<AudioSource>()).ToArray();
+                Require(hums.All(h => h && h.isPlaying && h.spatialize && h.volume > 0), "Each lit lamp must play its spatial hum.");
+                float volume = sound.MasterVolume;
+                sound.SetVolume(0);
+                Require(hums.All(h => !h.isPlaying), "Lamp hums kept playing at zero volume.");
+                sound.SetVolume(volume);
+                view.SetHazards(WaveHazards.None, game.GameplayTime);
+                yield return Delay(.7);
+                Require(lit.All(r => !r.enabled) && hums.All(h => !h.isPlaying), "Spotlights stayed on 0.7 s after the hazards were withdrawn.");
+                Record($"Two forced spotlights hung at {lampY:F2} m, brightened the board's brightest pixel by {brightest:F0}/255 and swept their pools {swept.Min():F2} m or more in 2 s. Each lamp hummed spatially, went silent at zero volume and switched off 0.7 s after withdrawal.");
+
+                Choose("Start wave");
+                yield return Stage(GameStage.Countdown);
+                var plan = game.State.ActiveWave;
+                StandOn(plan.GuaranteedTile);
                 view.SetHazards(new WaveHazards(1f, 0, 0, Array.Empty<double>(), 7), game.GameplayTime);
                 yield return Delay(.5);
-                var fog = Render();
+                var fog = Render(slices);
                 float rise = fog.with.Average() - fog.without.Average();
                 Require(rise >= 8f, $"Floor fog raised the board's mean luminance by only {rise:F1}/255.");
 
                 view.SetHazards(new WaveHazards(0f, 1, 0, Array.Empty<double>(), 7), game.GameplayTime);
                 yield return Delay(.5);
-                var patch = Render();
+                var patch = Render(slices);
                 var panes = PlayablePanes.Select(p => PaneRise(patch, p)).ToArray();
                 Require(panes.Max() - panes.Min() >= 12f,
                     $"A fog patch must stand out over a pane: brightest {panes.Max():F1}, dimmest {panes.Min():F1} (/255 added).");
@@ -94,6 +135,7 @@ namespace FloorFracture.Editor
                 yield return Delay(.7);
                 Require(slices.All(s => !s.enabled), "Fog renderers stayed on 0.7 s after the hazards were withdrawn.");
                 Record($"Forced floor fog raised the board's mean luminance by {rise:F0}/255. One patch added {panes.Max():F0}/255 over its pane against {panes.Min():F0}/255 elsewhere. Fog stays within 35 cm and was gone 0.7 s after withdrawal.");
+
             }
             finally
             {

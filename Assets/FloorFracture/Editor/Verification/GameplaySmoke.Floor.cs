@@ -58,7 +58,7 @@ namespace FloorFracture.Editor
             {
                 var board = probe.AddComponent<GlassBoardView>();
                 var state = new BoardState(9, 9, 379);
-                board.Build(state, Pose.identity);
+                board.Build(state, Pose.identity, null, WaveHazards.LampHeight(0, null));
                 var mesh = probe.transform.Find("Opening stencil").GetComponent<MeshFilter>().sharedMesh;
                 var fragments = probe.transform.Find("Falling fragments");
                 foreach (var cells in new[] { new[] { 0 }, new[] { 0, 1 }, new[] { 0, 10 },

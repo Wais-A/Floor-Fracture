@@ -1,0 +1,128 @@
+using System;
+using UnityEngine;
+
+namespace FloorFracture
+{
+    // Up to three lamps beside the board. Each beam sweeps a warm pool across the glass and each lamp hums.
+    internal sealed class OverheadLights : MonoBehaviour
+    {
+        const int MaxLamps = 3, Segments = 24;
+        const float Outside = .8f, PoolHeight = .004f;
+        static readonly int FadeId = Shader.PropertyToID("_Fade"), PoolId = Shader.PropertyToID("_Pool"),
+            MappedFloorId = Shader.PropertyToID("_MappedFloorY");
+        readonly Transform[] lamps = new Transform[MaxLamps];
+        readonly AudioSource[] hums = new AudioSource[MaxLamps];
+        readonly MeshRenderer[] beams = new MeshRenderer[MaxLamps], pools = new MeshRenderer[MaxLamps];
+        readonly Mesh[] cones = new Mesh[MaxLamps];
+        readonly Vector4[] paths = new Vector4[MaxLamps]; // ω, x phase, z phase, unused
+        readonly Vector3[] vertices = new Vector3[2*(Segments+1)], normals = new Vector3[2*(Segments+1)];
+        Material beamMaterial, poolMaterial;
+        Mesh poolMesh;
+        GameSound sound;
+        Vector2 extents;
+        float radius;
+        bool zIsLonger;
+        WaveHazards hazards = WaveHazards.None;
+
+        // renderQueue is the fog's queue + 1, so the pools draw over the fog and the fissures.
+        public void Build(BoardState board, float lampHeightLocal, GameSound gameSound, int renderQueue)
+        {
+            sound = gameSound;
+            float halfX = board.Width*board.Pitch*.5f, halfZ = board.Height*board.Pitch*.5f;
+            // Pool centres stay over the outer pane centres.
+            extents = new Vector2((board.Width-1)*board.Pitch*.5f, (board.Height-1)*board.Pitch*.5f);
+            radius = .55f*board.Pitch;
+            zIsLonger = board.Height > board.Width;
+            beamMaterial = GlassTile.MakeMaterial("FloorFractureBeam");
+            poolMaterial = new Material(beamMaterial) {name = "FloorFractureBeam pool", hideFlags = HideFlags.DontSave};
+            poolMaterial.SetFloat(PoolId, 1);
+            foreach (var material in new[] {beamMaterial, poolMaterial})
+            {
+                material.renderQueue = renderQueue;
+                material.SetFloat(MappedFloorId, transform.position.y);
+            }
+            var b = new GlassGeometry.Builder();
+            b.Quad(new(-radius,0,-radius),new(radius,0,-radius),new(radius,0,radius),new(-radius,0,radius),Color.white,Color.white);
+            poolMesh = b.Create("Spotlight pool");
+            var triangles = new int[3*Segments];
+            for (int i = 0; i < Segments; ++i)
+            {
+                triangles[3*i] = i; triangles[3*i+1] = Segments+2+i; triangles[3*i+2] = Segments+1+i;
+            }
+            // Alternate sides: left, right, then far.
+            var sides = new[] {new Vector2(-halfX-Outside,0), new Vector2(halfX+Outside,0), new Vector2(0,halfZ+Outside)};
+            for (int k = 0; k < MaxLamps; ++k)
+            {
+                lamps[k] = new GameObject("Lamp "+k).transform;
+                lamps[k].SetParent(transform,false);
+                lamps[k].localPosition = GlassGeometry.Ground(sides[k], lampHeightLocal);
+                if (sound) hums[k] = sound.CreateLampVoice(lamps[k]);
+                lamps[k].gameObject.SetActive(false);
+                cones[k] = new Mesh {name = "Spotlight beam "+k};
+                cones[k].MarkDynamic();
+                cones[k].vertices = vertices; cones[k].normals = normals;
+                cones[k].SetTriangles(triangles,0);
+                beams[k] = GlassTile.Part(transform, "Spotlight beam "+k, cones[k], beamMaterial);
+                pools[k] = GlassTile.Part(transform, "Spotlight pool "+k, poolMesh, poolMaterial);
+                beams[k].enabled = pools[k].enabled = false;
+            }
+        }
+
+        public void Show(WaveHazards shown)
+        {
+            hazards = shown;
+            var random = new System.Random(unchecked(shown.VisualSeed*31+7)); // apart from the fog's stream
+            float R() => (float)random.NextDouble();
+            for (int k = 0; k < paths.Length; ++k)
+            {
+                // Half a period crosses the longer side in 3-5 s. That side moves at ω, or at 1.3ω along z.
+                float omega = Mathf.PI/(3+2*R())/(zIsLonger ? 1.3f : 1f);
+                paths[k] = new Vector4(omega, 2*Mathf.PI*R(), 2*Mathf.PI*R(), 0);
+            }
+        }
+
+        public void Tick(double now, float fade)
+        {
+            beamMaterial.SetFloat(FadeId, fade);
+            poolMaterial.SetFloat(FadeId, fade);
+            for (int k = 0; k < MaxLamps; ++k)
+            {
+                bool on = fade > 0 && k < hazards.Spotlights;
+                if (lamps[k].gameObject.activeSelf != on) lamps[k].gameObject.SetActive(on);
+                beams[k].enabled = pools[k].enabled = on;
+                if (hums[k]) sound.SetLampLevel(hums[k], on ? fade : 0);
+                if (!on) continue;
+                var path = paths[k];
+                var center = new Vector2(extents.x*(float)Math.Sin(path.x*now+path.y),
+                    extents.y*(float)Math.Sin(1.3*path.x*now+path.z));
+                pools[k].transform.localPosition = GlassGeometry.Ground(center, PoolHeight);
+                Aim(k, center);
+            }
+        }
+
+        // An open cone from the lamp to the pool's rim on the floor.
+        void Aim(int k, Vector2 center)
+        {
+            var apex = lamps[k].localPosition;
+            for (int i = 0; i <= Segments; ++i)
+            {
+                float angle = 2*Mathf.PI*i/Segments, cos = Mathf.Cos(angle), sin = Mathf.Sin(angle);
+                var rim = new Vector3(center.x+radius*cos, PoolHeight, center.y+radius*sin);
+                var normal = Vector3.Cross(rim-apex, new Vector3(-sin,0,cos)).normalized;
+                vertices[i] = apex; vertices[Segments+1+i] = rim;
+                normals[i] = normals[Segments+1+i] = normal;
+            }
+            cones[k].SetVertices(vertices);
+            cones[k].SetNormals(normals);
+            cones[k].RecalculateBounds();
+        }
+
+        void OnDestroy()
+        {
+            foreach (var cone in cones) if (cone) Destroy(cone);
+            if (poolMesh) Destroy(poolMesh);
+            if (beamMaterial) Destroy(beamMaterial);
+            if (poolMaterial) Destroy(poolMaterial);
+        }
+    }
+}
