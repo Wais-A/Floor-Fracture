@@ -285,7 +285,7 @@ namespace FloorFracture.Editor
         private sealed class FloorDepthReadback : System.IDisposable
         {
             private readonly Material preprocess;
-            private readonly Texture2DArray raw;
+            private readonly Texture2DArray raw, monoRaw;
             private readonly RenderTexture current, mono;
             private readonly CommandBuffer commands = new CommandBuffer();
             private readonly Vector4 texel;
@@ -296,12 +296,15 @@ namespace FloorFracture.Editor
             private readonly Vector4 oldZ = Shader.GetGlobalVector("_EnvironmentDepthZBufferParams");
             private readonly Matrix4x4[] oldMatrices = Shader.GetGlobalMatrixArray("_EnvironmentDepthReprojectionMatrices");
             private Matrix4x4[] poses;
+            private float[][] samples;
 
             internal FloorDepthReadback(int size, float near)
             {
                 ShaderUtil.allowAsyncCompilation=false;
                 texel=new Vector4(1f/size,1f/size,size,size);
                 raw=new Texture2DArray(size,size,2,TextureFormat.RFloat,false,true)
+                    {filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp};
+                monoRaw=new Texture2DArray(size,size,2,TextureFormat.RFloat,false,true)
                     {filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp};
                 current=Target(RenderTextureFormat.ARGBHalf);
                 mono=Target(RenderTextureFormat.ARGBHalf);
@@ -329,6 +332,7 @@ namespace FloorFracture.Editor
                 Shader.SetGlobalTexture("_PreprocessedEnvironmentDepthTexture",current);
                 Shader.SetGlobalMatrixArray("_EnvironmentDepthReprojectionMatrices",matrices);
                 poses=matrices;
+                this.samples=samples;
             }
 
             private void Draw(Material material, int pass, RenderTexture target)
@@ -343,7 +347,11 @@ namespace FloorFracture.Editor
 
             internal Color32[] ReadGlassEye(int eye, System.Func<Color32[]> read)
             {
-                Graphics.CopyTexture(current, eye, 0, mono, 0, 0);
+                // Preprocess this eye into both slices: a per-slice CopyTexture did not reach the next render in the live Editor.
+                for (int slice=0; slice<2; slice++) monoRaw.SetPixelData(samples[eye],0,slice);
+                monoRaw.Apply(false);
+                preprocess.SetTexture("_EnvironmentDepthTexture",monoRaw);
+                Draw(preprocess,0,mono);
                 var oldTexel = Shader.GetGlobalVector("_PreprocessedEnvironmentDepthTexture_TexelSize");
                 Shader.SetGlobalTexture("_PreprocessedEnvironmentDepthTexture", mono);
                 Shader.SetGlobalVector("_PreprocessedEnvironmentDepthTexture_TexelSize", texel);
@@ -367,7 +375,7 @@ namespace FloorFracture.Editor
                     oldMatrices != null && oldMatrices.Length > 0 ? oldMatrices : new[] {Matrix4x4.identity, Matrix4x4.identity});
                 if (!softWasEnabled) Shader.DisableKeyword("SOFT_OCCLUSION");
                 commands.Dispose();
-                foreach (Object item in new Object[] {preprocess, raw, current, mono})
+                foreach (Object item in new Object[] {preprocess, raw, monoRaw, current, mono})
                     Object.DestroyImmediate(item);
             }
         }
