@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 
 namespace FloorFracture.Tests
@@ -81,23 +82,43 @@ namespace FloorFracture.Tests
             }
         }
 
+        // Counts flash pulses (rises past half brightness) at 1 ms steps around the strikes.
+        static void AssertAtMostThreeFlashesPerSecond(IReadOnlyList<double> strikes)
+        {
+            if (strikes.Count == 0) return;
+            var rises = new List<double>();
+            float prev = 0;
+            for (long ms = (long)(strikes.Min() * 1000) - 100; ms <= (long)(strikes.Max() * 1000) + 1000; ms++)
+            {
+                double t = ms / 1000.0; float level = 0;
+                foreach (double strike in strikes) level = System.Math.Max(level, WaveHazards.FlashIntensity(t - strike, false));
+                if (prev < .5f && level >= .5f) rises.Add(t);
+                prev = level;
+            }
+            for (int i = 0; i + 3 < rises.Count; i++)
+                Assert.That(rises[i + 3] - rises[i], Is.GreaterThanOrEqualTo(1.0), "More than three flashes in one second: " + string.Join(", ", strikes));
+        }
+
         [Test] public void FlashesNeverExceedThreePerSecond()
         {
-            var waves = new List<IReadOnlyList<double>> { new[] { 0.0, 1.2 } };
+            var waves = new List<IReadOnlyList<double>> { new[] { 0.0, WaveHazards.StrikeSpacing } };
             for (int s = 0; s < 40; s++) waves.Add(WaveHazards.Roll(10, 2, s, 0, 1).Strikes);
-            foreach (var strikes in waves)
+            foreach (var strikes in waves) AssertAtMostThreeFlashesPerSecond(strikes);
+        }
+
+        [Test] public void BackToBackWavesNeverFlashMoreThanThreeTimesPerSecond()
+        {
+            for (int level = 5; level <= 14; level++) for (int number = 1; number <= 4; number++) for (int s = 0; s < 50; s++)
             {
-                var rises = new List<double>();
-                float prev = 0;
-                for (int ms = 0; ms < 5000; ms++)
-                {
-                    double t = ms / 1000.0; float level = 0;
-                    foreach (double strike in strikes) level = System.Math.Max(level, WaveHazards.FlashIntensity(t - strike, false));
-                    if (prev < .5f && level >= .5f) rises.Add(t);
-                    prev = level;
-                }
-                for (int i = 0; i + 3 < rises.Count; i++)
-                    Assert.That(rises[i + 3] - rises[i], Is.GreaterThanOrEqualTo(1.0), "More than three flashes in one second.");
+                double duration = WavePacing.SwitchSeconds(level, number), next = 10 + duration + WavePacing.RecoveryAt(level);
+                var old = WaveHazards.Roll(level, number, s, 10, duration).Strikes;
+                var current = WaveHazards.Roll(level, number + 1, s + 1000, next, WavePacing.SwitchSeconds(level, number + 1)).Strikes;
+                // As Lightning does: the old wave's strikes show until the next wave replaces them, and each flash is spaced from the last.
+                double shown = double.NegativeInfinity;
+                var flashed = new List<double>();
+                foreach (double strike in old.Where(t => t < next).Concat(current))
+                    if (WaveHazards.MayFlash(shown, strike)) flashed.Add(shown = strike);
+                AssertAtMostThreeFlashesPerSecond(flashed);
             }
         }
 

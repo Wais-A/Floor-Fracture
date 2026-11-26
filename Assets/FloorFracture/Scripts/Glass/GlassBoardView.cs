@@ -212,7 +212,7 @@ namespace FloorFracture
             lights.Tick(now,fade);
             // Once withdrawn, nothing flashes: strikes that come due during the fade-out pass silently.
             lightning.Tick(now,double.IsPositiveInfinity(hazardsHiddenAt) ? fade : 0,ReducedMotion);
-            if (fade<=0 && !double.IsPositiveInfinity(hazardsHiddenAt)) hazards=null;
+            if (fade<=0 && !double.IsPositiveInfinity(hazardsHiddenAt)) { hazards=null; lightning.Withdraw(); }
         }
 
         public void Shatter(int index)

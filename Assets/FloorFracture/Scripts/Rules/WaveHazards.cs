@@ -59,8 +59,8 @@ namespace FloorFracture
                 {
                     double second = Between(ref random, low, high);
                     // shortcut: bounded redraw, then use the window's two ends (always >= 1.25 s apart).
-                    for (int tries = 0; Math.Abs(second - first) < 1.2 && tries < 32; ++tries) second = Between(ref random, low, high);
-                    if (Math.Abs(second - first) < 1.2) { first = low; second = high; strikes[0] = first; }
+                    for (int tries = 0; Math.Abs(second - first) < StrikeSpacing && tries < 32; ++tries) second = Between(ref random, low, high);
+                    if (Math.Abs(second - first) < StrikeSpacing) { first = low; second = high; strikes[0] = first; }
                     strikes.Add(second);
                     strikes.Sort();
                 }
@@ -68,6 +68,12 @@ namespace FloorFracture
             return new WaveHazards(0, 0, lights ? 1 + (level >= 8 ? 1 : 0) + (level >= 11 ? 1 : 0) : 0,
                 strikes.AsReadOnly(), random.Next(1 << 30));
         }
+
+        // Strikes at least this far apart never put more than 3 flash pulses (2 per strike, .16 s apart) in 1 s.
+        public const double StrikeSpacing = 1.2;
+
+        // Whether a strike due at `strike` may flash after the last strike flashed at `shown`, in this wave or the last.
+        public static bool MayFlash(double shown, double strike) => strike - shown >= StrikeSpacing;
 
         private static double Between(ref WavePlanner.Generator random, double low, double high) =>
             low + (high - low) * random.Next(1 << 20) / ((1 << 20) - 1);

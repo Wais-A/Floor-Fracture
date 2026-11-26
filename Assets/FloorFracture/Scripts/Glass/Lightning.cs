@@ -22,6 +22,8 @@ namespace FloorFracture
         Vector3 strikeLocal;
         float pitch, shownFlash = -1;
         int next;
+        // Gameplay-clock time of the last strike flashed. It carries across waves, so back-to-back waves keep the spacing.
+        double shownStrike = double.NegativeInfinity;
 
         public void Build(Transform board, GameSound gameSound, float lampHeightLocal)
         {
@@ -53,6 +55,9 @@ namespace FloorFracture
             pitch = .92f + .14f*(float)random.NextDouble();
         }
 
+        // The run left play (hazards withdrawn), so the next strike owes the last one no spacing.
+        public void Withdraw() => shownStrike = double.NegativeInfinity;
+
         // `now` is the pause-aware gameplay clock, so a menu pause holds a pending strike until resume.
         public void Tick(double now, float fade, bool reduced)
         {
@@ -61,12 +66,15 @@ namespace FloorFracture
             for (; next < strikes.Count && strikes[next] <= now; ++next)
             {
                 double late = now - strikes[next];
-                // A strike that passed while the board was hidden or before Show is dropped, not replayed late.
-                if (visible && late < FlashSeconds && sound)
+                // A strike that passed while the board was hidden or before Show, or that comes too soon after the
+                // last flash, passes silently: no flash and no thunder.
+                if (!visible || late >= FlashSeconds || !WaveHazards.MayFlash(shownStrike, strikes[next])) continue;
+                shownStrike = strikes[next];
+                if (sound)
                     sound.PlayThunder(transform.TransformPoint(strikeLocal),
                         Math.Max(0, WaveHazards.ThunderDelay(hazards.VisualSeed, next) - late), pitch);
             }
-            float flash = visible && next > 0 ? WaveHazards.FlashIntensity(now - strikes[next-1], reduced)*fade : 0;
+            float flash = visible ? WaveHazards.FlashIntensity(now - shownStrike, reduced)*fade : 0;
             bool wash = flash > 0 && !reduced;
             var head = wash ? Camera.main : null;
             bool veiled = head != null;

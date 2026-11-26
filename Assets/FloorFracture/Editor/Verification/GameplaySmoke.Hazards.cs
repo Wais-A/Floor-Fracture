@@ -256,13 +256,23 @@ namespace FloorFracture.Editor
 
                 view.ReducedMotion = true;
                 now = game.GameplayTime;
-                view.SetHazards(new WaveHazards(0, 0, 0, new[] { now + .3 }, 5), now);
-                view.DrawHazards(now + .3 + .1);
+                double glow = Math.Max(now + .3, strike + WaveHazards.StrikeSpacing); // a closer strike would pass silently
+                view.SetHazards(new WaveHazards(0, 0, 0, new[] { glow }, 5), now);
+                view.DrawHazards(glow + .1);
                 Require(Flash > 0 && !veil.enabled, "With Reduced motion a strike must not show the flash veil.");
-                yield return SampleFlash(now + .3 + .7, peak);
+                yield return SampleFlash(glow + .7, peak);
                 float soft = peak[0];
                 Require(soft > .1f && soft <= .35f, $"With Reduced motion a strike must glow softly at 0.35 or less, not {soft:F2}.");
-                Record($"A forced strike flashed to {full:F2}, went dark and flashed again at {second:F2}, ended by 0.6 s, with one spatial thunder voice {offset.magnitude:F1} m out and {Vector3.Dot(offset, board.up):F1} m up. With Reduced motion it peaked at {soft:F2}.");
+
+                // A new set whose strike comes too soon after the last flash, as when a wave starts just after an old strike.
+                int heard = sound.EditorThunderCues;
+                double close = game.GameplayTime + .2;
+                Require(close - glow < WaveHazards.StrikeSpacing, "The close strike must fall inside the strike spacing.");
+                view.SetHazards(new WaveHazards(0, 0, 0, new[] { close }, 6), game.GameplayTime);
+                yield return SampleFlash(close + .7, peak);
+                Require(peak[0] == 0 && sound.EditorThunderCues == heard,
+                    $"A strike {close - glow:F2} s after the last flash lit to {peak[0]:F2} or played thunder.");
+                Record($"A forced strike flashed to {full:F2}, went dark and flashed again at {second:F2}, ended by 0.6 s, with one spatial thunder voice {offset.magnitude:F1} m out and {Vector3.Dot(offset, board.up):F1} m up. With Reduced motion it peaked at {soft:F2}. A strike {close - glow:F2} s after it, in a new set, stayed dark and silent.");
             }
             finally { view.ReducedMotion = oldReduced; sound.SetVolume(oldVolume); }
             view.SetHazards(WaveHazards.None, game.GameplayTime);
