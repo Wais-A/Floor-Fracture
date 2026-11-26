@@ -22,7 +22,7 @@ Use one copy per APK and test room. Record observations from the headset and lea
 | 033–034 | Insufficient room. Record the message, passthrough visibility, and result of rescanning. | |
 | 037–044, 120 | Use each ray from seated and standing menu positions. Finish the untimed stepping tutorial. Enter optional stone practice, try both grips, miss, hit any pane, and leave for the game. Describe any coaching. | |
 
-Compare **Up to 16 tiles** and **Entire connected floor** on the same saved scan. Record playable tile count, pitch, and FPS during the countdown and first shatter for each mode. Check that each manual start shows 3, 2, 1 and GO! in both eyes and clears the display during play. Check the room for any leftover clock or stand.
+Compare **Up to 12 tiles** and **Entire connected floor** on the same saved scan. Record playable tile count, pitch, and FPS during the countdown and first shatter for each mode. Check that each manual start shows 3, 2, 1 and GO! in both eyes and clears the display during play. Check the room for any leftover clock or stand.
 
 ### Movement, visibility, and endings
 

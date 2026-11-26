@@ -371,7 +371,7 @@ namespace FloorFracture.Tests
 
         public static void CoordinatesAndSeams()
         {
-            foreach (float pitch in new[] {0.5f, 0.57f, 0.6367f, 0.67f})
+            foreach (float pitch in new[] {0.5f, 0.57f, 0.6367f, 0.75f})
             for (int w = 2; w <= 32; ++w)
             for (int h = 2; h <= 64 / w; ++h)
             {
@@ -473,7 +473,7 @@ namespace FloorFracture.Tests
         public static void PlantedStanceAndGapEdges()
         {
             // Use the 5 x 3 / 53.9 cm physical footprint, then both supported pitch limits.
-            foreach (float pitch in new[]{.539f,.50f,.67f})
+            foreach (float pitch in new[]{.539f,.50f,.75f})
             {
                 foreach (Vector2 side in new[]{Vector2.left,Vector2.right,Vector2.up,Vector2.down,
                     new Vector2(-1,-1),new Vector2(-1,1),new Vector2(1,-1),new Vector2(1,1)})
@@ -808,7 +808,7 @@ namespace FloorFracture.Tests
 
         public static void SlidingAndGrace()
         {
-            foreach (float pitch in new[] {0.50f, 0.61f, 0.67f})
+            foreach (float pitch in new[] {0.50f, 0.61f, 0.75f})
             foreach (Vector2 side in new[] { Vector2.right, Vector2.left, Vector2.up, Vector2.down })
             {
                 BoardState board = SlidingFixture(pitch);

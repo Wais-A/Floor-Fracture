@@ -6,9 +6,9 @@ namespace FloorFracture
 {
     internal sealed partial class FloorSurvey
     {
-        internal const int DefaultPaneLimit = 16;
-        internal const float PreferredMinPitch = .60f;
-        private static readonly float[] ConnectedPitches = { .65f, .625f, PreferredMinPitch, .55f, .50f, .45f, .40f };
+        internal const int DefaultPaneLimit = 12;
+        internal const float PreferredMinPitch = .69f;
+        private static readonly float[] ConnectedPitches = { .75f, .72f, PreferredMinPitch, .65f, .60f, .55f, .50f, .45f, .40f };
         private static readonly Vector2Int[] Directions = {
             Vector2Int.right, Vector2Int.up, Vector2Int.left, Vector2Int.down
         };

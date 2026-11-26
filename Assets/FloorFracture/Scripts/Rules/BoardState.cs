@@ -10,7 +10,7 @@ namespace FloorFracture
     public sealed class BoardState
     {
         public const int MinAxis = 2, MaxAxis = int.MaxValue / MinAxis;
-        public const float CompactMinPitch = 0.40f, MinPitch = 0.50f, MaxPitch = 0.67f;
+        public const float CompactMinPitch = 0.40f, MinPitch = 0.50f, MaxPitch = 0.75f;
         public const float PaneHalfPitch = .484f;
         public float Pitch { get; private set; }
         public BoardLayout Layout { get; private set; }

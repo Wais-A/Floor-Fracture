@@ -106,7 +106,7 @@ namespace FloorFracture
         public const float BorderTolerance = 0.035f;
         public const float SupportReach = 0.09f;
         public const double GapGrace = 0.3;
-        internal const double JumpGapGrace = .45;
+        internal const double JumpGapGrace = .55;
         public TileSample Current { get; private set; } = new TileSample(SupportKind.Untracked);
 
         private double gapStartedAt = double.NaN;

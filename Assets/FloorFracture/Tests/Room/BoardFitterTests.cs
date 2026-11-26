@@ -252,13 +252,13 @@ namespace FloorFracture.Tests
         [TestCase(1.00f, 1.00f, 2, 2, 0.50f, 1.00f, 1.00f)]
         [TestCase(1.80f, 1.80f, 3, 3, 0.60f, 1.80f, 1.80f)]
         [TestCase(1.94f, 1.94f, 3, 3, 1.94f / 3f, 1.94f, 1.94f)]
-        [TestCase(2.06f, 2.06f, 4, 4, 0.515f, 2.06f, 2.06f)]
+        [TestCase(2.06f, 2.06f, 3, 3, 2.06f / 3f, 2.06f, 2.06f)]
         [TestCase(2.30f, 2.80f, 4, 5, 0.56f, 2.24f, 2.80f)]
         [TestCase(2.80f, 2.30f, 5, 4, 0.56f, 2.80f, 2.24f)]
         [TestCase(3.20f, 3.60f, 6, 7, 3.60f / 7f, 6f * 3.60f / 7f, 3.60f)]
         [TestCase(4.00f, 4.20f, 6, 6, 4f / 6f, 4.00f, 4.00f)]
-        [TestCase(5.60f, 5.60f, 8, 8, 0.67f, 5.36f, 5.36f)]
-        [TestCase(7.00f, 7.00f, 8, 8, 0.67f, 5.36f, 5.36f)]
+        [TestCase(5.60f, 5.60f, 8, 8, 0.70f, 5.60f, 5.60f)]
+        [TestCase(7.00f, 7.00f, 8, 8, 0.75f, 6.00f, 6.00f)]
         [TestCase(6.40f, 2.00f, 10, 3, 0.64f, 6.40f, 1.92f)]
         [TestCase(1.80f, 6.80f, 3, 11, 0.60f, 1.80f, 6.60f)]
         [TestCase(8.04f, 2.68f, 12, 4, 0.67f, 8.04f, 2.68f)]
@@ -390,7 +390,7 @@ namespace FloorFracture.Tests
                 for (int c = 2; c <= 32; ++c)
                 for (int r = 2; r <= 64 / c; ++r)
                 {
-                    float pitch = Mathf.Min(0.67f, Mathf.Min(roomX / c, roomZ / r));
+                    float pitch = Mathf.Min(BoardState.MaxPitch, Mathf.Min(roomX / c, roomZ / r));
                     if (pitch >= 0.5f) expected = Mathf.Max(expected, c * r * pitch * pitch);
                 }
                 float glassArea = fit.Columns * fit.Rows * fit.Pitch * fit.Pitch;

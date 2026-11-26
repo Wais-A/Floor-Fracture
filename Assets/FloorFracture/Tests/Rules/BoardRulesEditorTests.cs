@@ -17,7 +17,7 @@ namespace FloorFracture.Tests
         [Test] public void EveryPlanCarriesHazardsWithoutFog() => BoardRuleChecks.PlansCarryHazards();
         [Test] public void SeededLevelCurveAndSingleClueWindows() => BoardRuleChecks.ProgressiveWaves();
         [TestCase(.40f)]
-        [TestCase(.67f)]
+        [TestCase(.75f)]
         public void OneHoleJumpOpensAtTakeoffAndResolvesAtLanding(float pitch)
         {
             var board = new BoardState(BoardLayout.Rectangle(3, 1), 379, pitch);
@@ -43,7 +43,8 @@ namespace FloorFracture.Tests
             wave=board.BeginWave(0,14,1,20);
             board.Tick(board.Center(0),true,wave.JumpOpensAt);
             board.Tick(board.Center(1),true,21.1);
-            Assert.That(board.Tick(board.Center(1),true,21.56),Is.EqualTo(WaveResult.Lost));
+            Assert.That(board.Tick(board.Center(1),true,21.62),Is.EqualTo(WaveResult.Pending));
+            Assert.That(board.Tick(board.Center(1),true,21.66),Is.EqualTo(WaveResult.Lost));
         }
 
         [TestCase(2, 2)]

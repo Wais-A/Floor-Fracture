@@ -331,13 +331,13 @@ namespace FloorFracture.Tests
             var survey = new FloorSurvey(floor, scan, 2.2f, null, default);
             var wearer = new Vector2(2.7f, 2.6f);
             var capped = FloorSurvey.FindConnected(new[] { survey }, wearer, default, out _).Value;
-            Assert.That(capped.Layout.PaneCount, Is.EqualTo(16));
-            Assert.That(capped.Pitch, Is.InRange(.60f, .65f));
+            Assert.That(capped.Layout.PaneCount, Is.EqualTo(12));
+            Assert.That(capped.Pitch, Is.InRange(.69f, .75f));
             Assert.That(Vector2.Distance(capped.Center, wearer), Is.LessThan(.65f));
             Assert.That(survey.ChecksEveryTile(capped), Is.True);
 
             var full = FloorSurvey.FindConnected(new[] { survey }, wearer, default, out _, entireFloor: true).Value;
-            Assert.That(full.Pitch, Is.InRange(.60f, .65f));
+            Assert.That(full.Pitch, Is.InRange(.69f, .75f));
             Assert.That(full.Layout.PaneCount, Is.GreaterThan(150));
             Assert.That(full.Layout.IsPlayable && survey.ChecksEveryTile(full), Is.True);
             Assert.That(BoardFitter.Fits(floor, full, FloorSurvey.FootMargin), Is.True);
@@ -353,6 +353,19 @@ namespace FloorFracture.Tests
             var fit = FloorSurvey.FindConnected(new[] { survey }, Vector2.one, default, out _).Value;
             Assert.That(fit.Pitch, Is.EqualTo(.55f));
             Assert.That(fit.Layout.PaneCount, Is.GreaterThanOrEqualTo(4));
+        }
+
+        [Test]
+        public void BiggerPanesGiveAboutThreeQuartersAsManyPanes()
+        {
+            // At the old 60-65 cm pitch this room held 16 panes.
+            Surface(0, 0, 4.2f, 2.8f);
+            Assert.That(FloorMeshScan.TryCreate(vertices.ToArray(), indices.ToArray(), Matrix4x4.identity, out var scan), Is.True);
+            var survey = new FloorSurvey(new RoomFloor(Box(0, 0, 4.2f, 2.8f), new List<Vector2[]>()), scan, 2.2f, null, default);
+            var fit = FloorSurvey.FindConnected(new[] { survey }, new Vector2(2.1f, 1.4f), default, out _).Value;
+            Assert.That(fit.Pitch, Is.GreaterThanOrEqualTo(.69f));
+            Assert.That(fit.Layout.PaneCount, Is.InRange(6, 12));
+            Assert.That(survey.ChecksEveryTile(fit), Is.True);
         }
 
         [TestCase(false)]
@@ -393,7 +406,7 @@ namespace FloorFracture.Tests
             var refreshed = result.surveys[0].Refresh(survey.Floor, scan, 2.2f, null, default);
             Assert.That(refreshed.Check(Box(-.02f, -.02f, .02f, .02f)), Is.EqualTo(TileClearance.LiveObstacle));
             Assert.That(refreshed.ChecksEveryTile(result.fit.Value), Is.True);
-            if (!entireFloor) Assert.That(result.fit.Value.Layout.PaneCount, Is.LessThanOrEqualTo(16));
+            if (!entireFloor) Assert.That(result.fit.Value.Layout.PaneCount, Is.LessThanOrEqualTo(12));
         }
 
         [Test]

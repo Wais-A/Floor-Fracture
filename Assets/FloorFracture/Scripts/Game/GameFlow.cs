@@ -198,7 +198,7 @@ namespace FloorFracture
             Room.ShowClearance(true);
             var choices=new System.Collections.Generic.List<MenuChoice>{
                 Choice("Back",Home),Choice("Refit saved floor",Room.Retry),Choice("Try another spot",Room.Decline),Choice("Space Setup",Room.RequestSpaceSetup)};
-            choices.Add(Choice("Board size  ·  "+(Room.EntireFloor?"Entire connected floor":"Up to 16 tiles"),()=>Room.SetEntireFloor(!Room.EntireFloor)));
+            choices.Add(Choice("Board size  ·  "+(Room.EntireFloor?"Entire connected floor":"Up to 12 tiles"),()=>Room.SetEntireFloor(!Room.EntireFloor)));
             if (Application.isEditor||Debug.isDebugBuild)
                 choices.Add(Choice("Placement debug  ·  "+(Room.PlacementDebug?"On":"Off"),()=>{Room.TogglePlacementDebug();PlayArea();}));
             Panel.Show("Play area",Room.Message+"\n"+(Room.PlacementDebug ? RoomBoardPlacement.DebugLegend :

@@ -165,7 +165,7 @@ namespace FloorFracture.Editor
             var outlines = game.Room.transform.Find("Placement outlines");
             Require(outlines && outlines.gameObject.activeInHierarchy && outlines.GetComponent<MeshFilter>().sharedMesh.vertexCount > 0,
                 "The Welcome screen did not show the fitted board's perimeter.");
-            Require(placement.Layout.PaneCount<=16 && placement.Pitch>=.60f && placement.Pitch<=.65f,"The recorded living room did not get the default larger panes.");
+            Require(placement.Layout.PaneCount<=12 && placement.Pitch>=.69f && placement.Pitch<=.75f,"The recorded living room did not get the default larger panes.");
             VerifyMenuAndSpatialAudio();
             yield return VerifyHandRecoveryMenu();
             VerifyOccupancyRingMesh();
@@ -344,7 +344,7 @@ namespace FloorFracture.Editor
             Choose("Play area");
             Choose("Board size");
             yield return Wait(()=>game.Stage==GameStage.Welcome && !game.Room.EntireFloor,"default board refit",55);
-            Require(game.State.Layout.PaneCount<=16,"Returning to the default board did not reapply the cap.");
+            Require(game.State.Layout.PaneCount<=12,"Returning to the default board did not reapply the cap.");
             Record($"Play area refit the saved room in both modes: {game.State.Layout.PaneCount} default panes and {fullCount} full-floor panes.");
         }
 
