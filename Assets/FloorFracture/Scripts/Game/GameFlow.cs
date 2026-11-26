@@ -13,6 +13,7 @@ namespace FloorFracture
         [SerializeField] bool useDynamicResolution = true;
         GameStage stage = GameStage.Room;
         GameStage pausedStage;
+        int pausedPane=-1;
         bool pausedBoardVisible;
         Action restorePausedPage;
         double? menuPausedAt;
@@ -384,6 +385,7 @@ namespace FloorFracture
                 restorePausedPage=Panel.Visible ? Panel.RememberPage() : null;
             }
             pausedStage=Stage;
+            pausedPane=State.IndexAt(HeadXZ);
             pausedBoardVisible=BoardView.gameObject.activeSelf;
             if (pausedStage==GameStage.Fall) Ending.SetTrackingPaused(true);
             else
@@ -421,6 +423,15 @@ namespace FloorFracture
             {
                 menuPauseSeconds += Time.unscaledTimeAsDouble-menuPausedAt.Value;
                 menuPausedAt=null;
+                // The clock stood still during the pause, so a step taken then would skip the timed move.
+                if (pausedStage==GameStage.Countdown && State.IndexAt(HeadXZ)!=pausedPane)
+                {
+                    State.Pause();
+                    BoardView.ClearTransient();
+                    restorePausedPage=null;
+                    Ready("You moved while paused. Resume with a fresh countdown.");
+                    return;
+                }
                 if (pausedStage==GameStage.CountIn || pausedStage==GameStage.Countdown || pausedStage==GameStage.BetweenWaves)
                 {
                     Stage=pausedStage;

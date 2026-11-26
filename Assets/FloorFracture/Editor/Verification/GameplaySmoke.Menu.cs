@@ -140,8 +140,13 @@ namespace FloorFracture.Editor
                 game.Room.Placement.Equals(fit),"Results Quit did not restore the main menu on the same floor.");
             game.Ending.SetDevelopmentEnding(-1);
             Choose("Start"); StandOn(MiddlePane); Choose("Start wave"); yield return Stage(GameStage.Countdown);
-            MenuInput(touch); Choose("Main menu"); yield return Stage(GameStage.Welcome);
-            Record("Meta Touch and hand Menu edges paused and resumed the same countdown. Holding Menu kept it paused. The hand menu froze a fall, and the panel resumed it. Results Quit returned to Welcome and started a fresh playable wave on the same floor.");
+            int safe=game.State.ActiveWave.GuaranteedTile;
+            MenuInput(touch); yield return Stage(GameStage.Paused);
+            StandOn(safe); yield return Frames(2);
+            Choose("Resume"); yield return Stage(GameStage.Ready);
+            Require(game.State.ActiveWave==null,"Stepping to another pane during a menu pause kept the frozen wave.");
+            Choose("Main menu"); yield return Stage(GameStage.Welcome);
+            Record("Meta Touch and hand Menu edges paused and resumed the same countdown. Moving to another pane while paused restarted the countdown. Holding Menu kept it paused. The hand menu froze a fall, and the panel resumed it. Results Quit returned to Welcome and started a fresh playable wave on the same floor.");
         }
 
         private static IEnumerator VerifyStartCount()
