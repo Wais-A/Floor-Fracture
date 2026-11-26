@@ -276,7 +276,8 @@ namespace FloorFracture.Editor
 
                 view.ReducedMotion = true;
                 now = game.GameplayTime;
-                double glow = Math.Max(now + .3, strike + WaveHazards.StrikeSpacing); // a closer strike would pass silently
+                // A closer strike would pass silently. The margin keeps strike + spacing from rounding just under it.
+                double glow = Math.Max(now + .3, strike + WaveHazards.StrikeSpacing + .05);
                 view.SetHazards(new WaveHazards(0, 0, 0, new[] { glow }, 5), now);
                 view.DrawHazards(glow + .1);
                 Require(Flash > 0 && !veil.enabled, "With Reduced motion a strike must not show the flash veil.");
