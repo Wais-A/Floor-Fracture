@@ -302,11 +302,11 @@ namespace FloorFracture.Editor
             MenuInput(new OVRInput.OVRControllerTouch());
             Choose("Main menu");
             yield return Delay(.7);
-            var parts = Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None)
+            var parts = Object.FindObjectsByType<MeshRenderer>()
                 .Where(r => r.transform.parent && r.transform.parent.name is "Floor fog" or "Overhead lights" or "Lightning").ToArray();
             var lit = parts.Where(r => r.enabled).Select(r => r.name).ToArray();
             Require(lit.Length == 0, "Hazard renderers stayed on after Main menu: " + string.Join(", ", lit));
-            var hums = Object.FindObjectsByType<AudioSource>(FindObjectsSortMode.None).Where(a => a.name == "Lamp hum").ToArray();
+            var hums = Object.FindObjectsByType<AudioSource>().Where(a => a.name == "Lamp hum").ToArray();
             Require(hums.All(h => !h.isPlaying) && voices.All(v => !v.isPlaying) && Flash == 0,
                 "Main menu left a lamp hum, thunder or the flash running.");
 
