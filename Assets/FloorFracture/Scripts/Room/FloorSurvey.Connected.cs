@@ -15,15 +15,16 @@ namespace FloorFracture
             Vector2Int.right, Vector2Int.up, Vector2Int.left, Vector2Int.down
         };
 
-        // Big panes win when they keep 3/4 of the most panes a comfortable pitch offers (the
-        // reference). Otherwise the largest comfortable pitch that keeps 3/4 wins. Only try compact
-        // panes when no comfortable pitch produces four. Two edge-neighbors still suffice.
-        // Both modes use the rule. Reference 0 turns it off when comparing fits of one pitch.
+        // Big panes win when they keep 3/4 of the reference: the panes this mode chose before from
+        // the comfortable pitches. Otherwise the largest comfortable pitch that keeps 3/4 wins. Only
+        // try compact panes when no comfortable pitch produces four. Two edge-neighbors still
+        // suffice. Reference 0 turns the rule off when comparing fits of one pitch.
         private readonly struct FitScore
         {
             private readonly int tier, area;
             private readonly float pitch, distance;
             internal readonly int Count;
+            internal int Area => area;
 
             internal FitScore(int count, float pitch, float distance, int reference = 0)
             {
@@ -90,9 +91,24 @@ namespace FloorFracture
                 return most;
             }
 
+            // The default board chose the most panes. The entire floor chose the most glass, four
+            // panes first and ties to the larger pitch.
+            private int ReferenceCount()
+            {
+                if (!entireFloor) return MostPanes(ComfortMinPitch);
+                int best = -1;
+                for (int p = 0; p < scores.Length && ConnectedPitches[p] >= ComfortMinPitch; p++)
+                {
+                    if (fits[p] == null) continue;
+                    bool four = scores[p].Count >= 4;
+                    if (best < 0 || (four != scores[best].Count >= 4 ? four : scores[p].Area > scores[best].Area)) best = p;
+                }
+                return best < 0 ? 0 : scores[best].Count;
+            }
+
             private int Chosen()
             {
-                int reference = MostPanes(ComfortMinPitch), best = -1;
+                int reference = ReferenceCount(), best = -1;
                 for (int p = 0; p < fits.Length; p++)
                     if (fits[p] != null && (best < 0 ||
                         scores[p].Against(reference).Beats(scores[best].Against(reference), entireFloor)))

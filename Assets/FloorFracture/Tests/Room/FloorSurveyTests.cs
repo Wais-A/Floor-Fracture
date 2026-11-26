@@ -337,7 +337,7 @@ namespace FloorFracture.Tests
             Assert.That(survey.ChecksEveryTile(capped), Is.True);
 
             var full = FloorSurvey.FindConnected(new[] { survey }, wearer, default, out _, entireFloor: true).Value;
-            Assert.That(full.Pitch, Is.InRange(.69f, .75f));
+            Assert.That(full.Pitch, Is.EqualTo(.75f));
             Assert.That(full.Layout.PaneCount, Is.GreaterThan(150));
             Assert.That(full.Layout.IsPlayable && survey.ChecksEveryTile(full), Is.True);
             Assert.That(BoardFitter.Fits(floor, full, FloorSurvey.FootMargin), Is.True);
