@@ -44,7 +44,7 @@ Break timing is unchanged. The hazards below add movement and visual or audio cl
 - Fog, from level two, is thick drifting fog below knee height. It thickens with level and partly hides the amber cracks. From level three, drifting fog patches also settle over single panes.
 - Sweeping spotlights, from level four, are one to three overhead beams from lamps placed below the real ceiling. Their bright pools wash out cracks, and each lamp hums from its own direction.
 - Lightning, from level five, is a double flash overhead followed by thunder from that direction, at most three flashes per second. With Reduced motion on it is one soft glow.
-- Mix: fog, patches, spotlights and lightning are rolled per wave. Level one has none, levels two and three have zero or one, levels four to six have one (sometimes two), levels seven to nine have one or two, and from level ten there are two or three.
+- Mix: fog belongs to the level. From level two every level has floor fog, thicker at higher levels, and from level three it also has fog patches (one, then two from level seven, then three from level ten). The fog is rolled once per level, rolls in over 3 seconds when the level's Ready screen appears, stays through every wave, the count-in, pause and the fall, and fades out over 1.5 seconds when the level is cleared or on Results or a menu. Only spotlights and lightning are rolled per wave: none on levels one to three, zero or one on levels four to six, one on levels seven to nine, and one or two from level ten.
 
 ## Loss and replay
 
