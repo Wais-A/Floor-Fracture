@@ -91,7 +91,7 @@ A follow-up tested whether reusing the opening mesh buffers would improve the re
 
 | Capture | What to do | How to find it in the game CSV |
 | --- | --- | --- |
-| Full board | Face the first wave on the largest automatically fitted board. The current fitter supports up to 64 panes at 50–67 cm each. The rectangle can be long or square, and its edges can reach the clear scan boundary. For example, an 8 × 8 board at 67 cm spans 5.36 × 5.36 m. Record the actual fitted dimensions. | Filter `stage=Countdown`, `columns`, `rows` and, in adaptive builds, `pane_pitch_m`. |
+| Full board | Face the first wave on the largest automatically fitted board. The current fitter supports up to 64 panes at 50–75 cm each. The rectangle can be long or square, and its edges can reach the clear scan boundary. For example, an 8 × 8 board at 75 cm spans 6.00 × 6.00 m. Record the actual fitted dimensions. | Filter `stage=Countdown`, `columns`, `rows` and, in adaptive builds, `pane_pitch_m`. |
 | Largest simultaneous shatter | Watch the breaking panes while standing safely. Keep the wave with the highest actual break count and repeat the same route. | Use the largest `event_count` on a `shatter` event. The following two seconds carry `shatter_count` and `shatter_wave_seed`. |
 | Fog | Play a wave with fog crossing the visible board. | Filter `stage=Countdown` and `fog=1`. |
 | Sliding glass | Watch or catch the moving pane, then watch it lock. | Filter `stage=Countdown` and `slider=active` or `locked`. |

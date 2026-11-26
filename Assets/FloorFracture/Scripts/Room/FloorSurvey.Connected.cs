@@ -8,33 +8,41 @@ namespace FloorFracture
     {
         internal const int DefaultPaneLimit = 12;
         internal const float PreferredMinPitch = .69f;
-        private static readonly float[] ConnectedPitches = { .75f, .72f, PreferredMinPitch, .65f, .60f, .55f, .50f, .45f, .40f };
+        // The smallest comfortable pane. The most panes from here up is the 3/4 rule's reference.
+        internal const float ComfortMinPitch = .60f;
+        private static readonly float[] ConnectedPitches = { .75f, .72f, PreferredMinPitch, .65f, ComfortMinPitch, .55f, .50f, .45f, .40f };
         private static readonly Vector2Int[] Directions = {
             Vector2Int.right, Vector2Int.up, Vector2Int.left, Vector2Int.down
         };
 
-        // Four comfortable panes take precedence over a denser compact fit. Only try compact
-        // panes when the preferred range cannot produce four. Two edge-neighbors still suffice.
+        // Big panes win when they keep 3/4 of the most panes a comfortable pitch offers (the
+        // reference). Otherwise the largest comfortable pitch that keeps 3/4 wins. Only try compact
+        // panes when no comfortable pitch produces four. Two edge-neighbors still suffice.
+        // Reference 0 turns the rule off: big panes beat any smaller pitch.
         private readonly struct FitScore
         {
-            private readonly int tier, count, area;
+            private readonly int tier, area;
             private readonly float pitch, distance;
-            internal bool HasFourPreferred => tier == 3;
+            internal readonly int Count;
 
-            internal FitScore(int count, float pitch, float distance)
+            internal FitScore(int count, float pitch, float distance, int reference = 0)
             {
-                tier = count >= 4 ? (pitch >= PreferredMinPitch ? 3 : 2) : 1;
-                this.count = count;
+                bool keeps = count * 4 >= reference * 3;
+                tier = count < 4 ? 1 : keeps && pitch >= PreferredMinPitch ? 4 :
+                    keeps && reference > 0 && pitch >= ComfortMinPitch ? 3 : 2;
+                Count = count;
                 this.pitch = pitch;
                 this.distance = distance;
                 area = Mathf.RoundToInt(count * pitch * pitch * 10000);
             }
 
+            internal FitScore Against(int reference) => new FitScore(Count, pitch, distance, reference);
+
             internal bool Beats(FitScore other, bool entireFloor)
             {
                 if (tier != other.tier) return tier > other.tier;
-                if (!entireFloor && tier == 2 && pitch != other.pitch) return pitch > other.pitch;
-                if (!entireFloor && count != other.count) return count > other.count;
+                if (!entireFloor && (tier == 2 || tier == 3) && pitch != other.pitch) return pitch > other.pitch;
+                if (!entireFloor && Count != other.Count) return Count > other.Count;
                 if (area != other.area) return area > other.area;
                 if (pitch != other.pitch) return pitch > other.pitch;
                 return distance < other.distance - .00001f;
@@ -56,9 +64,12 @@ namespace FloorFracture
             private readonly bool entireFloor;
             private readonly IReadOnlyList<Vector2> suggestions;
             private readonly CancellationToken cancel;
-            private FitScore score;
-            internal BoardPlacement? Best { get; private set; }
-            internal FloorSurvey Owner { get; private set; }
+            // The best fit at each pitch. The 3/4 rule needs every slot's count before choosing.
+            private readonly FitScore[] scores = new FitScore[ConnectedPitches.Length];
+            private readonly BoardPlacement?[] fits = new BoardPlacement?[ConnectedPitches.Length];
+            private readonly FloorSurvey[] owners = new FloorSurvey[ConnectedPitches.Length];
+            internal BoardPlacement? Best { get { int p = Chosen(); return p < 0 ? null : fits[p]; } }
+            internal FloorSurvey Owner { get { int p = Chosen(); return p < 0 ? null : owners[p]; } }
 
             internal ConnectedSearch(Vector2 preferred, bool entireFloor, IReadOnlyList<Vector2> suggestions, CancellationToken cancel)
             {
@@ -68,7 +79,26 @@ namespace FloorFracture
                 this.cancel = cancel;
             }
 
-            internal bool HasFourPreferred => score.HasFourPreferred;
+            internal bool HasFourPreferred =>
+                Best is BoardPlacement b && b.Pitch >= PreferredMinPitch && b.Layout.PaneCount >= 4;
+
+            private int MostPanes(float min)
+            {
+                int most = 0;
+                for (int p = 0; p < scores.Length && ConnectedPitches[p] >= min; p++)
+                    most = Mathf.Max(most, scores[p].Count);
+                return most;
+            }
+
+            private int Chosen()
+            {
+                int reference = entireFloor ? 0 : MostPanes(ComfortMinPitch), best = -1;
+                for (int p = 0; p < fits.Length; p++)
+                    if (fits[p] != null && (best < 0 ||
+                        scores[p].Against(reference).Beats(scores[best].Against(reference), entireFloor)))
+                        best = p;
+                return best;
+            }
 
             // A room or furniture edge can define an exact rotation and offset between our
             // trial grids. Treat its fitted rectangle as an additional verified footprint.
@@ -80,8 +110,9 @@ namespace FloorFracture
                 var forward = new Vector2(-right.y, right.x);
                 float headX = Vector2.Dot(preferred - source.Center, right);
                 float headZ = Vector2.Dot(preferred - source.Center, forward);
-                foreach (float pitch in ConnectedPitches)
+                for (int p = 0; p < ConnectedPitches.Length; p++)
                 {
+                    float pitch = ConnectedPitches[p];
                     int cols = Mathf.FloorToInt((spanX + FloorGeometry.Epsilon) / pitch);
                     int rows = Mathf.FloorToInt((spanZ + FloorGeometry.Epsilon) / pitch);
                     int maxWidth = entireFloor ? cols : Mathf.Min(cols, DefaultPaneLimit);
@@ -96,12 +127,12 @@ namespace FloorFracture
                         float distance = (center - preferred).sqrMagnitude +
                             pitch * pitch * (width * width + height * height - 2) / 12f;
                         var candidate = new FitScore(count, pitch, distance);
-                        if (!candidate.Beats(score, entireFloor)) continue;
+                        if (!candidate.Beats(scores[p], entireFloor)) continue;
                         var fit = new BoardPlacement(center, source.FloorHeight, source.AngleDegrees, width, height, pitch);
                         if (!survey.ChecksEveryTile(fit)) continue;
-                        Best = fit;
-                        Owner = survey;
-                        score = candidate;
+                        fits[p] = fit;
+                        owners[p] = survey;
+                        scores[p] = candidate;
                     }
                 }
             }
@@ -130,9 +161,14 @@ namespace FloorFracture
                 if (float.IsPositiveInfinity(low.x)) return;
 
                 var localHead = survey.Local(preferred);
-                foreach (float pitch in ConnectedPitches)
+                for (int p = 0; p < ConnectedPitches.Length; p++)
                 {
-                    if (pitch < PreferredMinPitch && score.HasFourPreferred) break;
+                    float pitch = ConnectedPitches[p];
+                    int big = MostPanes(PreferredMinPitch);
+                    // Nine or more big panes always keep 3/4 of a count capped at 12.
+                    if (pitch < PreferredMinPitch && big >= 4 && (entireFloor || big * 4 >= DefaultPaneLimit * 3)) break;
+                    // The reference is complete, and a comfortable four always outranks compact panes.
+                    if (!entireFloor && pitch < ComfortMinPitch && MostPanes(ComfortMinPitch) >= 4) break;
                     float half = pitch * .5f + FootMargin;
                     var firstCenter = low + Vector2.one * half;
                     var span = high - Vector2.one * half - firstCenter;
@@ -190,7 +226,7 @@ namespace FloorFracture
                                 sumDistance += (headCell - (Vector2)cell).sqrMagnitude;
                             }
                             var candidate = new FitScore(count, pitch, sumDistance * pitch * pitch / count);
-                            if (!candidate.Beats(score, entireFloor)) continue;
+                            if (!candidate.Beats(scores[p], entireFloor)) continue;
                             int width = upper.x - lower.x + 1;
                             var indices = new int[count];
                             for (int i = 0; i < count; i++)
@@ -199,9 +235,9 @@ namespace FloorFracture
                             var middle = first + (Vector2)(lower + upper) * (.5f * pitch);
                             var fit = new BoardPlacement(survey.World(middle), survey.Floor.Height, survey.Angle, layout, pitch);
                             if (!survey.ChecksEveryTile(fit)) continue;
-                            Best = fit;
-                            Owner = survey;
-                            score = candidate;
+                            fits[p] = fit;
+                            owners[p] = survey;
+                            scores[p] = candidate;
                         }
                     }
                 }

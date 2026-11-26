@@ -364,7 +364,22 @@ namespace FloorFracture.Tests
             var survey = new FloorSurvey(new RoomFloor(Box(0, 0, 4.2f, 2.8f), new List<Vector2[]>()), scan, 2.2f, null, default);
             var fit = FloorSurvey.FindConnected(new[] { survey }, new Vector2(2.1f, 1.4f), default, out _).Value;
             Assert.That(fit.Pitch, Is.GreaterThanOrEqualTo(.69f));
-            Assert.That(fit.Layout.PaneCount, Is.InRange(6, 12));
+            Assert.That(fit.Layout.PaneCount, Is.EqualTo(12));
+            Assert.That(survey.ChecksEveryTile(fit), Is.True);
+        }
+
+        // At the old 60-65 cm pitch these rooms held 12, 9 and 15 panes.
+        [TestCase(1.5f, 4.0f, 9)]
+        [TestCase(2.15f, 2.15f, 7)]
+        [TestCase(2.2f, 3.5f, 11)]
+        public void NarrowRoomsKeepThreeQuartersOfTheirPanes(float x, float z, int panes)
+        {
+            Surface(0, 0, x, z);
+            Assert.That(FloorMeshScan.TryCreate(vertices.ToArray(), indices.ToArray(), Matrix4x4.identity, out var scan), Is.True);
+            var survey = new FloorSurvey(new RoomFloor(Box(0, 0, x, z), new List<Vector2[]>()), scan, 2.2f, null, default);
+            var fit = FloorSurvey.FindConnected(new[] { survey }, new Vector2(x / 2, z / 2), default, out _).Value;
+            Assert.That(Mathf.Min(fit.Columns, fit.Rows), Is.GreaterThanOrEqualTo(2));
+            Assert.That(fit.Layout.PaneCount, Is.GreaterThanOrEqualTo(panes));
             Assert.That(survey.ChecksEveryTile(fit), Is.True);
         }
 
