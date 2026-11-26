@@ -168,16 +168,22 @@ namespace FloorFracture.Editor
             var sky = board.Find("Lightning/Sky flash")?.GetComponent<MeshRenderer>();
             Require(sky && !sky.enabled, "The board must carry a hidden sky flash.");
             bool oldReduced = view.ReducedMotion;
+            float oldVolume = sound.MasterVolume;
             var peak = new float[1];
             try
             {
                 view.ReducedMotion = false;
+                sound.SetVolume(1); // a muted mix plays no thunder
                 int cues = sound.EditorThunderCues;
-                double now = game.GameplayTime;
-                view.SetHazards(new WaveHazards(0, 0, 0, new[] { now + .3 }, 5), now);
-                yield return SampleFlash(now + .3 + .35, peak);
-                float full = peak[0];
-                Require(full > .9f, $"A strike must flash above 0.9 within 0.35 s, not {full:F2}.");
+                double now = game.GameplayTime, strike = now + .3;
+                view.SetHazards(new WaveHazards(0, 0, 0, new[] { strike }, 5), now);
+                yield return Wait(() => game.GameplayTime >= strike, "the forced strike", 5);
+                // Read the curve at fixed clock times, so a slow frame cannot step over the 60 ms peak.
+                view.DrawHazards(strike + .05); float full = Flash;
+                view.DrawHazards(strike + .1); float gap = Flash;
+                view.DrawHazards(strike + .19); float second = Flash;
+                Require(full > .9f && gap == 0 && second > .6f,
+                    $"A strike must flash above 0.9, go dark, then flash again: {full:F2}, {gap:F2}, {second:F2}.");
                 yield return Wait(() => game.GameplayTime >= now + .9, "the flash to end", 5);
                 Require(Flash == 0 && !sky.enabled, $"The flash must be over by 0.6 s after the strike, not {Flash:F2}.");
                 var thunder = sound.EditorLastThunder;
@@ -193,9 +199,9 @@ namespace FloorFracture.Editor
                 yield return SampleFlash(now + .3 + .7, peak);
                 float soft = peak[0];
                 Require(soft > .1f && soft <= .35f, $"With Reduced motion a strike must glow softly at 0.35 or less, not {soft:F2}.");
-                Record($"A forced strike flashed to {full:F2} and ended by 0.6 s, with one spatial thunder voice {offset.magnitude:F1} m out and {Vector3.Dot(offset, board.up):F1} m up. With Reduced motion it peaked at {soft:F2}.");
+                Record($"A forced strike flashed to {full:F2}, went dark and flashed again at {second:F2}, ended by 0.6 s, with one spatial thunder voice {offset.magnitude:F1} m out and {Vector3.Dot(offset, board.up):F1} m up. With Reduced motion it peaked at {soft:F2}.");
             }
-            finally { view.ReducedMotion = oldReduced; }
+            finally { view.ReducedMotion = oldReduced; sound.SetVolume(oldVolume); }
             view.SetHazards(WaveHazards.None, game.GameplayTime);
             yield return Delay(.7);
             Require(!sky.enabled && Flash == 0, "The sky flash stayed on after the hazards were withdrawn.");
@@ -239,7 +245,19 @@ namespace FloorFracture.Editor
             var hums = Object.FindObjectsByType<AudioSource>(FindObjectsSortMode.None).Where(a => a.name == "Lamp hum").ToArray();
             Require(hums.All(h => !h.isPlaying) && voices.All(v => !v.isPlaying) && Flash == 0,
                 "Main menu left a lamp hum, thunder or the flash running.");
-            Record($"A strike held through a 1 s menu pause with no flash, thunder or hum, then fired once after resume. Main menu switched off {parts.Length} hazard renderers, every lamp hum, the thunder and the flash within 0.7 s.");
+
+            // A strike that comes due while the hazards fade out must not flash or thunder.
+            var home = game.BoardView;
+            now = game.GameplayTime;
+            home.SetHazards(new WaveHazards(0, 0, 0, new[] { now + .6 }, 5), now);
+            yield return Wait(() => game.GameplayTime >= now + .4, "the forced set to fade in", 5);
+            int before = sound.EditorThunderCues;
+            home.SetHazards(WaveHazards.None, game.GameplayTime);
+            var peak = new float[1];
+            yield return SampleFlash(now + 1.1, peak);
+            Require(peak[0] == 0 && sound.EditorThunderCues == before,
+                $"A strike during the fade-out flashed to {peak[0]:F2} or played thunder.");
+            Record($"A strike held through a 1 s menu pause with no flash, thunder or hum, then fired once after resume. Main menu switched off {parts.Length} hazard renderers, every lamp hum, the thunder and the flash within 0.7 s. A strike due 0.2 s into the fade-out stayed dark and silent.");
         }
     }
 }

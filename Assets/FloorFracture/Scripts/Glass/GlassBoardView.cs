@@ -199,7 +199,8 @@ namespace FloorFracture
             float fade=WaveHazards.Fade(now,hazardsShownAt,hazardsHiddenAt);
             fog.Tick(now,fade);
             lights.Tick(now,fade);
-            lightning.Tick(now,fade,ReducedMotion);
+            // Once withdrawn, nothing flashes: strikes that come due during the fade-out pass silently.
+            lightning.Tick(now,double.IsPositiveInfinity(hazardsHiddenAt) ? fade : 0,ReducedMotion);
             if (fade<=0 && !double.IsPositiveInfinity(hazardsHiddenAt)) hazards=null;
         }
 

@@ -55,7 +55,8 @@ Shader "Floor Fracture/Floor fog"
                 }
                 float2 edge = _Extent.xy - abs(p);
                 alpha *= _Fade * smoothstep(0, .30, min(edge.x, edge.y));
-                // Four slices at 0.26 combine to at most 1 - 0.74^4 = 0.70.
+                // Four slices at 0.26 combine to at most 1 - 0.74^4 = 0.70. A full lightning flash lifts
+                // each slice to 0.39, so the stack briefly reaches 1 - 0.61^4 = 0.86.
                 // Lightning lifts the fog toward white and thickens it by up to half.
                 return half4(half3(.80, .84, .86) + .16 * _FloorFractureFlash, min(alpha, .26) * (1 + .5 * _FloorFractureFlash) * visibility);
             }

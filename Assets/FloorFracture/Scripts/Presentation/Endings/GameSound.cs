@@ -18,8 +18,8 @@ public sealed class GameSound : MonoBehaviour
     const float LampGain = .18f;
     readonly List<AudioSource> lampVoices = new();
     readonly List<float> lampLevels = new();
-    // Two strikes per wave at most, each 7 s of thunder.
-    readonly AudioSource[] thunder = new AudioSource[2];
+    // Two strikes per wave at most, each 7 s of thunder, plus one spare so a new wave's strike never cuts one off.
+    readonly AudioSource[] thunder = new AudioSource[3];
     int nextThunder;
     AudioLowPassFilter tarFilter;
     readonly AudioSource[,] glass = new AudioSource[3, 3];

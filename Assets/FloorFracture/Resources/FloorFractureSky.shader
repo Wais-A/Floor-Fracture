@@ -6,7 +6,7 @@ Shader "Floor Fracture/Sky flash"
         Tags { "Queue"="Transparent+3" "RenderType"="Transparent" "RenderPipeline"="UniversalPipeline" }
         Pass
         {
-            Cull Off ZWrite Off
+            Cull Off ZWrite Off ZTest Always
             Blend SrcAlpha OneMinusSrcAlpha, One OneMinusSrcAlpha
             HLSLPROGRAM
             #pragma vertex vert
