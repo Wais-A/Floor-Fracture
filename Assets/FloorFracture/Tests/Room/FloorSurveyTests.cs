@@ -368,12 +368,16 @@ namespace FloorFracture.Tests
             Assert.That(survey.ChecksEveryTile(fit), Is.True);
         }
 
-        // At the old 60-65 cm pitch these rooms held 12, 9, 15 and 9 panes in both modes.
-        [TestCase(1.5f, 4.0f, 9)]
-        [TestCase(2.15f, 2.15f, 7)]
-        [TestCase(2.2f, 3.5f, 12)]
-        [TestCase(2.05f, 2.5f, 7)]
-        public void NarrowRoomsKeepThreeQuartersOfTheirPanes(float x, float z, int panes)
+        // At the old 60-65 cm pitch the first four rooms held 12, 9, 15 and 9 panes in both modes. There the
+        // 69-75 cm band cannot keep 3/4 of them, so the fit keeps the largest comfortable pitch that does.
+        // The last two rooms are just wide enough for the band, so they must use it.
+        [TestCase(1.5f, 4.0f, 9, .65f)]
+        [TestCase(2.15f, 2.15f, 7, .65f)]
+        [TestCase(2.2f, 3.5f, 12, .65f)]
+        [TestCase(2.05f, 2.5f, 7, .625f)]
+        [TestCase(1.7f, 4.0f, 10, .69f)]
+        [TestCase(2.3f, 3.5f, 12, .69f)]
+        public void NarrowRoomsKeepThreeQuartersOfTheirPanes(float x, float z, int panes, float pitch)
         {
             Surface(0, 0, x, z);
             Assert.That(FloorMeshScan.TryCreate(vertices.ToArray(), indices.ToArray(), Matrix4x4.identity, out var scan), Is.True);
@@ -383,6 +387,7 @@ namespace FloorFracture.Tests
             Assert.That(Mathf.Min(fit.Columns, fit.Rows), Is.GreaterThanOrEqualTo(2));
             Assert.That(fit.Layout.PaneCount, Is.GreaterThanOrEqualTo(panes));
             Assert.That(survey.ChecksEveryTile(fit), Is.True);
+            Assert.That(fit.Pitch, Is.GreaterThanOrEqualTo(pitch), $"{fit.Columns}x{fit.Rows} at {fit.Pitch:F3}");
 
             // In these rooms the entire floor gives at least the default board's panes and glass.
             var full = FloorSurvey.FindConnected(new[] { survey }, center, default, out _, entireFloor: true).Value;

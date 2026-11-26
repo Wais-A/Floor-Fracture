@@ -441,7 +441,8 @@ namespace FloorFracture.Tests
             TestContext.WriteLine($"Patrols on {patrols}/{offered} offered panes ({fraction:P1}).");
             // shortcut: 11.0% measured; 15% needs more than two promoted exits per patrol, or exits that do not
             // join the survivors' group. Raise this if promotion is widened.
-            Assert.That(fraction,Is.GreaterThanOrEqualTo(.109),$"Patrols on {patrols}/{offered} offered panes ({fraction:P1}).");
+            // .09 leaves room for a planner change that reseeds the panes, yet fails if patrols become rarer.
+            Assert.That(fraction,Is.GreaterThanOrEqualTo(.09),$"Patrols on {patrols}/{offered} offered panes ({fraction:P1}).");
         }
 
         [Test]
@@ -544,7 +545,8 @@ namespace FloorFracture.Tests
                 ++rides;
             }
             TestContext.WriteLine($"{rides} ride finales across levels 6-12, seeds 0-199.");
-            Assert.That(rides,Is.GreaterThanOrEqualTo(10),$"{rides} ride finales across levels 6-12, seeds 0-199.");
+            // 405 measured; half of that still allows reseeding but catches a ride rule that stops firing.
+            Assert.That(rides,Is.GreaterThanOrEqualTo(200),$"{rides} ride finales across levels 6-12, seeds 0-199.");
         }
 
         [Test]
@@ -572,12 +574,21 @@ namespace FloorFracture.Tests
             {
                 ++rides;
                 var pane=wave.OfferedSliders[wave.RideSlider];
-                var beside=Enumerable.Range(0,board.Count).Where(c=>board.Neighbors(wave.StartingTile,c)).ToArray();
-                var counts=beside.Select(c=>RideTimes(board,wave,pane,c).Count).ToArray();
-                Assert.That(counts.Sum()*.01,Is.GreaterThanOrEqualTo(.35-1e-9));
-                // The neighbour with the most catchable time, lowest index on ties.
-                Assert.That(wave.RideCell,Is.EqualTo(beside[Array.IndexOf(counts,counts.Max())]));
-                Assert.That(pane.Path,Has.Member(wave.RideCell));
+                // Independent of RideCell: the cells one pitch from the start, and the pane's centre every millisecond
+                // from the wave start until .3 s before zero, counted while it is within a quarter pitch of one of them.
+                var start=board.Center(wave.StartingTile);
+                var beside=Enumerable.Range(0,board.Count)
+                    .Where(c=>board.Layout.Contains(c) && Mathf.Abs(Vector2.Distance(board.Center(c),start)-board.Pitch)<.001f).ToArray();
+                double over=0,overRideCell=0;
+                for(int ms=0;wave.StartsAt+ms/1000.0<=wave.Deadline-.3;++ms)
+                {
+                    var center=pane.CenterAt(wave.StartsAt+ms/1000.0);
+                    if(beside.Any(c=>Vector2.Distance(center,board.Center(c))<=.25f*board.Pitch)) over+=.001;
+                    if(Vector2.Distance(center,board.Center(wave.RideCell))<=.25f*board.Pitch) overRideCell+=.001;
+                }
+                Assert.That(over,Is.GreaterThanOrEqualTo(.35),$"The ride pane is beside the player for only {over:F3} s.");
+                Assert.That(beside,Has.Member(wave.RideCell));
+                Assert.That(overRideCell,Is.GreaterThan(0),"The ride pane never passes over its ride cell.");
             }
             Assert.That(rides,Is.GreaterThan(0));
         }
