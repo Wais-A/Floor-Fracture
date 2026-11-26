@@ -222,6 +222,9 @@ namespace FloorFracture.Editor
             var sound = game.GetComponent<GameSound>();
             var sky = board.Find("Lightning/Sky flash")?.GetComponent<MeshRenderer>();
             Require(sky && !sky.enabled, "The board must carry a hidden sky flash.");
+            var veil = board.Find("Lightning/Flash veil")?.GetComponent<MeshRenderer>();
+            Require(veil && !veil.enabled, "The board must carry a hidden flash veil.");
+            var block = new MaterialPropertyBlock();
             bool oldReduced = view.ReducedMotion;
             float oldVolume = sound.MasterVolume;
             var peak = new float[1];
@@ -235,7 +238,10 @@ namespace FloorFracture.Editor
                 yield return Wait(() => game.GameplayTime >= strike, "the forced strike", 5);
                 // Read the curve at fixed clock times, so a slow frame cannot step over the 60 ms peak.
                 view.DrawHazards(strike + .05); float full = Flash;
+                veil.GetPropertyBlock(block); float veilAlpha = block.GetColor("_Tint").a;
+                Require(veil.enabled && veilAlpha >= .45f, $"A strike must wash the whole view: veil on {veil.enabled}, alpha {veilAlpha:F2}.");
                 view.DrawHazards(strike + .1); float gap = Flash;
+                Require(!veil.enabled, "The flash veil must be off in the gap between flashes.");
                 view.DrawHazards(strike + .19); float second = Flash;
                 Require(full > .9f && gap == 0 && second > .6f,
                     $"A strike must flash above 0.9, go dark, then flash again: {full:F2}, {gap:F2}, {second:F2}.");
@@ -251,6 +257,8 @@ namespace FloorFracture.Editor
                 view.ReducedMotion = true;
                 now = game.GameplayTime;
                 view.SetHazards(new WaveHazards(0, 0, 0, new[] { now + .3 }, 5), now);
+                view.DrawHazards(now + .3 + .1);
+                Require(Flash > 0 && !veil.enabled, "With Reduced motion a strike must not show the flash veil.");
                 yield return SampleFlash(now + .3 + .7, peak);
                 float soft = peak[0];
                 Require(soft > .1f && soft <= .35f, $"With Reduced motion a strike must glow softly at 0.35 or less, not {soft:F2}.");

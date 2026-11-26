@@ -27,7 +27,7 @@ Shader "Floor Fracture/Sky flash"
             half4 frag(F i):SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
-                float alpha = .45 * _FloorFractureFlash * (1 - smoothstep(0, 1, length(i.uv * 2 - 1)));
+                float alpha = .8 * _FloorFractureFlash * (1 - smoothstep(0, 1, length(i.uv * 2 - 1)));
                 return half4(.88, .92, 1, alpha);
             }
             ENDHLSL

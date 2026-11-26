@@ -81,7 +81,7 @@ Shader "Floor Fracture/Surface"
                         samplePoint = lerp(eye, i.world, (eye.y - _MappedFloorY) / (eye.y - i.world.y));
                     visibility = GlassFloorVisibility(samplePoint, _MappedFloorY);
                 }
-                tint += _FloorFractureFlash*half3(.34,.37,.42);
+                tint += _FloorFractureFlash*half3(.68,.74,.84);
                 return half4(tint,i.color.a*_Fade*visibility);
             }
             ENDHLSL
