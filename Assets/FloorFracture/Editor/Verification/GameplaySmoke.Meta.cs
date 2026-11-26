@@ -97,7 +97,7 @@ namespace FloorFracture.Editor
 
             var sound = game.GetComponent<GameSound>();
             var positional = sound.GetComponentsInChildren<AudioSource>(true).Where(source => source.transform.parent == sound.transform && source.spatialBlend >= 0.99f).ToArray();
-            Require(positional.Length == 12, "The gameplay audio pool did not contain the twelve expected positional sources.");
+            Require(positional.Length == 15, "The gameplay audio pool did not contain the fifteen expected positional sources.");
             foreach (var source in positional)
             {
                 var spatial = source.GetComponents<MetaXRAudioSource>();
@@ -106,7 +106,7 @@ namespace FloorFracture.Editor
                     spatial[0].isActiveAndEnabled && spatial[0].EnableSpatialization,
                     "The pooled game source is missing its enabled Meta spatializer: " + source.name);
             }
-            Record("All twelve pooled positional glass, draft, tar and landing sources carry the Spatial Audio block and one enabled MetaXRAudioSource.");
+            Record("All fifteen pooled positional glass, draft, tar, landing and thunder sources carry the Spatial Audio block and one enabled MetaXRAudioSource.");
 
             bool HasPokeHand(string side) => hands.Any(poke => poke.GetComponentsInParent<Transform>(true)
                 .Any(parent => parent.name == "ComprehensiveInteractors" + side));
