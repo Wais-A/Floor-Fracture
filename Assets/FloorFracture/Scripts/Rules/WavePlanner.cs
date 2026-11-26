@@ -289,7 +289,7 @@ namespace FloorFracture
                 level == 1 ? WaveMode.Classic : ChooseMode(board.Seed, advancedWavesSurvived, level);
             var sliders = level >= 3 && remaining > 1 ?
                 ChooseSliders(board, start, survivors, route, landings.Count != 0, level >= 9 ? 3 : level >= 6 ? 2 : 1,
-                    now, WavePacing.SwitchSeconds(level, number), ref random) : Array.Empty<SlidingPane>();
+                    level >= 5, now, WavePacing.SwitchSeconds(level, number), ref random) : Array.Empty<SlidingPane>();
             return new WavePlan(board, level, number, seed, start, guaranteed, survivors, sliders,
                 mode, pacing, now, landings.AsReadOnly(), route);
         }
@@ -474,17 +474,17 @@ namespace FloorFracture
         }
 
         private static SlidingPane[] ChooseSliders(BoardState board, int start, bool[] survivors, int[] row,
-            bool jump, int limit, double now, double duration, ref Generator random)
+            bool jump, int limit, bool patrols, double now, double duration, ref Generator random)
         {
             var panes = new List<SlidingPane>(limit);
             var reserved = new bool[board.Count];
             // Last wave's panes keep shuttling (or holding the player) until they break this wave.
-            // A pane's center never leaves its own lane, so the lane also covers the cell under it.
+            // A pane's center never leaves its own path, so the path also covers the cell under it.
             foreach (var old in board.Sliders)
-            {
-                int step = (old.OtherHole - old.Tile) / old.TravelCells;
-                for (int i = 0; i <= old.TravelCells; ++i) reserved[old.Tile + i * step] = true;
-            }
+                foreach (int cell in old.Path) reserved[cell] = true;
+            var trail = new int[5];
+            int[] patrol = null;
+            int patrolLength = 0, patrolTies = 0;
             while (panes.Count < limit)
             {
                 int source = -1, end = -1, bestLength = 0, ties = 0;
@@ -508,16 +508,50 @@ namespace FloorFracture
                         if (random.Next(++ties) == 0) { source = a; end = b; }
                     }
                 }
-                if (source < 0) break;
-                var pane = new SlidingPane(board, source, end, now, duration);
+                // Patrol draws follow every lane draw so levels without patrols keep their seeded panes.
+                patrol = null;
+                patrolLength = patrolTies = 0;
+                if (patrols)
+                    for (int a = 0; a < board.Count; ++a)
+                    {
+                        if (a == start || !board.IsIntact(a) || survivors[a] || Unavailable(a)) continue;
+                        trail[0] = a;
+                        Walk(1, -1, false, ref random);
+                    }
+                if (source < 0 && patrol == null) break;
+                var pane = patrol != null && (source < 0 || random.Next(2) == 0)
+                    ? new SlidingPane(board, patrol, now, duration)
+                    : new SlidingPane(board, source, end, now, duration);
                 panes.Add(pane);
-                int stride = (end - source) / bestLength;
-                for (int i = 0; i <= bestLength; ++i) reserved[source + i * stride] = true;
+                foreach (int cell in pane.Path) reserved[cell] = true;
             }
             return panes.ToArray();
 
             bool Unavailable(int tile) => reserved[tile] || (jump && TouchesStart(board, start, tile)) ||
                 (row.Length != 0 && WavePlan.RowDistance(board, start, row[0], tile) < row.Length);
+
+            // Extends trail[0..count) over holes; both ends of each step need a survivor across that step.
+            void Walk(int count, int heading, bool turned, ref Generator draw)
+            {
+                if (turned && count >= patrolLength) // a turn needs three cells
+                {
+                    if (count > patrolLength) { patrolLength = count; patrolTies = 0; }
+                    if (draw.Next(++patrolTies) == 0) patrol = trail[..count];
+                }
+                if (count == trail.Length) return;
+                int tile = trail[count - 1];
+                for (int d = 0; d < 4; ++d)
+                {
+                    int next = board.Layout.Neighbor(tile, d);
+                    bool horizontal = d == 1 || d == 2;
+                    if (!board.Layout.Contains(next) || board.IsIntact(next) || Unavailable(next) ||
+                        Array.IndexOf(trail, next, 0, count) >= 0 ||
+                        !HasSideExit(board.Layout, tile, horizontal, survivors) ||
+                        !HasSideExit(board.Layout, next, horizontal, survivors)) continue;
+                    trail[count] = next;
+                    Walk(count + 1, d, turned || (heading >= 0 && d != heading), ref draw);
+                }
+            }
         }
 
         private static bool HasSideExit(BoardLayout layout, int tile, bool horizontal, bool[] survivors)

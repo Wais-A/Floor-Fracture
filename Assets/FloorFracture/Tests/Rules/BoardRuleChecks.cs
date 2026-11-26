@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace FloorFracture.Tests
@@ -30,7 +31,7 @@ namespace FloorFracture.Tests
             for (int width = 2; width <= 4; ++width)
             for (int height = 2; height <= 4; ++height)
             {
-                var visited = new HashSet<ulong>();
+                var visited = new HashSet<string>();
                 var path = new List<Step>();
                 for (int initial = 0; initial < width * height; ++initial)
                 {
@@ -53,7 +54,7 @@ namespace FloorFracture.Tests
         }
 
         private static void Visit(int width, int height, int seed, int level, int initial, List<Step> path,
-            HashSet<ulong> visited, ref int plans, ref int choices, ref int finales)
+            HashSet<string> visited, ref int plans, ref int choices, ref int finales)
         {
             var board = new BoardState(width, height, seed);
             int start = initial;
@@ -64,14 +65,10 @@ namespace FloorFracture.Tests
                 start = path[i].Tile;
             }
             ulong oldMask = IntactMask(board);
-            int oldSlider = board.Slider == null ? -1 : board.Slider.Tile;
-            ulong state = (uint)oldMask | ((ulong)(uint)start << 16) |
-                ((ulong)(uint)(oldSlider + 1) << 20) | ((ulong)(uint)path.Count << 25);
-            if (board.Slider != null)
-            {
-                state |= (ulong)(uint)(board.Slider.OtherHole+1) << 30;
-                if (board.Slider.Locked) state |= 1UL << 35;
-            }
+            // Exact key over every slider's whole path, so distinct boards are never merged.
+            string state = $"{oldMask}:{start}:{path.Count}";
+            foreach (var pane in board.Sliders)
+                state += ":" + string.Join(",", pane.Path) + (pane.Locked ? "L" : "");
             if (!visited.Add(state)) return;
             ++plans;
             WavePlan plan = board.BeginWave(start, level, path.Count + 1, path.Count * 10);
@@ -791,7 +788,7 @@ namespace FloorFracture.Tests
                     foreach (Vector2 corner in new[]{new Vector2(-1,-1),new Vector2(1,-1),new Vector2(-1,1),new Vector2(1,1)})
                     {
                         int cell = board.IndexAt(p+corner*pane.HalfSize);
-                        Check(cell==pane.Tile || cell==pane.OtherHole,"Moving glass overlaps solid glass or the exterior.");
+                        Check(pane.Path.Contains(cell),"Moving glass overlaps solid glass or the exterior.");
                     }
                 }
                 board.Tick(center + side * (pane.HalfSize + 0.002f), true, t);

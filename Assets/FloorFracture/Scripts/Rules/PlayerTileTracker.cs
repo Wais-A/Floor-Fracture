@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("FloorFracture.Rules.EditorTests")]
 
 namespace FloorFracture
 {
@@ -28,34 +32,48 @@ namespace FloorFracture
         public int OtherHole { get; }
         public Vector2 Direction { get; }
         public int TravelCells { get; }
+        // Edge-adjacent cells from Tile to OtherHole; a patrol turns corners.
+        public IReadOnlyList<int> Path { get; }
         public double MotionStartsAt { get; }
         public bool Locked { get; private set; }
 
-        private readonly Vector2 startCenter, endCenter;
+        private readonly Vector2[] centers;
         private Vector2 lockedCenter;
         public double OneWaySeconds { get; }
 
         internal SlidingPane(BoardState board, int tile, int otherHole, double start, double duration)
+            : this(board, Lane(board, tile, otherHole), start, duration) { }
+
+        internal SlidingPane(BoardState board, IReadOnlyList<int> path, double start, double duration)
         {
-            Tile = tile;
-            OtherHole = otherHole;
-            startCenter = board.Center(tile);
-            endCenter = board.Center(otherHole);
-            Direction = (endCenter-startCenter).normalized;
-            TravelCells = Math.Abs(otherHole % board.Width - tile % board.Width) +
-                Math.Abs(otherHole / board.Width - tile / board.Width);
+            Path = path.ToArray();
+            Tile = path[0];
+            OtherHole = path[path.Count - 1];
+            TravelCells = path.Count - 1;
+            centers = path.Select(board.Center).ToArray();
+            Direction = (centers[1] - centers[0]).normalized;
             HalfSize = board.Pitch * BoardState.PaneHalfPitch;
             double pace = Math.Min(1, duration / 2);
             MotionStartsAt = start + .65 * pace;
             OneWaySeconds = TravelCells * 1.20 * pace;
         }
 
+        private static int[] Lane(BoardState board, int tile, int otherHole)
+        {
+            int cells = Math.Abs(otherHole % board.Width - tile % board.Width) +
+                Math.Abs(otherHole / board.Width - tile / board.Width);
+            int stride = (otherHole - tile) / cells;
+            return Enumerable.Range(0, cells + 1).Select(i => tile + i * stride).ToArray();
+        }
+
         public Vector2 CenterAt(double now)
         {
             if (Locked) return lockedCenter;
             double phase = (Math.Max(0, now - MotionStartsAt) / OneWaySeconds) % 2.0;
-            double fraction = phase <= 1 ? phase : 2 - phase;
-            return Vector2.LerpUnclamped(startCenter, endCenter, (float)fraction);
+            // Every segment is one pitch long, so distance along the path is measured in cells.
+            double along = (phase <= 1 ? phase : 2 - phase) * TravelCells;
+            int cell = Math.Min((int)along, TravelCells - 1);
+            return Vector2.LerpUnclamped(centers[cell], centers[cell + 1], (float)(along - cell));
         }
 
         internal void RestoreLock(bool wasLocked) => Locked = wasLocked;

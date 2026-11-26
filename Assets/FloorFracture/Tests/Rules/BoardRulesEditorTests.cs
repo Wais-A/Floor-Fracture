@@ -196,10 +196,10 @@ namespace FloorFracture.Tests
                 foreach (var pane in board.Sliders)
                 {
                     Assert.That(intact.Contains(pane.Tile) && pane.Tile!=from && wave.IsSafe(pane.Tile));
-                    int stride=(pane.OtherHole-pane.Tile)/pane.TravelCells;
                     for(int step=0;step<=pane.TravelCells;++step)
                     {
-                        int cell=pane.Tile+stride*step;
+                        int cell=pane.Path[step];
+                        if(step>0) Assert.That(board.Neighbors(pane.Path[step-1],cell));
                         Assert.That(layout.Contains(cell) && !board.IsIntact(cell) && reserved.Add(cell));
                         if(step>0) Assert.That(intact.Contains(cell),Is.False);
                     }
@@ -304,9 +304,7 @@ namespace FloorFracture.Tests
                 if(fresh.Length>0) ++offers;
                 foreach(var pane in fresh)
                 {
-                    int stride=(pane.OtherHole-pane.Tile)/pane.TravelCells;
-                    for(int step=0;step<=pane.TravelCells;++step)
-                        Assert.That(pane.Tile+stride*step,Is.Not.EqualTo(board.IndexAt(stance)),"A new lane ran under the held pane.");
+                    Assert.That(pane.Path,Has.No.Member(board.IndexAt(stance)),"A new lane ran under the held pane.");
                 }
             }
             TestContext.WriteLine($"{offers}/{cases} waves started on a held slider offered new ones.");
@@ -337,6 +335,93 @@ namespace FloorFracture.Tests
                 Assert.That(IntactTiles(board),Is.EqualTo(intact));
             }
             Assert.That(tested,Is.GreaterThan(0));
+        }
+
+        static readonly int[] LPath={0,1,2,6};
+        static void AssertNear(Vector2 actual,Vector2 expected)=>Assert.That((actual-expected).magnitude,Is.LessThan(1e-4f));
+        static Vector2 Mid(BoardState board,int a,int b)=>(board.Center(a)+board.Center(b))/2;
+        static bool Turns(SlidingPane pane)=>
+            Enumerable.Range(1,pane.Path.Count-2).Any(i=>pane.Path[i+1]-pane.Path[i]!=pane.Path[1]-pane.Path[0]);
+
+        [Test]
+        public void PatrolPaneFollowsItsCornersAtTheSliderPace()
+        {
+            var board=new BoardState(4,4,0);
+            var pane=new SlidingPane(board,LPath,10,1.5);
+            Assert.That(pane.Path,Is.EqualTo(LPath));
+            Assert.That(pane.Tile==0 && pane.OtherHole==6 && pane.TravelCells==3 && pane.Direction==Vector2.right);
+            Assert.That(pane.OneWaySeconds,Is.EqualTo(3*1.20*.75).Within(1e-12));
+            double leg=pane.OneWaySeconds/3;
+            for(int k=0;k<=3;++k) AssertNear(pane.CenterAt(pane.MotionStartsAt+k*leg),board.Center(LPath[k]));
+            for(int k=0;k<3;++k) AssertNear(pane.CenterAt(pane.MotionStartsAt+(k+.5)*leg),Mid(board,LPath[k],LPath[k+1]));
+            AssertNear(pane.CenterAt(pane.MotionStartsAt+4*leg),board.Center(LPath[2]));
+            AssertNear(pane.CenterAt(pane.MotionStartsAt+5.5*leg),Mid(board,LPath[0],LPath[1]));
+        }
+
+        [Test]
+        public void PatrolPaneLocksWhereCaughtOnItsSecondSegment()
+        {
+            var board=new BoardState(4,4,0);
+            var pane=new SlidingPane(board,LPath,10,2);
+            double t=pane.MotionStartsAt+2.5*pane.OneWaySeconds/3;
+            var point=pane.CenterAt(t);
+            AssertNear(point,Mid(board,2,6));
+            Assert.That(pane.TryLand(point,t) && pane.Locked);
+            Assert.That(pane.CenterAt(t+7),Is.EqualTo(point));
+        }
+
+        static IEnumerable<(int level,WavePlan wave,BoardState board,SlidingPane pane)> OfferedPanes(int fromLevel)
+        {
+            for(int level=fromLevel;level<=12;++level)
+            for(int seed=0;seed<100;++seed)
+            {
+                var board=new BoardState(6,6,seed);
+                int start=0;
+                for(int number=1;number<=board.Count;++number)
+                {
+                    var wave=board.BeginWave(start,level,number,number*10);
+                    foreach(var pane in Offered(board,wave)) yield return (level,wave,board,pane);
+                    start=wave.GuaranteedTile;
+                    if(board.Tick(board.Center(start),true,wave.Deadline)!=WaveResult.Survived) break;
+                }
+            }
+        }
+
+        [Test]
+        public void EveryPlannedPatrolHasAnExitAlongItsWholePath()
+        {
+            int patrols=0;
+            foreach(var (level,wave,board,pane) in OfferedPanes(5))
+            {
+                if(!Turns(pane)) continue;
+                ++patrols;
+                for(int cell=0;cell<pane.TravelCells;++cell)
+                for(int sample=0;sample<20;++sample)
+                {
+                    double t=pane.MotionStartsAt+(cell+sample/19.0)/pane.TravelCells*pane.OneWaySeconds;
+                    Assert.That(pane.TryLand(pane.CenterAt(t),t),Is.True);
+                    Assert.That(wave.StationarySafe.Any(tile=>board.CanStepFrom(pane.Tile,tile)),Is.True,
+                        $"Level {level}: a patrol {string.Join(",",pane.Path)} caught at {cell}+{sample}/19 has no exit.");
+                    pane.RestoreLock(false);
+                }
+            }
+            TestContext.WriteLine($"Checked {patrols} patrols.");
+            Assert.That(patrols,Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void PatrolsTurnOnlyFromLevelFive()
+        {
+            int patrols=0;
+            foreach(var (level,_,_,pane) in OfferedPanes(3))
+            {
+                Assert.That(pane.Path.Count,Is.EqualTo(pane.TravelCells+1));
+                if(!Turns(pane)) continue;
+                Assert.That(level,Is.GreaterThanOrEqualTo(5));
+                Assert.That(pane.Path.Count,Is.InRange(3,5));
+                ++patrols;
+            }
+            Assert.That(patrols,Is.GreaterThan(0));
         }
 
         [Test] public void EarlyBreakDeadlinesAndTrackingRollback() => BoardRuleChecks.TimedBreaksAndRollback();
