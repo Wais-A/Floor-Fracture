@@ -10,6 +10,10 @@ namespace FloorFracture
     {
         internal readonly Vector3[] Vertices;
         internal readonly int[] Indices;
+        // Each heading survey of a fit asks for the same faces; the answer depends only on the two heights.
+        private readonly object raisedLock = new object();
+        private float raisedCutoff, raisedHeadHigh;
+        private bool[] raisedFaces;
         private FloorMeshScan(Vector3[] vertices, int[] indices)
         {
             Vertices = vertices;
@@ -34,6 +38,9 @@ namespace FloorFracture
         // vertices and duplicate faces must not turn separate speckles into an object.
         internal bool[] FindRaisedFaces(float cutoff, float headHigh, CancellationToken cancel)
         {
+            lock (raisedLock)
+                if (raisedFaces != null && raisedCutoff == cutoff && raisedHeadHigh == headHigh)
+                    return raisedFaces;
             int count = Indices.Length / 3;
             var parent = new int[count];
             var firstFace = new Dictionary<Vector3, int>();
@@ -84,6 +91,8 @@ namespace FloorFracture
                 result[i] = samples[root] >= 2 && (Mathf.Max(size.x, size.z) >= .08f ||
                     Mathf.Min(headHigh, bounds[root].max.y) - baseY[root] >= .15f);
             }
+            lock (raisedLock)
+                (raisedCutoff, raisedHeadHigh, raisedFaces) = (cutoff, headHigh, result);
             return result;
 
             int Root(int i)
@@ -146,8 +155,7 @@ namespace FloorFracture
             {
                 float offset = heights[i] - label;
                 var point = min + new Vector2(i % width + .5f, i / width + .5f) * step;
-                if (!FloorGeometry.Contains(floor.Boundary, point) ||
-                    floor.Obstacles.Exists(p => p.Length >= 3 && FloorGeometry.Contains(p, point))) continue;
+                if (!FloorGeometry.Contains(floor.Boundary, point) || InsideObstacle(point)) continue;
                 openLocations++;
                 if (Mathf.Abs(offset) > HeightSearchRange) continue;
                 int bin = rangeCm + Mathf.RoundToInt(offset * 100);
@@ -156,6 +164,12 @@ namespace FloorFracture
                 observed++;
             }
 
+            bool InsideObstacle(Vector2 point)
+            {
+                foreach (var p in floor.Obstacles)
+                    if (p.Length >= 3 && FloorGeometry.Contains(p, point)) return true;
+                return false;
+            }
             int Count(int center) => bins[center - 1] + bins[center] + bins[center + 1];
             int best = rangeCm;
             // Only lower the baseline. A raised flat surface can be a real obstacle.
