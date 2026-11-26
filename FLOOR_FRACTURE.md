@@ -39,7 +39,7 @@ The project runs on Unity `6000.6.10f1`, upgraded on November 25 from the approv
 
 Break timing is unchanged. The hazards below add movement and visual or audio clutter on top of it.
 
-- Patrol panes, from level five, are moving panes whose lane turns a corner along a path of 3 to 5 cells. They stop where the player lands. From level seven roughly 1 in 9 moving panes is a patrol.
+- Patrol panes, from level five, are moving panes whose lane turns a corner along a path of 3 to 5 cells. They stop where the player lands. On a 6 × 6 board about 1 in 10 moving panes is a patrol from level seven (11% at levels seven and eight, 10% from nine). Each corner needs standing glass on both outer sides, so the default boards of 12 panes or fewer (6 × 2, 4 × 3, 3 × 3) had no patrols in 2,381 measured moving panes from level seven; on two-row boards a corner can never have both.
 - Ride finale, from level six: some levels end with a ride instead of Last Tile. Every stationary pane breaks, the pane beside the player starts to slide, and the player steps onto it before it slides out of reach. Landing on it clears the level. The level six Ready screen hint reads "When no glass is left in reach, step onto the pane that starts to slide."
 - Fog, from level two, is thick drifting fog below knee height. It thickens with level and partly hides the amber cracks. From level three, drifting fog patches also settle over single panes.
 - Sweeping spotlights, from level four, are one to three overhead beams from lamps placed below the real ceiling. Their bright pools wash out cracks, and each lamp hums from its own direction.

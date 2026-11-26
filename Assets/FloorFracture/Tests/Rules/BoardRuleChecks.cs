@@ -142,21 +142,29 @@ namespace FloorFracture.Tests
                    $"and checked onward reachability for {choices} advertised choices.";
         }
 
-        // The planner mutates survivors (patrol exits) and offers rides only from level five.
+        // Corners, edge middles and the centre cell (when it is interior) of a rectangular board.
+        public static int[] StartTiles(int width, int height) =>
+            new[] { 0, width - 1, (height - 1) * width, width * height - 1, width / 2, height / 2 * width, height / 2 * width + width / 2 }
+                .Distinct().ToArray();
+
+        // The planner mutates survivors (patrol exits) from level five and offers rides from level six. Real rooms
+        // fit at most 12 panes by default, so the small boards are checked from every kind of starting pane.
         public static void PlansFromLevelFive()
         {
-            for (int level = 5; level <= 12; ++level)
+            foreach (var (width, height) in new[] { (6, 6), (6, 2), (4, 3), (3, 4), (3, 3) })
+            foreach (int first in StartTiles(width, height))
+            for (int level = 5; level <= 14; ++level)
             for (int seed = 0; seed < 40; ++seed)
             {
-                var board = new BoardState(6, 6, seed);
-                int start = 0;
+                var board = new BoardState(width, height, seed, BoardState.MaxPitch);
+                int start = first;
                 for (int number = 1; ; ++number)
                 {
                     Check(number <= board.Count, "A level must finish.");
                     ulong oldMask = IntactMask(board);
                     var wave = board.BeginWave(start, level, number, number * 10);
                     try { ValidatePlan(board, wave, start, oldMask); }
-                    catch (Exception e) { throw new InvalidOperationException($"Level {level}, seed {seed}, wave {number}", e); }
+                    catch (Exception e) { throw new InvalidOperationException($"{width}x{height} from {first}, level {level}, seed {seed}, wave {number}", e); }
                     if (wave.IsRide)
                     {
                         var pane = wave.OfferedSliders[wave.RideSlider];
@@ -164,7 +172,7 @@ namespace FloorFracture.Tests
                         while ((pane.CenterAt(t) - board.Center(wave.RideCell)).sqrMagnitude > .0625f * board.Pitch * board.Pitch) t += .01;
                         Vector2 stance = pane.CenterAt(t);
                         Check(board.Sample(stance, true, t).IsSlider && board.Tick(stance, true, wave.Deadline) == WaveResult.LevelCleared,
-                            $"Level {level}, seed {seed}: landing on the ride must clear the level.");
+                            $"{width}x{height} from {first}, level {level}, seed {seed}: landing on the ride must clear the level.");
                         break;
                     }
                     start = wave.GuaranteedTile;
