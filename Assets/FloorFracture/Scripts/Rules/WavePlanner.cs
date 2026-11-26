@@ -87,7 +87,7 @@ namespace FloorFracture
             }
             else Duration = switchSeconds;
             RecoverySeconds = WavePacing.RecoveryAt(level);
-            Hazards = WaveHazards.Roll(level, number, seed, now, Duration);
+            Hazards = WaveHazards.Roll(level, seed, now, Duration);
             Mode = mode;
             Stationary = stationary;
             OfferedSliders = sliders;

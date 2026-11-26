@@ -36,7 +36,7 @@ namespace FloorFracture
         // Per-wave kinds, in the order they unlock: spotlights (L4), lightning (L5). Fog belongs to the level.
         private static readonly int[] UnlockLevel = { 4, 5 };
 
-        public static WaveHazards Roll(int level, int number, int seed, double startsAt, double duration)
+        public static WaveHazards Roll(int level, int seed, double startsAt, double duration)
         {
             if (level < UnlockLevel[0]) return None;
             var random = new WavePlanner.Generator(unchecked(seed ^ 0x5F3759DF));

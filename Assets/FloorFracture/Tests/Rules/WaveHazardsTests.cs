@@ -8,8 +8,8 @@ namespace FloorFracture.Tests
     {
         [Test] public void LevelOneHasNoHazards()
         {
-            for (int s = 0; s < 500; s++) for (int n = 1; n < 8; n++)
-                Assert.That(WaveHazards.Roll(1, n, s, 10, 2).Any, Is.False);
+            for (int s = 0; s < 500; s++)
+                Assert.That(WaveHazards.Roll(1, s, 10, 2).Any, Is.False);
         }
 
         static int Kinds(WaveHazards h) => (h.Spotlights > 0 ? 1 : 0) + (h.Strikes.Count > 0 ? 1 : 0);
@@ -18,10 +18,10 @@ namespace FloorFracture.Tests
         {
             for (int s = 0; s < 500; s++)
             {
-                Assert.That(WaveHazards.Roll(3, 3, s, 10, 2).Any, Is.False);
-                Assert.That(WaveHazards.Roll(4, 3, s, 10, 2).Strikes.Count, Is.Zero);
-                Assert.That(Kinds(WaveHazards.Roll(6, 3, s, 10, 2)), Is.InRange(0, 1));
-                Assert.That(Kinds(WaveHazards.Roll(8, 3, s, 10, 2)), Is.EqualTo(1));
+                Assert.That(WaveHazards.Roll(3, s, 10, 2).Any, Is.False);
+                Assert.That(WaveHazards.Roll(4, s, 10, 2).Strikes.Count, Is.Zero);
+                Assert.That(Kinds(WaveHazards.Roll(6, s, 10, 2)), Is.InRange(0, 1));
+                Assert.That(Kinds(WaveHazards.Roll(8, s, 10, 2)), Is.EqualTo(1));
             }
         }
 
@@ -30,7 +30,7 @@ namespace FloorFracture.Tests
             int lights = 0, strikes = 0;
             for (int s = 0; s < 1000; s++)
             {
-                var h = WaveHazards.Roll(12, 2, s, 10, 1);
+                var h = WaveHazards.Roll(12, s, 10, 1);
                 Assert.That(Kinds(h), Is.GreaterThanOrEqualTo(1));
                 if (h.Spotlights > 0) lights++; if (h.Strikes.Count > 0) strikes++;
             }
@@ -51,9 +51,9 @@ namespace FloorFracture.Tests
 
         [Test] public void WavesNoLongerRollFog()
         {
-            for (int level = 1; level <= 14; level++) for (int n = 1; n <= 8; n++) for (int s = 0; s < 200; s++)
+            for (int level = 1; level <= 14; level++) for (int s = 0; s < 200; s++)
             {
-                var h = WaveHazards.Roll(level, n, s, 10, 2);
+                var h = WaveHazards.Roll(level, s, 10, 2);
                 Assert.That(h.FogDensity, Is.Zero);
                 Assert.That(h.FogPatches, Is.Zero);
                 if (level <= 3) Assert.That(h.Any, Is.False);
@@ -70,13 +70,13 @@ namespace FloorFracture.Tests
         }
 
         [Test] public void RollIsDeterministic() =>
-            Assert.That(WaveHazards.Roll(9, 4, 379, 3.5, 1.2).Strikes, Is.EqualTo(WaveHazards.Roll(9, 4, 379, 3.5, 1.2).Strikes));
+            Assert.That(WaveHazards.Roll(9, 379, 3.5, 1.2).Strikes, Is.EqualTo(WaveHazards.Roll(9, 379, 3.5, 1.2).Strikes));
 
         [Test] public void StrikesStayInTheirWindowAndApart()
         {
             for (int s = 0; s < 500; s++)
             {
-                var h = WaveHazards.Roll(10, 2, s, 20, 1);
+                var h = WaveHazards.Roll(10, s, 20, 1);
                 foreach (double t in h.Strikes) Assert.That(t, Is.InRange(20.25, 22.5));
                 for (int i = 1; i < h.Strikes.Count; i++) Assert.That(h.Strikes[i] - h.Strikes[i - 1], Is.GreaterThanOrEqualTo(1.2));
             }
@@ -102,7 +102,7 @@ namespace FloorFracture.Tests
         [Test] public void FlashesNeverExceedThreePerSecond()
         {
             var waves = new List<IReadOnlyList<double>> { new[] { 0.0, WaveHazards.StrikeSpacing } };
-            for (int s = 0; s < 40; s++) waves.Add(WaveHazards.Roll(10, 2, s, 0, 1).Strikes);
+            for (int s = 0; s < 40; s++) waves.Add(WaveHazards.Roll(10, s, 0, 1).Strikes);
             foreach (var strikes in waves) AssertAtMostThreeFlashesPerSecond(strikes);
         }
 
@@ -111,8 +111,8 @@ namespace FloorFracture.Tests
             for (int level = 5; level <= 14; level++) for (int number = 1; number <= 4; number++) for (int s = 0; s < 50; s++)
             {
                 double duration = WavePacing.SwitchSeconds(level, number), next = 10 + duration + WavePacing.RecoveryAt(level);
-                var old = WaveHazards.Roll(level, number, s, 10, duration).Strikes;
-                var current = WaveHazards.Roll(level, number + 1, s + 1000, next, WavePacing.SwitchSeconds(level, number + 1)).Strikes;
+                var old = WaveHazards.Roll(level, s, 10, duration).Strikes;
+                var current = WaveHazards.Roll(level, s + 1000, next, WavePacing.SwitchSeconds(level, number + 1)).Strikes;
                 // As Lightning does: the old wave's strikes show until the next wave replaces them, and each flash is spaced from the last.
                 double shown = double.NegativeInfinity;
                 var flashed = new List<double>();
