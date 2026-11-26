@@ -44,7 +44,6 @@ namespace FloorFracture
         }
         public int Level { get; private set; } = 1;
         const string HighestLevelKey = "ff.highestLevel";
-        const int LevelsPerPage = 3;
         static int HighestLevel => Math.Max(1, PlayerPrefs.GetInt(HighestLevelKey, 1));
         bool developmentRun, pickerFromResults;
         public int WaveNumber { get; private set; } = 1;
@@ -165,26 +164,17 @@ namespace FloorFracture
         {
             pickerFromResults = Stage == GameStage.Results;
             Room.ShowClearance(false);
-            ShowLevelPage(1 + (HighestLevel - 1) / LevelsPerPage * LevelsPerPage);
-        }
-
-        void ShowLevelPage(int first)
-        {
             Stage = GameStage.LevelSelect;
             int highest = HighestLevel;
-            var choices = new List<MenuChoice>();
-            for (int offset = 0; offset < LevelsPerPage && offset <= highest - first; ++offset)
+            var levels = new List<MenuChoice>();
+            for (int i = 1; i <= highest; ++i)
             {
-                int level = first + offset;
-                choices.Add(Choice($"Level {level}", () => RestartAt(level)));
+                int level = i;
+                levels.Add(Choice($"Level {level}", () => RestartAt(level)));
             }
-            bool hasNext = highest - first >= LevelsPerPage;
-            if (!hasNext && highest < int.MaxValue)
-                choices.Add(Choice($"Level {highest + 1} · Locked", null));
-            if (first > 1) choices.Add(Choice("Earlier levels", () => ShowLevelPage(first - LevelsPerPage)));
-            if (hasNext) choices.Add(Choice("Later levels", () => ShowLevelPage(first + LevelsPerPage)));
-            choices.Add(Choice("Back", LeaveLevelPicker));
-            Panel.Show("Choose level", "Reach a level to unlock it. Each attempt starts at wave 1.", choices.ToArray());
+            if (highest < int.MaxValue) levels.Add(Choice($"Level {highest + 1} · Locked", null));
+            Panel.ShowList("Choose level", "Reach a level to unlock it. Each attempt starts at wave 1.",
+                levels.ToArray(), highest - 1, Choice("Back", LeaveLevelPicker));
         }
 
         void LeaveLevelPicker()

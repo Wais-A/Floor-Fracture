@@ -29,7 +29,7 @@ namespace FloorFracture.Editor
             yield return RayChoose(2, false);
             Require(game.Stage == GameStage.LevelSelect && !game.Panel.EditorChoose("Level 2"),
                 "A fresh player could start a locked level.");
-            var locked = game.Panel.transform.Find(GamePanel.CanvasName + "/Choice 2").GetComponent<Button>();
+            var locked = game.Panel.GetComponentsInChildren<Button>().First(b => b.name == "Choice 2");
             Require(!locked.IsInteractable() && locked.GetComponentInChildren<Text>().text == "Level 2 · Locked",
                 "The next level must be visible and disabled.");
             Choose("Back");
@@ -75,15 +75,48 @@ namespace FloorFracture.Editor
             try
             {
                 Choose("Choose level");
-                Require(!game.Panel.EditorChoose("Level 14") && !game.Panel.EditorChoose("Level 10"),
-                    "The picker failed to open on the highest unlocked page.");
-                Choose("Earlier levels"); Choose("Later levels"); Choose("Level 13");
+                Require(!game.Panel.EditorChoose("Earlier") && !game.Panel.EditorChoose("Later") && !game.Panel.EditorChoose("Level 14"),
+                    "The picker still pages, or opened Level 14.");
+                var list = game.Panel.transform.Find(GamePanel.CanvasName).GetComponentInChildren<ScrollRect>();
+                Require(list && list.viewport, "Choose level has no scroll list.");
+                RectTransform Row(string label) => (RectTransform)list.content.GetComponentsInChildren<Text>().First(t => t.text == label).transform.parent;
+                bool Shown(string label)
+                {
+                    var row = Row(label);
+                    float top = list.viewport.InverseTransformPoint(row.TransformPoint(row.rect.max)).y;
+                    float bottom = list.viewport.InverseTransformPoint(row.TransformPoint(row.rect.min)).y;
+                    return bottom >= list.viewport.rect.yMin - .5f && top <= list.viewport.rect.yMax + .5f;
+                }
+                Require(Shown("Level 13") && !Shown("Level 1"), "The picker did not open scrolled to the highest level.");
+                float before = list.content.anchoredPosition.y;
+                yield return RayDrag(Row("Level 13"), new Vector2(0, -250));
+                Require(game.Stage == GameStage.LevelSelect && before - list.content.anchoredPosition.y > 100,
+                    "A ray drag did not scroll the level list, or it selected the level it started on.");
+                list.verticalNormalizedPosition = 0;
+                Require(Shown("Level 13"), "Level 13 was outside the list at the bottom of its scroll.");
+                Choose("Level 13");
                 Require(game.Level == 13 && game.Stage == GameStage.Ready && game.WaveNumber == 1,
                     "Level selection was capped at 12.");
                 Choose("Main menu");
             }
             finally { PlayerPrefs.SetInt(ProgressKey, 2); PlayerPrefs.Save(); }
-            Record("Reached Level 2, left before its first wave, selected it, lost it, and retried on fresh glass. Earlier levels, disabled locks, development shortcuts and paging to Level 13 passed.");
+            Record("Reached Level 2, left before its first wave, selected it, lost it, and retried on fresh glass. Earlier levels, disabled locks, development shortcuts, and a scroll list that opened at Level 13, scrolled by ray drag without selecting, and chose Level 13 passed.");
+        }
+
+        // Presses the right ray on a row, sweeps it by a canvas-space offset, and releases.
+        private static IEnumerator RayDrag(RectTransform row, Vector2 by)
+        {
+            game.Panel.EditorSetTriggers(false, false);
+            Vector3 from = row.TransformPoint(row.rect.center), to = row.TransformPoint(row.rect.center + by);
+            for (int step = 0; step <= 8; ++step)
+            {
+                right.rotation = Quaternion.LookRotation(Vector3.Lerp(from, to, step / 8f) - right.position, Vector3.up);
+                game.Panel.EditorSetPose(head, left, right);
+                yield return Frames(2);
+                if (step == 0) { game.Panel.EditorSetTriggers(false, true); yield return Frames(2); }
+            }
+            game.Panel.EditorSetTriggers(false, false);
+            yield return Frames(2);
         }
 
         private static IEnumerator VerifyMenuPauseAndQuit()

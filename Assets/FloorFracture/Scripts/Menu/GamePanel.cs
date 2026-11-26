@@ -19,7 +19,9 @@ namespace FloorFracture
     public sealed class GamePanel : MonoBehaviour
     {
         public const string CanvasName = "Floor Fracture Menu";
-        private const float Width = 672, Margin = 32, RowHeight = 72, RowGap = 14;
+        private const float Width = 672, Margin = 32, RowHeight = 72, RowGap = 14, RowStep = RowHeight + RowGap;
+        // A half row peeks out at the edge to show the list scrolls; with Back the panel stays within the old six-row page.
+        private const float ListRows = 4.5f;
         private const float WarningPreviewSize = 144;
         private static readonly Color Paper = new Color32(13, 32, 41, 249);
         private static readonly Color Idle = new Color32(35, 66, 76, 255);
@@ -39,6 +41,8 @@ namespace FloorFracture
         private readonly List<Row> rows = new List<Row>();
         private readonly PanelController[] pointers = new PanelController[2];
         private MenuChoice[] choices = Array.Empty<MenuChoice>();
+        private ScrollRect scroll;
+        private int listCount;
         private OVRCameraRig rig;
         private global::GameSound sound;
         private RectTransform panel;
@@ -123,6 +127,20 @@ namespace FloorFracture
             background.raycastTarget = false;
             title = Label(panel, "Title", 46, FontStyle.Bold, Ink);
             body = Label(panel, "Instructions", 26, FontStyle.Normal, Secondary);
+            // PointableCanvasModule sends poke and ray drags to the nearest IDragHandler above the pressed row.
+            var list = new GameObject("Choice list", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(RectMask2D), typeof(ScrollRect));
+            list.transform.SetParent(panel, false);
+            // A clear backing lets a drag start between rows or on a locked level.
+            list.GetComponent<UnityEngine.UI.Image>().color = Color.clear;
+            scroll = list.GetComponent<ScrollRect>();
+            scroll.horizontal = false;
+            scroll.viewport = (RectTransform)list.transform;
+            scroll.content = (RectTransform)new GameObject("Content", typeof(RectTransform)).transform;
+            scroll.content.SetParent(list.transform, false);
+            scroll.content.anchorMin = scroll.content.anchorMax = scroll.content.pivot = new Vector2(0, 1);
+            // Once the list moves nothing stays pressed, so a drag never looks like a selection.
+            scroll.onValueChanged.AddListener(_ => { mousePress = pointers[0].Pressed = pointers[1].Pressed = -1; Paint(); });
+            list.SetActive(false);
             pointers[0] = new PanelController(transform, true);
             pointers[1] = new PanelController(transform, false);
             Hide();
@@ -131,6 +149,23 @@ namespace FloorFracture
         public void Show(string heading, string message, params MenuChoice[] options)
         {
             ShowPage(heading, message, options, false);
+        }
+
+        // The listed choices scroll inside the panel, opened with listed[reveal] mid-view; the rest stay fixed below.
+        public void ShowList(string heading, string message, MenuChoice[] listed, int reveal, params MenuChoice[] after)
+        {
+            var options = new MenuChoice[listed.Length + after.Length];
+            listed.CopyTo(options, 0);
+            after.CopyTo(options, listed.Length);
+            ShowPage(heading, message, options, false, listed.Length);
+            ScrollTo(reveal * RowStep + (RowHeight - scroll.viewport.rect.height) / 2);
+        }
+
+        private void ScrollTo(float offset)
+        {
+            scroll.StopMovement();
+            float range = Mathf.Max(0, scroll.content.rect.height - scroll.viewport.rect.height);
+            scroll.content.anchoredPosition = new Vector2(0, Mathf.Clamp(offset, 0, range));
         }
 
         public void ShowStartCount(int count, float opacity = 1f)
@@ -173,7 +208,7 @@ namespace FloorFracture
             ShowPage("Find a clear floor", message + "\nCheck again uses your saved scan. Space Setup opens the Quest scanner, where you can use a Touch controller.", options.ToArray(), true);
         }
 
-        private void ShowPage(string heading, string message, MenuChoice[] options, bool isRoomRecovery)
+        private void ShowPage(string heading, string message, MenuChoice[] options, bool isRoomRecovery, int listed = 0)
         {
             bool position = !Visible;
             bool updatingRecovery = isRoomRecovery && roomRecovery && Visible && choices.Length == options.Length;
@@ -189,9 +224,13 @@ namespace FloorFracture
             panel.gameObject.SetActive(true);
             ClearPointers();
             title.text = heading ?? "";
+            listCount = listed;
+            scroll.gameObject.SetActive(listed > 0);
             for (int i = rows.Count; i < choices.Length; ++i) BuildRow(i);
             for (int i = 0; i < rows.Count; ++i)
             {
+                var parent = i < listed ? scroll.content : panel;
+                if (rows[i].Rect.parent != parent) rows[i].Rect.SetParent(parent, false);
                 rows[i].Button.ClearPendingPresses();
                 bool use = i < choices.Length;
                 rows[i].Rect.gameObject.SetActive(use);
@@ -237,7 +276,8 @@ namespace FloorFracture
         {
             string heading=title.text, message=body.text;
             var buttons=choices;
-            return () => Show(heading,message,buttons);
+            int listed=listCount;
+            return () => ShowPage(heading,message,buttons,false,listed);
         }
 
         public void SetBody(string message)
@@ -251,9 +291,19 @@ namespace FloorFracture
             Place(body.rectTransform, Margin, 93, bodyWidth, bodyHeight);
             float headerBottom = Mathf.Max(93 + bodyHeight, showPreview ? Margin - 6 + WarningPreviewSize : 0);
             float top = headerBottom + (choices.Length > 0 ? 23 : 0);
+            float bottom = top;
+            if (listCount > 0)
+            {
+                float listHeight = Mathf.Min(listCount, ListRows) * RowStep - RowGap;
+                Place(scroll.viewport, Margin, top, Width - 2 * Margin, listHeight);
+                scroll.content.sizeDelta = new Vector2(Width - 2 * Margin, listCount * RowStep - RowGap);
+                bottom += listHeight + RowGap;
+            }
             for (int i = 0; i < choices.Length; ++i)
-                Place(rows[i].Rect, Margin, top + i * (RowHeight + RowGap), Width - 2 * Margin, RowHeight);
-            float height = top + choices.Length * (RowHeight + RowGap) - (choices.Length > 0 ? RowGap : 0) + Margin;
+                if (i < listCount) Place(rows[i].Rect, 0, i * RowStep, Width - 2 * Margin, RowHeight);
+                else Place(rows[i].Rect, Margin, bottom + (i - listCount) * RowStep, Width - 2 * Margin, RowHeight);
+            bottom += (choices.Length - listCount) * RowStep;
+            float height = bottom - (choices.Length > 0 ? RowGap : 0) + Margin;
             // On the recovery page the first button's top edge stays at the panel origin.
             // Additional lines of tracking status expand the panel above a resting hand.
             panel.pivot = new Vector2(.5f, roomRecovery ? (height - top) / height : .5f);
@@ -471,8 +521,10 @@ namespace FloorFracture
                 return -1;
             Vector3 point = ray.GetPoint(t);
             if (!panel.rect.Contains(panel.InverseTransformPoint(point))) return -1;
+            bool inList = scroll.viewport.rect.Contains(scroll.viewport.InverseTransformPoint(point));
             for (int i = 0; i < choices.Length; ++i)
-                if (rows[i].Button.interactable && rows[i].Rect.rect.Contains(rows[i].Rect.InverseTransformPoint(point))) return i;
+                if (rows[i].Button.interactable && (i >= listCount || inList) &&
+                    rows[i].Rect.rect.Contains(rows[i].Rect.InverseTransformPoint(point))) return i;
             return -1;
         }
 
@@ -543,6 +595,9 @@ namespace FloorFracture
             var mouse = UnityEngine.InputSystem.Mouse.current;
             mouseHover = mouse != null && eye ? Hit(eye.ScreenPointToRay(mouse.position.ReadValue())) : -1;
             if (mouse == null) return false;
+            // Clamped to one row per frame, because wheel delta units differ between platforms.
+            float wheel = Mathf.Clamp(mouse.scroll.ReadValue().y, -1, 1);
+            if (listCount > 0 && wheel != 0) ScrollTo(scroll.content.anchoredPosition.y - wheel * RowStep);
             if (mouse.leftButton.wasPressedThisFrame) mousePress = mouseHover;
             if (!mouse.leftButton.wasReleasedThisFrame) return false;
             int clicked = mousePress;
