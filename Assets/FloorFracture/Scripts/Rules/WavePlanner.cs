@@ -509,6 +509,7 @@ namespace FloorFracture
                     }
                 }
                 // Patrol draws follow every lane draw so levels without patrols keep their seeded panes.
+                // A patrol, when one exists, always replaces the lane.
                 patrol = null;
                 patrolLength = patrolTies = 0;
                 if (patrols)
@@ -519,7 +520,7 @@ namespace FloorFracture
                         Walk(1, -1, false, ref random);
                     }
                 if (source < 0 && patrol == null) break;
-                var pane = patrol != null && (source < 0 || random.Next(2) == 0)
+                var pane = patrol != null
                     ? new SlidingPane(board, patrol, now, duration)
                     : new SlidingPane(board, source, end, now, duration);
                 panes.Add(pane);
