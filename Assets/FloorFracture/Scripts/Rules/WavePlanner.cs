@@ -531,7 +531,7 @@ namespace FloorFracture
             bool Unavailable(int tile) => reserved[tile] || (jump && TouchesStart(board, start, tile)) ||
                 (row.Length != 0 && WavePlan.RowDistance(board, start, row[0], tile) < row.Length);
 
-            // Extends trail[0..count) over holes; both ends of each step need a survivor across that step.
+            // Extends trail[0..count) over holes; a pane locked anywhere on each step must reach a survivor.
             void Walk(int count, int heading, bool turned, ref Generator draw)
             {
                 if (turned && count >= patrolLength) // a turn needs three cells
@@ -544,14 +544,38 @@ namespace FloorFracture
                 for (int d = 0; d < 4; ++d)
                 {
                     int next = board.Layout.Neighbor(tile, d);
-                    bool horizontal = d == 1 || d == 2;
                     if (!board.Layout.Contains(next) || board.IsIntact(next) || Unavailable(next) ||
-                        Array.IndexOf(trail, next, 0, count) >= 0 ||
-                        !HasSideExit(board.Layout, tile, horizontal, survivors) ||
-                        !HasSideExit(board.Layout, next, horizontal, survivors)) continue;
+                        Array.IndexOf(trail, next, 0, count) >= 0 || !StepHasExits(board, tile, next, survivors)) continue;
                     trail[count] = next;
                     Walk(count + 1, d, turned || (heading >= 0 && d != heading), ref draw);
                 }
+            }
+        }
+
+        // CanExitTo's geometry, kept inside its 1.2501 bound: both cell centers and 20 points between them
+        // need a survivor. Midway samples are offset so abutting side exits (1.25 at the seam) still count.
+        private static bool StepHasExits(BoardState board, int tile, int next, bool[] survivors)
+        {
+            UnityEngine.Vector2 a = board.Center(tile), b = board.Center(next);
+            float reach = board.Pitch * board.Pitch * 1.24f;
+            for (int s = 0; s <= 21; ++s)
+            {
+                var point = s == 0 ? a : s == 21 ? b : UnityEngine.Vector2.Lerp(a, b, (s - .5f) / 20);
+                if (!NearSurvivor(tile, point) && !NearSurvivor(next, point)) return false;
+            }
+            return true;
+
+            // Any survivor within reach of the step is within one cell of one of its ends.
+            bool NearSurvivor(int end, UnityEngine.Vector2 point)
+            {
+                int col = end % board.Width, row = end / board.Width;
+                for (int y = Math.Max(0, row - 1); y <= Math.Min(board.Height - 1, row + 1); ++y)
+                for (int x = Math.Max(0, col - 1); x <= Math.Min(board.Width - 1, col + 1); ++x)
+                {
+                    int cell = y * board.Width + x;
+                    if (survivors[cell] && (board.Center(cell) - point).sqrMagnitude <= reach) return true;
+                }
+                return false;
             }
         }
 

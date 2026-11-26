@@ -435,8 +435,8 @@ namespace FloorFracture.Tests
             }
             double fraction=(double)patrols/offered;
             TestContext.WriteLine($"Patrols on {patrols}/{offered} offered panes ({fraction:P1}).");
-            // shortcut: 15% is unreachable under the per-segment side-exit rule (3/794 measured; 78% without it),
-            // so this guards the measured rate until survivor selection makes room for corners.
+            // shortcut: 15% is unreachable while every point of a patrol must reach a survivor (3/794 measured;
+            // a corner needs both outer sides), so this guards the measured rate until survivors make room for corners.
             Assert.That(fraction,Is.GreaterThanOrEqualTo(.0035),$"Patrols on {patrols}/{offered} offered panes ({fraction:P1}).");
         }
 
