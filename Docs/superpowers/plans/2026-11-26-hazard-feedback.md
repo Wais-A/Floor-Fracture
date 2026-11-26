@@ -21,7 +21,7 @@
   - `unity recompile --format json`
   - `unity command test run --mode editor --filter <X> --result-only --timeout 900`
   - `unity command script eval --caller plugin --skill unity-cli '<C#>' --result-only`
-- Do not run the full Play Mode smoke suite before Task 5.
+- Do not run the full Play Mode smoke suite before Task 7.
 - Commit and push after each task on `floor-fracture-game`, ending each message with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 
 ## Review Focus
@@ -204,7 +204,61 @@
 
 ---
 
-### Task 5: Full verification and Quest build
+### Task 5: Lamp hum matches the music up close
+
+**Files:**
+- Modify: `Assets/FloorFracture/Scripts/Presentation/Endings/GameSound.cs:18` (`LampGain`), `CreateLampVoice` (`minDistance`)
+- Replace: `Assets/FloorFracture/Resources/Endings/Audio/BeamHum.wav` (keep its .meta)
+
+**Interfaces:**
+- `BeamHum.wav` is normalized so that its RMS is ≥ +18 dB above today's −46.3 dBFS, with peak ≤ −1 dBFS. It stays mono, 48 kHz, Int16, and still loops seamlessly: apply the same gain to every sample, with no fades.
+- `voice.minDistance = 1.3f`, with logarithmic rolloff unchanged.
+- Set `LampGain` so that at distance ≤ 1.3 m the hum's loudness at the ear equals the music's.
+  - Music: the clip's loudness plus `20·log10(MusicGain)`, where MusicGain is .12. Measured −22.0 LUFS clip, so about −40.4 relative to master.
+  - Hum: the normalized clip's loudness plus `20·log10(LampGain)`.
+  - Use one measurement method (stdlib BS.1770-style approximation or RMS) for both clips, and print the numbers. `LampGain` must stay ≤ 1.
+
+- [ ] **Step 1:** Measure the music and hum loudness with one method, and print both.
+- [ ] **Step 2:** Normalize BeamHum.wav. Use a stdlib Python script in the scratchpad, run with `python3 -I`, and verify it with `afinfo`.
+- [ ] **Step 3:** Set `LampGain` from the measurement, and `minDistance` to 1.3. Add a one-line comment giving the measured target.
+- [ ] **Step 4:** Recompile (0/0) and run the EditMode suite (green). The smoke check `VerifySpotlights` (gain > 0, stops at volume 0) should still compile.
+- [ ] **Step 5: Commit and push.** Commit message: `Make the lamp hum as loud as the music when you stand under it`
+
+---
+
+### Task 6: Scrollable level picker
+
+**Files:**
+- Modify: the level picker UI in `Assets/FloorFracture/Scripts/Menu/` (`GamePanel.cs`, and `MenuPageButton.cs` / `PanelController.cs` as needed). Find where "earlier levels" / "later levels" paging is built.
+- Modify: `Assets/FloorFracture/Scripts/Menu/EditorPanelInput.cs` if desktop input needs a scroll path.
+- Modify smoke: `Assets/FloorFracture/Editor/Verification/GameplaySmoke.Menu.cs` (`VerifyLevelPicker`, which today pages to Level 13).
+
+**Interfaces:**
+- Choose level shows one vertical list of every level button, inside a `ScrollRect` (Unity UI) with a viewport mask that fits the existing panel.
+- The paging buttons are removed. Which levels appear and which are enabled is unchanged.
+- Scrolling works by:
+  - fingertip poke drag, through the Meta Interaction SDK's poke and canvas pipeline already used by the menu
+  - a hand or controller ray drag
+  - the mouse wheel or a drag in the Editor's desktop input
+- Opening the picker scrolls so the player's highest reached level is visible.
+- A tap without a drag still selects a level. A drag must not select the button it started on.
+- If the `meta-vr:hz-unity-meta-interaction-sdk` skill is available, load it before wiring poke scrolling.
+
+- [ ] **Step 1: Write the failing smoke changes** in `VerifyLevelPicker`:
+  - With levels 1–13 unlocked, require no choice starting "Earlier"/"Later" (or the current paging labels), and require a ScrollRect under the panel canvas.
+  - Set `verticalNormalizedPosition` to 0 and require Level 13's button to be inside the viewport. Then choose it with `EditorChoose("Level 13")`, or the existing label prefix, and require the game to go to Level 13's Ready.
+  - Keep the existing lock and development checks.
+- [ ] **Step 2:** Recompile. It should compile, and the new requirements fail by inspection (paging labels still present).
+- [ ] **Step 3:** Implement. Reuse the panel's existing button factory and styles, and keep the panel size.
+- [ ] **Step 4: Verify.**
+  - Recompile (0/0) and run the EditMode suite (green).
+  - Do a quick Play Mode check in the open Editor with desktop input: open Choose level with many levels unlocked (set `ff.highestLevel` through script eval, and restore it afterwards), scroll with the mouse wheel, and pick a level.
+  - Stop Play Mode.
+- [ ] **Step 5: Commit and push.** Commit message: `Let players scroll the level list with a finger instead of paging`
+
+---
+
+### Task 7: Full verification and Quest build
 
 - [ ] **Step 1:** Run the full EditMode suite. Expected: all green.
 - [ ] **Step 2:** Ask the controller to confirm the user is not using the Editor. Then run the full Play Mode smoke once, from the open Editor: set `XR_RUNTIME_JSON=/nonexistent/openxr_runtime.json` in the Editor process, invoke "Tools/Floor Fracture/Verify gameplay in Play Mode", and ALWAYS clear the variable afterwards. Fix failures with targeted commits; this allows up to 3 runs.
