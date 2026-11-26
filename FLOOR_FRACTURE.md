@@ -32,8 +32,19 @@ The project runs on Unity `6000.6.10f1`, upgraded on November 25 from the approv
 - Listen for the stress crackle coming from each pane as it flashes amber. Its tint, bright rim and cracks disappear together. Level one gives 0.80 seconds per clue, level seven gives 0.30 seconds and level twelve gives 0.25 seconds. On early levels, groups can start flashing up to 0.12 seconds apart.
 - Manual starts give a three-second count-in. Ordinary movement windows open at 2.00 seconds on level one, 1.50 on level three and 1.00 from level six. Every required step gives at least one second from its own danger cue. The target share of surviving glass falls from 70% to 35% as levels advance, subject to keeping viable landings and exits.
 - From level six, all marked glass can break at once, or a row can fall behind the player. The first row gives 1.25 seconds, the next gives 1.10, and from level nine a third can follow after 1.00. Each new row flashes and crackles as the preceding row drops. Shorter floors get shorter crossings.
-- Jumps unlock from wave two of level two and wave three of level three. When a jump needs to open fresh gaps, the surrounding glass warns for a full second before falling. The player then has at least 1.85 seconds to cross one opening to any reachable clear landing. From level nine a second jump wave can follow. A pane that starts sliding moves into existing holes and locks at its exact position when caught. One can move from level three and two can move from level six when they have separate paths with reachable exits.
+- Jumps unlock from wave two of level two and wave three of level three. When a jump needs to open fresh gaps, the surrounding glass warns for a full second before falling. The player then has at least 1.85 seconds to cross one opening to any reachable clear landing. From level nine a second jump wave can follow. A pane that starts sliding moves into existing holes and locks at its exact position when caught. Up to one pane can slide per wave at levels three to five, two at levels six to eight and three from level nine, when they have separate paths with reachable exits. A wave can offer new sliders while the previous wave's slider is still on the board.
 
+
+## Level hazards
+
+Break timing is unchanged. The hazards below add movement and visual or audio clutter on top of it.
+
+- Patrol panes, from level five, are moving panes whose lane turns a corner along a path of 3 to 5 cells. They stop where the player lands. From level seven roughly 1 in 9 moving panes is a patrol.
+- Ride finale, from level six: some levels end with a ride instead of Last Tile. Every stationary pane breaks, the pane beside the player starts to slide, and the player steps onto it before it slides out of reach. Landing on it clears the level. The level six Ready screen hint reads "When no glass is left in reach, step onto the pane that starts to slide."
+- Fog, from level two, is thick drifting fog below knee height. It thickens with level and partly hides the amber cracks. From level three, drifting fog patches also settle over single panes.
+- Sweeping spotlights, from level four, are one to three overhead beams from lamps placed below the real ceiling. Their bright pools wash out cracks, and each lamp hums from its own direction.
+- Lightning, from level five, is a double flash overhead followed by thunder from that direction, at most three flashes per second. With Reduced motion on it is one soft glow.
+- Mix: fog, patches, spotlights and lightning are rolled per wave. Level one has none, levels two and three have zero or one, levels four to six have one (sometimes two), levels seven to nine have one or two, and from level ten there are two or three.
 
 ## Loss and replay
 
