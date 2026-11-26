@@ -15,7 +15,7 @@ public sealed class GameSound : MonoBehaviour
     AudioSource holeDraft;
     const float DraftGain = .40f;
     float draftFade;
-    const float LampGain = .18f;
+    const float LampGain = .5f;
     readonly List<AudioSource> lampVoices = new();
     readonly List<float> lampLevels = new();
     // Two strikes per wave at most, each 7 s of thunder, plus one spare so a new wave's strike never cuts one off.
@@ -88,7 +88,7 @@ public sealed class GameSound : MonoBehaviour
         {
             thunder[i] = Voice("Thunder " + i, true);
             thunder[i].clip = thunderClip;
-            thunder[i].minDistance = 6f;
+            thunder[i].minDistance = 8f;
             thunder[i].maxDistance = 40f;
         }
         SetVolume(volume);
@@ -133,6 +133,7 @@ public sealed class GameSound : MonoBehaviour
         emitter.name = "Lamp hum";
         var voice = emitter.GetComponent<AudioSource>();
         voice.clip = beamHum;
+        voice.minDistance = 2f;
         voice.loop = true;
         voice.volume = 0f;
         lampVoices.Add(voice);
