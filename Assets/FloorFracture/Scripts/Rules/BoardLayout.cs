@@ -8,9 +8,6 @@ namespace FloorFracture
     public readonly struct BoardLayout : IEquatable<BoardLayout>
     {
         public readonly int Columns, Rows;
-        // Compatibility view for callers with a single 64-bit word. Gameplay uses Contains.
-        [Obsolete("Mask covers only indices 0 through 63. Use Contains for the full board.")]
-        public ulong Mask => lowWord;
         private readonly ulong lowWord;
         private readonly bool[] occupied;
         public int CellCount { get; }

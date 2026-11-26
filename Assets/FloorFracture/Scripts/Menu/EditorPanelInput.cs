@@ -15,7 +15,7 @@ namespace FloorFracture
         private readonly Transform[] grips = new Transform[2];
         private readonly List<XRDisplaySubsystem> displays = new List<XRDisplaySubsystem>();
         private static readonly Key[] Digits = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5, Key.Digit6 };
-        private bool sawXr, rigWasEnabled, heldLeft, heldRight, triggerLeft, triggerRight;
+        private bool sawXr, rigWasEnabled, triggerLeft, triggerRight;
         private Vector3 originalHeadPosition;
         private Quaternion originalHeadRotation;
         private double probeAt;
@@ -69,13 +69,6 @@ namespace FloorFracture
 
         internal Transform Grip(bool left) => grips[left ? 0 : 1];
         internal bool TriggerHeld(bool left) => left ? triggerLeft : triggerRight;
-
-        internal bool GripHeld(bool left)
-        {
-            if (Override) return left ? heldLeft : heldRight;
-            var keyboard = Keyboard.current;
-            return keyboard != null && (left ? keyboard.qKey.isPressed : keyboard.eKey.isPressed);
-        }
 
         internal int NumberPressed()
         {
@@ -134,8 +127,6 @@ namespace FloorFracture
             rig.centerEyeAnchor.SetPositionAndRotation(head.position, head.rotation);
             grips[0].SetPositionAndRotation(left.position, left.rotation);
             grips[1].SetPositionAndRotation(right.position, right.rotation);
-            heldLeft = leftHeld;
-            heldRight = rightHeld;
         }
 
         internal void SetTriggers(bool left, bool right)

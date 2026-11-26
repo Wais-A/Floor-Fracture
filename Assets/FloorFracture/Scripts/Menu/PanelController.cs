@@ -24,7 +24,6 @@ namespace FloorFracture
 
         private OVRInput.Controller Device => left ? OVRInput.Controller.LTouch : OVRInput.Controller.RTouch;
         private XRNode Node => left ? XRNode.LeftHand : XRNode.RightHand;
-        internal bool GripHeld => OVRInput.Get(left ? OVRInput.RawButton.LHandTrigger : OVRInput.RawButton.RHandTrigger, Device);
 
         internal static bool HeadTracked()
         {

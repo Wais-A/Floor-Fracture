@@ -46,7 +46,6 @@ namespace FloorFracture
 #if UNITY_EDITOR
         private PointableCanvas pointable;
         private RayInteractable raySurface;
-        public bool EditorSimulatesControllers => desktop != null && desktop.Active;
 #endif
         private UnityEngine.UI.Text title, body;
         private Canvas countCanvas;
@@ -83,21 +82,6 @@ namespace FloorFracture
             }
         }
 
-        public Transform Grip(bool left)
-        {
-#if UNITY_EDITOR
-            if (desktop != null && desktop.Active) return desktop.Grip(left);
-#endif
-            return !rig ? null : (left ? rig.leftHandAnchor : rig.rightHandAnchor);
-        }
-
-        public bool GripHeld(bool left)
-        {
-#if UNITY_EDITOR
-            if (desktop != null && desktop.Active) return desktop.GripHeld(left);
-#endif
-            return Tracked && pointers[left ? 0 : 1].GripHeld;
-        }
 
         public void Initialize(OVRCameraRig cameraRig, global::GameSound gameSound)
         {

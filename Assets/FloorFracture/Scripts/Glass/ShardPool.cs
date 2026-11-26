@@ -16,7 +16,7 @@ namespace FloorFracture
         readonly List<Vector3> vertices=new(1024);
         readonly List<Color> colors=new(1024);
         readonly List<int> triangles=new(1800);
-        readonly Vector3[] centroids=new Vector3[16];
+        readonly Vector3[] centroids=new Vector3[GlassGeometry.Pieces.Length];
         Mesh mesh;
         MeshRenderer view;
         float paneScale;
@@ -34,7 +34,6 @@ namespace FloorFracture
                 active[i] = piece;
             }
         }
-        public int ActiveCount => active.Count;
 
         public void Initialize(Material material, float tileScale)
         {

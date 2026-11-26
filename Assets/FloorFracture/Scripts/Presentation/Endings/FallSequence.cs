@@ -9,9 +9,6 @@ public sealed class FallSequence : MonoBehaviour
     const float RimHold = .40f;
     static readonly float FreeFallTime = Mathf.Sqrt(2f * FallScenery.ShaftDepth / Gravity);
     [SerializeField] FloorEndingSet enabledEndings = FloorEndingSet.All;
-    [SerializeField] Material waterSurfaceOverride = null;
-    [SerializeField] GameObject splashPrefabOverride = null;
-    [SerializeField] GameObject lavaFlamesOverride = null;
 #if UNITY_EDITOR || DEBUG
     enum PreviewEnding { Shuffle = -1, Water, Lava, TarPit, Space, Sand, Snow }
     [SerializeField] PreviewEnding developmentEnding = PreviewEnding.Shuffle;
@@ -73,9 +70,11 @@ public sealed class FallSequence : MonoBehaviour
         selectedLevel = level;
         CurrentLevelEnding = shuffle.Next(enabledEndings);
         if (CurrentLevelEnding < 0) return;
+        // Saved to disk on pause, not here: this runs on the frame the wave countdown starts.
         PlayerPrefs.SetString(shufflePreference, shuffle.Save());
-        PlayerPrefs.Save();
     }
+
+    void OnApplicationPause(bool pause) { if (pause) PlayerPrefs.Save(); }
 
     internal void SetBoard(FloorFracture.GlassBoardView nextBoard)
     {
@@ -123,7 +122,7 @@ public sealed class FallSequence : MonoBehaviour
 
     void PrepareChamber()
     {
-        scenery ??= new FallScenery(waterSurfaceOverride,splashPrefabOverride,lavaFlamesOverride);
+        scenery ??= new FallScenery();
     }
 
     /// <summary>Water through snow are indices zero through five. A negative index restores the bag.</summary>
@@ -150,8 +149,6 @@ public sealed class FallSequence : MonoBehaviour
             return;
         }
         if (!sound) sound = GetComponent<GameSound>();
-        if (!sound) sound = FindAnyObjectByType<GameSound>();
-        if (!sound) sound = gameObject.AddComponent<GameSound>();
         int selected = PresentationEnding(developmentPreview, true);
         bool emptyBag = selected < 0;
         kind = emptyBag ? FloorEnding.Water : (FloorEnding)selected;

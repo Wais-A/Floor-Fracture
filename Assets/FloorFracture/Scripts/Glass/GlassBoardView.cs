@@ -186,7 +186,6 @@ namespace FloorFracture
         }
         public void PracticeBreak(int index) { if (model.Layout.Contains(index)) { practiceHole=index; Shatter(index); } }
         public void ClearTransient() { practiceHole=-1; if(shards) shards.Clear(); }
-        public void RestorePracticePane() { practiceHole=-1; }
         public void RevealLossAperture(int cell)
         {
             occupancy.enabled=false;

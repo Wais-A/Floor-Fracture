@@ -55,7 +55,11 @@ namespace FloorFracture.Editor
             if(!AssetDatabase.LoadAssetAtPath<GameObject>(TilePrefab))
             {
                 var go=new GameObject("GlassTile"); go.AddComponent<GlassTile>();
-                PrefabUtility.SaveAsPrefabAsset(go,TilePrefab); UnityEngine.Object.DestroyImmediate(go);
+                try
+                {
+                    if(!PrefabUtility.SaveAsPrefabAsset(go,TilePrefab)) throw new IOException("Could not save "+TilePrefab+".");
+                }
+                finally { UnityEngine.Object.DestroyImmediate(go); }
             }
             Scene previous=SceneManager.GetActiveScene();
             Scene scene=SceneManager.GetSceneByPath(MainScene);

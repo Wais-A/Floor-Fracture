@@ -19,7 +19,6 @@ namespace FloorFracture.Editor
         public const string FloorSpawnsId = "93762ef0-9738-45f4-bb87-bdb9a0acb994";
         public const string EffectMeshId = "65c6e778-10b3-4490-89da-008a18aa116a";
         public const string GuardianId = "715d6e5e-2d15-475d-9b2b-43ce3eca2f3d";
-        public const string OcclusionId = "c1dbe32c-fed2-4835-8e6a-3fbb4f4f4315";
         public const string DepthProviderId = "ece9de6e-19c8-4f64-bb33-313ed23e6c5c";
         public const string EnvironmentRaycastId = "3ce5fc30-a5c9-4ad0-a76d-3583bcd405b0";
         public const string InteractionsId = "81f55626-5fad-45e9-a1df-184f330da7ba";

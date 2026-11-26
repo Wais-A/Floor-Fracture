@@ -101,7 +101,8 @@ namespace FloorFracture.Editor
         {
             if (kind != LogType.Exception && kind != LogType.Assert && kind != LogType.Error) return;
             if (!EditorApplication.isPlaying || SessionState.GetInt(Key + "phase", 0) != 1) return;
-            if (stack.Contains("FloorFracture.") || stack.Contains("FallSequence.") || stack.Contains("FallScenery."))
+            if (stack.Contains("FloorFracture.") || stack.Contains("FallSequence.") || stack.Contains("FallScenery.") ||
+                stack.Contains("Assets/FloorFracture/"))
                 pendingException = message + Environment.NewLine + stack;
         }
 
@@ -196,9 +197,9 @@ namespace FloorFracture.Editor
             yield return VerifyMenuPauseAndQuit();
             yield return VerifyTrapRotation();
             yield return VerifyTileCracks();
-            yield return RayChoose(4, false); yield return Stage(GameStage.Settings);
+            yield return RayChoose(3, false); yield return Stage(GameStage.Settings);
             Require(!outlines.gameObject.activeSelf, "The Welcome board perimeter stayed visible inside Settings.");
-            yield return RayChoose(6, true); yield return Stage(GameStage.Welcome);
+            yield return RayChoose(5, true); yield return Stage(GameStage.Welcome);
             Record("The right simulated ray opened Settings and the left ray selected Back through independent trigger presses.");
             Choose("Settings"); yield return Stage(GameStage.Settings);
             int oldMotion = PlayerPrefs.GetInt("ff.reduced",0);

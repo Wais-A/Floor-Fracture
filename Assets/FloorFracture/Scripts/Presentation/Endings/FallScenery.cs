@@ -44,7 +44,7 @@ internal sealed class FallScenery
     readonly List<Mesh> ownedMeshes = new List<Mesh>();
     readonly Mesh[] moteMeshes = new Mesh[6];
     readonly Mesh boxMesh;
-    readonly GameObject splashPrefab, replacementFire;
+    readonly GameObject splashPrefab;
     readonly Color sourceWaterColor;
     GameObject splash;
     FloorEnding kind;
@@ -55,7 +55,7 @@ internal sealed class FallScenery
     bool hasFloorApertures, stencilEnabled, fullyUnder;
     float sandShade;
 
-    internal FallScenery(Material waterOverride, GameObject splashOverride, GameObject fireOverride)
+    internal FallScenery()
     {
         world = new GameObject("Fall chamber").transform;
         surfaceMaterial = new Material(Resources.Load<Shader>("Endings/Chamber"));
@@ -77,7 +77,7 @@ internal sealed class FallScenery
         rightColumn = Part("Right brick column", column, surfaceMaterial);
         background = Part("Chamber darkness", boxMesh, backgroundMaterial);
         floor = Part("Hazard surface", disk, surfaceMaterial);
-        var native = waterOverride ? waterOverride : Resources.Load<Material>("Endings/MetaFloorZone/materials/Water");
+        var native = Resources.Load<Material>("Endings/MetaFloorZone/materials/Water");
         if (native && native.HasProperty("_WaterNormal"))
             surfaceMaterial.SetTexture("_WaterNormal",native.GetTexture("_WaterNormal"));
         if (native && native.shader && native.shader.isSupported)
@@ -95,12 +95,7 @@ internal sealed class FallScenery
         dustMaterial.SetInt("_DepthWrite",0);
         dust = Part("Fall dust", Own(FallMeshes.Dust()), dustMaterial);
         CreateView();
-        splashPrefab = splashOverride ? splashOverride : Resources.Load<GameObject>("Endings/MetaFloorZone/prefabs/Splash");
-        if (fireOverride)
-        {
-            replacementFire = Object.Instantiate(fireOverride, world);
-            replacementFire.SetActive(false);
-        }
+        splashPrefab = Resources.Load<GameObject>("Endings/MetaFloorZone/prefabs/Splash");
         // Even a straight-down ray must meet the destination before it meets the sky enclosure.
         background.transform.localScale = Vector3.one * (ShaftDepth + 8f);
         Hide();
@@ -290,12 +285,6 @@ internal sealed class FallScenery
         Paint(entryBubbles,16,new Color(.72f,.93f,1f),plunge && fullyUnder ? .9f*(1-Ease(.9f,1.7f,seconds)) : 0);
         pillars.transform.localPosition = entryLocal + Vector3.up*(kind == FloorEnding.Lava ? surfaceY-.11f : 0);
         Paint(pillars,7,Color.white,fullyUnder ? 0 : pillarsAlpha);
-        if (replacementFire)
-        {
-            bool lit = kind == FloorEnding.Lava && pillarsAlpha > .20f && !fullyUnder;
-            if (lit != replacementFire.activeSelf) replacementFire.SetActive(lit);
-            replacementFire.transform.localPosition = entryLocal + new Vector3(1.25f,surfaceY,0);
-        }
         if (fullyUnder && splash && splash.activeSelf) splash.SetActive(false);
         if (kind == FloorEnding.TarPit || (fullyUnder && kind != FloorEnding.Water)) particleAlpha = 0;
         Paint(motes,6,Color.white,particleAlpha);
@@ -409,7 +398,6 @@ internal sealed class FallScenery
         }
         if (interior) interior.enabled = false;
         if (splash) { splash.SetActive(false); }
-        if (replacementFire) replacementFire.SetActive(false);
         if (world) world.gameObject.SetActive(false);
         head = null;
     }

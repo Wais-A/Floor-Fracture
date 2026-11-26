@@ -271,7 +271,8 @@ namespace FloorFracture
         {
             var file = writer; writer = null;
             try { file?.Dispose(); }
-            catch (IOException) { }
+            // Dispose flushes the last buffered rows; say so if they were lost.
+            catch (IOException error) { Debug.LogWarning("[Floor Fracture] Quest performance capture lost its final rows. " + error.Message); }
         }
 
         void Suspend()

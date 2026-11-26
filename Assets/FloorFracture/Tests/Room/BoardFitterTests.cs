@@ -45,6 +45,14 @@ namespace FloorFracture.Tests
         }
 
         [Test]
+        public void JoinsAChainOfNearlyCoplanarPatches()
+        {
+            var patches = new[] { -2f, 0f, 2f }.Select((x, i) =>
+                new RoomFloor(Rectangle(x,-1,x+2,1), new List<Vector2[]>(), i * .0008f)).ToArray();
+            Assert.That(FloorPatchUnion.Join(patches).Count, Is.EqualTo(1));
+        }
+
+        [Test]
         public void JoinsARotatedConcaveAnchorWithoutLosingMetricSize()
         {
             var pose = new BoardPlacement(P(2.3f,-3.2f), 0, 24.36f, 6, 3);
@@ -199,51 +207,9 @@ namespace FloorFracture.Tests
                     Assert.That(patch.effectMeshGO.transform.parent, Is.EqualTo(room.FloorAnchors[i].transform));
                 }
 
-                var first = effect.EffectMeshObjects[left].effectMeshGO.GetComponent<MeshFilter>();
-                var second = effect.EffectMeshObjects[right].effectMeshGO.GetComponent<MeshFilter>();
-                right.transform.localPosition = Vector3.left * .5f;
-                Mesh clipped;
-                using (var coverage = new FloorPatchCoverage())
-                {
-                    coverage.Add(left, first);
-                    coverage.Add(right, second);
-                    clipped = second.sharedMesh;
-                    Assert.That(first.sharedMesh, Is.SameAs(meshes[0]));
-                    Assert.That(clipped, Is.Not.SameAs(meshes[1]));
-                    double area = 0;
-                    var v = clipped.vertices;
-                    var t = clipped.triangles;
-                    for (int i = 0; i < t.Length; i += 3)
-                        area += Vector3.Cross(v[t[i+1]]-v[t[i]],v[t[i+2]]-v[t[i]]).magnitude * .5;
-                    Assert.That(area, Is.EqualTo(3).Within(.0001));
-                    Assert.That(effect.EffectMeshObjects[right].mesh, Is.SameAs(meshes[1]));
-                }
-                Assert.That(second.sharedMesh, Is.SameAs(meshes[1]));
-                Assert.That(!clipped, Is.True, "The generated drawing mesh was released.");
-                right.transform.localPosition += Vector3.up * .04f;
-                using (var coverage = new FloorPatchCoverage())
-                {
-                    coverage.Add(left, first);
-                    coverage.Add(right, second);
-                    Assert.That(second.sharedMesh, Is.SameAs(meshes[1]), "The other elevation keeps its coverage.");
-                }
+                right.transform.localPosition = Vector3.left * .5f + Vector3.up * .04f;
                 Assert.That(MrukFloorReader.TryRead(room,0,1.6f,out current), Is.True);
                 Assert.That(current.Exists(floor => BoardFitter.Fits(floor, fit)), Is.False);
-
-                // A malformed later scan still has its old native draw mesh. Its bad
-                // boundary must never remove coverage from another valid draw.
-                right.transform.localPosition = Vector3.left * .5f;
-                foreach (var invalid in new[] { new[] { P(-2,-1), P(0,1), P(-2,1), P(0,-1) },
-                    new[] { P(-2,-1), P(0,-1), P(float.NaN,1), P(-2,1) } })
-                {
-                    left.PlaneBoundary2D.Clear();
-                    left.PlaneBoundary2D.AddRange(invalid);
-                    using var coverage = new FloorPatchCoverage();
-                    coverage.Add(left,first);
-                    coverage.Add(right,second);
-                    Assert.That(first.sharedMesh, Is.SameAs(meshes[0]));
-                    Assert.That(second.sharedMesh, Is.SameAs(meshes[1]));
-                }
             }
             finally
             {

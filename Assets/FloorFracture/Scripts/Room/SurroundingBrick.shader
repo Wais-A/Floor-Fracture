@@ -8,8 +8,6 @@ Shader "Floor Fracture/Surrounding Brick"
         [HideInInspector] _BoardMaskLow("Pane mask, cells 0 to 31", Integer) = 0
         [HideInInspector] _BoardMaskHigh("Pane mask, cells 32 to 63", Integer) = 0
         _EnvironmentDepthBias("Relative floor depth bias", Range(0, .1)) = .045
-        [HideInInspector][NoScaleOffset] _FloorPreviousDepth("Previous native soft depth", 2DArray) = "" {}
-        [HideInInspector] _FloorPreviousWeight("Previous capture weight", Float) = 0
         [HideInInspector] _RequireEnvironmentDepth("Require furniture occlusion", Float) = 1
     }
     SubShader
@@ -28,31 +26,6 @@ Shader "Floor Fracture/Surrounding Brick"
             #pragma multi_compile_instancing
             #pragma multi_compile _ HARD_OCCLUSION SOFT_OCCLUSION
             #include "Packages/com.meta.xr.sdk.core/Shaders/EnvironmentDepth/URP/EnvironmentOcclusionURP.hlsl"
-            #if defined(SOFT_OCCLUSION)
-            TEXTURE2D_ARRAY(_FloorPreviousDepth);
-            SAMPLER(sampler_FloorPreviousDepth);
-            float4 ReadPreviousDepth(float2 uv, float eye)
-            {
-                return SAMPLE_TEXTURE2D_ARRAY(_FloorPreviousDepth, sampler_FloorPreviousDepth, uv, eye);
-            }
-            // Compile the SDK's same occlusion routine against the archived stereo texture and pose.
-            #undef META_DEPTH_ENVIRONMENT_OCCLUSION_INCLUDED
-            #define SamplePreprocessedDepth ReadPreviousDepth
-            #define _EnvironmentDepthReprojectionMatrices _FloorPreviousReprojection
-            #define _EnvironmentDepthZBufferParams _FloorPreviousZParams
-            #define SampleEnvironmentDepthLinear PreviousLinearDepth
-            #define CalculateEnvironmentDepthHardOcclusion PreviousHardOcclusion
-            #define CalculateEnvironmentDepthSoftOcclusion PreviousSoftOcclusion
-            #define CalculateEnvironmentDepthOcclusion PreviousOcclusion
-            #include "Packages/com.meta.xr.sdk.core/Shaders/EnvironmentDepth/EnvironmentOcclusion.cginc"
-            #undef CalculateEnvironmentDepthOcclusion
-            #undef CalculateEnvironmentDepthSoftOcclusion
-            #undef CalculateEnvironmentDepthHardOcclusion
-            #undef SampleEnvironmentDepthLinear
-            #undef _EnvironmentDepthZBufferParams
-            #undef _EnvironmentDepthReprojectionMatrices
-            #undef SamplePreprocessedDepth
-            #endif
             #include "Assets/FloorFracture/Scripts/Room/ShaftBrickwork.hlsl"
             #include "Assets/FloorFracture/Scripts/Room/BoardFootprint.hlsl"
 
@@ -62,7 +35,6 @@ Shader "Floor Fracture/Surrounding Brick"
                 uint _BoardMaskLow;
                 uint _BoardMaskHigh;
                 float _EnvironmentDepthBias;
-                float _FloorPreviousWeight;
                 float _RequireEnvironmentDepth;
             CBUFFER_END
             struct Attributes { float3 positionOS : POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -81,18 +53,7 @@ Shader "Floor Fracture/Surrounding Brick"
 
             half FloorCoverage(float3 world)
             {
-                half current = META_DEPTH_GET_OCCLUSION_VALUE_WORLDPOS(world, _EnvironmentDepthBias);
-                #if defined(SOFT_OCCLUSION)
-                if (_FloorPreviousWeight <= 0 || current <= 0 || current >= 1) return current;
-                float4 priorClip = mul(_FloorPreviousReprojection[unity_StereoEyeIndex], float4(world, 1));
-                if (priorClip.w <= 0 || any(abs(priorClip.xy) >= priorClip.w)) return current;
-                half prior = PreviousOcclusion(world, _EnvironmentDepthBias);
-                // A newly covered or newly exposed surface adopts its current measurement immediately.
-                half agreement = saturate(8 * min(current, 1 - current)) * (1 - smoothstep(.55h, .85h, abs(current - prior)));
-                return lerp(current, prior, _FloorPreviousWeight * agreement);
-                #else
-                return current;
-                #endif
+                return META_DEPTH_GET_OCCLUSION_VALUE_WORLDPOS(world, _EnvironmentDepthBias);
             }
 
             half4 Frag(Varyings input) : SV_Target

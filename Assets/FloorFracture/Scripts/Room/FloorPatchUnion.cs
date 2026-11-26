@@ -12,6 +12,8 @@ namespace FloorFracture
         // Distinct steps and sloping patches keep their own plane. One millimetre permits
         // small transform differences between anchors measured on the same level surface.
         internal const float CoplanarRange = .001f;
+        // Chained neighbours (0, .8, 1.6 mm) still form one surface, but a group never spans a real step.
+        private const float GroupSpan = 2 * CoplanarRange;
         internal const float MillimetresPerMetre = 1000f;
 
         public static List<RoomFloor> Join(IReadOnlyList<RoomFloor> patches)
@@ -22,7 +24,8 @@ namespace FloorFracture
             {
                 float low = ordered[first].LowestY, high = ordered[first].HighestY;
                 int end = first + 1;
-                while (end < ordered.Count && Mathf.Max(high, ordered[end].HighestY) - low <= CoplanarRange)
+                while (end < ordered.Count && ordered[end].LowestY - high <= CoplanarRange &&
+                       Mathf.Max(high, ordered[end].HighestY) - low <= GroupSpan)
                 {
                     high = Mathf.Max(high, ordered[end].HighestY);
                     ++end;
