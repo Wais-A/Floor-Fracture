@@ -51,13 +51,19 @@ namespace FloorFracture
         public IReadOnlyList<int> StationarySafe { get; }
         internal bool[] Stationary { get; }
         internal SlidingPane[] OfferedSliders { get; }
+        // A ride finale breaks every stationary pane; its only offer is the guarantee, passing RideCell beside the start.
+        public int RideSlider { get; }
+        public bool IsRide => RideSlider >= 0;
+        public int RideCell { get; }
 
         private readonly WaveBreakGroup[] groupByTile;
 
         internal WavePlan(BoardState board, int level, int number, int seed, int start, int guaranteed,
             bool[] stationary, SlidingPane[] sliders, WaveMode mode, WavePacing pacing, double now,
-            IReadOnlyList<int> landings, int[] rowRoute)
+            IReadOnlyList<int> landings, int[] rowRoute, int rideCell = -1)
         {
+            RideCell = rideCell;
+            RideSlider = rideCell < 0 ? -1 : 0;
             Level = level;
             Number = number;
             Seed = seed;
@@ -290,8 +296,36 @@ namespace FloorFracture
             var sliders = level >= 3 && remaining > 1 ?
                 ChooseSliders(board, start, survivors, route, landings.Count != 0, level >= 9 ? 3 : level >= 6 ? 2 : 1,
                     level >= 5, now, WavePacing.SwitchSeconds(level, number), ref random) : Array.Empty<SlidingPane>();
-            return new WavePlan(board, level, number, seed, start, guaranteed, survivors, sliders,
+            var plan = new WavePlan(board, level, number, seed, start, guaranteed, survivors, sliders,
                 mode, pacing, now, landings.AsReadOnly(), route);
+            if (remaining != 1 || level < 6 || board.Sliders.Count != 0) return plan;
+            var none = new bool[board.Count];
+            var ride = ChooseSliders(board, start, none, route, false, 1, true, now,
+                WavePacing.SwitchSeconds(level, number), ref random, plan.Deadline);
+            if (ride.Length == 0 || random.Next(2) != 0) return plan;
+            return new WavePlan(board, level, number, seed, start, ride[0].Tile, none, ride, mode, pacing, now,
+                landings.AsReadOnly(), route, RideCell(board, start, ride[0], now, plan.Deadline));
+        }
+
+        // The pane is catchable while centered within a quarter pitch of a cell beside the start. Sampled every
+        // 10 ms from the start until .3 s before zero, it must be catchable for .35 s in all. Returns the neighbour
+        // with the most catchable time (lowest index on ties), or -1.
+        internal static int RideCell(BoardState board, int start, SlidingPane pane, double startsAt, double deadline)
+        {
+            int best = -1, bestNear = 0, total = 0;
+            foreach (int cell in new[] { start - board.Width, start - 1, start + 1, start + board.Width })
+            {
+                if (!board.Neighbors(start, cell)) continue;
+                int near = 0;
+                for (int i = 0; startsAt + i * .01 <= deadline - .3; ++i)
+                {
+                    UnityEngine.Vector2 d = pane.CenterAt(startsAt + i * .01) - board.Center(cell);
+                    if (Math.Max(Math.Abs(d.x), Math.Abs(d.y)) <= .25f * board.Pitch) ++near;
+                }
+                total += near;
+                if (near > bestNear) { best = cell; bestNear = near; }
+            }
+            return total >= 35 ? best : -1;
         }
 
         private static int[] ChooseRow(BoardState board, int start, int maxSteps, ref Generator random)
@@ -474,8 +508,11 @@ namespace FloorFracture
         }
 
         private static SlidingPane[] ChooseSliders(BoardState board, int start, bool[] survivors, int[] row,
-            bool jump, int limit, bool patrols, double now, double duration, ref Generator random)
+            bool jump, int limit, bool patrols, double now, double duration, ref Generator random,
+            double rideDeadline = double.NaN)
         {
+            // A ride ends the level on landing, so it needs no side exits; it must be catchable beside the start.
+            bool ride = !double.IsNaN(rideDeadline);
             var panes = new List<SlidingPane>(limit);
             var reserved = new bool[board.Count];
             // Last wave's panes keep shuttling (or holding the player) until they break this wave.
@@ -491,20 +528,22 @@ namespace FloorFracture
                 int source = -1, end = -1, bestLength = 0, ties = 0;
                 for (int a = 0; a < board.Count; ++a)
                 {
-                    if (a == start || !board.IsIntact(a) || survivors[a] || Unavailable(a)) continue;
+                    if (!CanStart(a)) continue;
                     for (int d = 0; d < 4; ++d)
                     {
                         bool horizontal = d == 1 || d == 2;
-                        if (!HasSideExit(board.Layout, a, horizontal, survivors)) continue;
+                        if (!ride && !HasSideExit(board.Layout, a, horizontal, survivors)) continue;
                         int b = a, length = 0;
                         for (int next = board.Layout.Neighbor(b, d); board.Layout.Contains(next);
                             next = board.Layout.Neighbor(b, d))
                         {
-                            if (board.IsIntact(next) || Unavailable(next) || !HasSideExit(board.Layout, next, horizontal, survivors)) break;
+                            if (board.IsIntact(next) || Unavailable(next) ||
+                                (!ride && !HasSideExit(board.Layout, next, horizontal, survivors))) break;
                             b = next;
                             ++length;
                         }
-                        if (length == 0 || length < bestLength) continue;
+                        if (length == 0 || length < bestLength ||
+                            (ride && RideCell(board, start, new SlidingPane(board, a, b, now, duration), now, rideDeadline) < 0)) continue;
                         if (length > bestLength) { bestLength = length; ties = 0; }
                         if (random.Next(++ties) == 0) { source = a; end = b; }
                     }
@@ -516,7 +555,7 @@ namespace FloorFracture
                 if (patrols)
                     for (int a = 0; a < board.Count; ++a)
                     {
-                        if (a == start || !board.IsIntact(a) || survivors[a] || Unavailable(a)) continue;
+                        if (!CanStart(a)) continue;
                         trail[0] = a;
                         Walk(1, -1, false, Array.Empty<int>(), ref random);
                     }
@@ -531,6 +570,8 @@ namespace FloorFracture
             }
             return panes.ToArray();
 
+            bool CanStart(int a) => a != start && board.IsIntact(a) && !survivors[a] && !Unavailable(a);
+
             bool Unavailable(int tile) => reserved[tile] || (jump && TouchesStart(board, start, tile)) ||
                 (row.Length != 0 && WavePlan.RowDistance(board, start, row[0], tile) < row.Length);
 
@@ -538,7 +579,8 @@ namespace FloorFracture
             // possibly one of at most two breaking tiles promoted to survivors (cover).
             void Walk(int count, int heading, bool turned, int[] cover, ref Generator draw)
             {
-                if (turned && count >= patrolLength) // a turn needs three cells
+                if (turned && count >= patrolLength && // a turn needs three cells
+                    (!ride || RideCell(board, start, new SlidingPane(board, trail[..count], now, duration), now, rideDeadline) >= 0))
                 {
                     if (count > patrolLength) { patrolLength = count; patrolTies = 0; }
                     if (draw.Next(++patrolTies) == 0) { patrol = trail[..count]; patrolCover = cover; }
@@ -551,7 +593,7 @@ namespace FloorFracture
                     if (!board.Layout.Contains(next) || board.IsIntact(next) || Unavailable(next) ||
                         Array.IndexOf(trail, next, 0, count) >= 0) continue;
                     int mark = missing.Count;
-                    AddMissingExits(board, tile, next, survivors, missing);
+                    if (!ride) AddMissingExits(board, tile, next, survivors, missing);
                     trail[count] = next;
                     int[] found = missing.Count == mark ? cover : Cover(count + 1);
                     if (found != null) Walk(count + 1, d, turned || (heading >= 0 && d != heading), found, ref draw);

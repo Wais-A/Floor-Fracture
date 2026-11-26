@@ -248,6 +248,7 @@ namespace FloorFracture.Tests
                         if(some) ++offered;
                         if(holes) { ++withHoles; if(some) ++offeredWithHoles; }
                     }
+                    if(wave.IsRide) break; // a ride finale ends the level
                     start=wave.GuaranteedTile;
                     var result=board.Tick(board.Center(start),true,wave.Deadline);
                     Assert.That(result,Is.EqualTo(WaveResult.Survived).Or.EqualTo(WaveResult.LevelCleared));
@@ -271,6 +272,7 @@ namespace FloorFracture.Tests
                 for(int number=1;number<board.Count;++number)
                 {
                     var wave=board.BeginWave(start,level,number,number*10);
+                    if(wave.IsRide) break; // catching a ride clears the level, so no next wave follows
                     var pane=Offered(board,wave).FirstOrDefault();
                     double t=pane==null ? 0 : pane.MotionStartsAt+pane.OneWaySeconds/2;
                     if(pane!=null && t<wave.Deadline)
@@ -380,6 +382,7 @@ namespace FloorFracture.Tests
                 for(int number=1;number<=board.Count;++number)
                 {
                     var wave=board.BeginWave(start,level,number,number*10);
+                    if(wave.IsRide) break; // a ride pane has no exits by design; the ride tests cover it
                     foreach(var pane in Offered(board,wave)) yield return (level,wave,board,pane);
                     start=wave.GuaranteedTile;
                     if(board.Tick(board.Center(start),true,wave.Deadline)!=WaveResult.Survived) break;
@@ -492,6 +495,114 @@ namespace FloorFracture.Tests
             TestContext.WriteLine($"Checked {promoted} patrols with promoted exits.");
             Assert.That(promoted,Is.GreaterThan(0));
         }
+
+        // Follows each guarantee to the level's first ride finale, or null when the level ends without one.
+        static WavePlan FirstRide(int level,int seed,out BoardState board)
+        {
+            board=new BoardState(6,6,seed);
+            int start=0;
+            for(int number=1;number<=board.Count;++number)
+            {
+                var wave=board.BeginWave(start,level,number,number*10);
+                if(wave.IsRide) return wave;
+                start=wave.GuaranteedTile;
+                if(board.Tick(board.Center(start),true,wave.Deadline)!=WaveResult.Survived) return null;
+            }
+            return null;
+        }
+        static IEnumerable<(int level,int seed,BoardState board,WavePlan wave)> Rides(int fromLevel=6)
+        {
+            for(int level=fromLevel;level<=12;++level)
+            for(int seed=0;seed<200;++seed)
+            {
+                var wave=FirstRide(level,seed,out var board);
+                if(wave!=null) yield return (level,seed,board,wave);
+            }
+        }
+        // 10 ms samples inside [StartsAt, Deadline - .3] with the pane centered within a quarter pitch of the cell.
+        static List<double> RideTimes(BoardState board,WavePlan wave,SlidingPane pane,int cell)
+        {
+            var times=new List<double>();
+            for(int i=0;wave.StartsAt+i*.01<=wave.Deadline-.3;++i)
+            {
+                double t=wave.StartsAt+i*.01;
+                Vector2 d=pane.CenterAt(t)-board.Center(cell);
+                if(Math.Max(Math.Abs(d.x),Math.Abs(d.y))<=.25f*board.Pitch) times.Add(t);
+            }
+            return times;
+        }
+
+        [Test]
+        public void RideFinaleAppearsOnlyFromLevelSix()
+        {
+            int rides=0;
+            foreach(var (level,_,_,wave) in Rides(3))
+            {
+                Assert.That(level,Is.GreaterThanOrEqualTo(6));
+                Assert.That(wave.Mode,Is.EqualTo(WaveMode.LastTile));
+                ++rides;
+            }
+            TestContext.WriteLine($"{rides} ride finales across levels 6-12, seeds 0-199.");
+            Assert.That(rides,Is.GreaterThanOrEqualTo(10),$"{rides} ride finales across levels 6-12, seeds 0-199.");
+        }
+
+        [Test]
+        public void RideFinaleBreaksEveryStationaryPane()
+        {
+            int rides=0;
+            foreach(var (_,_,board,wave) in Rides())
+            {
+                ++rides;
+                var pane=wave.OfferedSliders[wave.RideSlider];
+                Assert.That(wave.StationarySafe,Is.Empty);
+                Assert.That(wave.GuaranteedTile,Is.EqualTo(pane.Tile));
+                Assert.That(wave.SafeTiles,Is.EqualTo(new[]{pane.Tile}));
+                foreach(int tile in Enumerable.Range(0,board.Count).Where(board.IsIntact))
+                    Assert.That(wave.BreakingTiles,Has.Member(tile));
+            }
+            Assert.That(rides,Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void RidePaneIsCatchableBesideThePlayer()
+        {
+            int rides=0;
+            foreach(var (_,_,board,wave) in Rides())
+            {
+                ++rides;
+                var pane=wave.OfferedSliders[wave.RideSlider];
+                var beside=Enumerable.Range(0,board.Count).Where(c=>board.Neighbors(wave.StartingTile,c)).ToArray();
+                var counts=beside.Select(c=>RideTimes(board,wave,pane,c).Count).ToArray();
+                Assert.That(counts.Sum()*.01,Is.GreaterThanOrEqualTo(.35-1e-9));
+                // The neighbour with the most catchable time, lowest index on ties.
+                Assert.That(wave.RideCell,Is.EqualTo(beside[Array.IndexOf(counts,counts.Max())]));
+                Assert.That(pane.Path,Has.Member(wave.RideCell));
+            }
+            Assert.That(rides,Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void LandingOnTheRidePaneClearsTheLevelAndStayingPutLoses()
+        {
+            int rides=0;
+            foreach(var (level,seed,_,_) in Rides())
+            {
+                ++rides;
+                var stay=FirstRide(level,seed,out var board);
+                Assert.That(board.Tick(board.Center(stay.StartingTile),true,stay.Deadline),Is.EqualTo(WaveResult.Lost));
+
+                var ride=FirstRide(level,seed,out board);
+                var pane=ride.OfferedSliders[ride.RideSlider];
+                var span=RideTimes(board,ride,pane,ride.RideCell);
+                double t=span[span.Count/2];
+                Vector2 stance=pane.CenterAt(t);
+                Assert.That(board.Sample(stance,true,t).IsSlider && pane.Locked);
+                Assert.That(board.Tick(stance,true,ride.Deadline),Is.EqualTo(WaveResult.LevelCleared));
+            }
+            Assert.That(rides,Is.GreaterThan(0));
+        }
+
+        [Test] public void PlansFromLevelFiveSatisfyValidatePlan() => BoardRuleChecks.PlansFromLevelFive();
 
         [Test] public void EarlyBreakDeadlinesAndTrackingRollback() => BoardRuleChecks.TimedBreaksAndRollback();
         [Test] public void SlidersAndGrace() => BoardRuleChecks.SlidingAndGrace();

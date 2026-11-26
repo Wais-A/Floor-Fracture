@@ -219,6 +219,8 @@ namespace FloorFracture
                 text+=" When rows crack in turn, keep stepping onto clear glass.";
             if (Level>=2 && WaveNumber==1)
                 text+=" When a gap opens around you, cross one opening to any clear pane within reach.";
+            if (Level==6 && WaveNumber==1)
+                text+=" When no glass is left in reach, step onto the pane that starts to slide.";
             Panel.Show("Level "+Level,text,start,menu);
         }
         void Unlock(int level)

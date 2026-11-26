@@ -142,6 +142,37 @@ namespace FloorFracture.Tests
                    $"and checked onward reachability for {choices} advertised choices.";
         }
 
+        // The planner mutates survivors (patrol exits) and offers rides only from level five.
+        public static void PlansFromLevelFive()
+        {
+            for (int level = 5; level <= 12; ++level)
+            for (int seed = 0; seed < 40; ++seed)
+            {
+                var board = new BoardState(6, 6, seed);
+                int start = 0;
+                for (int number = 1; ; ++number)
+                {
+                    Check(number <= board.Count, "A level must finish.");
+                    ulong oldMask = IntactMask(board);
+                    var wave = board.BeginWave(start, level, number, number * 10);
+                    try { ValidatePlan(board, wave, start, oldMask); }
+                    catch (Exception e) { throw new InvalidOperationException($"Level {level}, seed {seed}, wave {number}", e); }
+                    if (wave.IsRide)
+                    {
+                        var pane = wave.OfferedSliders[wave.RideSlider];
+                        double t = wave.StartsAt;
+                        while ((pane.CenterAt(t) - board.Center(wave.RideCell)).sqrMagnitude > .0625f * board.Pitch * board.Pitch) t += .01;
+                        Vector2 stance = pane.CenterAt(t);
+                        Check(board.Sample(stance, true, t).IsSlider && board.Tick(stance, true, wave.Deadline) == WaveResult.LevelCleared,
+                            $"Level {level}, seed {seed}: landing on the ride must clear the level.");
+                        break;
+                    }
+                    start = wave.GuaranteedTile;
+                    if (board.Tick(board.Center(start), true, wave.Deadline) != WaveResult.Survived) break;
+                }
+            }
+        }
+
         public static void VariableSizeLayouts()
         {
             var occupied = new List<int>();
@@ -266,8 +297,16 @@ namespace FloorFracture.Tests
         private static void ValidatePlan(BoardState board, WavePlan plan, int start, ulong oldMask)
         {
             Check(plan.StartingTile == start && plan.IsBreaking(start) && !plan.IsSafe(start), "Start must break.");
-            Check(CanReachLanding(board, plan) && board.IsIntact(plan.GuaranteedTile) &&
-                Has(plan.StationarySafe, plan.GuaranteedTile), "The mandatory step must reach permanent glass from the actual support.");
+            // A ride finale breaks every stationary pane; its guarantee is the moving pane passing beside the start.
+            if (plan.IsRide)
+                Check(plan.Mode == WaveMode.LastTile && plan.StationarySafe.Count == 0 && plan.SafeTiles.Count == 1 &&
+                    plan.GuaranteedTile == plan.OfferedSliders[plan.RideSlider].Tile && board.SliderFor(plan.GuaranteedTile) != null &&
+                    board.Neighbors(start, plan.RideCell) && !board.IsIntact(plan.RideCell) &&
+                    Has(plan.OfferedSliders[plan.RideSlider].Path, plan.RideCell),
+                    "A ride's only guarantee must be its moving pane, catchable beside the start.");
+            else
+                Check(CanReachLanding(board, plan) && board.IsIntact(plan.GuaranteedTile) &&
+                    Has(plan.StationarySafe, plan.GuaranteedTile), "The mandatory step must reach permanent glass from the actual support.");
             ulong survivors = 0;
             foreach (int tile in plan.StationarySafe) survivors |= 1UL << tile;
             Check(survivors != oldMask && (survivors & ~oldMask) == 0, "Permanent glass must strictly shrink.");
@@ -279,7 +318,7 @@ namespace FloorFracture.Tests
                 foreach (int tile in plan.StationarySafe)
                     if ((NeighborBits(tile, board.Width, board.Height) & reachable) != 0) reachable |= 1UL << tile;
             } while (priorReach != reachable);
-            Check(reachable == survivors, "Each group of survivors must be reachable from a landing.");
+            Check(plan.IsRide || reachable == survivors, "Each group of survivors must be reachable from a landing.");
             for (int i = 0; i < board.Count; ++i)
             {
                 bool surface = board.IsIntact(i) || board.SliderFor(i) != null;
@@ -290,7 +329,7 @@ namespace FloorFracture.Tests
             }
             Check(!plan.IsBreaking(-1) && !plan.IsSafe(-1) && !plan.IsBreaking(board.Count) && !plan.IsSafe(board.Count),
                 "Indices outside the footprint must not alias valid tile indices.");
-            Check((plan.Mode == WaveMode.LastTile) == (plan.StationarySafe.Count == 1), "Finale must leave one permanent pane.");
+            Check(plan.IsRide || (plan.Mode == WaveMode.LastTile) == (plan.StationarySafe.Count == 1), "Finale must leave one permanent pane.");
         }
 
         private static ulong NeighborBits(int tile, int width, int height)
@@ -621,6 +660,7 @@ namespace FloorFracture.Tests
                             board.IsIntact(standing),"A timely step must escape the early collapse.");
                         foreach (int tile in group.Tiles) Check(!board.IsIntact(tile),"Due glass stayed intact.");
                     }
+                    if (wave.IsRide) break; // ends the level; the ride tests resolve it
                     Check(marked.SetEquals(wave.BreakingTiles) && wave.BreakGroupFor(wave.GuaranteedTile) == null &&
                         CanReachLanding(board,wave),"The planned escape must be reachable and safe.");
                     start = wave.GuaranteedTile;
