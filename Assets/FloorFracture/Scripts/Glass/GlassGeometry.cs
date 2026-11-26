@@ -13,7 +13,6 @@ namespace FloorFracture
         private const float RimHeight = .0005f;
         internal const float MarkingHeight = .001f;
         private const float RingHeight = .0015f;
-        internal const float FogHeight = .002f;
         private const float KeylineWidth = RingWidth * .5f;
         public const float RingOuterRadius = RingRadius + RingWidth * .5f + KeylineWidth;
         public static readonly Vector2[] Points = {

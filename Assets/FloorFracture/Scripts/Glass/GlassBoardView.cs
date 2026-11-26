@@ -10,9 +10,12 @@ namespace FloorFracture
         GameSound sound;
         GlassTile[] tiles;
         IReadOnlyList<SlidingPane> displayedSliders;
-        MeshRenderer occupancy, fog, holes;
+        MeshRenderer occupancy, holes;
+        FloorFog fog;
+        WaveHazards hazards;
+        double hazardsShownAt, hazardsHiddenAt;
         ShardPool shards;
-        Mesh cutouts, fogPlane, boundary;
+        Mesh cutouts, boundary;
         Material bodyMaterial, paneMaterial, maskMaterial, fogMaterial, shardMaterial;
         bool[] openPanes;
         int practiceHole=-1;
@@ -27,6 +30,7 @@ namespace FloorFracture
             }
         }
         internal float PaneWidth => model.Pitch;
+        public bool ReducedMotion { get; set; }
 
         internal bool TryGetViewedOpening(Transform head, out Vector3 source)
         {
@@ -64,6 +68,8 @@ namespace FloorFracture
             ShowLiftedBlocks(false);
             maskMaterial=GlassTile.MakeMaterial("FloorFractureMask");
             fogMaterial=GlassTile.MakeMaterial("FloorFractureFog");
+            // The cracks share the pane material, so the fog draws after them and dims them.
+            fogMaterial.renderQueue=paneMaterial.renderQueue+1;
             foreach (var material in new[] {paneMaterial, bodyMaterial, maskMaterial, fogMaterial})
                 material.SetFloat("_MappedFloorY", pose.position.y);
             tiles=new GlassTile[board.Count];
@@ -88,19 +94,9 @@ namespace FloorFracture
             foreach (var edge in board.Layout.Perimeter(board.Pitch)) b.Stroke(edge.a,edge.b,.012f,GlassGeometry.MarkingHeight);
             boundary=b.Create("Board perimeter"); var border=GlassTile.Part(transform,"Perimeter",boundary,paneMaterial);
             GlassTile.Tint(border,new Color(.61f,.82f,.85f,.96f));
-            b=new GlassGeometry.Builder();
-            float half=board.Pitch*.5f;
-            for (int i=0;i<tiles.Length;i++)
-            {
-                if (!tiles[i]) continue;
-                var p=board.Center(i);
-                b.Quad(new(p.x-half,GlassGeometry.FogHeight,p.y-half),new(p.x+half,GlassGeometry.FogHeight,p.y-half),
-                    new(p.x+half,GlassGeometry.FogHeight,p.y+half),new(p.x-half,GlassGeometry.FogHeight,p.y+half),Color.white,Color.white);
-                // Keep one continuous fog bank across the connected panes.
-                for (int v=b.Uv.Count-4; v<b.Uv.Count; v++)
-                    b.Uv[v]=new Vector2((i%board.Width+b.Uv[v].x)/board.Width,(i/board.Width+b.Uv[v].y)/board.Height);
-            }
-            fogPlane=b.Create("Fog bank"); fog=GlassTile.Part(transform,"Low fog",fogPlane,fogMaterial); fog.enabled=false;
+            fog=new GameObject("Floor fog").AddComponent<FloorFog>();
+            fog.transform.SetParent(transform,false);
+            fog.Build(board,fogMaterial);
             holes.enabled=false;
         }
 
@@ -153,7 +149,6 @@ namespace FloorFracture
                 contact.y=Mathf.Clamp(contact.y,-inset,inset);
                 occupancy.transform.localPosition=GlassGeometry.Ground(center+contact);
             }
-            fog.enabled=wave!=null&&wave.Fog;
             void DrawWarning(GlassTile tile,int cell)
             {
                 var group=wave?.BreakGroupFor(cell);
@@ -174,6 +169,27 @@ namespace FloorFracture
             var pane = model.Sliders[index];
             var center = pane.CenterAt(now);
             return new Vector4(center.x, center.y, pane.HalfSize, 0);
+        }
+
+        // A set with any hazard replaces the shown one and fades in. An empty set fades the shown one out.
+        public void SetHazards(WaveHazards next, double now)
+        {
+            if (next.Any)
+            {
+                hazards=next; hazardsShownAt=now; hazardsHiddenAt=double.PositiveInfinity;
+                fog.Show(next);
+            }
+            else if (hazards!=null && double.IsPositiveInfinity(hazardsHiddenAt)) hazardsHiddenAt=now;
+            DrawHazards(now);
+        }
+
+        // Runs every frame on the gameplay clock, including stages that do not Draw the board.
+        public void DrawHazards(double now)
+        {
+            if (hazards==null) return;
+            float fade=WaveHazards.Fade(now,hazardsShownAt,hazardsHiddenAt);
+            fog.Tick(now,fade);
+            if (fade<=0 && !double.IsPositiveInfinity(hazardsHiddenAt)) hazards=null;
         }
 
         public void Shatter(int index)
@@ -233,7 +249,7 @@ namespace FloorFracture
         }
         void OnDestroy()
         {
-            foreach(Object asset in new Object[]{cutouts,fogPlane,boundary,bodyMaterial,paneMaterial,maskMaterial,shardMaterial,fogMaterial})
+            foreach(Object asset in new Object[]{cutouts,boundary,bodyMaterial,paneMaterial,maskMaterial,shardMaterial,fogMaterial})
                 if(asset) Destroy(asset);
         }
     }

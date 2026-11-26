@@ -122,12 +122,12 @@ namespace FloorFracture.Editor
                 Mathf.Abs(pane.transform.Find("Smoky pane").GetComponent<Renderer>().bounds.center.y - floorY) < .0001f),
                 "A glass face is above or below the fitted floor.");
             foreach (var mesh in game.BoardView.GetComponentsInChildren<MeshFilter>(true))
-                if (mesh.name == "Rim" || mesh.name == "Fissures" || mesh.name == "Low fog" ||
+                if (mesh.name == "Rim" || mesh.name == "Fissures" || mesh.name.StartsWith("Floor fog") ||
                     mesh.name == "Occupied square" || mesh.name == "Perimeter")
                     foreach (var vertex in mesh.sharedMesh.vertices)
-                        Require(Mathf.Abs(mesh.transform.TransformPoint(vertex).y - floorY) <= .0021f,
+                        Require(Mathf.Abs(mesh.transform.TransformPoint(vertex).y - floorY) <= (mesh.name.StartsWith("Floor fog") ? .35f : .0021f),
                             "A floor marking is floating above the glass: " + mesh.name);
-            Record($"All {panes.Length} glass faces are flush with the fitted room floor; rim, cracks, fog and stance ring are within 2 mm.");
+            Record($"All {panes.Length} glass faces are flush with the fitted room floor; rim, cracks and stance ring are within 2 mm, and fog stays below 35 cm.");
             VerifyGlassOpenings();
             VerifyFloorVisibility(false);
             Require(FloorSurface.EffectMeshObjects.Count == 0, "The room created decorative floor patches.");

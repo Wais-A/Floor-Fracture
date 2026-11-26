@@ -197,6 +197,7 @@ namespace FloorFracture.Editor
             yield return VerifyMenuPauseAndQuit();
             yield return VerifyTrapRotation();
             yield return VerifyTileCracks();
+            yield return VerifyHazardVisuals();
             yield return RayChoose(3, false); yield return Stage(GameStage.Settings);
             Require(!outlines.gameObject.activeSelf, "The Welcome board perimeter stayed visible inside Settings.");
             yield return RayChoose(5, true); yield return Stage(GameStage.Welcome);
@@ -612,7 +613,7 @@ namespace FloorFracture.Editor
             int startingTile = FindSliderRoute();
             StandOn(startingTile); Choose("Start wave"); yield return Stage(GameStage.Countdown);
             var wave = game.State.ActiveWave;
-            var fog = game.BoardView.transform.Find("Low fog").GetComponent<MeshRenderer>();
+            var fog = game.BoardView.transform.Find("Floor fog/Floor fog 0").GetComponent<MeshRenderer>();
             Require(wave.Level == 3, "The level-three fixture did not open on level three.");
             LookAtTile(wave.GuaranteedTile); yield return Frames(2);
             Require(fog.enabled == wave.Fog, "The level-three fog renderer must follow the rolled fog.");
@@ -652,8 +653,10 @@ namespace FloorFracture.Editor
             Choose("Show board");
             Require(game.Room.IsRoomLocalized && game.Stage == GameStage.Ready && game.BoardView.gameObject.activeInHierarchy &&
                 moving.gameObject.activeSelf && moving.localPosition == GlassGeometry.Ground(game.State.Center(canceledPane.Tile)) &&
-                !ring.enabled && !fog.enabled,
+                !ring.enabled,
                 "Showing the board must restore the original pane in place and clear transient cues.");
+            yield return Delay(.7);
+            Require(!fog.enabled, "The canceled wave's fog did not fade out after Show board.");
             VerifyFloorVisibility(false);
             StandOn(canceled.StartingTile);
             Choose("Start wave");

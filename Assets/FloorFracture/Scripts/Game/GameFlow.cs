@@ -28,6 +28,9 @@ namespace FloorFracture
                 if (narration) narration.Stop();
                 if (Panel) Panel.HideStartCount();
                 stage = value;
+                // Hazards stay up between waves and through a menu pause, and fade when the run leaves play.
+                if (BoardView && value != GameStage.Countdown && value != GameStage.BetweenWaves && value != GameStage.Paused)
+                    BoardView.SetHazards(WaveHazards.None, GameplayTime);
                 if (sound)
                 {
                     sound.SetMusicAudible(value != GameStage.Fall);
@@ -130,6 +133,7 @@ namespace FloorFracture
             if(BoardView) { BoardView.gameObject.SetActive(false); Destroy(BoardView.gameObject); }
             var fit=Room.Placement; State=new BoardState(fit.Layout,SelectedSeed,fit.Pitch);
             var board=new GameObject("Confirmed glass board"); BoardView=board.AddComponent<GlassBoardView>(); BoardView.Build(State,fit.Pose,sound);
+            BoardView.ReducedMotion=reduced;
             Ending.SetBoard(BoardView);
             Level=WaveNumber=1; levelFinished=false;
             developmentRun=false;
@@ -193,7 +197,7 @@ namespace FloorFracture
         {
             Room.ShowClearance(false);
             Stage=GameStage.Settings; Panel.Show("Settings","Use the controller Menu button or hand menu gesture to pause. During a fall, pinch or press A or X to skip.",
-                Choice("Fall motion  ·  "+(reduced?"Reduced":"Full"),()=>{reduced=!reduced; SaveSettings(); Settings();}),
+                Choice("Fall motion  ·  "+(reduced?"Reduced":"Full"),()=>{reduced=!reduced; if (BoardView) BoardView.ReducedMotion=reduced; SaveSettings(); Settings();}),
                 Choice("Warning  ·  "+(gentle?"Gentle":"Standard"),()=>{gentle=!gentle; SaveSettings(); Settings();}),
                 Choice("Volume  ·  "+volume*25+"%",()=>{volume=(volume+1)%5; SaveSettings(); sound.SetVolume(volume/4f); Settings();}),
                 Choice("Narration  ·  "+(narrated?"On":"Off"),()=>{narrated=!narrated; SaveSettings(); Settings();}),
@@ -273,6 +277,7 @@ namespace FloorFracture
         void StartWave(TileSample sample, double now, bool manual)
         {
             var plan=State.BeginWave(sample.Index,Level,WaveNumber,now);
+            BoardView.SetHazards(plan.Hazards,GameplayTime);
             nextCueGroup=0;
             Ending.SelectLevel(Level);
             Stage=GameStage.Countdown; Panel.Hide();
@@ -293,6 +298,7 @@ namespace FloorFracture
             if(!BoardView||Stage==GameStage.Room) return;
             if ((Stage==GameStage.Ready || Stage==GameStage.CountIn || Stage==GameStage.Fall) && !Tracked) { PauseRound(); return; }
             double now=GameplayTime;
+            BoardView.DrawHazards(now);
             if(Stage==GameStage.Countdown) { UpdateWave(now); return; }
             if (Stage==GameStage.Paused && menuPausedAt.HasValue && pausedStage==GameStage.CountIn && !Tracked)
                 InterruptRound();
