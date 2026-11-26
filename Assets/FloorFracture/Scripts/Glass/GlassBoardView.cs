@@ -17,7 +17,9 @@ namespace FloorFracture
         WaveHazards hazards;
         double hazardsShownAt, hazardsHiddenAt;
         double fogShownAt, fogHiddenAt=double.NegativeInfinity;
+        // The level fog and the spotlights and lightning on show, through their fade-out; None once gone.
         public WaveHazards Fog { get; private set; } = WaveHazards.None;
+        internal WaveHazards Hazards => hazards ?? WaveHazards.None;
         ShardPool shards;
         Mesh cutouts, boundary;
         Material bodyMaterial, paneMaterial, maskMaterial, fogMaterial, shardMaterial;
@@ -206,7 +208,9 @@ namespace FloorFracture
         // Runs every frame on the gameplay clock, including stages that do not Draw the board.
         public void DrawHazards(double now)
         {
-            fog.Tick(now,WaveHazards.FogFade(now,fogShownAt,fogHiddenAt));
+            float fogFade=WaveHazards.FogFade(now,fogShownAt,fogHiddenAt);
+            fog.Tick(now,fogFade);
+            if (fogFade<=0 && !double.IsPositiveInfinity(fogHiddenAt)) Fog=WaveHazards.None;
             if (hazards==null) return;
             float fade=WaveHazards.Fade(now,hazardsShownAt,hazardsHiddenAt);
             lights.Tick(now,fade);

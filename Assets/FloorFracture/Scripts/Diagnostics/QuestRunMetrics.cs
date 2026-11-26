@@ -13,7 +13,7 @@ namespace FloorFracture
     [DisallowMultipleComponent, DefaultExecutionOrder(9000)]
     public sealed class QuestRunMetrics : MonoBehaviour
     {
-        const string Header = "kind,event,event_count,device_utc_ms,device_boot_ms,unity_start_s,unity_end_s,package,version,build_guid,unity_version,device,graphics,quality,scene,stage,columns,rows,run_seed,level,wave,wave_seed,mode,fog,slider,shatter_count,shatter_wave_seed,ending,reduced_motion,refresh_hz,frames,unity_fps,frame_ms_mean,frame_ms_max,frames_at_or_above_13_9ms,main_thread_ms,timed_cpu_ms,timed_gpu_ms,xr_app_gpu_ms,draw_calls_mean,draw_calls_max,triangles_mean,triangles_max,head_yaw_deg,head_pitch_deg,head_turn_deg_s,main_samples,timed_cpu_samples,timed_gpu_samples,xr_gpu_samples,draw_samples,triangle_samples,pane_pitch_m,playable_panes,entire_floor";
+        const string Header = "kind,event,event_count,device_utc_ms,device_boot_ms,unity_start_s,unity_end_s,package,version,build_guid,unity_version,device,graphics,quality,scene,stage,columns,rows,run_seed,level,wave,wave_seed,mode,fog,slider,shatter_count,shatter_wave_seed,ending,reduced_motion,refresh_hz,frames,unity_fps,frame_ms_mean,frame_ms_max,frames_at_or_above_13_9ms,main_thread_ms,timed_cpu_ms,timed_gpu_ms,xr_app_gpu_ms,draw_calls_mean,draw_calls_max,triangles_mean,triangles_max,head_yaw_deg,head_pitch_deg,head_turn_deg_s,main_samples,timed_cpu_samples,timed_gpu_samples,xr_gpu_samples,draw_samples,triangle_samples,pane_pitch_m,playable_panes,entire_floor,fog_patches,spotlights,strikes";
         readonly List<XRDisplaySubsystem> displays = new List<XRDisplaySubsystem>(1);
         readonly FrameTiming[] timing = new FrameTiming[1];
         ProfilerRecorder draws, triangles, mainThread;
@@ -173,10 +173,12 @@ namespace FloorFracture
             public int? WaveSeed, ShatterSeed;
             public WaveMode? Mode;
             public bool Fog, Reduced;
+            public int FogPatches, Spotlights, Strikes;
             public string Ending;
             public bool Matches(SampleContext b) => Stage == b.Stage && Width == b.Width && Height == b.Height && PaneCount == b.PaneCount && EntireFloor == b.EntireFloor && PanePitch == b.PanePitch &&
                 Seed == b.Seed && Level == b.Level && Wave == b.Wave && WaveSeed == b.WaveSeed && Mode == b.Mode &&
-                Fog == b.Fog && Slider == b.Slider && Shatter == b.Shatter && ShatterSeed == b.ShatterSeed &&
+                Fog == b.Fog && FogPatches == b.FogPatches && Spotlights == b.Spotlights && Strikes == b.Strikes &&
+                Slider == b.Slider && Shatter == b.Shatter && ShatterSeed == b.ShatterSeed &&
                 Ending == b.Ending && Reduced == b.Reduced && Quality == b.Quality;
         }
 
@@ -184,6 +186,8 @@ namespace FloorFracture
         {
             var state = game.State;
             var wave = state?.ActiveWave;
+            var view = game.BoardView;
+            WaveHazards fog = view ? view.Fog : WaveHazards.None, shown = view ? view.Hazards : WaveHazards.None;
             int moving = state == null || state.Sliders.Count == 0 ? 0 : 1;
             if (moving != 0)
                 for (int i=0; i<state.Sliders.Count; ++i)
@@ -193,7 +197,9 @@ namespace FloorFracture
                 PanePitch = state?.Pitch ?? 0f, PaneCount = state?.Layout.PaneCount ?? 0,
                 EntireFloor = game.Room && game.Room.EntireFloor,
                 Seed = game.SelectedSeed, Level = game.Level, Wave = game.WaveNumber,
-                WaveSeed = wave?.Seed, Mode = wave?.Mode, Fog = wave != null && wave.Level >= 2, // fog belongs to every level from 2 (WaveHazards.LevelFog)
+                WaveSeed = wave?.Seed, Mode = wave?.Mode,
+                // What the board draws, including fade-outs: the level's fog, and the wave's lamps and planned strikes.
+                Fog = fog.FogDensity > 0, FogPatches = fog.FogPatches, Spotlights = shown.Spotlights, Strikes = shown.Strikes.Count,
                 Slider = moving,
                 Quality = QualitySettings.GetQualityLevel()
             };
@@ -242,7 +248,7 @@ namespace FloorFracture
                 Text(package),Text(version),Text(build),Text(unity),Text(device),Text(graphics),Integer(c.Quality),Text(scene),Text(c.Stage.ToString()),
                 board ? Integer(c.Width) : "",board ? Integer(c.Height) : "",board ? Integer(c.Seed) : "",
                 board ? Integer(c.Level) : "",board ? Integer(c.Wave) : "",Value(c.WaveSeed),Text(c.Mode?.ToString()),
-                c.Mode.HasValue ? Flag(c.Fog) : "",board ? (c.Slider == 0 ? "none" : c.Slider == 2 ? "locked" : "active") : "",
+                board ? Flag(c.Fog) : "",board ? (c.Slider == 0 ? "none" : c.Slider == 2 ? "locked" : "active") : "",
                 c.Shatter > 0 ? Integer(c.Shatter) : "",Value(c.ShatterSeed),Text(c.Ending),c.Stage == GameStage.Fall ? Flag(c.Reduced) : "",
                 refresh > 0 ? Number(refresh) : "",measured ? Integer(w.FrameMs.Count) : "",w.Fps,w.FrameMs.Mean,w.FrameMs.Peak,
                 measured ? Integer(w.OverBudget) : "",w.MainThreadMs.Mean,w.TimedCpuMs.Mean,w.TimedGpuMs.Mean,w.XrGpuMs.Mean,
@@ -250,7 +256,8 @@ namespace FloorFracture
                 measured && hasPose ? Number(yaw) : "",measured && hasPose ? Number(pitch) : "",w.TurnRate,
                 measured ? Integer(w.MainThreadMs.Count) : "",measured ? Integer(w.TimedCpuMs.Count) : "",measured ? Integer(w.TimedGpuMs.Count) : "",
                 measured ? Integer(w.XrGpuMs.Count) : "",measured ? Integer(w.Draws.Count) : "",measured ? Integer(w.Triangles.Count) : "",
-                board ? Number(c.PanePitch) : "", board ? Integer(c.PaneCount) : "", board ? Flag(c.EntireFloor) : ""
+                board ? Number(c.PanePitch) : "", board ? Integer(c.PaneCount) : "", board ? Flag(c.EntireFloor) : "",
+                board ? Integer(c.FogPatches) : "", board ? Integer(c.Spotlights) : "", board ? Integer(c.Strikes) : ""
             });
             try
             {
