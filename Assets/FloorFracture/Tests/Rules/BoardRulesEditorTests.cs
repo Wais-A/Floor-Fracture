@@ -435,9 +435,62 @@ namespace FloorFracture.Tests
             }
             double fraction=(double)patrols/offered;
             TestContext.WriteLine($"Patrols on {patrols}/{offered} offered panes ({fraction:P1}).");
-            // shortcut: 15% is unreachable while every point of a patrol must reach a survivor (3/794 measured;
-            // a corner needs both outer sides), so this guards the measured rate until survivors make room for corners.
-            Assert.That(fraction,Is.GreaterThanOrEqualTo(.0035),$"Patrols on {patrols}/{offered} offered panes ({fraction:P1}).");
+            // shortcut: 11.0% measured; 15% needs more than two promoted exits per patrol, or exits that do not
+            // join the survivors' group. Raise this if promotion is widened.
+            Assert.That(fraction,Is.GreaterThanOrEqualTo(.109),$"Patrols on {patrols}/{offered} offered panes ({fraction:P1}).");
+        }
+
+        [Test]
+        public void PromotedPatrolExitsStayIntactThroughTheWave()
+        {
+            int promoted=0;
+            for(int level=5;level<=12;++level)
+            for(int seed=0;seed<100;++seed)
+            {
+                var board=new BoardState(6,6,seed);
+                int start=0;
+                for(int number=1;number<=board.Count;++number)
+                {
+                    var wave=board.BeginWave(start,level,number,number*10);
+                    var panes=Offered(board,wave).Where(p=>p.PromotedExits.Length!=0).ToArray();
+                    foreach(var pane in panes)
+                    {
+                        Assert.That(Turns(pane) && pane.PromotedExits.Length<=2);
+                        Assert.That(wave.BreakingTiles.Intersect(pane.PromotedExits),Is.Empty);
+                        Assert.That(wave.StationarySafe,Is.SupersetOf(pane.PromotedExits));
+                        // ValidatePlan's rules: a stationary neighbour, and survivors reachable from a landing.
+                        var reached=new HashSet<int>(wave.JumpLandings){wave.GuaranteedTile};
+                        for(var queue=new Queue<int>(reached);queue.Count!=0;)
+                        {
+                            int tile=queue.Dequeue();
+                            foreach(int next in wave.StationarySafe)
+                                if(board.Neighbors(tile,next) && reached.Add(next)) queue.Enqueue(next);
+                        }
+                        foreach(int tile in pane.PromotedExits)
+                            Assert.That(reached.Contains(tile) && wave.StationarySafe.Any(s=>board.Neighbors(tile,s)),
+                                $"Level {level}: promoted tile {tile} is stranded.");
+                    }
+                    start=wave.GuaranteedTile;
+                    var result=board.Tick(board.Center(start),true,wave.Deadline);
+                    foreach(var pane in panes)
+                    {
+                        ++promoted;
+                        Assert.That(pane.PromotedExits.All(board.IsIntact),Is.True);
+                        for(int cell=0;cell<pane.TravelCells;++cell)
+                        for(int sample=0;sample<20;++sample)
+                        {
+                            double t=pane.MotionStartsAt+(cell+sample/19.0)/pane.TravelCells*pane.OneWaySeconds;
+                            Assert.That(pane.TryLand(pane.CenterAt(t),t),Is.True);
+                            Assert.That(Enumerable.Range(0,board.Count).Any(tile=>board.IsIntact(tile) && board.CanStepFrom(pane.Tile,tile)),
+                                Is.True,$"Level {level}: patrol {string.Join(",",pane.Path)} caught at {cell}+{sample}/19 has no exit after zero.");
+                            pane.RestoreLock(false);
+                        }
+                    }
+                    if(result!=WaveResult.Survived) break;
+                }
+            }
+            TestContext.WriteLine($"Checked {promoted} patrols with promoted exits.");
+            Assert.That(promoted,Is.GreaterThan(0));
         }
 
         [Test] public void EarlyBreakDeadlinesAndTrackingRollback() => BoardRuleChecks.TimedBreaksAndRollback();

@@ -483,7 +483,8 @@ namespace FloorFracture
             foreach (var old in board.Sliders)
                 foreach (int cell in old.Path) reserved[cell] = true;
             var trail = new int[5];
-            int[] patrol = null;
+            var missing = new List<UnityEngine.Vector2>();
+            int[] patrol = null, patrolCover = null;
             int patrolLength = 0, patrolTies = 0;
             while (panes.Count < limit)
             {
@@ -517,12 +518,14 @@ namespace FloorFracture
                     {
                         if (a == start || !board.IsIntact(a) || survivors[a] || Unavailable(a)) continue;
                         trail[0] = a;
-                        Walk(1, -1, false, ref random);
+                        Walk(1, -1, false, Array.Empty<int>(), ref random);
                     }
                 if (source < 0 && patrol == null) break;
                 var pane = patrol != null
-                    ? new SlidingPane(board, patrol, now, duration)
+                    ? new SlidingPane(board, patrol, now, duration) { PromotedExits = patrolCover }
                     : new SlidingPane(board, source, end, now, duration);
+                // Promoted tiles stay intact this wave so a pane caught anywhere on its patrol has an exit.
+                foreach (int tile in pane.PromotedExits) survivors[tile] = true;
                 panes.Add(pane);
                 foreach (int cell in pane.Path) reserved[cell] = true;
             }
@@ -531,13 +534,14 @@ namespace FloorFracture
             bool Unavailable(int tile) => reserved[tile] || (jump && TouchesStart(board, start, tile)) ||
                 (row.Length != 0 && WavePlan.RowDistance(board, start, row[0], tile) < row.Length);
 
-            // Extends trail[0..count) over holes; a pane locked anywhere on each step must reach a survivor.
-            void Walk(int count, int heading, bool turned, ref Generator draw)
+            // Extends trail[0..count) over holes. A pane locked anywhere on the path must reach a survivor,
+            // possibly one of at most two breaking tiles promoted to survivors (cover).
+            void Walk(int count, int heading, bool turned, int[] cover, ref Generator draw)
             {
                 if (turned && count >= patrolLength) // a turn needs three cells
                 {
                     if (count > patrolLength) { patrolLength = count; patrolTies = 0; }
-                    if (draw.Next(++patrolTies) == 0) patrol = trail[..count];
+                    if (draw.Next(++patrolTies) == 0) { patrol = trail[..count]; patrolCover = cover; }
                 }
                 if (count == trail.Length) return;
                 int tile = trail[count - 1];
@@ -545,25 +549,60 @@ namespace FloorFracture
                 {
                     int next = board.Layout.Neighbor(tile, d);
                     if (!board.Layout.Contains(next) || board.IsIntact(next) || Unavailable(next) ||
-                        Array.IndexOf(trail, next, 0, count) >= 0 || !StepHasExits(board, tile, next, survivors)) continue;
+                        Array.IndexOf(trail, next, 0, count) >= 0) continue;
+                    int mark = missing.Count;
+                    AddMissingExits(board, tile, next, survivors, missing);
                     trail[count] = next;
-                    Walk(count + 1, d, turned || (heading >= 0 && d != heading), ref draw);
+                    int[] found = missing.Count == mark ? cover : Cover(count + 1);
+                    if (found != null) Walk(count + 1, d, turned || (heading >= 0 && d != heading), found, ref draw);
+                    missing.RemoveRange(mark, missing.Count - mark);
                 }
+            }
+
+            // The smallest set of promotable tiles reaching every missing exit, lowest indices first; null if none.
+            int[] Cover(int count)
+            {
+                var near = new SortedSet<int>();
+                for (int i = 0; i < count; ++i)
+                    for (int y = Math.Max(0, trail[i] / board.Width - 1); y <= Math.Min(board.Height - 1, trail[i] / board.Width + 1); ++y)
+                    for (int x = Math.Max(0, trail[i] % board.Width - 1); x <= Math.Min(board.Width - 1, trail[i] % board.Width + 1); ++x)
+                        if (Promotable(y * board.Width + x, count)) near.Add(y * board.Width + x);
+                // Promoted tiles must join the survivors' group, directly or through the other promoted tile.
+                foreach (int one in near)
+                    if (Joins(one, -1) && missing.TrueForAll(point => Reaches(board, one, point))) return new[] { one };
+                foreach (int one in near)
+                foreach (int two in near)
+                    if (two > one && (Joins(one, -1) || Joins(two, -1)) && Joins(one, two) && Joins(two, one) &&
+                        missing.TrueForAll(point => Reaches(board, one, point) || Reaches(board, two, point)))
+                        return new[] { one, two };
+                return null;
+            }
+
+            bool Promotable(int tile, int count) => tile != start && board.IsIntact(tile) && !survivors[tile] &&
+                !Unavailable(tile) && Array.IndexOf(trail, tile, 0, count) < 0;
+
+            bool Joins(int tile, int other)
+            {
+                for (int d = 0; d < 4; ++d)
+                {
+                    int next = board.Layout.Neighbor(tile, d);
+                    if (next >= 0 && (survivors[next] || next == other)) return true;
+                }
+                return false;
             }
         }
 
         // CanExitTo's geometry, kept inside its 1.2501 bound: both cell centers and 20 points between them
         // need a survivor. Midway samples are offset so abutting side exits (1.25 at the seam) still count.
-        private static bool StepHasExits(BoardState board, int tile, int next, bool[] survivors)
+        private static void AddMissingExits(BoardState board, int tile, int next, bool[] survivors,
+            List<UnityEngine.Vector2> missing)
         {
             UnityEngine.Vector2 a = board.Center(tile), b = board.Center(next);
-            float reach = board.Pitch * board.Pitch * 1.24f;
             for (int s = 0; s <= 21; ++s)
             {
                 var point = s == 0 ? a : s == 21 ? b : UnityEngine.Vector2.Lerp(a, b, (s - .5f) / 20);
-                if (!NearSurvivor(tile, point) && !NearSurvivor(next, point)) return false;
+                if (!NearSurvivor(tile, point) && !NearSurvivor(next, point)) missing.Add(point);
             }
-            return true;
 
             // Any survivor within reach of the step is within one cell of one of its ends.
             bool NearSurvivor(int end, UnityEngine.Vector2 point)
@@ -573,11 +612,14 @@ namespace FloorFracture
                 for (int x = Math.Max(0, col - 1); x <= Math.Min(board.Width - 1, col + 1); ++x)
                 {
                     int cell = y * board.Width + x;
-                    if (survivors[cell] && (board.Center(cell) - point).sqrMagnitude <= reach) return true;
+                    if (survivors[cell] && Reaches(board, cell, point)) return true;
                 }
                 return false;
             }
         }
+
+        private static bool Reaches(BoardState board, int cell, UnityEngine.Vector2 point) =>
+            (board.Center(cell) - point).sqrMagnitude <= board.Pitch * board.Pitch * 1.24f;
 
         private static bool HasSideExit(BoardLayout layout, int tile, bool horizontal, bool[] survivors)
         {

@@ -34,6 +34,8 @@ namespace FloorFracture
         public int TravelCells { get; }
         // Edge-adjacent cells from Tile to OtherHole; a patrol turns corners.
         public IReadOnlyList<int> Path { get; }
+        // Tiles the planner kept intact this wave so every point on the patrol has an exit.
+        internal int[] PromotedExits { get; set; } = Array.Empty<int>();
         public double MotionStartsAt { get; }
         public bool Locked { get; private set; }
 
