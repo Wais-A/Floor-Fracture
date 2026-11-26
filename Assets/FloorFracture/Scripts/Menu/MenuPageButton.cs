@@ -8,13 +8,18 @@ namespace FloorFracture
     // loading. The same pooled button then represents a different action.
     public sealed class MenuPageButton : Button
     {
+        // Canvas units per second. A press on a list moving faster than this only stops it.
+        private const float CoastingSpeed = 30;
         private readonly HashSet<int> pressesOnThisPage = new();
 
         internal void ClearPendingPresses() => pressesOnThisPage.Clear();
 
         public override void OnPointerDown(PointerEventData input)
         {
-            if (input.button == PointerEventData.InputButton.Left && IsInteractable())
+            // Read before PointableCanvasModule's initializePotentialDrag zeroes the list's velocity.
+            var list = GetComponentInParent<ScrollRect>();
+            bool coasting = list && list.velocity.sqrMagnitude > CoastingSpeed * CoastingSpeed;
+            if (input.button == PointerEventData.InputButton.Left && IsInteractable() && !coasting)
                 pressesOnThisPage.Add(input.pointerId);
             base.OnPointerDown(input);
         }

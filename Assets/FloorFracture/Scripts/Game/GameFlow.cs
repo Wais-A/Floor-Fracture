@@ -44,6 +44,7 @@ namespace FloorFracture
         }
         public int Level { get; private set; } = 1;
         const string HighestLevelKey = "ff.highestLevel";
+        const int MaxListedLevel = 999;
         static int HighestLevel => Math.Max(1, PlayerPrefs.GetInt(HighestLevelKey, 1));
         bool developmentRun, pickerFromResults;
         public int WaveNumber { get; private set; } = 1;
@@ -165,14 +166,15 @@ namespace FloorFracture
             pickerFromResults = Stage == GameStage.Results;
             Room.ShowClearance(false);
             Stage = GameStage.LevelSelect;
-            int highest = HighestLevel;
+            // A corrupt saved level must not build millions of rows.
+            int reached = HighestLevel, highest = Math.Min(reached, MaxListedLevel);
             var levels = new List<MenuChoice>();
             for (int i = 1; i <= highest; ++i)
             {
                 int level = i;
                 levels.Add(Choice($"Level {level}", () => RestartAt(level)));
             }
-            if (highest < int.MaxValue) levels.Add(Choice($"Level {highest + 1} · Locked", null));
+            if (reached == highest) levels.Add(Choice($"Level {highest + 1} · Locked", null));
             Panel.ShowList("Choose level", "Reach a level to unlock it. Each attempt starts at wave 1.",
                 levels.ToArray(), highest - 1, Choice("Back", LeaveLevelPicker));
         }

@@ -88,32 +88,45 @@ namespace FloorFracture.Editor
                     return bottom >= list.viewport.rect.yMin - .5f && top <= list.viewport.rect.yMax + .5f;
                 }
                 Require(Shown("Level 13") && !Shown("Level 1"), "The picker did not open scrolled to the highest level.");
+                // The drag releases over Level 11 inside the list, so only the drag can withhold its click.
                 float before = list.content.anchoredPosition.y;
-                yield return RayDrag(Row("Level 13"), new Vector2(0, -250));
+                yield return RayDrag(Row("Level 11"), new Vector2(0, -250), list.viewport);
                 Require(game.Stage == GameStage.LevelSelect && before - list.content.anchoredPosition.y > 100,
-                    "A ray drag did not scroll the level list, or it selected the level it started on.");
+                    "A ray drag did not scroll the level list, or it selected the level it ended on.");
+                list.StopMovement();
                 list.verticalNormalizedPosition = 0;
                 Require(Shown("Level 13"), "Level 13 was outside the list at the bottom of its scroll.");
-                Choose("Level 13");
+                yield return RayDrag(Row("Level 13"), Vector2.zero, list.viewport, () => list.velocity = new Vector2(0, -300));
+                Require(game.Stage == GameStage.LevelSelect, "Tapping a coasting list started the level under the ray.");
+                list.StopMovement();
+                list.verticalNormalizedPosition = 0;
+                yield return RayDrag(Row("Level 13"), Vector2.zero, list.viewport);
                 Require(game.Level == 13 && game.Stage == GameStage.Ready && game.WaveNumber == 1,
-                    "Level selection was capped at 12.");
+                    "A ray tap on Level 13 did not start it.");
                 Choose("Main menu");
+                PlayerPrefs.SetInt(ProgressKey, int.MaxValue);
+                Choose("Choose level");
+                Require(list.content.childCount == 999 && !game.Panel.EditorChoose("Level 1000"),
+                    "A corrupt saved level was not capped at 999 rows.");
+                Choose("Back");
             }
             finally { PlayerPrefs.SetInt(ProgressKey, 2); PlayerPrefs.Save(); }
-            Record("Reached Level 2, left before its first wave, selected it, lost it, and retried on fresh glass. Earlier levels, disabled locks, development shortcuts, and a scroll list that opened at Level 13, scrolled by ray drag without selecting, and chose Level 13 passed.");
+            Record("Reached Level 2, left before its first wave, selected it, lost it, and retried on fresh glass. Earlier levels, disabled locks, development shortcuts, and a scroll list that opened at Level 13, scrolled by ray drag without selecting, ignored a tap that stopped it coasting, started Level 13 by ray tap, and capped a corrupt save at 999 rows passed.");
         }
 
-        // Presses the right ray on a row, sweeps it by a canvas-space offset, and releases.
-        private static IEnumerator RayDrag(RectTransform row, Vector2 by)
+        // Presses the right ray on a row, sweeps it by a canvas-space offset, and releases, all inside `within`.
+        private static IEnumerator RayDrag(RectTransform row, Vector2 by, RectTransform within, System.Action beforePress = null)
         {
             game.Panel.EditorSetTriggers(false, false);
             Vector3 from = row.TransformPoint(row.rect.center), to = row.TransformPoint(row.rect.center + by);
+            Require(within.rect.Contains(within.InverseTransformPoint(from)) && within.rect.Contains(within.InverseTransformPoint(to)),
+                "The ray gesture must start and end inside the list.");
             for (int step = 0; step <= 8; ++step)
             {
                 right.rotation = Quaternion.LookRotation(Vector3.Lerp(from, to, step / 8f) - right.position, Vector3.up);
                 game.Panel.EditorSetPose(head, left, right);
                 yield return Frames(2);
-                if (step == 0) { game.Panel.EditorSetTriggers(false, true); yield return Frames(2); }
+                if (step == 0) { beforePress?.Invoke(); game.Panel.EditorSetTriggers(false, true); yield return Frames(2); }
             }
             game.Panel.EditorSetTriggers(false, false);
             yield return Frames(2);
