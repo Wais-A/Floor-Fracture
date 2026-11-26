@@ -174,16 +174,27 @@ namespace FloorFracture.Editor
             for (int survived = 0; survived < 2; ++survived)
             {
                 var wave = game.State.ActiveWave;
-                Require(wave.Mode != WaveMode.LastTile, "Level three reached its finale within three waves.");
+                int number = game.WaveNumber;
                 StandOn(wave.GuaranteedTile);
                 yield return Wait(() => Steady("during a wave") && game.Stage == GameStage.BetweenWaves, "the wave to resolve", 10);
+                // A survived wave advances the number. A cleared level (finale, or a jump with no standing exit) does not.
+                Require(game.WaveNumber == number + 1, $"Level three cleared on wave {number}, which rightly fades its fog; the fixture needs a longer level.");
                 yield return Wait(() => Steady("between waves") && game.Stage == GameStage.Countdown, "the next wave", 8);
             }
             // Staying on the starting pane, which always breaks, loses the third wave.
             float restY = board.position.y;
             yield return Wait(() => Steady("in the losing wave") && game.Stage == GameStage.Fall, "the fall", 12);
             double fell = Now;
-            yield return Wait(() => Steady("in the fall") && Now >= fell + 1.5, "1.5 s of the fall", 8);
+            // Smoke steps run from EditorApplication.update, between player frames: after FallSequence.Update
+            // has moved the board and FloorFog.LateUpdate has written _BoardY, so the two must agree.
+            var fogRoot = board.Find("Floor fog");
+            bool MeasuredFromBoard()
+            {
+                float measured = material.GetFloat("_BoardY"), actual = fogRoot.position.y;
+                Require(Mathf.Abs(measured - actual) <= .001f, $"The fog measured from y {measured:F3}, not the lifted board's {actual:F3}.");
+                return true;
+            }
+            yield return Wait(() => Steady("in the fall") && MeasuredFromBoard() && Now >= fell + 1.5, "1.5 s of the fall", 8);
             float lift = board.position.y - restY;
             Require(lift >= 1f, $"The fall must lift the board, not move it {lift:F2} m.");
             game.Ending.Skip(); yield return Stage(GameStage.Results);
@@ -277,7 +288,8 @@ namespace FloorFracture.Editor
             Require(sound.EditorThunderCues - cues == 1, $"The held strike must fire once after resume, not {sound.EditorThunderCues - cues} times.");
 
             double now = game.GameplayTime;
-            view.SetHazards(new WaveHazards(1, 1, 2, new[] { now + .2 }, 5), now);
+            view.SetHazards(new WaveHazards(0, 0, 2, new[] { now + .2 }, 5), now);
+            view.SetFog(new WaveHazards(1, 1, 0, Array.Empty<double>(), 5), now);
             yield return Delay(.3);
             MenuInput(new OVRInput.OVRControllerTouch());
             Choose("Main menu");

@@ -56,7 +56,8 @@ Shader "Floor Fracture/Floor fog"
                 float2 edge = _Extent.xy - abs(p);
                 float inward = min(edge.x, edge.y);
                 // _Fade moves a ragged front in from the board edges, so the fog rolls in rather than popping.
-                alpha *= saturate((_Fade * (min(_Extent.x, _Extent.y) + .5) - inward + .3 * (noise - .5)) / .5) * smoothstep(0, .30, inward);
+                // + .65 covers the deepest point and the noise's -.15, so the factor is exactly 1 at _Fade = 1.
+                alpha *= saturate((_Fade * (min(_Extent.x, _Extent.y) + .65) - inward + .3 * (noise - .5)) / .5) * smoothstep(0, .30, inward);
                 // Four slices at 0.26 combine to at most 1 - 0.74^4 = 0.70. A full lightning flash lifts
                 // each slice to 0.39, so the stack briefly reaches 1 - 0.61^4 = 0.86.
                 // Lightning lifts the fog toward white and thickens it by up to half.

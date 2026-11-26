@@ -72,8 +72,6 @@ namespace FloorFracture
             if (!on) return;
             material.SetFloat(FadeId, fade);
             material.SetFloat(TimeId, (float)now);
-            // The fall lifts the board, so the fog measures its height from the glass, not the room floor.
-            material.SetFloat(BoardYId, transform.position.y);
             // Ease toward the target so a hop across a missing cell glides instead of jumping.
             float follow = placed ? 1-Mathf.Exp(-(float)Math.Min(.1, Math.Max(0, now-lastTick))/.5f) : 1;
             placed = true; lastTick = now;
@@ -88,6 +86,9 @@ namespace FloorFracture
             }
             material.SetVectorArray(PatchesId, patches);
         }
+
+        // The fall lifts the board in another Update, so measure the fog from the glass once every Update has run.
+        void LateUpdate() { if (material) material.SetFloat(BoardYId, transform.position.y); }
 
         // Nearest point at least 0.2 pitch inside a pane, so a patch over a missing cell still hides glass.
         Vector2 OverPanes(Vector2 point)
