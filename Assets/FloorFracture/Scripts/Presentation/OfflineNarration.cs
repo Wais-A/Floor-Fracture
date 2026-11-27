@@ -13,11 +13,14 @@ namespace FloorFracture
         Vector3 startingPosition;
         bool requested;
 
-        void Awake()
+        void Awake() => Build();
+
+        /// <summary>Adopts the narrator saved under this object, or creates it.</summary>
+        public void Build()
         {
-            var voice = new GameObject("Offline narration");
-            voice.transform.SetParent(transform, false);
-            speaker = voice.AddComponent<AudioSource>();
+            var voice = SceneParts.Child(transform, "Offline narration", out bool created);
+            speaker = SceneParts.Require<AudioSource>(voice.gameObject);
+            if (!created) return;
             speaker.playOnAwake = false;
             speaker.spatialBlend = 0f;
             speaker.spatialize = false;

@@ -87,11 +87,12 @@ namespace FloorFracture
             trackedHands = Rig.GetComponentsInChildren<OVRHand>(true);
             reduced=PlayerPrefs.GetInt("ff.reduced",0)!=0; gentle=PlayerPrefs.GetInt("ff.gentle",0)!=0;
             volume=PlayerPrefs.GetInt("ff.volume",3);
-            sound=gameObject.AddComponent<GameSound>(); sound.SetVolume(volume/4f);
+            // These are saved on this object in the scene; a bare GameFlow still gets them.
+            sound=SceneParts.Require<GameSound>(gameObject); sound.SetVolume(volume/4f);
             narrated=PlayerPrefs.GetInt("ff.narration",0)!=0;
-            narration=gameObject.AddComponent<OfflineNarration>(); narration.Configure(narrated,volume/4f);
-            Ending=gameObject.AddComponent<FallSequence>();
-            Panel=gameObject.AddComponent<GamePanel>(); Panel.Initialize(Rig,sound);
+            narration=SceneParts.Require<OfflineNarration>(gameObject); narration.Configure(narrated,volume/4f);
+            Ending=SceneParts.Require<FallSequence>(gameObject);
+            Panel=SceneParts.Require<GamePanel>(gameObject); Panel.Initialize(Rig,sound);
 #if DEBUG && UNITY_ANDROID && !UNITY_EDITOR
             if (Debug.isDebugBuild) metrics=gameObject.AddComponent<QuestRunMetrics>();
 #endif

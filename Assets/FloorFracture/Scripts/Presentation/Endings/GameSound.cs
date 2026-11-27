@@ -44,6 +44,14 @@ public sealed class GameSound : MonoBehaviour
 
     void Awake()
     {
+        // Saved in the scene, this wakes long before GameFlow.Start. A muted player must hear no music meanwhile.
+        volume = PlayerPrefs.GetInt("ff.volume", 3) / 4f;
+        Build();
+    }
+
+    /// <summary>Adopts the sound sources saved under this object and creates any that are missing.</summary>
+    public void Build()
+    {
         spatialVoicePrefab = Resources.Load<GameObject>(SpatialVoiceResource);
         if (!spatialVoicePrefab)
             throw new InvalidOperationException("Prepare the game scene to create the Meta Spatial Audio prefab.");
@@ -55,38 +63,54 @@ public sealed class GameSound : MonoBehaviour
         sand = Clip("Sand"); snow = Clip("Snow");
         lavaImpact = Clip("LavaImpact"); sandImpact = Clip("SandImpact"); snowImpact = Clip("SnowImpact");
         splash = Clip("WaterImpact");
-        ui = Voice("Menu and countdown", false);
-        music = Voice("Background music", false);
-        music.clip = Clip("BackgroundMusic");
-        music.loop = true;
-        holeDraft = Voice("Opening draft", true);
-        holeDraft.clip = Clip("HoleDraft");
-        holeDraft.loop = true;
+        // A saved source keeps its own clip and 3D settings; these apply only to one created here.
+        ui = Voice("Menu and countdown", false, out _);
+        music = Voice("Background music", false, out bool made);
+        if (made)
+        {
+            music.clip = Clip("BackgroundMusic");
+            music.loop = true;
+        }
+        holeDraft = Voice("Opening draft", true, out made);
+        if (made)
+        {
+            holeDraft.clip = Clip("HoleDraft");
+            holeDraft.loop = true;
+            holeDraft.minDistance = 1.6f;
+        }
         holeDraft.volume = 0f;
-        holeDraft.minDistance = 1.6f;
-        falling = Voice("Shaft air", false);
-        roar = Voice("Shaft roar", false);
-        ambience = Voice("Ending ambience", false);
-        accent = Voice("Ending impact", true);
-        tarBed = Voice("Tar bubbling", true);
-        // Contact is at the feet, even when the player is standing at full height.
-        accent.minDistance = tarBed.minDistance = 2.6f;
-        // The positional impact needs to cut through the head-relative rush at contact.
-        accent.GetComponent<MetaXRAudioSource>().GainBoostDb = 7f;
-        accent.priority = 32;
-        falling.priority = roar.priority = 64;
-        tarFilter = tarBed.gameObject.AddComponent<AudioLowPassFilter>();
-        tarFilter.lowpassResonanceQ = 1f;
+        falling = Voice("Shaft air", false, out made);
+        if (made) falling.priority = 64;
+        roar = Voice("Shaft roar", false, out made);
+        if (made) roar.priority = 64;
+        ambience = Voice("Ending ambience", false, out _);
+        accent = Voice("Ending impact", true, out made);
+        if (made)
+        {
+            // Contact is at the feet, even when the player is standing at full height.
+            accent.minDistance = 2.6f;
+            // The positional impact needs to cut through the head-relative rush at contact.
+            accent.GetComponent<MetaXRAudioSource>().GainBoostDb = 7f;
+            accent.priority = 32;
+        }
+        tarBed = Voice("Tar bubbling", true, out made);
+        tarFilter = FloorFracture.SceneParts.Require<AudioLowPassFilter>(tarBed.gameObject);
+        if (made)
+        {
+            tarBed.minDistance = 2.6f;
+            tarFilter.lowpassResonanceQ = 1f;
+        }
         for (int i = 0; i < glass.GetLength(0); i++)
         {
-            glass[i, 0] = Voice("Pane impact " + i, true);
-            glass[i, 1] = Voice("Glass fragments " + i, true);
-            glass[i, 2] = Voice("Shaft echo " + i, true);
+            glass[i, 0] = Voice("Pane impact " + i, true, out _);
+            glass[i, 1] = Voice("Glass fragments " + i, true, out _);
+            glass[i, 2] = Voice("Shaft echo " + i, true, out _);
         }
         var thunderClip = Clip("Thunder");
         for (int i = 0; i < thunder.Length; i++)
         {
-            thunder[i] = Voice("Thunder " + i, true);
+            thunder[i] = Voice("Thunder " + i, true, out made);
+            if (!made) continue;
             thunder[i].clip = thunderClip;
             thunder[i].minDistance = 8f;
             thunder[i].maxDistance = 40f;
@@ -96,18 +120,13 @@ public sealed class GameSound : MonoBehaviour
 
     static AudioClip Clip(string name) => Resources.Load<AudioClip>("Endings/Audio/" + name);
 
-    AudioSource Voice(string name, bool isSpatial)
+    AudioSource Voice(string name, bool isSpatial, out bool created)
     {
         if (isSpatial)
-        {
-            var emitter = Instantiate(spatialVoicePrefab, transform);
-            emitter.name = name;
-            return emitter.GetComponent<AudioSource>();
-        }
-        var child = new GameObject(name);
-        child.transform.SetParent(transform, false);
-        var source = child.AddComponent<AudioSource>();
-        source.playOnAwake = false;
+            return FloorFracture.SceneParts.Spawn(spatialVoicePrefab, transform, name, out created).GetComponent<AudioSource>();
+        var child = FloorFracture.SceneParts.Child(transform, name, out created);
+        var source = FloorFracture.SceneParts.Require<AudioSource>(child.gameObject);
+        if (created) source.playOnAwake = false;
         return source;
     }
 
@@ -129,15 +148,19 @@ public sealed class GameSound : MonoBehaviour
     {
         for (int i = lampVoices.Count - 1; i >= 0; --i)
             if (!lampVoices[i]) { lampVoices.RemoveAt(i); lampLevels.RemoveAt(i); }
-        var emitter = Instantiate(spatialVoicePrefab, lamp, false);
-        emitter.name = "Lamp hum";
-        var voice = emitter.GetComponent<AudioSource>();
-        voice.clip = beamHum;
-        voice.minDistance = 1.3f;
-        voice.loop = true;
+        var voice = FloorFracture.SceneParts.Spawn(spatialVoicePrefab, lamp, "Lamp hum", out bool made).GetComponent<AudioSource>();
+        if (made)
+        {
+            voice.clip = beamHum;
+            voice.minDistance = 1.3f;
+            voice.loop = true;
+        }
+        voice.Stop();
         voice.volume = 0f;
-        lampVoices.Add(voice);
-        lampLevels.Add(0f);
+        // A board fitted again hands back the lamp it already has.
+        int known = lampVoices.IndexOf(voice);
+        if (known >= 0) lampLevels[known] = 0f;
+        else { lampVoices.Add(voice); lampLevels.Add(0f); }
         return voice;
     }
 

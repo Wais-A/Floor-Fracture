@@ -43,6 +43,7 @@ namespace FloorFracture.Editor
                 throw new InvalidOperationException("Start the gameplay check from Edit Mode after the previous run finishes.");
             var scene = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath);
             if (!scene) throw new FileNotFoundException("Prepare the actual gameplay scene first.", ScenePath);
+            SessionState.SetBool(Key + "quick", false);
 
             string folder = Path.GetFullPath("Builds/Verification/PlayMode-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff"));
             Directory.CreateDirectory(folder);
@@ -154,6 +155,8 @@ namespace FloorFracture.Editor
             yield return Wait(() => game.Room.Status != RoomPlacementStatus.Loading, "MRUK fixture discovery", 55);
             Require(game.Stage == GameStage.Welcome && game.Room.Status == RoomPlacementStatus.Confirmed && game.State != null,
                 "The verified fixture fit did not go directly to Welcome: " + game.Room.Message);
+            VerifySavedSceneAdopted();
+            if (Quick) yield break;
             var placement = game.Room.Placement;
             report.columns = placement.Columns; report.rows = placement.Rows;
             report.pitch = placement.Pitch;
