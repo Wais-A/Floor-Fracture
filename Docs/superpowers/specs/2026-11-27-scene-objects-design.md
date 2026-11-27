@@ -215,7 +215,7 @@ scene, the game must still switch off at startup, since it already sets these st
 |---|---|
 | Pane colours: resting, rim, warning, hot, and the two colours the pane face pulses between while warned | fields on `Resources/GlassTile.prefab` |
 | Standing-ring colour and board outline colour | **Confirmed glass board** → `GlassBoardView` |
-| Menu fonts, font sizes, style and alignment | the saved Title, Instructions and Choice 1 label |
+| Menu fonts, font sizes, style and alignment | the saved Title, Instructions and each saved Choice's label (rows beyond the saved ones copy Choice 1) |
 | Menu colours: background, button idle, hovered and pressed, text, secondary text | **Floor Fracture** → `GamePanel` |
 | Menu width, margin, row height, row gap | **Floor Fracture** → `GamePanel` |
 | Wall and sky colour of each of the six endings | **Floor Fracture** → `FallSequence` |

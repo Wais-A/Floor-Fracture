@@ -82,11 +82,11 @@ The game adopts these objects by name and creates one only when it is missing. *
 |---|---|
 | Pane colours: resting, rim, warning, hot, and the two a warned face pulses between | the fields on `Resources/GlassTile.prefab` |
 | Standing-ring and board outline colours | **Confirmed glass board** → `GlassBoardView` |
-| Menu fonts, font sizes, style and alignment | the saved **Title**, **Instructions** and **Choice 1 → Label** |
+| Menu fonts, font sizes, style and alignment | the saved **Title**, **Instructions** and the **Label** under each saved **Choice** (rows beyond the saved ones copy **Choice 1**) |
 | Menu colours: background, button idle, hovered and pressed, text, secondary text | **Floor Fracture** → `GamePanel` |
 | Menu width, margin, row height and row gap | **Floor Fracture** → `GamePanel` |
 | Wall and sky colour of each ending | **Floor Fracture** → `FallSequence` |
-| A sound's clip and 3D settings | that sound source under **Floor Fracture** |
+| A sound's 3D settings (distances, priority, loop), and the clip of **Background music**, **Opening draft**, **Thunder** and **Lamp hum** | that sound source |
 
 Colour fields show in the Scene view as soon as they change. The menu layout fields take effect at Play, or in the scene the next time the save command runs. The game still decides everything fitted to the room or animated: positions and sizes of the board, panes, fog, lamps and chamber, menu text, and sound loudness and pitch. The colours of fog, lamp beams and lightning are in their shader files. The mesh and material files under `Generated/` are snapshots that let the saved objects show in edit mode; the game regenerates all of them at Play and never reads them, so editing one changes nothing in the game.
 
