@@ -9,6 +9,20 @@ namespace FloorFracture
         static readonly Color Edge = new(.58f,.88f,.88f,.91f);
         static readonly Color Danger = new(1f,.41f,.15f,1f);
         static readonly Color Fire = new(1f,.78f,.36f,1f);
+        // Set these on the GlassTile prefab: every pane on the board is an instance of it, and the Settings sample copies it.
+        [SerializeField] Color resting = Safe;
+        [SerializeField] Color rim = Edge;
+        [SerializeField] Color warning = Danger;
+        [SerializeField] Color hot = Fire;
+        [Tooltip("A warned pane's face pulses from the first of these to the second.")]
+        [SerializeField] Color warnedFaceDim = new(.36f,.24f,.23f,.79f);
+        [SerializeField] Color warnedFaceBright = new(1f,.56f,.13f,.90f);
+        public Color Resting => resting;
+        public void CopyColours(GlassTile from)
+        {
+            resting=from.resting; rim=from.rim; warning=from.warning; hot=from.hot;
+            warnedFaceDim=from.warnedFaceDim; warnedFaceBright=from.warnedFaceBright;
+        }
         static readonly int ColorId = Shader.PropertyToID("_Color");
         static readonly int SheenId = Shader.PropertyToID("_Sheen");
         static Material surface;
@@ -50,12 +64,12 @@ namespace FloorFracture
             {
                 body=Part(transform,"Glass sides and bottom",GlassGeometry.BlockSides,bodyMaterial);
                 body.transform.localScale=new Vector3(1,depthScale,1);
-                ColorPart(body,Safe,.7f);
+                ColorPart(body,resting,.7f);
             }
             frame=Part(transform,"Rim",GlassGeometry.SafeRim,material);
             frameFilter=frame.GetComponent<MeshFilter>();
             fracture=Part(transform,"Fissures",GlassGeometry.Cracks,material);
-            ColorPart(pane,Safe,.7f); ColorPart(frame,Edge); fracture.enabled=false;
+            ColorPart(pane,resting,.7f); ColorPart(frame,rim); fracture.enabled=false;
             // A pane fitted again starts as a new one: no warning showing, and no crack voice tuned to its last cell.
             lastWarning=lastLow=false; lastPulse=-1;
             if (crackVoice)
@@ -65,6 +79,19 @@ namespace FloorFracture
                 crackVoice=null;
             }
         }
+#if UNITY_EDITOR
+        // A colour painted on one renderer is not saved in a scene or prefab. In edit mode the resting look is
+        // painted again whenever the Editor loads this pane or one of its colour fields changes.
+        void OnValidate()
+        {
+            if (Application.isPlaying) return;
+            foreach (var (part,colour,sheen) in new[] {("Smoky pane",resting,.7f),("Glass sides and bottom",resting,.7f),("Rim",rim,0f)})
+            {
+                var child=transform.Find(part);
+                if (child && child.TryGetComponent<Renderer>(out var shown)) Tint(shown,colour,sheen);
+            }
+        }
+#endif
         void ColorPart(Renderer r,Color color,float sheen=0)
         {
             block.SetColor(ColorId,color); block.SetFloat(SheenId,sheen); r.SetPropertyBlock(block);
@@ -107,9 +134,9 @@ namespace FloorFracture
             if(warn==lastWarning && low==lastLow && Mathf.Abs(pulse-lastPulse)<.025f) return;
             if (lastWarning != warn) frameFilter.sharedMesh=warn ? GlassGeometry.Rim : GlassGeometry.SafeRim;
             lastWarning=warn; lastLow=low; lastPulse=pulse; fracture.enabled=warn;
-            ColorPart(frame,warn?Color.Lerp(Danger,Fire,low?.23f+pulse*.18f:.12f+pulse*.72f):Edge);
-            if(warn) ColorPart(fracture,Color.Lerp(Danger,Fire,low?.40f:.36f+pulse*.46f));
-            Color tint=warn ? Color.Lerp(new Color(.36f,.24f,.23f,.79f), new Color(1f,.56f,.13f,.90f),pulse*(low?.22f:.70f)) : Safe;
+            ColorPart(frame,warn?Color.Lerp(warning,hot,low?.23f+pulse*.18f:.12f+pulse*.72f):rim);
+            if(warn) ColorPart(fracture,Color.Lerp(warning,hot,low?.40f:.36f+pulse*.46f));
+            Color tint=warn ? Color.Lerp(warnedFaceDim,warnedFaceBright,pulse*(low?.22f:.70f)) : resting;
             ColorPart(pane,tint,.7f);
             if (body) ColorPart(body,tint,.7f);
         }

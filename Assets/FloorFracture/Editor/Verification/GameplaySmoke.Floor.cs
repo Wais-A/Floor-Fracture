@@ -100,7 +100,7 @@ namespace FloorFracture.Editor
                     Color start=Surface(danger);
                     board.Draw(wave,default,10.18,gentle);
                     Color peak=Surface(danger);
-                    Require(peak.r>start.r+.08f && Surface(safe)==GlassTile.Safe,"The single amber pulse missed its target pane.");
+                    Require(peak.r>start.r+.08f && Surface(safe)==safe.GetComponent<GlassTile>().Resting,"The single amber pulse missed its target pane.");
                     if (gentle) Require(peak.r<.60f,"Gentle warning went as bright as the standard pulse.");
                     board.Draw(wave,default,10.70,gentle);
                     Require(Surface(danger)==start && danger.Find("Fissures").GetComponent<Renderer>().enabled,

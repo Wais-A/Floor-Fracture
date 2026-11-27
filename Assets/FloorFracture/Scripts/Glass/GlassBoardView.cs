@@ -25,6 +25,8 @@ namespace FloorFracture
         Material bodyMaterial, paneMaterial, maskMaterial, fogMaterial, shardMaterial;
         bool[] openPanes;
         int practiceHole=-1;
+        [SerializeField] Color ringColour = new(.90f,1f,.73f);
+        [SerializeField] Color outlineColour = new(.61f,.82f,.85f,.96f);
         public Transform Board => transform;
         internal bool HasOpenPanes => isActiveAndEnabled && holes && holes.enabled;
         internal float ChamberRadius
@@ -117,7 +119,7 @@ namespace FloorFracture
             }
             occupancy=GlassTile.Part(transform,"Occupied square",GlassGeometry.Ring,paneMaterial);
             occupancy.transform.localScale=fittedScale;
-            GlassTile.Tint(occupancy,new Color(.90f,1f,.73f)); occupancy.enabled=false;
+            GlassTile.Tint(occupancy,ringColour); occupancy.enabled=false;
             shardMaterial=GlassTile.MakeMaterial("FloorFractureDepth");
             cutouts=new Mesh{name="Open floor apertures"};
             holes=GlassTile.Part(transform,"Opening stencil",cutouts,maskMaterial);
@@ -125,7 +127,7 @@ namespace FloorFracture
             var b=new GlassGeometry.Builder();
             foreach (var edge in board.Layout.Perimeter(board.Pitch)) b.Stroke(edge.a,edge.b,.012f,GlassGeometry.MarkingHeight);
             boundary=b.Create("Board perimeter"); var border=GlassTile.Part(transform,"Perimeter",boundary,paneMaterial);
-            GlassTile.Tint(border,new Color(.61f,.82f,.85f,.96f));
+            GlassTile.Tint(border,outlineColour);
             fog=SceneParts.Require<FloorFog>(SceneParts.Child(transform,"Floor fog",out _).gameObject);
             fog.Build(board,fogMaterial);
             lights=SceneParts.Require<OverheadLights>(SceneParts.Child(transform,"Overhead lights",out _).gameObject);
@@ -300,6 +302,18 @@ namespace FloorFracture
             maskGeometry.Write(cutouts);
             holes.enabled=maskGeometry.Vertices.Count>0;
         }
+#if UNITY_EDITOR
+        // As on the panes: in edit mode the ring and outline are painted again on load and when a colour field changes.
+        void OnValidate()
+        {
+            if (Application.isPlaying) return;
+            foreach (var (part,colour) in new[] {("Occupied square",ringColour),("Perimeter",outlineColour)})
+            {
+                var child=transform.Find(part);
+                if (child && child.TryGetComponent<Renderer>(out var shown)) GlassTile.Tint(shown,colour);
+            }
+        }
+#endif
         // The meshes and materials one fit made. The saved files they were snapshotted to are never touched.
         void ReleaseOwned()
         {

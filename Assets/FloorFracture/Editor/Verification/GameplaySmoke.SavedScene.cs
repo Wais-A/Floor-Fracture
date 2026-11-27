@@ -165,6 +165,11 @@ namespace FloorFracture.Editor
                 if (item.name.StartsWith("Editor ")) problems.Add("The editor-only helper " + item.name + " was saved in the scene.");
             var preview = canvas.Find("Title/Warning preview");
             if (preview) RequireSavedAssets(preview, problems);
+            var panel = game.GetComponent<GamePanel>();
+            var heading = canvas.Find("Title");
+            if (panel && heading && (!Same(canvas.GetComponent<UnityEngine.UI.Image>().color, Field(panel, "paper")) ||
+                !Same(heading.GetComponent<UnityEngine.UI.Text>().color, Field(panel, "ink"))))
+                problems.Add("The saved menu is not drawn in the colours set on GamePanel.");
         }
 
         private static void CheckSavedChamber(Scene scene, GameFlow game, List<string> problems)
@@ -225,6 +230,13 @@ namespace FloorFracture.Editor
                 if (renderer.enabled && (renderer.name == "Fissures" || renderer.name == "Occupied square" || renderer.name == "Opening stencil"))
                     problems.Add(renderer.transform.parent.name + "/" + renderer.name + " was saved switched on.");
             RequireSavedAssets(board, problems);
+            // Per-renderer colours are not saved in a scene. The scripts re-apply them, so the Scene view shows the game's resting look.
+            var sample = board.Find("Glass 0, 0");
+            if (sample && sample.Find("Smoky pane") && !Same(Painted(sample.Find("Smoky pane")), sample.GetComponent<GlassTile>().Resting))
+                problems.Add("In edit mode the panes are not drawn in their Resting colour.");
+            var outline = board.Find("Perimeter");
+            if (outline && !Same(Painted(outline), Field(board.GetComponent<GlassBoardView>(), "outlineColour")))
+                problems.Add("In edit mode the board outline is not drawn in its Outline colour.");
             foreach (var item in board.GetComponentsInChildren<Transform>(true))
                 if (item.gameObject.layer == 30) problems.Add(item.name + " is on layer 30, which the checks render on.");
 
@@ -241,6 +253,23 @@ namespace FloorFracture.Editor
             var sequence = flow.GetComponent<FallSequence>();
             return sequence ? new SerializedObject(sequence).FindProperty("chamber")?.objectReferenceValue : null;
         }
+
+        private static readonly int ColourId = Shader.PropertyToID("_Color");
+
+        // The colour a script painted on one renderer; clear when it painted none.
+        private static Color Painted(Component part)
+        {
+            var block = new MaterialPropertyBlock();
+            part.GetComponent<Renderer>().GetPropertyBlock(block);
+            return block.GetColor(ColourId);
+        }
+
+        // A colour field as the Inspector shows it.
+        private static Color Field(Object owner, string name) => new SerializedObject(owner).FindProperty(name).colorValue;
+
+        // Menu colours are stored in 8 bits per channel.
+        private static bool Same(Color a, Color b) =>
+            Mathf.Abs(a.r - b.r) < .004f && Mathf.Abs(a.g - b.g) < .004f && Mathf.Abs(a.b - b.b) < .004f && Mathf.Abs(a.a - b.a) < .004f;
 
         // A scene file cannot hold a mesh or material generated at Play; a saved object needs asset files to show in edit mode.
         private static void RequireSavedAssets(Transform root, List<string> problems, string meshFreeName = null)
@@ -312,6 +341,15 @@ namespace FloorFracture.Editor
             foreach (string name in IdleEffects.Concat(new[] { "Opening stencil", "Falling fragments", "Occupied square", "Perimeter" }))
                 RequireOne(everything, name);
             VerifyBoardFitsLayout("the first fit");
+
+            // An edit to a colour field is what the game draws.
+            var pane = game.BoardView.GetComponentsInChildren<GlassTile>().First();
+            Require(Same(Painted(pane.transform.Find("Smoky pane")), pane.Resting), "A resting pane is not drawn in its Resting colour.");
+            Require(Same(Painted(game.BoardView.transform.Find("Perimeter")), Field(game.BoardView, "outlineColour")),
+                "The board outline is not drawn in its Outline colour.");
+            Require(Same(canvas.GetComponent<UnityEngine.UI.Image>().color, Field(game.Panel, "paper")) &&
+                Same(canvas.Find("Title").GetComponent<UnityEngine.UI.Text>().color, Field(game.Panel, "ink")),
+                "The menu is not drawn in the colours set on GamePanel.");
             // Whatever was left switched on in the scene, nothing that only a wave shows is on at Welcome.
             foreach (string effect in IdleEffects)
             {

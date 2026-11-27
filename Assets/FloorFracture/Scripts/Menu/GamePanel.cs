@@ -21,16 +21,23 @@ namespace FloorFracture
         public const string CanvasName = "Floor Fracture Menu";
         // The physical row is 4.2 cm tall, with 8 mm between adjacent actions.
         public const float CanvasScale = 0.00058f;
-        private const float Width = 672, Margin = 32, RowHeight = 72, RowGap = 14, RowStep = RowHeight + RowGap;
+        [Header("Layout, in canvas units")]
+        [SerializeField] private float width = 672;
+        [SerializeField] private float margin = 32;
+        [SerializeField] private float rowHeight = 72;
+        [SerializeField] private float rowGap = 14;
+        private float RowStep => rowHeight + rowGap;
         // A half row peeks out at the edge to show the list scrolls; with Back the panel stays within the old six-row page.
         private const float ListRows = 4.5f;
         private const float WarningPreviewSize = 144;
-        private static readonly Color Paper = new Color32(13, 32, 41, 249);
-        private static readonly Color Idle = new Color32(35, 66, 76, 255);
-        private static readonly Color Hovered = new Color32(55, 109, 116, 255);
-        private static readonly Color Pressed = new Color32(119, 196, 183, 255);
-        private static readonly Color Ink = new Color32(237, 247, 248, 255);
-        private static readonly Color Secondary = new Color32(192, 216, 221, 255);
+        // The one source of every menu colour. The panel repaints its texts and rows from these, so a colour set on a text itself is overwritten.
+        [Header("Colours")]
+        [SerializeField] private Color paper = new Color32(13, 32, 41, 249);
+        [SerializeField] private Color idle = new Color32(35, 66, 76, 255);
+        [SerializeField] private Color hovered = new Color32(55, 109, 116, 255);
+        [SerializeField] private Color pressed = new Color32(119, 196, 183, 255);
+        [SerializeField] private Color ink = new Color32(237, 247, 248, 255);
+        [SerializeField] private Color secondary = new Color32(192, 216, 221, 255);
 
         private sealed class Row
         {
@@ -136,11 +143,11 @@ namespace FloorFracture
             if (!panel.TryGetComponent<UnityEngine.UI.Image>(out var background))
             {
                 background = panel.gameObject.AddComponent<UnityEngine.UI.Image>();
-                background.color = Paper;
+                background.color = paper;
                 background.raycastTarget = false;
             }
-            title = Label(panel, "Title", 46, FontStyle.Bold, Ink, out _);
-            body = Label(panel, "Instructions", 26, FontStyle.Normal, Secondary, out _);
+            title = Label(panel, "Title", 46, FontStyle.Bold, ink, out _);
+            body = Label(panel, "Instructions", 26, FontStyle.Normal, secondary, out _);
             // PointableCanvasModule sends poke and ray drags to the nearest IDragHandler above the pressed row.
             var list = SceneParts.Child(panel, "Choice list", out bool made,
                 typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(RectMask2D), typeof(ScrollRect));
@@ -169,7 +176,7 @@ namespace FloorFracture
                 countCanvas.renderMode = RenderMode.WorldSpace;
                 countCanvas.sortingOrder = 30;
             }
-            countLabel = Label(count, "Count", 100, FontStyle.Bold, Ink, out made);
+            countLabel = Label(count, "Count", 100, FontStyle.Bold, ink, out made);
             if (made)
             {
                 countLabel.rectTransform.sizeDelta = count.sizeDelta;
@@ -181,6 +188,16 @@ namespace FloorFracture
             count.gameObject.SetActive(false);
             // A saved sample pane is adopted now, so one left switched on in the scene is hidden.
             if (title.transform.Find(WarningPreviewName)) BuildWarningPreview();
+            ApplyColours();
+        }
+
+        // The background and the two texts take their colours from the fields; Paint does the same for the rows.
+        private void ApplyColours()
+        {
+            if (panel.TryGetComponent<UnityEngine.UI.Image>(out var background)) background.color = paper;
+            title.color = ink;
+            body.color = secondary;
+            countLabel.color = ink;
         }
 
         /// <summary>Lays out one page from plain labels, to save a sample in the scene. No rig, pointers or sound.</summary>
@@ -209,7 +226,7 @@ namespace FloorFracture
             listed.CopyTo(options, 0);
             after.CopyTo(options, listed.Length);
             ShowPage(heading, message, options, false, listed.Length);
-            ScrollTo(reveal * RowStep + (RowHeight - scroll.viewport.rect.height) / 2);
+            ScrollTo(reveal * RowStep + (rowHeight - scroll.viewport.rect.height) / 2);
         }
 
         private void ScrollTo(float offset)
@@ -229,7 +246,7 @@ namespace FloorFracture
                 countCanvas.transform.localRotation = Quaternion.identity;
             }
             countLabel.text = StartCounts[count];
-            var color = Ink;
+            var color = ink;
             color.a = opacity;
             countLabel.color = color;
             countCanvas.gameObject.SetActive(true);
@@ -308,6 +325,9 @@ namespace FloorFracture
                 sample.localScale = Vector3.one * (WarningPreviewSize / GlassGeometry.AuthoredPitch);
             }
             warningPreview = SceneParts.Require<GlassTile>(sample.gameObject);
+            // The sample is not an instance of the pane prefab, so it takes the prefab's colours and always matches the board.
+            var paneTemplate = Resources.Load<GameObject>("GlassTile");
+            if (paneTemplate && paneTemplate.TryGetComponent<GlassTile>(out var boardPane)) warningPreview.CopyColours(boardPane);
             warningPreview.Initialize();
             foreach (var renderer in sample.GetComponentsInChildren<MeshRenderer>(true))
                 renderer.sortingOrder = menuCanvas.sortingOrder + 1;
@@ -335,31 +355,35 @@ namespace FloorFracture
         public void SetBody(string message)
         {
             body.text = message ?? "";
-            Place(title.rectTransform, Margin, Margin - 6, Width - 2 * Margin, 61);
+            Place(title.rectTransform, margin, margin - 6, width - 2 * margin, 61);
             bool showPreview = warningPreview && warningPreview.gameObject.activeSelf;
-            float bodyWidth = Width - 2 * Margin - (showPreview ? WarningPreviewSize + 20 : 0);
-            Place(body.rectTransform, Margin, 93, bodyWidth, 40);
+            float bodyWidth = width - 2 * margin - (showPreview ? WarningPreviewSize + 20 : 0);
+            Place(body.rectTransform, margin, 93, bodyWidth, 40);
             float bodyHeight = Mathf.Max(30, Mathf.Ceil(body.preferredHeight) + 4);
-            Place(body.rectTransform, Margin, 93, bodyWidth, bodyHeight);
-            float headerBottom = Mathf.Max(93 + bodyHeight, showPreview ? Margin - 6 + WarningPreviewSize : 0);
+            Place(body.rectTransform, margin, 93, bodyWidth, bodyHeight);
+            float headerBottom = Mathf.Max(93 + bodyHeight, showPreview ? margin - 6 + WarningPreviewSize : 0);
             float top = headerBottom + (choices.Length > 0 ? 23 : 0);
             float bottom = top;
             if (listCount > 0)
             {
-                float listHeight = Mathf.Min(listCount, ListRows) * RowStep - RowGap;
-                Place(scroll.viewport, Margin, top, Width - 2 * Margin, listHeight);
-                scroll.content.sizeDelta = new Vector2(Width - 2 * Margin, listCount * RowStep - RowGap);
-                bottom += listHeight + RowGap;
+                float listHeight = Mathf.Min(listCount, ListRows) * RowStep - rowGap;
+                Place(scroll.viewport, margin, top, width - 2 * margin, listHeight);
+                scroll.content.sizeDelta = new Vector2(width - 2 * margin, listCount * RowStep - rowGap);
+                bottom += listHeight + rowGap;
             }
             for (int i = 0; i < choices.Length; ++i)
-                if (i < listCount) Place(rows[i].Rect, 0, i * RowStep, Width - 2 * Margin, RowHeight);
-                else Place(rows[i].Rect, Margin, bottom + (i - listCount) * RowStep, Width - 2 * Margin, RowHeight);
+            {
+                if (i < listCount) Place(rows[i].Rect, 0, i * RowStep, width - 2 * margin, rowHeight);
+                else Place(rows[i].Rect, margin, bottom + (i - listCount) * RowStep, width - 2 * margin, rowHeight);
+                // The label follows the row, so a changed row height or width reaches it too.
+                Place(rows[i].Text.rectTransform, 19, 0, width - 2 * margin - 35, rowHeight);
+            }
             bottom += (choices.Length - listCount) * RowStep;
-            float height = bottom - (choices.Length > 0 ? RowGap : 0) + Margin;
+            float height = bottom - (choices.Length > 0 ? rowGap : 0) + margin;
             // On the recovery page the first button's top edge stays at the panel origin.
             // Additional lines of tracking status expand the panel above a resting hand.
             panel.pivot = new Vector2(.5f, roomRecovery ? (height - top) / height : .5f);
-            panel.sizeDelta = new Vector2(Width, height);
+            panel.sizeDelta = new Vector2(width, height);
         }
 
         public void Hide()
@@ -481,11 +505,11 @@ namespace FloorFracture
                 choices[index].OnSelect?.Invoke();
                 if (sound) sound.Click();
             });
-            row.Text = Label(go.transform, "Label", 28, FontStyle.Bold, Ink, out bool madeLabel);
+            row.Text = Label(go.transform, "Label", 28, FontStyle.Bold, ink, out bool madeLabel);
             if (madeLabel)
             {
                 row.Text.alignment = TextAnchor.MiddleLeft;
-                Place(row.Text.rectTransform, 19, 0, Width - 2 * Margin - 35, RowHeight);
+                Place(row.Text.rectTransform, 19, 0, width - 2 * margin - 35, rowHeight);
             }
             rows.Add(row);
         }
@@ -609,14 +633,14 @@ namespace FloorFracture
             {
                 if (!rows[i].Button.interactable)
                 {
-                    rows[i].Fill.color = Paper;
-                    rows[i].Text.color = Secondary;
+                    rows[i].Fill.color = paper;
+                    rows[i].Text.color = secondary;
                     continue;
                 }
                 bool down = mousePress == i || pointers[0]?.Pressed == i || pointers[1]?.Pressed == i;
                 bool over = mouseHover == i || pointers[0]?.Hover == i || pointers[1]?.Hover == i;
-                rows[i].Fill.color = down ? Pressed : over ? Hovered : Idle;
-                rows[i].Text.color = down ? Paper : Ink;
+                rows[i].Fill.color = down ? pressed : over ? hovered : idle;
+                rows[i].Text.color = down ? paper : ink;
             }
         }
 
@@ -694,6 +718,32 @@ namespace FloorFracture
             SetRecenterSources(display, OVRManager.GetCurrentInputSubsystem());
 
 #endif
+#if UNITY_EDITOR
+        // In edit mode a changed colour field shows on the saved menu at once. The layout fields take effect
+        // at Play, or in the scene the next time Tools > Floor Fracture > Save game objects into scene runs.
+        private void OnValidate()
+        {
+            if (Application.isPlaying) return;
+            var canvas = transform.Find(CanvasName);
+            if (!canvas) return;
+            if (canvas.TryGetComponent<UnityEngine.UI.Image>(out var background)) background.color = paper;
+            Colour(canvas.Find("Title"), ink);
+            Colour(canvas.Find("Instructions"), secondary);
+            Colour(transform.Find("Start count/Count"), ink);
+            foreach (Transform row in canvas)
+            {
+                if (!row.GetComponent<MenuPageButton>()) continue;
+                Colour(row, idle);
+                Colour(row.Find("Label"), ink);
+            }
+        }
+
+        private static void Colour(Transform item, Color colour)
+        {
+            if (item && item.TryGetComponent<Graphic>(out var graphic)) graphic.color = colour;
+        }
+#endif
+
         private void OnDestroy()
         {
             if (countCanvas) Destroy(countCanvas.gameObject);

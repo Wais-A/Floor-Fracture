@@ -25,15 +25,17 @@ internal sealed class FallScenery
     // Allow for both eye offsets and pose updates between Update and stereo rendering.
     const float EyeMargin = .08f;
     static readonly int InteriorPlane = Shader.PropertyToID("_InteriorPlane");
-    static readonly Color[] wallTints = {
+    internal static readonly Color[] DefaultWallTints = {
         new Color(.19f,.28f,.30f), new Color(.25f,.15f,.12f), new Color(.17f,.13f,.09f),
         new Color(.18f,.19f,.26f), new Color(.44f,.31f,.19f), new Color(.26f,.40f,.53f)
     };
-    static readonly Color[] skyTints = {
+    internal static readonly Color[] DefaultSkyTints = {
         new Color(.018f,.049f,.060f), new Color(.040f,.019f,.014f), new Color(.027f,.021f,.014f),
         new Color(.009f,.012f,.030f), new Color(.061f,.039f,.021f), new Color(.16f,.25f,.36f)
     };
 
+    // One colour per ending, in the order Water, Lava, Tar Pit, Space, Sand, Snow.
+    readonly Color[] wallTints, skyTints;
     readonly Transform world;
     readonly Material surfaceMaterial, backgroundMaterial, fadeMaterial, interiorMaterial, bubbleMaterial, dustMaterial;
     readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
@@ -61,8 +63,11 @@ internal sealed class FallScenery
     /// Adopts the chamber saved in the scene, part by part, and creates what is missing.
     /// Meshes and material settings are still made here; the saved ones are snapshots for edit mode.
     /// </summary>
-    internal FallScenery(Transform saved = null)
+    internal FallScenery(Transform saved = null, Color[] wallColours = null, Color[] skyColours = null)
     {
+        // A list that does not hold one colour per ending cannot be used.
+        wallTints = wallColours != null && wallColours.Length == DefaultWallTints.Length ? wallColours : DefaultWallTints;
+        skyTints = skyColours != null && skyColours.Length == DefaultSkyTints.Length ? skyColours : DefaultSkyTints;
         world = saved ? saved : new GameObject("Fall chamber").transform;
         surfaceMaterial = FloorFracture.SceneParts.MakeMaterial("Chamber surface","Endings/Chamber");
         surfaceMaterial.SetFloat("_WideningPerMetre",WideningPerMetre);

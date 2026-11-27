@@ -1739,6 +1739,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b63ddb35fb7cf4741a4daf393982aa74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FloorFracture.GamePanel
+  width: 672
+  margin: 32
+  rowHeight: 72
+  rowGap: 14
+  paper: {r: 0.050980393, g: 0.1254902, b: 0.16078432, a: 0.9764706}
+  idle: {r: 0.13725491, g: 0.25882354, b: 0.29803923, a: 1}
+  hovered: {r: 0.21568628, g: 0.42745098, b: 0.45490196, a: 1}
+  pressed: {r: 0.46666667, g: 0.76862746, b: 0.7176471, a: 1}
+  ink: {r: 0.92941177, g: 0.96862745, b: 0.972549, a: 1}
+  secondary: {r: 0.7529412, g: 0.84705883, b: 0.8666667, a: 1}
 --- !u!114 &237852969
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1753,6 +1763,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FallSequence
   enabledEndings: 63
   developmentEnding: -1
+  wallTints:
+  - {r: 0.19, g: 0.28, b: 0.3, a: 1}
+  - {r: 0.25, g: 0.15, b: 0.12, a: 1}
+  - {r: 0.17, g: 0.13, b: 0.09, a: 1}
+  - {r: 0.18, g: 0.19, b: 0.26, a: 1}
+  - {r: 0.44, g: 0.31, b: 0.19, a: 1}
+  - {r: 0.26, g: 0.4, b: 0.53, a: 1}
+  skyTints:
+  - {r: 0.018, g: 0.049, b: 0.06, a: 1}
+  - {r: 0.04, g: 0.019, b: 0.014, a: 1}
+  - {r: 0.027, g: 0.021, b: 0.014, a: 1}
+  - {r: 0.009, g: 0.012, b: 0.03, a: 1}
+  - {r: 0.061, g: 0.039, b: 0.021, a: 1}
+  - {r: 0.16, g: 0.25, b: 0.36, a: 1}
   chamber: {fileID: 1011928629}
 --- !u!114 &237852970
 MonoBehaviour:
@@ -3395,6 +3419,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57ee640837154428aa1e46a00583f997, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FloorFracture.GlassTile
+  resting: {r: 0.19, g: 0.36, b: 0.4, a: 0.7}
+  rim: {r: 0.58, g: 0.88, b: 0.88, a: 0.91}
+  warning: {r: 1, g: 0.41, b: 0.15, a: 1}
+  hot: {r: 1, g: 0.78, b: 0.36, a: 1}
+  warnedFaceDim: {r: 0.36, g: 0.24, b: 0.23, a: 0.79}
+  warnedFaceBright: {r: 1, g: 0.56, b: 0.13, a: 0.9}
 --- !u!1 &535930146
 GameObject:
   m_ObjectHideFlags: 0
@@ -6666,6 +6696,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f34d56c7937247b3b87643788b0eef4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FloorFracture.GlassBoardView
+  ringColour: {r: 0.9, g: 1, b: 0.73, a: 1}
+  outlineColour: {r: 0.61, g: 0.82, b: 0.85, a: 0.96}
 --- !u!4 &1186012575
 Transform:
   m_ObjectHideFlags: 0

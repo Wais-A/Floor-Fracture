@@ -14,6 +14,9 @@ public sealed class FallSequence : MonoBehaviour
 #pragma warning disable CS0414 // unread in release builds
     [SerializeField] PreviewEnding developmentEnding = PreviewEnding.Shuffle;
 #pragma warning restore CS0414
+    [Header("One colour per ending: Water, Lava, Tar Pit, Space, Sand, Snow")]
+    [SerializeField] Color[] wallTints = (Color[])FallScenery.DefaultWallTints.Clone();
+    [SerializeField] Color[] skyTints = (Color[])FallScenery.DefaultSkyTints.Clone();
     // The Fall chamber saved in the scene. It stays switched off until a fall or a look through an opening.
     [SerializeField] Transform chamber;
     EndingShuffle shuffle;
@@ -130,7 +133,7 @@ public sealed class FallSequence : MonoBehaviour
 
     void PrepareChamber()
     {
-        scenery ??= new FallScenery(chamber);
+        scenery ??= new FallScenery(chamber, wallTints, skyTints);
     }
 
     /// <summary>Builds the chamber around the one saved in the scene and returns its root. Also runs in edit mode.</summary>
