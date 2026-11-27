@@ -27,6 +27,12 @@ namespace FloorFracture.Editor
         };
         // Idle sources hold no clip, so an ending or the narrator cannot replay a stale one.
         private static readonly string[] ClipFreeSounds = { "Ending ambience", "Ending impact", "Offline narration" };
+        private static readonly string[] ChamberParts =
+        {
+            "Shaft walls", "Shaft landmarks", "Left brick column", "Right brick column", "Chamber darkness", "Hazard surface",
+            "Floor Zone water ripples", "Lava flames", "Particles", "Water spray", "Entry bubbles", "Fall dust",
+            "View fade", "View fade/Submerged view", "Water contact splash"
+        };
         private static bool Quick => SessionState.GetBool(Key + "quick", false);
 
         [MenuItem("Tools/Floor Fracture/Check saved scene objects")]
@@ -46,6 +52,7 @@ namespace FloorFracture.Editor
                 if (flows.Length != 1) throw new InvalidOperationException("The saved scene needs exactly one GameFlow; it has " + flows.Length + ".");
                 if (all || areas.Contains("sound")) CheckSavedSound(flows[0].transform, problems);
                 if (all || areas.Contains("menu")) CheckSavedMenu(flows[0].transform, problems);
+                if (all || areas.Contains("chamber")) CheckSavedChamber(scene, flows[0], problems);
             }
             finally { if (preview) EditorSceneManager.ClosePreviewScene(scene); }
             if (all || areas.Contains("sound")) CheckSoundWakesAtSavedVolume(problems);
@@ -136,13 +143,39 @@ namespace FloorFracture.Editor
             if (preview) RequireSavedAssets(preview, problems);
         }
 
+        private static void CheckSavedChamber(Scene scene, GameFlow game, List<string> problems)
+        {
+            var roots = scene.GetRootGameObjects().Where(root => root.name == "Fall chamber").ToArray();
+            if (roots.Length != 1)
+            {
+                problems.Add(roots.Length == 0 ? "missing: Fall chamber (scene root)" : "saved " + roots.Length + " times: Fall chamber");
+                return;
+            }
+            var chamber = roots[0].transform;
+            // GameObject.Find must not see the chamber until a fall or a look through an opening shows it.
+            if (chamber.gameObject.activeSelf) problems.Add("Fall chamber was saved switched on.");
+            foreach (string part in ChamberParts) Expect(chamber, part, problems);
+            var splash = chamber.Find("Water contact splash");
+            if (splash && splash.gameObject.activeSelf)
+                problems.Add("Water contact splash was saved switched on; it would play every time the chamber shows.");
+            // Particles takes its mesh from the ending that plays.
+            RequireSavedAssets(chamber, problems, "Particles");
+            if (SavedChamber(game) != chamber) problems.Add("FallSequence on Floor Fracture does not reference the saved Fall chamber.");
+        }
+
+        private static Object SavedChamber(GameFlow flow)
+        {
+            var sequence = flow.GetComponent<FallSequence>();
+            return sequence ? new SerializedObject(sequence).FindProperty("chamber")?.objectReferenceValue : null;
+        }
+
         // A scene file cannot hold a mesh or material generated at Play; a saved object needs asset files to show in edit mode.
         private static void RequireSavedAssets(Transform root, List<string> problems, string meshFreeName = null)
         {
             foreach (var filter in root.GetComponentsInChildren<MeshFilter>(true))
                 if (filter.name != meshFreeName && (!filter.sharedMesh || !EditorUtility.IsPersistent(filter.sharedMesh)))
                     problems.Add(root.name + "/" + filter.name + " has no saved mesh file.");
-            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+            foreach (var renderer in root.GetComponentsInChildren<MeshRenderer>(true))
                 if (!renderer.sharedMaterial || !EditorUtility.IsPersistent(renderer.sharedMaterial))
                     problems.Add(root.name + "/" + renderer.name + " has no saved material file.");
         }
@@ -194,6 +227,11 @@ namespace FloorFracture.Editor
             Require(game.GetComponents<GamePanel>().Length == 1, "Play added a second GamePanel beside the saved one.");
             Require(canvas.Find("Choice 1/Label").GetComponent<UnityEngine.UI.Text>().text == "Start",
                 "The Welcome page is not using the saved first row.");
+
+            var chambers = everything.Where(item => item.name == "Fall chamber").ToArray();
+            Require(chambers.Length == 1, "Play has " + chambers.Length + " fall chambers; the saved one must be the only one.");
+            Require(!chambers[0].gameObject.activeSelf, "The fall chamber is switched on at Welcome.");
+            Require(SavedChamber(game) == chambers[0], "The fall sequence is not using the chamber saved in the scene.");
         }
     }
 }

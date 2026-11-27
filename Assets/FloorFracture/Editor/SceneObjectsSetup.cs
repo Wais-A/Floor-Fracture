@@ -40,7 +40,7 @@ namespace FloorFracture.Editor
                 var game = flow.gameObject;
                 var sound = SceneParts.Require<GameSound>(game);
                 var narration = SceneParts.Require<OfflineNarration>(game);
-                SceneParts.Require<FallSequence>(game);
+                var sequence = SceneParts.Require<FallSequence>(game);
                 var panel = SceneParts.Require<GamePanel>(game);
                 Saved.Clear();
                 sound.Build();
@@ -55,6 +55,13 @@ namespace FloorFracture.Editor
                 canvas.anchoredPosition3D = new Vector3(0, 1.36f, .56f);
                 canvas.localRotation = Quaternion.identity;
                 Snapshot(canvas.Find("Title/Warning preview"));
+
+                // The fall chamber is saved switched off, as it is until a fall or a look through an opening.
+                var chamber = sequence.BuildChamber();
+                Snapshot(chamber);
+                var savedSequence = new SerializedObject(sequence);
+                savedSequence.FindProperty("chamber").objectReferenceValue = chamber;
+                savedSequence.ApplyModifiedPropertiesWithoutUndo();
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!EditorSceneManager.SaveScene(scene, GameProjectSetup.MainScene))
                     throw new IOException("Could not save the Floor Fracture scene.");

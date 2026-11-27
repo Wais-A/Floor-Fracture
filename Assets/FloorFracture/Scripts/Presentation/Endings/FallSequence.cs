@@ -9,10 +9,13 @@ public sealed class FallSequence : MonoBehaviour
     const float RimHold = .40f;
     static readonly float FreeFallTime = Mathf.Sqrt(2f * FallScenery.ShaftDepth / Gravity);
     [SerializeField] FloorEndingSet enabledEndings = FloorEndingSet.All;
-#if UNITY_EDITOR || DEBUG
+    // Saved in the scene, so the field exists in every build. Only development code reads it.
     enum PreviewEnding { Shuffle = -1, Water, Lava, TarPit, Space, Sand, Snow }
+#pragma warning disable CS0414 // unread in release builds
     [SerializeField] PreviewEnding developmentEnding = PreviewEnding.Shuffle;
-#endif
+#pragma warning restore CS0414
+    // The Fall chamber saved in the scene. It stays switched off until a fall or a look through an opening.
+    [SerializeField] Transform chamber;
     EndingShuffle shuffle;
     string shufflePreference;
     int selectedLevel;
@@ -48,7 +51,12 @@ public sealed class FallSequence : MonoBehaviour
         opening = pointOnFloor; width = Mathf.Max(.1f,tileWidth); yaw = yawDegrees; hasOpening = true;
     }
 
-    void Awake() => LoadShuffle("ff.waveEndingBag.v1", Guid.NewGuid().GetHashCode());
+    void Awake()
+    {
+        // Left switched on in the scene, the chamber would show before there is a board to fall through.
+        if (chamber) chamber.gameObject.SetActive(false);
+        LoadShuffle("ff.waveEndingBag.v1", Guid.NewGuid().GetHashCode());
+    }
 
     void LoadShuffle(string preference, int seed)
     {
@@ -122,7 +130,17 @@ public sealed class FallSequence : MonoBehaviour
 
     void PrepareChamber()
     {
-        scenery ??= new FallScenery();
+        scenery ??= new FallScenery(chamber);
+    }
+
+    /// <summary>Builds the chamber around the one saved in the scene and returns its root. Also runs in edit mode.</summary>
+    public Transform BuildChamber()
+    {
+        if (scenery != null && !scenery.Root) scenery = null;
+        PrepareChamber();
+        scenery.BuildSplash();
+        scenery.Hide();
+        return scenery.Root;
     }
 
     /// <summary>Water through snow are indices zero through five. A negative index restores the bag.</summary>

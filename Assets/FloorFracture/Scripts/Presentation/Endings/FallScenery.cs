@@ -55,17 +55,23 @@ internal sealed class FallScenery
     bool hasFloorApertures, stencilEnabled, fullyUnder;
     float sandShade;
 
-    internal FallScenery()
+    internal Transform Root => world;
+
+    /// <summary>
+    /// Adopts the chamber saved in the scene, part by part, and creates what is missing.
+    /// Meshes and material settings are still made here; the saved ones are snapshots for edit mode.
+    /// </summary>
+    internal FallScenery(Transform saved = null)
     {
-        world = new GameObject("Fall chamber").transform;
-        surfaceMaterial = new Material(Resources.Load<Shader>("Endings/Chamber"));
+        world = saved ? saved : new GameObject("Fall chamber").transform;
+        surfaceMaterial = FloorFracture.SceneParts.MakeMaterial("Chamber surface","Endings/Chamber");
         surfaceMaterial.SetFloat("_WideningPerMetre",WideningPerMetre);
         surfaceMaterial.SetFloat("_ThroatDepth",ThroatDepth);
         // Establish the sky's projection alpha before fading walls or the landing can write depth.
-        backgroundMaterial = new Material(surfaceMaterial) { renderQueue = surfaceMaterial.renderQueue - 1 };
-        fadeMaterial = new Material(Resources.Load<Shader>("Endings/ViewFade"));
-        interiorMaterial = new Material(fadeMaterial) { renderQueue = fadeMaterial.renderQueue - 2 };
-        bubbleMaterial = new Material(surfaceMaterial) { renderQueue = fadeMaterial.renderQueue - 1 };
+        backgroundMaterial = new Material(surfaceMaterial) { name = "Chamber background", renderQueue = surfaceMaterial.renderQueue - 1 };
+        fadeMaterial = FloorFracture.SceneParts.MakeMaterial("Chamber fade","Endings/ViewFade");
+        interiorMaterial = new Material(fadeMaterial) { name = "Chamber interior", renderQueue = fadeMaterial.renderQueue - 2 };
+        bubbleMaterial = new Material(surfaceMaterial) { name = "Chamber bubbles", renderQueue = fadeMaterial.renderQueue - 1 };
         bubbleMaterial.SetInt("_DepthTest",(int)CompareFunction.Always);
         bubbleMaterial.SetInt("_DepthWrite",0);
         boxMesh = Own(FallMeshes.Box());
@@ -85,17 +91,25 @@ internal sealed class FallScenery
             nativeWater = Part("Floor Zone water ripples", disk, native);
             if (native.HasProperty("_Color")) sourceWaterColor = native.GetColor("_Color");
         }
+        else
+        {
+            // Saved in the scene, but this device cannot draw its shader.
+            var unusable = world.Find("Floor Zone water ripples");
+            if (unusable) unusable.gameObject.SetActive(false);
+        }
         pillars = Part("Lava flames", Own(FallMeshes.Flames()), surfaceMaterial);
         motes = Part("Particles", null, surfaceMaterial);
         spray = Part("Water spray", Own(FallMeshes.Spray()), surfaceMaterial);
         // Bubbles draw over the underwater view, as the Water particles do.
         entryBubbles = Part("Entry bubbles", Own(FallMeshes.EntryBubbles()), bubbleMaterial);
         // Drawn after the walls and without depth writes, so faint specks never punch holes in them.
-        dustMaterial = new Material(surfaceMaterial) { renderQueue = surfaceMaterial.renderQueue + 1 };
+        dustMaterial = new Material(surfaceMaterial) { name = "Chamber dust", renderQueue = surfaceMaterial.renderQueue + 1 };
         dustMaterial.SetInt("_DepthWrite",0);
         dust = Part("Fall dust", Own(FallMeshes.Dust()), dustMaterial);
         CreateView();
         splashPrefab = Resources.Load<GameObject>("Endings/MetaFloorZone/prefabs/Splash");
+        var savedSplash = world.Find(SplashName);
+        if (savedSplash) splash = savedSplash.gameObject;
         // Even a straight-down ray must meet the destination before it meets the sky enclosure.
         background.transform.localScale = Vector3.one * (ShaftDepth + 8f);
         Hide();
@@ -103,13 +117,15 @@ internal sealed class FallScenery
 
     Mesh Own(Mesh mesh) { ownedMeshes.Add(mesh); return mesh; }
 
-    MeshRenderer Part(string name, Mesh mesh, Material material)
+    const string SplashName = "Water contact splash";
+
+    MeshRenderer Part(string name, Mesh mesh, Material material, Transform parent = null)
     {
-        var obj = new GameObject(name);
-        obj.transform.SetParent(world, false);
-        obj.AddComponent<MeshFilter>().sharedMesh = mesh;
-        var renderer = obj.AddComponent<MeshRenderer>();
+        var obj = FloorFracture.SceneParts.Child(parent ? parent : world, name, out bool created).gameObject;
+        FloorFracture.SceneParts.Require<MeshFilter>(obj).sharedMesh = mesh;
+        var renderer = FloorFracture.SceneParts.Require<MeshRenderer>(obj);
         renderer.sharedMaterial = material;
+        if (!created) return renderer;
         renderer.shadowCastingMode = ShadowCastingMode.Off; renderer.receiveShadows = false;
         renderer.lightProbeUsage = LightProbeUsage.Off; renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
         renderer.allowOcclusionWhenDynamic = false;
@@ -119,8 +135,7 @@ internal sealed class FallScenery
     void CreateView()
     {
         veil = Part("View fade",boxMesh,fadeMaterial);
-        interior = Part("Submerged view",boxMesh,interiorMaterial);
-        interior.transform.SetParent(veil.transform,false);
+        interior = Part("Submerged view",boxMesh,interiorMaterial,veil.transform);
         interior.enabled = false;
     }
 
@@ -358,11 +373,7 @@ internal sealed class FallScenery
     internal void Splash(Vector3 point, bool reduced)
     {
         if (!splashPrefab) return;
-        if (!splash)
-        {
-            splash = Object.Instantiate(splashPrefab,world);
-            splash.name = "Water contact splash";
-        }
+        BuildSplash();
         splash.transform.SetPositionAndRotation(point,world.rotation*splashPrefab.transform.localRotation);
         splash.transform.localScale = splashPrefab.transform.localScale*(reduced ? .5f : 1);
         splash.SetActive(true);
@@ -372,6 +383,12 @@ internal sealed class FallScenery
             system.Stop(true,ParticleSystemStopBehavior.StopEmittingAndClear);
             system.Play(true);
         }
+    }
+
+    /// <summary>Adopts the splash saved under the chamber, or makes a new instance of its prefab.</summary>
+    internal void BuildSplash()
+    {
+        if (!splash && splashPrefab) splash = FloorFracture.SceneParts.Spawn(splashPrefab, world, SplashName, out _);
     }
 
     internal void SetVeil(Color color, float alpha)
@@ -406,11 +423,11 @@ internal sealed class FallScenery
     {
         Hide();
         // During scene unload Unity may have destroyed the chamber before the sequence.
-        if (world) Object.Destroy(world.gameObject);
-        else if (veil) Object.Destroy(veil.gameObject);
-        Object.Destroy(surfaceMaterial); Object.Destroy(backgroundMaterial); Object.Destroy(fadeMaterial);
-        Object.Destroy(interiorMaterial); Object.Destroy(bubbleMaterial); Object.Destroy(dustMaterial);
-        foreach (Mesh owned in ownedMeshes) Object.Destroy(owned);
+        if (world) FloorFracture.SceneParts.Release(world.gameObject);
+        else if (veil) FloorFracture.SceneParts.Release(veil.gameObject);
+        foreach (var material in new[] { surfaceMaterial, backgroundMaterial, fadeMaterial, interiorMaterial, bubbleMaterial, dustMaterial })
+            FloorFracture.SceneParts.Release(material);
+        foreach (Mesh owned in ownedMeshes) FloorFracture.SceneParts.Release(owned);
     }
 
     internal static float Ease(float from, float to, float value) => Smooth(Mathf.InverseLerp(from,to,value));
