@@ -139,7 +139,12 @@ public sealed class FallSequence : MonoBehaviour
     /// <summary>Builds the chamber around the one saved in the scene and returns its root. Also runs in edit mode.</summary>
     public Transform BuildChamber()
     {
-        if (scenery != null && !scenery.Root) scenery = null;
+        // In edit mode the save command adopts afresh, so a part deleted since its last run is rebuilt.
+        if (scenery != null && (!Application.isPlaying || !scenery.Root))
+        {
+            scenery.ReleaseGenerated();
+            scenery = null;
+        }
         PrepareChamber();
         scenery.BuildSplash();
         scenery.Hide();

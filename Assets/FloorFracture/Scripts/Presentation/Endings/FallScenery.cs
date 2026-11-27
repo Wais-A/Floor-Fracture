@@ -430,6 +430,12 @@ internal sealed class FallScenery
         // During scene unload Unity may have destroyed the chamber before the sequence.
         if (world) FloorFracture.SceneParts.Release(world.gameObject);
         else if (veil) FloorFracture.SceneParts.Release(veil.gameObject);
+        ReleaseGenerated();
+    }
+
+    /// <summary>Destroys the meshes and materials this scenery made. Saved snapshot files are never touched.</summary>
+    internal void ReleaseGenerated()
+    {
         foreach (var material in new[] { surfaceMaterial, backgroundMaterial, fadeMaterial, interiorMaterial, bubbleMaterial, dustMaterial })
             FloorFracture.SceneParts.Release(material);
         foreach (Mesh owned in ownedMeshes) FloorFracture.SceneParts.Release(owned);

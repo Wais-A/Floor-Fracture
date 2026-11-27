@@ -157,13 +157,22 @@ namespace FloorFracture
                 // A clear backing lets a drag start between rows or on a locked level.
                 list.GetComponent<UnityEngine.UI.Image>().color = Color.clear;
                 scroll.horizontal = false;
-                scroll.viewport = (RectTransform)list;
+            }
+            // Also for a saved list: its Content may have been deleted by hand.
+            if (!scroll.viewport) scroll.viewport = (RectTransform)list;
+            if (!scroll.content)
+            {
                 scroll.content = (RectTransform)SceneParts.Child(list, "Content", out _, typeof(RectTransform));
                 scroll.content.anchorMin = scroll.content.anchorMax = scroll.content.pivot = new Vector2(0, 1);
             }
             list.gameObject.SetActive(false);
             // Every saved row joins the pool now, or a page with fewer choices would leave the rest showing.
-            while (panel.Find("Choice " + (rows.Count + 1))) BuildRow(rows.Count);
+            // A number missing below the highest saved one is rebuilt, so no saved row is left out of the pool.
+            int savedRows = 0;
+            foreach (Transform child in panel)
+                if (child.GetComponent<MenuPageButton>() && child.name.StartsWith("Choice ") && int.TryParse(child.name.Substring(7), out int number))
+                    savedRows = Mathf.Max(savedRows, number);
+            while (rows.Count < savedRows) BuildRow(rows.Count);
 
             // Saved beside the menu so it has its real size in the scene. ShowStartCount moves it to the head.
             var count = (RectTransform)SceneParts.Child(transform, "Start count", out made, typeof(RectTransform), typeof(Canvas));
@@ -203,12 +212,16 @@ namespace FloorFracture
         /// <summary>Lays out one page from plain labels, to save a sample in the scene. No rig, pointers or sound.</summary>
         public void BuildSample(string heading, string message, params string[] labels)
         {
+            // Adopt afresh: an object deleted since the last save must be rebuilt, not reached through a dead reference.
+            title = null;
+            warningPreview = null;
             BuildMenu();
             roomRecovery = false;
             choices = Array.ConvertAll(labels, label => new MenuChoice(label, () => { }));
             FillPage(heading, message, 0);
             Paint();
             BuildWarningPreview();
+            PlaceWarningPreview(warningPreview.transform);
             // Saved as the idle game has them, even when the scene had them switched on.
             warningPreview.gameObject.SetActive(false);
             countCanvas.gameObject.SetActive(false);
@@ -319,8 +332,6 @@ namespace FloorFracture
             var sample = SceneParts.Child(title.rectTransform, WarningPreviewName, out bool made);
             if (made)
             {
-                sample.localPosition = new Vector3(title.rectTransform.rect.xMax - WarningPreviewSize / 2f,
-                    -WarningPreviewSize / 2f, -2f);
                 sample.localRotation = Quaternion.Euler(-90f, 0f, 0f);
                 sample.localScale = Vector3.one * (WarningPreviewSize / GlassGeometry.AuthoredPitch);
             }
@@ -334,9 +345,14 @@ namespace FloorFracture
             sample.gameObject.SetActive(false);
         }
 
+        // At the right end of the title, which the layout fields size. Placed once the page is laid out, so a changed width or margin moves the sample with it.
+        private void PlaceWarningPreview(Transform sample) =>
+            sample.localPosition = new Vector3(title.rectTransform.rect.xMax - WarningPreviewSize / 2f, -WarningPreviewSize / 2f, -2f);
+
         public void ShowWarningPreview(bool gentle)
         {
             BuildWarningPreview();
+            PlaceWarningPreview(warningPreview.transform);
             previewGentle = gentle;
             previewStarted = Time.unscaledTimeAsDouble;
             warningPreview.gameObject.SetActive(true);

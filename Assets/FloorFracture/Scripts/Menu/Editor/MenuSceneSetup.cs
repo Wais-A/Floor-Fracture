@@ -20,10 +20,11 @@ namespace FloorFracture.Editor
                 Undo.RegisterCreatedObjectUndo(created, "Add Floor Fracture menu canvas");
                 created.transform.SetParent(gameRoot, false);
                 child = created.transform;
+                // Only a new canvas gets a starting size. The saved menu's size comes from the page laid out on it.
+                ((RectTransform)child).sizeDelta = new Vector2(672, 370);
             }
             var canvas = child.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
-            ((RectTransform)child).sizeDelta = new Vector2(672, 370);
             child.localScale = Vector3.one * GamePanel.CanvasScale;
             if (!child.GetComponentInChildren<RayInteractable>(true))
                 QuickActionsAPI.AddRayCanvasInteraction(child.gameObject);
