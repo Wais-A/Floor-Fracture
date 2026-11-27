@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Oculus.Interaction;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -44,6 +45,7 @@ namespace FloorFracture.Editor
                 var flows = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<GameFlow>(true)).ToArray();
                 if (flows.Length != 1) throw new InvalidOperationException("The saved scene needs exactly one GameFlow; it has " + flows.Length + ".");
                 if (all || areas.Contains("sound")) CheckSavedSound(flows[0].transform, problems);
+                if (all || areas.Contains("menu")) CheckSavedMenu(flows[0].transform, problems);
             }
             finally { if (preview) EditorSceneManager.ClosePreviewScene(scene); }
             if (all || areas.Contains("sound")) CheckSoundWakesAtSavedVolume(problems);
@@ -107,6 +109,44 @@ namespace FloorFracture.Editor
             }
         }
 
+        private static void CheckSavedMenu(Transform game, List<string> problems)
+        {
+            var canvas = Expect(game, GamePanel.CanvasName, problems);
+            if (!canvas) return;
+            foreach (string path in new[] { "Title", "Title/Warning preview", "Instructions", "Choice list", "Choice list/Content" })
+                Expect(canvas, path, problems);
+            for (int i = 1; i <= 5; ++i) Expect(canvas, "Choice " + i + "/Label", problems);
+            Expect(game, "Start count/Count", problems);
+            // Shown only on their own pages, so they are saved switched off.
+            foreach (var hidden in new[] { canvas.Find("Title/Warning preview"), canvas.Find("Choice list"), game.Find("Start count") })
+                if (hidden && hidden.gameObject.activeSelf) problems.Add(hidden.name + " was saved switched on.");
+            if (canvas.GetComponents<UnityEngine.UI.Image>().Length != 1) problems.Add("The menu canvas needs one background Image.");
+            if (Mathf.Abs(canvas.localScale.x - GamePanel.CanvasScale) > 1e-6f)
+                problems.Add("The menu canvas is saved at scale " + canvas.localScale.x + ", not the " + GamePanel.CanvasScale + " it has at Play.");
+            foreach (var (row, text) in new[] { ("Choice 1/Label", "Start"), ("Choice 5/Label", "Development") })
+            {
+                var label = canvas.Find(row);
+                if (label && label.GetComponent<UnityEngine.UI.Text>().text != text) problems.Add(row + " should read " + text + ".");
+            }
+            if (canvas.GetComponentsInChildren<RayInteractable>(true).Length != 1 || canvas.GetComponentsInChildren<PokeInteractable>(true).Length != 1)
+                problems.Add("The menu canvas needs exactly one Meta ray surface and one poke surface.");
+            foreach (var item in game.GetComponentsInChildren<Transform>(true))
+                if (item.name.StartsWith("Editor ")) problems.Add("The editor-only helper " + item.name + " was saved in the scene.");
+            var preview = canvas.Find("Title/Warning preview");
+            if (preview) RequireSavedAssets(preview, problems);
+        }
+
+        // A scene file cannot hold a mesh or material generated at Play; a saved object needs asset files to show in edit mode.
+        private static void RequireSavedAssets(Transform root, List<string> problems, string meshFreeName = null)
+        {
+            foreach (var filter in root.GetComponentsInChildren<MeshFilter>(true))
+                if (filter.name != meshFreeName && (!filter.sharedMesh || !EditorUtility.IsPersistent(filter.sharedMesh)))
+                    problems.Add(root.name + "/" + filter.name + " has no saved mesh file.");
+            foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
+                if (!renderer.sharedMaterial || !EditorUtility.IsPersistent(renderer.sharedMaterial))
+                    problems.Add(root.name + "/" + renderer.name + " has no saved material file.");
+        }
+
         // GameSound now wakes with the scene, long before GameFlow.Start applies the player's volume.
         private static void CheckSoundWakesAtSavedVolume(List<string> problems)
         {
@@ -146,6 +186,14 @@ namespace FloorFracture.Editor
             float music = game.transform.Find("Background music").GetComponent<AudioSource>().volume;
             Require(music <= sound.MasterVolume * .12f + .001f, "The music is louder than the player's volume allows.");
             if (Quick) Require(sound.MasterVolume == 0f && music == 0f, "A muted player's music was audible at Welcome.");
+
+            var canvas = game.transform.Find(GamePanel.CanvasName);
+            var menu = canvas.GetComponentsInChildren<Transform>(true);
+            foreach (string name in new[] { "Title", "Instructions", "Choice list", "Content", "Warning preview", "Choice 1" }) RequireOne(menu, name);
+            RequireOne(everything, "Start count");
+            Require(game.GetComponents<GamePanel>().Length == 1, "Play added a second GamePanel beside the saved one.");
+            Require(canvas.Find("Choice 1/Label").GetComponent<UnityEngine.UI.Text>().text == "Start",
+                "The Welcome page is not using the saved first row.");
         }
     }
 }

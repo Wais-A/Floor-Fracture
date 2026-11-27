@@ -24,7 +24,7 @@ namespace FloorFracture.Editor
             var canvas = child.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
             ((RectTransform)child).sizeDelta = new Vector2(672, 370);
-            child.localScale = Vector3.one * 0.00116f;
+            child.localScale = Vector3.one * GamePanel.CanvasScale;
             if (!child.GetComponentInChildren<RayInteractable>(true))
                 QuickActionsAPI.AddRayCanvasInteraction(child.gameObject);
             if (!child.GetComponentInChildren<PokeInteractable>(true))

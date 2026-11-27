@@ -19,6 +19,8 @@ namespace FloorFracture
     public sealed class GamePanel : MonoBehaviour
     {
         public const string CanvasName = "Floor Fracture Menu";
+        // The physical row is 4.2 cm tall, with 8 mm between adjacent actions.
+        public const float CanvasScale = 0.00058f;
         private const float Width = 672, Margin = 32, RowHeight = 72, RowGap = 14, RowStep = RowHeight + RowGap;
         // A half row peeks out at the edge to show the list scrolls; with Back the panel stays within the old six-row page.
         private const float ListRows = 4.5f;
@@ -90,60 +92,106 @@ namespace FloorFracture
         public void Initialize(OVRCameraRig cameraRig, global::GameSound gameSound)
         {
             if (!cameraRig) throw new ArgumentNullException(nameof(cameraRig));
-            if (panel) return;
+            if (rig) return;
             rig = cameraRig;
             sound = gameSound;
             eye = Head ? Head.GetComponent<Camera>() : Camera.main;
 #if UNITY_EDITOR
             desktop = new EditorPanelInput(rig, transform);
             desktop.UpdateMode();
-#endif
-            // This built-in dynamic font is included in the player without a TMP Essentials import.
-            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            var authored = transform.Find(CanvasName);
-            GameObject go = authored ? authored.gameObject : null;
-#if UNITY_EDITOR
             // A bare no-XR fixture can still use the keyboard and mouse during scene authoring.
-            if (!go && desktop.Active)
-            {
-                go = new GameObject(CanvasName, typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster));
-                go.transform.SetParent(transform, false);
-            }
+            if (!transform.Find(CanvasName) && desktop.Active)
+                new GameObject(CanvasName, typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster)).transform.SetParent(transform, false);
 #endif
-            if (!go) throw new InvalidOperationException("Install the Meta ray canvas with MenuSceneSetup before building this scene.");
-            panel = (RectTransform)go.transform;
-            // The physical row is 4.2 cm tall, with 8 mm between adjacent actions.
-            panel.localScale = Vector3.one * 0.00058f;
-            menuCanvas = go.GetComponent<Canvas>();
-            menuCanvas.renderMode = RenderMode.WorldSpace;
-            menuCanvas.worldCamera = eye;
-            menuCanvas.sortingOrder = 12;
+            BuildMenu();
+            menuCanvas.worldCamera = countCanvas.worldCamera = eye;
 #if UNITY_EDITOR
-            raySurface = go.GetComponentInChildren<RayInteractable>(true);
+            raySurface = panel.GetComponentInChildren<RayInteractable>(true);
             if (raySurface) pointable = raySurface.GetComponent<PointableCanvas>();
 #endif
-            var background = go.AddComponent<UnityEngine.UI.Image>();
-            background.color = Paper;
-            background.raycastTarget = false;
-            title = Label(panel, "Title", 46, FontStyle.Bold, Ink);
-            body = Label(panel, "Instructions", 26, FontStyle.Normal, Secondary);
-            // PointableCanvasModule sends poke and ray drags to the nearest IDragHandler above the pressed row.
-            var list = new GameObject("Choice list", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(RectMask2D), typeof(ScrollRect));
-            list.transform.SetParent(panel, false);
-            // A clear backing lets a drag start between rows or on a locked level.
-            list.GetComponent<UnityEngine.UI.Image>().color = Color.clear;
-            scroll = list.GetComponent<ScrollRect>();
-            scroll.horizontal = false;
-            scroll.viewport = (RectTransform)list.transform;
-            scroll.content = (RectTransform)new GameObject("Content", typeof(RectTransform)).transform;
-            scroll.content.SetParent(list.transform, false);
-            scroll.content.anchorMin = scroll.content.anchorMax = scroll.content.pivot = new Vector2(0, 1);
             // Once the list moves nothing stays pressed, so a drag never looks like a selection.
             scroll.onValueChanged.AddListener(_ => { mousePress = pointers[0].Pressed = pointers[1].Pressed = -1; Paint(); });
-            list.SetActive(false);
             pointers[0] = new PanelController(transform, true);
             pointers[1] = new PanelController(transform, false);
             Hide();
+        }
+
+        /// <summary>
+        /// Adopts the menu objects saved in the scene and creates any that are missing. A saved object
+        /// keeps its own font, size and style. Needs no rig, so it also runs in edit mode.
+        /// </summary>
+        public void BuildMenu()
+        {
+            if (title) return;
+            rows.Clear();
+            var authored = transform.Find(CanvasName);
+            if (!authored) throw new InvalidOperationException("Install the Meta ray canvas with MenuSceneSetup before building this scene.");
+            // This built-in dynamic font is included in the player without a TMP Essentials import.
+            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            panel = (RectTransform)authored;
+            panel.localScale = Vector3.one * CanvasScale;
+            menuCanvas = panel.GetComponent<Canvas>();
+            menuCanvas.renderMode = RenderMode.WorldSpace;
+            menuCanvas.sortingOrder = 12;
+            if (!panel.TryGetComponent<UnityEngine.UI.Image>(out var background))
+            {
+                background = panel.gameObject.AddComponent<UnityEngine.UI.Image>();
+                background.color = Paper;
+                background.raycastTarget = false;
+            }
+            title = Label(panel, "Title", 46, FontStyle.Bold, Ink, out _);
+            body = Label(panel, "Instructions", 26, FontStyle.Normal, Secondary, out _);
+            // PointableCanvasModule sends poke and ray drags to the nearest IDragHandler above the pressed row.
+            var list = SceneParts.Child(panel, "Choice list", out bool made,
+                typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(RectMask2D), typeof(ScrollRect));
+            scroll = list.GetComponent<ScrollRect>();
+            if (made)
+            {
+                // A clear backing lets a drag start between rows or on a locked level.
+                list.GetComponent<UnityEngine.UI.Image>().color = Color.clear;
+                scroll.horizontal = false;
+                scroll.viewport = (RectTransform)list;
+                scroll.content = (RectTransform)SceneParts.Child(list, "Content", out _, typeof(RectTransform));
+                scroll.content.anchorMin = scroll.content.anchorMax = scroll.content.pivot = new Vector2(0, 1);
+            }
+            list.gameObject.SetActive(false);
+            // Every saved row joins the pool now, or a page with fewer choices would leave the rest showing.
+            while (panel.Find("Choice " + (rows.Count + 1))) BuildRow(rows.Count);
+
+            // Saved beside the menu so it has its real size in the scene. ShowStartCount moves it to the head.
+            var count = (RectTransform)SceneParts.Child(transform, "Start count", out made, typeof(RectTransform), typeof(Canvas));
+            countCanvas = count.GetComponent<Canvas>();
+            if (made)
+            {
+                count.localPosition = new Vector3(0, 1.72f, .95f);
+                count.localScale = Vector3.one * .001f;
+                count.sizeDelta = new Vector2(360, 150);
+                countCanvas.renderMode = RenderMode.WorldSpace;
+                countCanvas.sortingOrder = 30;
+            }
+            countLabel = Label(count, "Count", 100, FontStyle.Bold, Ink, out made);
+            if (made)
+            {
+                countLabel.rectTransform.sizeDelta = count.sizeDelta;
+                countLabel.alignment = TextAnchor.MiddleCenter;
+                var outline = countLabel.gameObject.AddComponent<UnityEngine.UI.Outline>();
+                outline.effectColor = new Color(0, .05f, .07f, .95f);
+                outline.effectDistance = new Vector2(3, -3);
+            }
+            count.gameObject.SetActive(false);
+            // A saved sample pane is adopted now, so one left switched on in the scene is hidden.
+            if (title.transform.Find(WarningPreviewName)) BuildWarningPreview();
+        }
+
+        /// <summary>Lays out one page from plain labels, to save a sample in the scene. No rig, pointers or sound.</summary>
+        public void BuildSample(string heading, string message, params string[] labels)
+        {
+            BuildMenu();
+            roomRecovery = false;
+            choices = Array.ConvertAll(labels, label => new MenuChoice(label, () => { }));
+            FillPage(heading, message, 0);
+            Paint();
+            BuildWarningPreview();
         }
 
         public void Show(string heading, string message, params MenuChoice[] options)
@@ -170,24 +218,12 @@ namespace FloorFracture
 
         public void ShowStartCount(int count, float opacity = 1f)
         {
-            if (!countCanvas)
+            if (countCanvas.transform.parent != Head)
             {
-                var go = new GameObject("Start count", typeof(RectTransform), typeof(Canvas));
-                var rect = (RectTransform)go.transform;
-                rect.SetParent(Head, false);
-                rect.localPosition = new Vector3(0, .12f, .95f);
-                rect.localScale = Vector3.one * .001f;
-                rect.sizeDelta = new Vector2(360, 150);
-                countCanvas = go.GetComponent<Canvas>();
-                countCanvas.renderMode = RenderMode.WorldSpace;
-                countCanvas.worldCamera = eye;
-                countCanvas.sortingOrder = 30;
-                countLabel = Label(rect, "Count", 100, FontStyle.Bold, Ink);
-                countLabel.rectTransform.sizeDelta = rect.sizeDelta;
-                countLabel.alignment = TextAnchor.MiddleCenter;
-                var outline = countLabel.gameObject.AddComponent<UnityEngine.UI.Outline>();
-                outline.effectColor = new Color(0, .05f, .07f, .95f);
-                outline.effectDistance = new Vector2(3, -3);
+                // The count rides with the head, a little above the line of sight.
+                countCanvas.transform.SetParent(Head, false);
+                countCanvas.transform.localPosition = new Vector3(0, .12f, .95f);
+                countCanvas.transform.localRotation = Quaternion.identity;
             }
             countLabel.text = StartCounts[count];
             var color = Ink;
@@ -220,6 +256,15 @@ namespace FloorFracture
                 SetBody(message);
                 return;
             }
+            FillPage(heading, message, listed);
+            Paint();
+            var center = eye ? eye.WorldToViewportPoint(panel.position) : Vector3.zero;
+            if (position || center.z <= 0 || center.x < 0 || center.x > 1 || center.y < 0 || center.y > 1)
+                Recenter();
+        }
+
+        private void FillPage(string heading, string message, int listed)
+        {
             if (warningPreview) warningPreview.gameObject.SetActive(false);
             panel.gameObject.SetActive(true);
             ClearPointers();
@@ -242,29 +287,33 @@ namespace FloorFracture
                 }
             }
             SetBody(message);
-            Paint();
-            var center = eye ? eye.WorldToViewportPoint(panel.position) : Vector3.zero;
-            if (position || center.z <= 0 || center.x < 0 || center.x > 1 || center.y < 0 || center.y > 1)
-                Recenter();
+        }
+
+        private const string WarningPreviewName = "Warning preview";
+
+        // Keep the real pane and its branching cracks beside the Settings title,
+        // in reach even when the wearer opens the menu from outside the board.
+        private void BuildWarningPreview()
+        {
+            if (warningPreview) return;
+            var sample = SceneParts.Child(title.rectTransform, WarningPreviewName, out bool made);
+            if (made)
+            {
+                sample.localPosition = new Vector3(title.rectTransform.rect.xMax - WarningPreviewSize / 2f,
+                    -WarningPreviewSize / 2f, -2f);
+                sample.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+                sample.localScale = Vector3.one * (WarningPreviewSize / GlassGeometry.AuthoredPitch);
+            }
+            warningPreview = SceneParts.Require<GlassTile>(sample.gameObject);
+            warningPreview.Initialize();
+            foreach (var renderer in sample.GetComponentsInChildren<MeshRenderer>(true))
+                renderer.sortingOrder = menuCanvas.sortingOrder + 1;
+            sample.gameObject.SetActive(false);
         }
 
         public void ShowWarningPreview(bool gentle)
         {
-            if (!warningPreview)
-            {
-                // Keep the real pane and its branching cracks beside the Settings title,
-                // in reach even when the wearer opens the menu from outside the board.
-                var sample = new GameObject("Warning preview");
-                sample.transform.SetParent(title.rectTransform, false);
-                sample.transform.localPosition = new Vector3(title.rectTransform.rect.xMax - WarningPreviewSize / 2f,
-                    -WarningPreviewSize / 2f, -2f);
-                sample.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-                sample.transform.localScale = Vector3.one * (WarningPreviewSize / GlassGeometry.AuthoredPitch);
-                warningPreview = sample.AddComponent<GlassTile>();
-                warningPreview.Initialize();
-                foreach (var renderer in sample.GetComponentsInChildren<MeshRenderer>())
-                    renderer.sortingOrder = menuCanvas.sortingOrder + 1;
-            }
+            BuildWarningPreview();
             previewGentle = gentle;
             previewStarted = Time.unscaledTimeAsDouble;
             warningPreview.gameObject.SetActive(true);
@@ -373,13 +422,14 @@ namespace FloorFracture
                 Debug.Log($"[Floor Fracture] Centered menu '{title.text}' at {panel.position:F2}, head {Head.position:F2}.");
         }
 
-        private UnityEngine.UI.Text Label(Transform parent, string name, int size, FontStyle style, Color color)
+        private UnityEngine.UI.Text Label(Transform parent, string name, int size, FontStyle style, Color color, out bool created)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(UnityEngine.UI.Text));
-            go.transform.SetParent(parent, false);
-            var text = go.GetComponent<UnityEngine.UI.Text>();
+            var text = SceneParts.Child(parent, name, out created, typeof(RectTransform), typeof(UnityEngine.UI.Text)).GetComponent<UnityEngine.UI.Text>();
+            if (!created) return text;
             text.font = font;
             text.fontSize = size;
+            // Unity raises this to the font size the next time it validates the Text; set here, a second save changes nothing.
+            text.resizeTextMaxSize = Mathf.Max(text.resizeTextMaxSize, size);
             text.fontStyle = style;
             text.color = color;
             text.supportRichText = false;
@@ -390,20 +440,31 @@ namespace FloorFracture
             return text;
         }
 
+        // A row saved in the scene is adopted. A row past those is a copy of the first, so it inherits that row's styling.
         private void BuildRow(int index)
         {
-            var go = new GameObject("Choice " + (index + 1), typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(MenuPageButton));
-            go.transform.SetParent(panel, false);
+            string name = "Choice " + (index + 1);
+            var saved = panel.Find(name);
+            bool fresh = !saved && rows.Count == 0;
+            GameObject go = saved ? saved.gameObject
+                : fresh ? new GameObject(name, typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(MenuPageButton))
+                : Instantiate(rows[0].Rect.gameObject);
+            go.name = name;
+            if (!saved) go.transform.SetParent(panel, false);
             var row = new Row
             {
                 Rect = (RectTransform)go.transform,
                 Fill = go.GetComponent<UnityEngine.UI.Image>(),
                 Button = go.GetComponent<MenuPageButton>()
             };
-            row.Fill.raycastTarget = true;
-            row.Button.targetGraphic = row.Fill;
-            row.Button.transition = Selectable.Transition.None;
-            row.Button.navigation = new Navigation { mode = Navigation.Mode.None };
+            if (fresh)
+            {
+                row.Fill.raycastTarget = true;
+                row.Button.targetGraphic = row.Fill;
+                row.Button.transition = Selectable.Transition.None;
+                row.Button.navigation = new Navigation { mode = Navigation.Mode.None };
+            }
+            // A click listener is never saved or copied, so every row is wired here, once.
             row.Button.onClick.AddListener(() =>
             {
                 if (!Visible || index >= choices.Length || !row.Button.interactable) return;
@@ -417,9 +478,12 @@ namespace FloorFracture
                 choices[index].OnSelect?.Invoke();
                 if (sound) sound.Click();
             });
-            row.Text = Label(go.transform, "Label", 28, FontStyle.Bold, Ink);
-            row.Text.alignment = TextAnchor.MiddleLeft;
-            Place(row.Text.rectTransform, 19, 0, Width - 2 * Margin - 35, RowHeight);
+            row.Text = Label(go.transform, "Label", 28, FontStyle.Bold, Ink, out bool madeLabel);
+            if (madeLabel)
+            {
+                row.Text.alignment = TextAnchor.MiddleLeft;
+                Place(row.Text.rectTransform, 19, 0, Width - 2 * Margin - 35, RowHeight);
+            }
             rows.Add(row);
         }
 
@@ -546,8 +610,8 @@ namespace FloorFracture
                     rows[i].Text.color = Secondary;
                     continue;
                 }
-                bool down = mousePress == i || pointers[0].Pressed == i || pointers[1].Pressed == i;
-                bool over = mouseHover == i || pointers[0].Hover == i || pointers[1].Hover == i;
+                bool down = mousePress == i || pointers[0]?.Pressed == i || pointers[1]?.Pressed == i;
+                bool over = mouseHover == i || pointers[0]?.Hover == i || pointers[1]?.Hover == i;
                 rows[i].Fill.color = down ? Pressed : over ? Hovered : Idle;
                 rows[i].Text.color = down ? Paper : Ink;
             }

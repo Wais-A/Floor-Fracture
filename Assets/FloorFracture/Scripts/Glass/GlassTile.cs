@@ -27,9 +27,11 @@ namespace FloorFracture
         }
         public static MeshRenderer Part(Transform parent,string name,Mesh mesh,Material material)
         {
-            var go=new GameObject(name); go.transform.SetParent(parent,false);
-            go.AddComponent<MeshFilter>().sharedMesh=mesh;
-            var r=go.AddComponent<MeshRenderer>(); r.sharedMaterial=material;
+            var go=SceneParts.Child(parent,name,out bool created).gameObject;
+            // The mesh generated for this run and its material replace the snapshots saved in the scene.
+            SceneParts.Require<MeshFilter>(go).sharedMesh=mesh;
+            var r=SceneParts.Require<MeshRenderer>(go); r.sharedMaterial=material;
+            if(!created) return r;
             r.shadowCastingMode=ShadowCastingMode.Off; r.receiveShadows=false;
             r.lightProbeUsage=LightProbeUsage.Off; r.reflectionProbeUsage=ReflectionProbeUsage.Off; return r;
         }
