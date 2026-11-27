@@ -1808,7 +1808,7 @@ MonoBehaviour:
   countdownTick: 0.66
   countdownGo: 0.84
   music: 0.12
-  lampHum: 0.5
+  lampHum: 1
   openingDraft: 0.4
   thunder: 1
   paneImpact: 0.55
@@ -2874,7 +2874,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2138701228427133224, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: MinDistance
-      value: 8
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 3475204834218262060, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3079,7 +3079,7 @@ PrefabInstance:
       objectReference: {fileID: 8300000, guid: 1cf3cae848d34dd18afe5fbd68cb9fc2, type: 3}
     - target: {fileID: 2138701228427133224, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: MinDistance
-      value: 1.3
+      value: 0.4541817
       objectReference: {fileID: 0}
     - target: {fileID: 3475204834218262060, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8013,7 +8013,7 @@ PrefabInstance:
       objectReference: {fileID: 8300000, guid: 1cf3cae848d34dd18afe5fbd68cb9fc2, type: 3}
     - target: {fileID: 2138701228427133224, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: MinDistance
-      value: 1.3
+      value: 0.4541817
       objectReference: {fileID: 0}
     - target: {fileID: 3475204834218262060, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9739,7 +9739,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2138701228427133224, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: MinDistance
-      value: 8
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 3475204834218262060, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10126,7 +10126,7 @@ PrefabInstance:
       objectReference: {fileID: 8300000, guid: 1cf3cae848d34dd18afe5fbd68cb9fc2, type: 3}
     - target: {fileID: 2138701228427133224, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: MinDistance
-      value: 1.3
+      value: 0.4541817
       objectReference: {fileID: 0}
     - target: {fileID: 3475204834218262060, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: m_LocalPosition.x
@@ -12347,7 +12347,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2138701228427133224, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: MinDistance
-      value: 8
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 3475204834218262060, guid: b50e134e5c1aa4df79c5726813e54061, type: 3}
       propertyPath: m_LocalPosition.x

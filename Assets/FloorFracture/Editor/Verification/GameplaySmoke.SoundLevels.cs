@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace FloorFracture.Editor
 {
@@ -30,7 +31,9 @@ namespace FloorFracture.Editor
             FieldInfo Field(string name) => typeof(GameSound).GetField(name, Private);
             var kept = SoundLevels.ToDictionary(name => name, name => (float)Field(name).GetValue(sound));
             var lamp = Locate("Confirmed glass board/Overhead lights/Lamp 0");
-            float keptHum = lamp.GetComponentInChildren<AudioSource>(true).volume;
+            var savedHum = lamp.GetComponentInChildren<AudioSource>(true);
+            float keptHum = savedHum.volume, keptReach = savedHum.minDistance;
+            var keptPosition = savedHum.transform.position;
             try
             {
                 Field("lampHum").SetValue(sound, .5f); Field("thunder").SetValue(sound, .9f); Field("music").SetValue(sound, .2f);
@@ -42,9 +45,24 @@ namespace FloorFracture.Editor
                     Require(Mathf.Abs(voice.volume - level * master) < .0005f,
                         $"{what} plays at {voice.volume:0.###}, not its level {level} times the player's volume {master}.");
 
-                var hum = sound.CreateLampVoice(lamp);
+                const float Pitch = .75f, PoolRadius = .55f * Pitch;
+                var hum = sound.CreateLampVoice(lamp, PoolRadius);
                 sound.SetLampLevel(hum, 1f);
                 Expect(hum, .5f, "A fully lit lamp's hum");
+
+                // The hum comes from its spotlight: full while the player stands in the lit spot, much quieter two panes away.
+                var ear = Object.FindFirstObjectByType<AudioListener>().transform.position;
+                float Loudness(Vector3 pool)
+                {
+                    sound.PlaceLampVoice(hum, pool);
+                    float distance = Vector3.Distance(ear, hum.transform.position);
+                    return Mathf.Min(1f, hum.minDistance / distance); // Unity's logarithmic rolloff
+                }
+                var under = new Vector3(ear.x, 0f, ear.z);
+                Require(Loudness(under) >= .999f, "Standing in the middle of a spotlight does not hear its hum at full volume.");
+                Require(Loudness(under + Vector3.right * PoolRadius) >= .999f, "Standing at the edge of a spotlight does not hear its hum at full volume.");
+                float away = Loudness(under + Vector3.right * 2 * Pitch);
+                Require(away <= .4f, $"Two panes from the spotlight the hum is still at {away:0.00} of full volume.");
                 Expect(Voice("Thunder 0"), .9f, "Thunder");
                 Expect(Voice("Background music"), .2f, "The music");
                 typeof(GameSound).GetMethod("MixFall", Private).Invoke(sound, new object[] { 1f, 1f });
@@ -58,7 +76,18 @@ namespace FloorFracture.Editor
             {
                 foreach (var level in kept) Field(level.Key).SetValue(sound, level.Value);
                 sound.Build();
-                lamp.GetComponentInChildren<AudioSource>(true).volume = keptHum;
+                savedHum.volume = keptHum;
+                savedHum.minDistance = keptReach;
+                savedHum.transform.position = keptPosition;
+            }
+            // Thunder starts fading only beyond its Min Distance. A strike is 9 m from the board centre, so a player
+            // standing up to 3 m from the centre must be inside it to hear the full level.
+            float strike = (float)typeof(GameSound).Assembly.GetType("FloorFracture.Lightning")
+                .GetField("StrikeDistance", BindingFlags.Static | BindingFlags.NonPublic).GetRawConstantValue();
+            foreach (var name in new[] { "Thunder 0", "Thunder 1", "Thunder 2" })
+            {
+                float reach = sound.transform.Find(name).GetComponent<AudioSource>().minDistance;
+                Require(reach >= strike + 3f, $"{name} starts fading {reach} m away, so thunder {strike} m from the board centre is quieter than its level.");
             }
             Debug.Log("[Floor Fracture verification] Sound levels check passed.");
         }

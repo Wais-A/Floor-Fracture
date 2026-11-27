@@ -60,7 +60,7 @@ namespace FloorFracture
             {
                 lamps[k] = SceneParts.Child(transform, "Lamp "+k, out _);
                 lamps[k].localPosition = GlassGeometry.Ground(sides[k], lampHeightLocal);
-                hums[k] = sound ? sound.CreateLampVoice(lamps[k]) : null;
+                hums[k] = sound ? sound.CreateLampVoice(lamps[k], radius) : null;
                 lamps[k].gameObject.SetActive(false);
                 cones[k] = new Mesh {name = "Spotlight beam "+k};
                 cones[k].MarkDynamic();
@@ -105,6 +105,7 @@ namespace FloorFracture
                 var center = new Vector2(extents.x*(float)Math.Sin(path.x*now+path.y),
                     extents.y*(float)Math.Sin(1.3*path.x*now+path.z));
                 pools[k].transform.localPosition = GlassGeometry.Ground(center, PoolHeight);
+                if (hums[k]) sound.PlaceLampVoice(hums[k], pools[k].transform.position);
                 Aim(k, center);
             }
         }

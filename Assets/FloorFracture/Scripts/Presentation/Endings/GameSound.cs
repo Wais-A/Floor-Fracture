@@ -16,7 +16,7 @@ public sealed class GameSound : MonoBehaviour
     [SerializeField, Range(0, 1)] float countdownTick = .66f;
     [SerializeField, Range(0, 1)] float countdownGo = .84f;
     [SerializeField, Range(0, 1)] float music = .12f;
-    [SerializeField, Range(0, 1), Tooltip("A fully lit lamp. It fades with the lamp.")] float lampHum = .5f;
+    [SerializeField, Range(0, 1), Tooltip("A fully lit lamp, heard standing in its spotlight. It fades with the lamp and with distance from the spot.")] float lampHum = 1f;
     [SerializeField, Range(0, 1), Tooltip("The air rising from an open hole the player stands near.")] float openingDraft = .40f;
     [SerializeField, Range(0, 1)] float thunder = 1f;
     [SerializeField, Range(0, 1), Tooltip("One pane breaking.")] float paneImpact = .55f;
@@ -134,7 +134,7 @@ public sealed class GameSound : MonoBehaviour
             thunderVoices[i] = Voice("Thunder " + i, true, out made);
             if (!made) continue;
             thunderVoices[i].clip = thunderClip;
-            thunderVoices[i].minDistance = 8f;
+            thunderVoices[i].minDistance = 12f; // strikes are 9 m from the board centre: full level anywhere on the board
             thunderVoices[i].maxDistance = 40f;
         }
         SetVolume(volume);
@@ -166,8 +166,19 @@ public sealed class GameSound : MonoBehaviour
         return voice;
     }
 
-    // Parented to the lamp, so the hum comes from its direction. Silent until SetLampLevel.
-    public AudioSource CreateLampVoice(Transform lamp)
+    AudioListener listener;
+    const float LampHumAboveHead = .3f;
+
+    // Over the middle of the lamp's spotlight, just above the player's head, so the hum is loudest in the lit spot.
+    public void PlaceLampVoice(AudioSource voice, Vector3 pool)
+    {
+        if (!listener) listener = FindFirstObjectByType<AudioListener>();
+        float ear = listener ? listener.transform.position.y : pool.y + 1.6f;
+        voice.transform.position = new Vector3(pool.x, ear + LampHumAboveHead, pool.z);
+    }
+
+    // Saved under its lamp; PlaceLampVoice moves it over the lamp's spotlight. Silent until SetLampLevel.
+    public AudioSource CreateLampVoice(Transform lamp, float poolRadius)
     {
         for (int i = lampVoices.Count - 1; i >= 0; --i)
             if (!lampVoices[i]) { lampVoices.RemoveAt(i); lampLevels.RemoveAt(i); }
@@ -175,9 +186,10 @@ public sealed class GameSound : MonoBehaviour
         if (made)
         {
             voice.clip = beamHum;
-            voice.minDistance = 1.3f;
             voice.loop = true;
         }
+        // Full volume anywhere in the lit spot, fading beyond it. The spot's size follows the panes, so this is set on every fit.
+        voice.minDistance = Mathf.Sqrt(poolRadius * poolRadius + LampHumAboveHead * LampHumAboveHead);
         voice.Stop();
         voice.volume = 0f;
         // A board fitted again hands back the lamp it already has.
