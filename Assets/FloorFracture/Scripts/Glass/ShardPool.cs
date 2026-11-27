@@ -37,6 +37,8 @@ namespace FloorFracture
 
         public void Initialize(Material material, float tileScale)
         {
+            // Fitted again, no shard from the fit before is still falling.
+            SceneParts.Release(mesh); active.Clear(); FullFall=false;
             paneScale=tileScale;
             mesh=new Mesh{name="Pooled falling glass"}; mesh.MarkDynamic();
             view=GlassTile.Part(transform,"Falling fragments",mesh,material); view.enabled=false;
@@ -86,6 +88,6 @@ namespace FloorFracture
             mesh.SetVertices(vertices); mesh.SetColors(colors); mesh.SetTriangles(triangles,0); mesh.RecalculateBounds();
             view.enabled=active.Count!=0;
         }
-        void OnDestroy() { if(mesh) Destroy(mesh); }
+        void OnDestroy() => SceneParts.Release(mesh);
     }
 }

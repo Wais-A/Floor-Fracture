@@ -44,6 +44,8 @@ namespace FloorFracture.Editor
             var scene = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath);
             if (!scene) throw new FileNotFoundException("Prepare the actual gameplay scene first.", ScenePath);
             SessionState.SetBool(Key + "quick", false);
+            // Refuse a scene with a game object missing: the game would rebuild it at Play and hide the loss.
+            CheckSavedScene();
 
             string folder = Path.GetFullPath("Builds/Verification/PlayMode-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff"));
             Directory.CreateDirectory(folder);
@@ -342,12 +344,14 @@ namespace FloorFracture.Editor
             Choose("Board size");
             yield return Wait(()=>game.Stage==GameStage.Welcome && game.Room.EntireFloor,"full-floor refit",55);
             int fullCount=game.State.Layout.PaneCount;
+            VerifyRefit("the full-floor refit");
             Require(fullCount>=placement.Layout.PaneCount && PlayerPrefs.GetInt("ff.entireFloor")==1,
                 "Full floor lost the enabled setting or produced fewer playable panes on the same scan.");
             Choose("Play area");
             Choose("Board size");
             yield return Wait(()=>game.Stage==GameStage.Welcome && !game.Room.EntireFloor,"default board refit",55);
             Require(game.State.Layout.PaneCount<=12,"Returning to the default board did not reapply the cap.");
+            VerifyRefit("the default board refit");
             Record($"Play area refit the saved room in both modes: {game.State.Layout.PaneCount} default panes and {fullCount} full-floor panes.");
         }
 

@@ -28,6 +28,10 @@ namespace FloorFracture
 
         public void Build(BoardState board, Material fogMaterial)
         {
+            // Fitted again, the fog starts as new fog would.
+            ReleaseOwned();
+            hazards = WaveHazards.None; placed = false; lastTick = 0;
+            for (int k = 0; k < patches.Length; ++k) { patches[k] = NoPatch; paths[k] = default; drawn[k] = default; }
             material = fogMaterial;
             var half = new Vector2(board.Width*board.Pitch*.5f+.30f, board.Height*board.Pitch*.5f+.30f);
             // Patch centres stay over the outer pane centres.
@@ -136,10 +140,11 @@ namespace FloorFracture
             return texture;
         }
 
-        void OnDestroy()
+        void ReleaseOwned()
         {
-            if (mesh) Destroy(mesh);
-            if (noise) Destroy(noise);
+            SceneParts.Release(mesh);
+            SceneParts.Release(noise);
         }
+        void OnDestroy() => ReleaseOwned();
     }
 }

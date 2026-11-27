@@ -11,6 +11,8 @@ namespace FloorFracture
         public RoomBoardPlacement Room;
         public OVRCameraRig Rig;
         [SerializeField] bool useDynamicResolution = true;
+        // The 6 x 6 preview board saved in the scene. StartBoard fits it to the room; BoardView stays null until then.
+        [SerializeField] GlassBoardView savedBoard;
         GameStage stage = GameStage.Room;
         GameStage pausedStage;
         int pausedPane=-1;
@@ -73,6 +75,9 @@ namespace FloorFracture
         float eyeDepth = .08f;
         Vector2 HeadXZ => PlayerTileTracker.ProjectStance(BoardView.Board.worldToLocalMatrix, Panel.Head.position, Panel.Head.rotation, eyeDepth);
         public int SelectedSeed { get; private set; }
+
+        // The saved board shows in the scene for editing. At Play it stays hidden until the room is confirmed.
+        void Awake() { if (savedBoard) savedBoard.gameObject.SetActive(false); }
 
         void Start()
         {
@@ -137,9 +142,11 @@ namespace FloorFracture
             menuPausedAt=null;
             restorePausedPage=null;
             menuPauseSeconds=cueDelaySeconds=0;
-            if(BoardView) { BoardView.gameObject.SetActive(false); Destroy(BoardView.gameObject); }
             var fit=Room.Placement; State=new BoardState(fit.Layout,SelectedSeed,fit.Pitch);
-            var board=new GameObject("Confirmed glass board"); BoardView=board.AddComponent<GlassBoardView>(); BoardView.Build(State,fit.Pose,sound,LampHeight(fit.FloorHeight));
+            // One board object for the whole session: the saved one when the scene has it, fitted again on every call.
+            if(!BoardView) BoardView=savedBoard ? savedBoard : new GameObject("Confirmed glass board").AddComponent<GlassBoardView>();
+            BoardView.gameObject.SetActive(false);
+            BoardView.Build(State,fit.Pose,sound,LampHeight(fit.FloorHeight));
             BoardView.ReducedMotion=reduced;
             Ending.SetBoard(BoardView);
             Level=WaveNumber=1; levelFinished=false;

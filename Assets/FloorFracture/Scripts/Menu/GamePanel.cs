@@ -192,6 +192,9 @@ namespace FloorFracture
             FillPage(heading, message, 0);
             Paint();
             BuildWarningPreview();
+            // Saved as the idle game has them, even when the scene had them switched on.
+            warningPreview.gameObject.SetActive(false);
+            countCanvas.gameObject.SetActive(false);
         }
 
         public void Show(string heading, string message, params MenuChoice[] options)

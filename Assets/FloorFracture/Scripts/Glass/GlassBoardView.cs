@@ -60,17 +60,30 @@ namespace FloorFracture
             return true;
         }
 
+        /// <summary>The pane material and its copy for the sides and bottom, before a board sets its floor height.</summary>
+        public static (Material pane, Material body) GlassMaterials()
+        {
+            var pane=SceneParts.MakeMaterial("Board glass","FloorFractureSurface");
+            var body=new Material(pane){name="Board glass sides",hideFlags=HideFlags.DontSave};
+            body.SetFloat("_BlockBody",1);
+            body.SetInt("_Cull",(int)UnityEngine.Rendering.CullMode.Back);
+            return (pane,body);
+        }
+
+        /// <summary>
+        /// Fits this board to a layout. The first call adopts the panes and parts saved in the scene. Every
+        /// later call fits the same object again, so nothing from the fit before may carry over.
+        /// </summary>
         public void Build(BoardState board,Pose pose,GameSound gameSound,float lampHeight)
         {
+            ReleaseOwned();
+            displayedSliders=null; hazards=null; Fog=WaveHazards.None; practiceHole=-1;
+            hazardsShownAt=hazardsHiddenAt=fogShownAt=0; fogHiddenAt=double.NegativeInfinity;
             sound=gameSound;
             model=board; transform.SetPositionAndRotation(pose.position,pose.rotation);
             var template=Resources.Load<GameObject>("GlassTile");
-            var prefab=template?template.GetComponent<GlassTile>():null;
-            if(!prefab) throw new System.InvalidOperationException("Missing Resources/GlassTile prefab");
-            paneMaterial=GlassTile.MakeMaterial("FloorFractureSurface");
-            bodyMaterial = new Material(paneMaterial);
-            bodyMaterial.SetFloat("_BlockBody",1);
-            bodyMaterial.SetInt("_Cull",(int)UnityEngine.Rendering.CullMode.Back);
+            if(!template||!template.GetComponent<GlassTile>()) throw new System.InvalidOperationException("Missing Resources/GlassTile prefab");
+            (paneMaterial,bodyMaterial)=GlassMaterials();
             ShowLiftedBlocks(false);
             maskMaterial=GlassTile.MakeMaterial("FloorFractureMask");
             fogMaterial=GlassTile.MakeMaterial("FloorFractureFog");
@@ -78,6 +91,9 @@ namespace FloorFracture
             fogMaterial.renderQueue=paneMaterial.renderQueue+1;
             foreach (var material in new[] {paneMaterial, bodyMaterial, maskMaterial, fogMaterial})
                 material.SetFloat("_MappedFloorY", pose.position.y);
+            // Panes already here, saved in the scene or left by the fit before, are used first. The prefab supplies the rest.
+            var spare=new Queue<GlassTile>();
+            foreach (Transform child in transform) if (child.TryGetComponent<GlassTile>(out var pane)) spare.Enqueue(pane);
             tiles=new GlassTile[board.Count];
             openPanes=new bool[board.Count];
             float paneScale=board.Pitch/GlassGeometry.AuthoredPitch;
@@ -85,9 +101,19 @@ namespace FloorFracture
             for(int i=0;i<tiles.Length;i++)
             {
                 if (!board.Layout.Contains(i)) continue;
-                var t=Instantiate(prefab,transform); t.name="Glass "+(i%board.Width)+", "+(i/board.Width);
+                var t=spare.Count>0 ? spare.Dequeue() : SceneParts.Instance(template,transform).GetComponent<GlassTile>();
+                t.name="Glass "+(i%board.Width)+", "+(i/board.Width);
+                t.gameObject.SetActive(true);
                 t.transform.localPosition=GlassGeometry.Ground(board.Center(i));
                 t.transform.localScale=fittedScale; t.Initialize(paneMaterial,bodyMaterial,paneScale); tiles[i]=t;
+            }
+            // A pane this layout does not use leaves at once. Kept hidden, it would still be found by name and measured.
+            while (spare.Count>0)
+            {
+                var unused=spare.Dequeue().gameObject;
+                unused.SetActive(false);
+                if (Application.isPlaying) unused.transform.SetParent(null,false);
+                SceneParts.Release(unused);
             }
             occupancy=GlassTile.Part(transform,"Occupied square",GlassGeometry.Ring,paneMaterial);
             occupancy.transform.localScale=fittedScale;
@@ -95,18 +121,16 @@ namespace FloorFracture
             shardMaterial=GlassTile.MakeMaterial("FloorFractureDepth");
             cutouts=new Mesh{name="Open floor apertures"};
             holes=GlassTile.Part(transform,"Opening stencil",cutouts,maskMaterial);
-            shards=gameObject.AddComponent<ShardPool>(); shards.Initialize(shardMaterial,paneScale);
+            shards=SceneParts.Require<ShardPool>(gameObject); shards.Initialize(shardMaterial,paneScale);
             var b=new GlassGeometry.Builder();
             foreach (var edge in board.Layout.Perimeter(board.Pitch)) b.Stroke(edge.a,edge.b,.012f,GlassGeometry.MarkingHeight);
             boundary=b.Create("Board perimeter"); var border=GlassTile.Part(transform,"Perimeter",boundary,paneMaterial);
             GlassTile.Tint(border,new Color(.61f,.82f,.85f,.96f));
-            fog=new GameObject("Floor fog").AddComponent<FloorFog>();
-            fog.transform.SetParent(transform,false);
+            fog=SceneParts.Require<FloorFog>(SceneParts.Child(transform,"Floor fog",out _).gameObject);
             fog.Build(board,fogMaterial);
-            lights=new GameObject("Overhead lights").AddComponent<OverheadLights>();
-            lights.transform.SetParent(transform,false);
+            lights=SceneParts.Require<OverheadLights>(SceneParts.Child(transform,"Overhead lights",out _).gameObject);
             lights.Build(board,lampHeight-pose.position.y,sound,fogMaterial.renderQueue+1);
-            lightning=new GameObject("Lightning").AddComponent<Lightning>();
+            lightning=SceneParts.Require<Lightning>(SceneParts.Child(transform,"Lightning",out _).gameObject);
             lightning.Build(transform,sound,lampHeight-pose.position.y);
             holes.enabled=false;
         }
@@ -276,10 +300,12 @@ namespace FloorFracture
             maskGeometry.Write(cutouts);
             holes.enabled=maskGeometry.Vertices.Count>0;
         }
-        void OnDestroy()
+        // The meshes and materials one fit made. The saved files they were snapshotted to are never touched.
+        void ReleaseOwned()
         {
-            foreach(Object asset in new Object[]{cutouts,boundary,bodyMaterial,paneMaterial,maskMaterial,shardMaterial,fogMaterial})
-                if(asset) Destroy(asset);
+            foreach(Object made in new Object[]{cutouts,boundary,bodyMaterial,paneMaterial,maskMaterial,shardMaterial,fogMaterial})
+                SceneParts.Release(made);
         }
+        void OnDestroy() => ReleaseOwned();
     }
 }

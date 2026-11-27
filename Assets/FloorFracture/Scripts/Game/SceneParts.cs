@@ -28,21 +28,26 @@ namespace FloorFracture
             var found = parent.Find(name);
             created = !found;
             if (found) return found.gameObject;
-            GameObject made = null;
-#if UNITY_EDITOR
-            // Saved into the scene, the instance stays linked to its prefab.
-            if (!Application.isPlaying) made = (GameObject)UnityEditor.PrefabUtility.InstantiatePrefab(prefab, parent);
-#endif
-            if (!made) made = Object.Instantiate(prefab, parent, false);
+            var made = Instance(prefab, parent);
             made.name = name;
             return made;
         }
 
-        /// <summary>A private copy of Resources/Materials/name when that file exists, else a new material from the shader.</summary>
+        /// <summary>A new instance of the prefab under parent. Made in edit mode, it stays linked to its prefab when saved.</summary>
+        public static GameObject Instance(GameObject prefab, Transform parent)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying) return (GameObject)UnityEditor.PrefabUtility.InstantiatePrefab(prefab, parent);
+#endif
+            return Object.Instantiate(prefab, parent, false);
+        }
+
+        /// <summary>
+        /// A material made from a shader in Resources, as the game has always made them. Its name is the
+        /// file a snapshot of it is saved under, so a saved object shows in edit mode. Play never reads that file.
+        /// </summary>
         public static Material MakeMaterial(string name, string shaderResource)
         {
-            var saved = Resources.Load<Material>("Materials/" + name);
-            if (saved) return new Material(saved) { name = name, hideFlags = HideFlags.DontSave };
             var shader = Resources.Load<Shader>(shaderResource);
             if (!shader) throw new System.InvalidOperationException("Missing Floor Fracture shader " + shaderResource);
             return new Material(shader) { name = name, hideFlags = HideFlags.DontSave };

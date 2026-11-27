@@ -27,6 +27,10 @@ namespace FloorFracture
 
         public void Build(Transform board, GameSound gameSound, float lampHeightLocal)
         {
+            // Fitted again, no strike is pending and nothing is lit.
+            ReleaseOwned();
+            hazards = WaveHazards.None; next = 0; shownFlash = -1; shownStrike = double.NegativeInfinity;
+            Shader.SetGlobalFloat(FlashId, 0);
             transform.SetParent(board, false);
             sound = gameSound;
             skyMaterial = GlassTile.MakeMaterial("FloorFractureSky");
@@ -39,8 +43,9 @@ namespace FloorFracture
             // A full-view white wash, so a strike lights the view even when the player looks at the floor.
             var wash = Resources.Load<Shader>("Endings/ViewFade");
             if (!wash) { Debug.LogError("[Floor Fracture] Missing Resources/Endings/ViewFade; lightning flashes without its view wash."); return; }
-            veilMaterial = new Material(wash) { renderQueue = 4190, hideFlags = HideFlags.DontSave };
+            veilMaterial = new Material(wash) { name = "Flash veil", renderQueue = 4190, hideFlags = HideFlags.DontSave };
             veilMesh = FallMeshes.Box();
+            veilMesh.name = "Flash veil";
             veilBlock = new MaterialPropertyBlock();
             veil = GlassTile.Part(transform, "Flash veil", veilMesh, veilMaterial);
             veil.transform.localScale = Vector3.one * 1.5f;
@@ -102,12 +107,13 @@ namespace FloorFracture
             if (veil) veil.enabled = false;
         }
 
-        void OnDestroy()
+        void ReleaseOwned()
         {
-            if (skyMesh) Destroy(skyMesh);
-            if (skyMaterial) Destroy(skyMaterial);
-            if (veilMesh) Destroy(veilMesh);
-            if (veilMaterial) Destroy(veilMaterial);
+            SceneParts.Release(skyMesh);
+            SceneParts.Release(skyMaterial);
+            SceneParts.Release(veilMesh);
+            SceneParts.Release(veilMaterial);
         }
+        void OnDestroy() => ReleaseOwned();
     }
 }

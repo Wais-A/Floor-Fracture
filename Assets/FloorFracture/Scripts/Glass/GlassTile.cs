@@ -41,9 +41,10 @@ namespace FloorFracture
         }
         public void Initialize(Material material = null, Material bodyMaterial = null, float depthScale = 1f)
         {
-            if(pane) return;
+            // ShowWarning asks on every draw. Only a board fitting its panes passes a material, and it builds again.
+            if(pane && !material) return;
             if (!material) material=Surface;
-            block=new MaterialPropertyBlock();
+            block ??= new MaterialPropertyBlock();
             pane=Part(transform,"Smoky pane",GlassGeometry.Face,material);
             if (bodyMaterial)
             {
@@ -55,6 +56,14 @@ namespace FloorFracture
             frameFilter=frame.GetComponent<MeshFilter>();
             fracture=Part(transform,"Fissures",GlassGeometry.Cracks,material);
             ColorPart(pane,Safe,.7f); ColorPart(frame,Edge); fracture.enabled=false;
+            // A pane fitted again starts as a new one: no warning showing, and no crack voice tuned to its last cell.
+            lastWarning=lastLow=false; lastPulse=-1;
+            if (crackVoice)
+            {
+                crackVoice.gameObject.SetActive(false);
+                SceneParts.Release(crackVoice.gameObject);
+                crackVoice=null;
+            }
         }
         void ColorPart(Renderer r,Color color,float sheen=0)
         {

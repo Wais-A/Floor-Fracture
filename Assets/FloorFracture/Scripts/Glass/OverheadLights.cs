@@ -29,6 +29,9 @@ namespace FloorFracture
         // renderQueue is the fog's queue + 1, so the pools draw over the fog and the fissures.
         public void Build(BoardState board, float lampHeightLocal, GameSound gameSound, int renderQueue)
         {
+            // Fitted again, every lamp starts dark.
+            ReleaseOwned();
+            for (int k = 0; k < MaxLamps; ++k) { litAt[k] = 0; dimAt[k] = double.NegativeInfinity; paths[k] = default; }
             sound = gameSound;
             block = new MaterialPropertyBlock();
             // Pool centres stay over the outer pane centres.
@@ -55,10 +58,9 @@ namespace FloorFracture
             var sides = new[] {new Vector2(-extents.x,0), new Vector2(extents.x,0), new Vector2(0,extents.y)};
             for (int k = 0; k < MaxLamps; ++k)
             {
-                lamps[k] = new GameObject("Lamp "+k).transform;
-                lamps[k].SetParent(transform,false);
+                lamps[k] = SceneParts.Child(transform, "Lamp "+k, out _);
                 lamps[k].localPosition = GlassGeometry.Ground(sides[k], lampHeightLocal);
-                if (sound) hums[k] = sound.CreateLampVoice(lamps[k]);
+                hums[k] = sound ? sound.CreateLampVoice(lamps[k]) : null;
                 lamps[k].gameObject.SetActive(false);
                 cones[k] = new Mesh {name = "Spotlight beam "+k};
                 cones[k].MarkDynamic();
@@ -124,12 +126,13 @@ namespace FloorFracture
             cones[k].RecalculateBounds();
         }
 
-        void OnDestroy()
+        void ReleaseOwned()
         {
-            foreach (var cone in cones) if (cone) Destroy(cone);
-            if (poolMesh) Destroy(poolMesh);
-            if (beamMaterial) Destroy(beamMaterial);
-            if (poolMaterial) Destroy(poolMaterial);
+            foreach (var cone in cones) SceneParts.Release(cone);
+            SceneParts.Release(poolMesh);
+            SceneParts.Release(beamMaterial);
+            SceneParts.Release(poolMaterial);
         }
+        void OnDestroy() => ReleaseOwned();
     }
 }

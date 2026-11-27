@@ -15,7 +15,8 @@ namespace FloorFracture.Editor
     /// </summary>
     public static class SceneObjectsSetup
     {
-        public const string MeshFolder = "Assets/FloorFracture/Generated", MaterialFolder = "Assets/FloorFracture/Resources/Materials";
+        // Snapshots of what the builders generate, so saved objects show in edit mode. Play regenerates all of it and never reads these.
+        public const string MeshFolder = "Assets/FloorFracture/Generated", MaterialFolder = MeshFolder;
 
         [MenuItem("Tools/Floor Fracture/Save game objects into scene")]
         public static void Save()
@@ -62,6 +63,32 @@ namespace FloorFracture.Editor
                 var savedSequence = new SerializedObject(sequence);
                 savedSequence.FindProperty("chamber").objectReferenceValue = chamber;
                 savedSequence.ApplyModifiedPropertiesWithoutUndo();
+
+                // The pane prefab holds its four parts, so opening it shows a pane and each pane in the scene is a plain instance.
+                var tile = PrefabUtility.LoadPrefabContents(GameProjectSetup.TilePrefab);
+                try
+                {
+                    var (paneGlass, sideGlass) = GlassBoardView.GlassMaterials();
+                    tile.GetComponent<GlassTile>().Initialize(paneGlass, sideGlass, 1f);
+                    Snapshot(tile.transform);
+                    PrefabUtility.SaveAsPrefabAsset(tile, GameProjectSetup.TilePrefab);
+                    UnityEngine.Object.DestroyImmediate(paneGlass);
+                    UnityEngine.Object.DestroyImmediate(sideGlass);
+                }
+                finally { PrefabUtility.UnloadPrefabContents(tile); }
+                // The board makes its own glass materials under the same names. Its snapshot is the one kept.
+                Saved.Clear();
+
+                // A 6 x 6 preview of the board at the origin. At Play the game fits this same object to the scanned room.
+                GlassBoardView board = null;
+                foreach (var root in scene.GetRootGameObjects())
+                    if (root.name == BoardName) board = SceneParts.Require<GlassBoardView>(root);
+                if (!board) board = new GameObject(BoardName).AddComponent<GlassBoardView>();
+                board.Build(new BoardState(6, 6, 379, .62f), Pose.identity, sound, WaveHazards.LampHeight(0, null));
+                Snapshot(board.transform);
+                var savedFlow = new SerializedObject(flow);
+                savedFlow.FindProperty("savedBoard").objectReferenceValue = board;
+                savedFlow.ApplyModifiedPropertiesWithoutUndo();
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!EditorSceneManager.SaveScene(scene, GameProjectSetup.MainScene))
                     throw new IOException("Could not save the Floor Fracture scene.");
@@ -76,6 +103,8 @@ namespace FloorFracture.Editor
                 }
             }
         }
+
+        private const string BoardName = "Confirmed glass board";
 
         // A generated object and the file it was saved to, within one Save.
         private static readonly Dictionary<UnityEngine.Object, UnityEngine.Object> Saved = new Dictionary<UnityEngine.Object, UnityEngine.Object>();

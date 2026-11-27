@@ -33,7 +33,25 @@ namespace FloorFracture.Editor
             "Floor Zone water ripples", "Lava flames", "Particles", "Water spray", "Entry bubbles", "Fall dust",
             "View fade", "View fade/Submerged view", "Water contact splash"
         };
+        private const string TilePrefabPath = "Assets/FloorFracture/Resources/GlassTile.prefab";
+        private static readonly string[] PaneParts = { "Smoky pane", "Glass sides and bottom", "Rim", "Fissures" };
+        private static readonly string[] BoardParts =
+        {
+            "Occupied square", "Opening stencil", "Perimeter", "Falling fragments",
+            "Floor fog/Floor fog 0", "Floor fog/Floor fog 1", "Floor fog/Floor fog 2", "Floor fog/Floor fog 3",
+            "Overhead lights/Lamp 0/Lamp hum", "Overhead lights/Lamp 1/Lamp hum", "Overhead lights/Lamp 2/Lamp hum",
+            "Overhead lights/Spotlight beam 0", "Overhead lights/Spotlight beam 1", "Overhead lights/Spotlight beam 2",
+            "Overhead lights/Spotlight pool 0", "Overhead lights/Spotlight pool 1", "Overhead lights/Spotlight pool 2",
+            "Lightning/Sky flash", "Lightning/Flash veil"
+        };
+        // Parents of the effects that show only while a wave uses them.
+        private static readonly string[] IdleEffects = { "Floor fog", "Overhead lights", "Lightning" };
+        private const int PreviewSide = 6;
+        private const float PreviewPitch = .62f;
         private static bool Quick => SessionState.GetBool(Key + "quick", false);
+
+        /// <summary>What the last check found switched on that the idle game keeps off. The save command leaves none.</summary>
+        public static string[] SavedSwitchedOn { get; private set; } = Array.Empty<string>();
 
         [MenuItem("Tools/Floor Fracture/Check saved scene objects")]
         private static void CheckSavedSceneMenu() => CheckSavedScene();
@@ -53,9 +71,15 @@ namespace FloorFracture.Editor
                 if (all || areas.Contains("sound")) CheckSavedSound(flows[0].transform, problems);
                 if (all || areas.Contains("menu")) CheckSavedMenu(flows[0].transform, problems);
                 if (all || areas.Contains("chamber")) CheckSavedChamber(scene, flows[0], problems);
+                if (all || areas.Contains("board")) CheckSavedBoard(scene, flows[0], problems);
             }
             finally { if (preview) EditorSceneManager.ClosePreviewScene(scene); }
             if (all || areas.Contains("sound")) CheckSoundWakesAtSavedVolume(problems);
+            // Something left switched on in the scene is not a fault: the game switches it off at startup.
+            SavedSwitchedOn = problems.Where(problem => problem.Contains("switched on")).ToArray();
+            problems.RemoveAll(problem => problem.Contains("switched on"));
+            if (SavedSwitchedOn.Length > 0)
+                Debug.LogWarning("[Floor Fracture verification] Saved switched on; the game switches these off when it starts:\n" + string.Join("\n", SavedSwitchedOn));
             if (problems.Count > 0)
                 throw new InvalidOperationException("Saved scene check failed (" + problems.Count + "):\n" + string.Join("\n", problems));
             Debug.Log("[Floor Fracture verification] Saved scene check passed: " + (all ? "all areas" : string.Join(", ", areas)));
@@ -163,6 +187,55 @@ namespace FloorFracture.Editor
             if (SavedChamber(game) != chamber) problems.Add("FallSequence on Floor Fracture does not reference the saved Fall chamber.");
         }
 
+        private static void CheckSavedBoard(Scene scene, GameFlow game, List<string> problems)
+        {
+            var roots = scene.GetRootGameObjects().Where(root => root.name == "Confirmed glass board").ToArray();
+            if (roots.Length != 1)
+            {
+                problems.Add(roots.Length == 0 ? "missing: Confirmed glass board (scene root)" : "saved " + roots.Length + " times: Confirmed glass board");
+                return;
+            }
+            var board = roots[0].transform;
+            if (!board.GetComponent<GlassBoardView>() || !board.GetComponent<ShardPool>()) problems.Add("The saved board needs GlassBoardView and ShardPool.");
+            if (SavedBoard(game) != board.GetComponent<GlassBoardView>()) problems.Add("GameFlow does not reference the saved board.");
+            for (int i = 0; i < PreviewSide * PreviewSide; ++i)
+            {
+                var pane = Expect(board, "Glass " + i % PreviewSide + ", " + i / PreviewSide, problems);
+                if (!pane) continue;
+                foreach (string part in PaneParts) Expect(pane, part, problems);
+                var prefab = PrefabUtility.GetCorrespondingObjectFromSource(pane.gameObject);
+                if (!prefab || AssetDatabase.GetAssetPath(prefab) != TilePrefabPath) problems.Add(pane.name + " is not a linked instance of the pane prefab.");
+            }
+            int panes = board.Cast<Transform>().Count(child => child.GetComponent<GlassTile>());
+            if (panes != PreviewSide * PreviewSide) problems.Add("The preview board has " + panes + " panes, not " + PreviewSide * PreviewSide + ".");
+            var first = board.Find("Glass 0, 0"); var second = board.Find("Glass 1, 0");
+            if (first && second && Mathf.Abs(Vector3.Distance(first.localPosition, second.localPosition) - PreviewPitch) > 1e-4f)
+                problems.Add("The preview panes are not " + PreviewPitch + " m apart.");
+            foreach (string part in BoardParts) Expect(board, part, problems);
+            // Saved as the idle game has them: nothing that only a wave shows is switched on.
+            foreach (string effect in IdleEffects)
+            {
+                var parent = board.Find(effect);
+                if (parent) foreach (var renderer in parent.GetComponentsInChildren<MeshRenderer>(true))
+                    if (renderer.enabled) problems.Add(effect + "/" + renderer.name + " was saved switched on.");
+            }
+            foreach (var lamp in board.GetComponentsInChildren<Transform>(true).Where(item => item.name.StartsWith("Lamp ") && item.name != "Lamp hum"))
+                if (lamp.gameObject.activeSelf) problems.Add(lamp.name + " was saved switched on.");
+            foreach (var renderer in board.GetComponentsInChildren<MeshRenderer>(true))
+                if (renderer.enabled && (renderer.name == "Fissures" || renderer.name == "Occupied square" || renderer.name == "Opening stencil"))
+                    problems.Add(renderer.transform.parent.name + "/" + renderer.name + " was saved switched on.");
+            RequireSavedAssets(board, problems);
+            foreach (var item in board.GetComponentsInChildren<Transform>(true))
+                if (item.gameObject.layer == 30) problems.Add(item.name + " is on layer 30, which the checks render on.");
+
+            var tile = AssetDatabase.LoadAssetAtPath<GameObject>(TilePrefabPath);
+            if (!tile) { problems.Add("missing: " + TilePrefabPath); return; }
+            foreach (string part in PaneParts) Expect(tile.transform, part, problems);
+            RequireSavedAssets(tile.transform, problems);
+        }
+
+        private static Object SavedBoard(GameFlow flow) => new SerializedObject(flow).FindProperty("savedBoard")?.objectReferenceValue;
+
         private static Object SavedChamber(GameFlow flow)
         {
             var sequence = flow.GetComponent<FallSequence>();
@@ -232,6 +305,49 @@ namespace FloorFracture.Editor
             Require(chambers.Length == 1, "Play has " + chambers.Length + " fall chambers; the saved one must be the only one.");
             Require(!chambers[0].gameObject.activeSelf, "The fall chamber is switched on at Welcome.");
             Require(SavedChamber(game) == chambers[0], "The fall sequence is not using the chamber saved in the scene.");
+
+            var boards = Object.FindObjectsByType<GlassBoardView>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            Require(boards.Length == 1 && boards[0] == game.BoardView && SavedBoard(game) == game.BoardView,
+                "Play is not using the one board saved in the scene.");
+            foreach (string name in IdleEffects.Concat(new[] { "Opening stencil", "Falling fragments", "Occupied square", "Perimeter" }))
+                RequireOne(everything, name);
+            VerifyBoardFitsLayout("the first fit");
+            // Whatever was left switched on in the scene, nothing that only a wave shows is on at Welcome.
+            foreach (string effect in IdleEffects)
+            {
+                var parent = game.BoardView.transform.Find(effect);
+                Require(parent.GetComponentsInChildren<MeshRenderer>(true).All(renderer => !renderer.enabled),
+                    "A renderer under " + effect + " is showing at Welcome.");
+                Require(parent.Cast<Transform>().All(child => !child.name.StartsWith("Lamp ") || !child.gameObject.activeSelf),
+                    "A lamp is switched on at Welcome.");
+            }
+        }
+
+        // A board fitted to a new layout has exactly that layout's panes, under that layout's names.
+        private static void VerifyBoardFitsLayout(string fit)
+        {
+            var panes = game.BoardView.transform.Cast<Transform>().Where(child => child.GetComponent<GlassTile>()).Select(child => child.name).ToArray();
+            var expected = new HashSet<string>(PlayablePanes.Select(i => "Glass " + i % game.State.Width + ", " + i / game.State.Width));
+            Require(panes.Length == expected.Count && expected.SetEquals(panes),
+                "After " + fit + " the board holds " + panes.Length + " panes for a layout of " + expected.Count + ", or misnames them.");
+        }
+
+        // The same board object is fitted again and again. Nothing from the fit before may show or sound.
+        private static void VerifyRefit(string fit)
+        {
+            var view = game.BoardView;
+            Require(SavedBoard(game) == view, "After " + fit + " the game is no longer using the board saved in the scene.");
+            VerifyBoardFitsLayout(fit);
+            Require(view.Fog == WaveHazards.None, "After " + fit + " the board still reports fog from the fit before.");
+            foreach (string effect in IdleEffects)
+                Require(view.transform.Find(effect).GetComponentsInChildren<MeshRenderer>(true).All(renderer => !renderer.enabled),
+                    "After " + fit + " a renderer under " + effect + " is still showing.");
+            Require(view.GetComponentsInChildren<GlassTile>(true).All(tile => tile.gameObject.activeSelf && !tile.transform.Find("Fissures").GetComponent<MeshRenderer>().enabled),
+                "After " + fit + " a pane is missing or still shows its warning.");
+            Require(view.GetComponentsInChildren<AudioSource>(true).All(source => !source.gameObject.activeInHierarchy || !source.isPlaying),
+                "After " + fit + " a sound under the board is still playing.");
+            Require(!view.transform.Find("Falling fragments").GetComponent<MeshRenderer>().enabled && !view.transform.Find("Opening stencil").GetComponent<MeshRenderer>().enabled,
+                "After " + fit + " shards or an opening from the fit before are still showing.");
         }
     }
 }

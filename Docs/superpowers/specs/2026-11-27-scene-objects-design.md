@@ -154,9 +154,13 @@ scene, the game must still switch off at startup, since it already sets these st
   under `Assets/FloorFracture/Generated/`, so saved objects are visible in edit mode. At Play
   the builders assign the generated meshes over the snapshots, as they do now. Swapping or
   editing a snapshot has no effect on the game.
-- **Materials are saved as files** and assigned to the saved renderers. At Play the game makes
-  its own copy of each file and changes only the copy, so Play never writes to disk. Where no
-  file exists, the material is made from its shader as today.
+- **Materials stay generated in code at Play too.** The command saves a snapshot of each beside
+  the meshes and assigns it to the saved renderer, so the object shows in edit mode. Play makes
+  every material from its shader as today and never reads or writes the snapshots. (Changed
+  while building: the first design had Play copy the saved file. A snapshot carries values of
+  the run that made it, such as the mapped floor height, and feeding those back into Play could
+  change how the game renders. Editing a snapshot therefore has no effect on the game; colours
+  are edited through the Inspector fields in "What becomes editable".)
 - **Resting colours in edit mode.** Per-renderer colours are not stored in a scene. Scripts
   that tint renderers re-apply the resting colours in edit mode, so the Scene view shows the
   game's resting look and a changed colour field shows at once.
