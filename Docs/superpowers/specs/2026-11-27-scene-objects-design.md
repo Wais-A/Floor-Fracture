@@ -117,8 +117,9 @@ Floor Fracture              GameFlow, GameSound, OfflineNarration, FallSequence,
 │  ├─ Instructions
 │  ├─ Choice list / Content
 │  ├─ Choice 1 … Choice 5   Welcome page: Start, Choose level, Settings, Play area, Development
-│  ├─ Start count / Count   off; moved under the head when shown, as today
 │  └─ the two Meta canvas interaction objects (already saved)
+├─ Start count / Count      off; moved under the head when shown, as today. Saved beside the
+│                           menu, not inside it, so it has its real size when switched on.
 ├─ 5 plain sound sources    Menu and countdown, Background music, Shaft air, Shaft roar,
 │                           Ending ambience
 ├─ 15 spatial sound sources Opening draft, Ending impact, Tar bubbling, Pane impact 0–2,
