@@ -70,6 +70,26 @@ The first brick build’s Editor checks cover a couch profile, the gap between t
 
 Open `Assets/FloorFracture/Scenes/FloorFracture.unity`. Its **Floor Fracture** object has `GameFlow` and references the room provider and tracked rig. **Tools → Floor Fracture → Prepare game scene** reapplies the configured SDK blocks and keeps the main scene in the Android build list.
 
+Every object the game shows or plays sound through is saved in that scene, so it can be selected and inspected without pressing Play:
+
+- **Floor Fracture** carries `GameFlow`, `GameSound`, `OfflineNarration`, `FallSequence` and `GamePanel`. Under it are the menu on its Welcome page, the start count and the 21 sound sources.
+- **Confirmed glass board** is a 6 × 6 preview with its panes, outline, standing ring, fog, lamps and lightning. At Play the game fits this same object to the scanned room and fits it again on every restart.
+- **Fall chamber** holds the shaft, hazard surface and view fade. It is saved switched off.
+
+The game adopts these objects by name and creates one only when it is missing. **Tools → Floor Fracture → Save game objects into scene** rebuilds anything that was deleted and keeps Inspector edits. Fog, lamps, beams, the lightning flash, the standing ring and pane cracks are saved switched off, because the idle game keeps them off. Switch one on to look at it; the game switches it off again when it starts.
+
+| To change | Edit |
+|---|---|
+| Pane colours: resting, rim, warning, hot, and the two a warned face pulses between | the fields on `Resources/GlassTile.prefab` |
+| Standing-ring and board outline colours | **Confirmed glass board** → `GlassBoardView` |
+| Menu fonts, font sizes, style and alignment | the saved **Title**, **Instructions** and **Choice 1 → Label** |
+| Menu colours: background, button idle, hovered and pressed, text, secondary text | **Floor Fracture** → `GamePanel` |
+| Menu width, margin, row height and row gap | **Floor Fracture** → `GamePanel` |
+| Wall and sky colour of each ending | **Floor Fracture** → `FallSequence` |
+| A sound's clip and 3D settings | that sound source under **Floor Fracture** |
+
+Colour fields show in the Scene view as soon as they change. The menu layout fields take effect at Play, or in the scene the next time the save command runs. The game still decides everything fitted to the room or animated: positions and sizes of the board, panes, fog, lamps and chamber, menu text, and sound loudness and pitch. The colours of fog, lamp beams and lightning are in their shader files. The mesh and material files under `Generated/` are snapshots that let the saved objects show in edit mode; the game regenerates all of them at Play and never reads them, so editing one changes nothing in the game.
+
 | Responsibility | Unity source and verification point |
 |---|---|
 | Room, permission and footprint | `RoomBoardPlacement` owns loading, permission recovery and relocation. Meta’s Find Spawn Positions suggests locations. `MrukFloorReader` supplies the floor and obstacle anchors. Adjoining level sections can support one board. A finer search checks angled aisles if the first layout fails. Each pane and its 8 cm foot margin must clear mapped furniture and confirmed obstacles inside the floor boundary. Gaps between floor triangles and small uncertain bumps are eligible for placement. The development recovery page reports the supported width or a live-depth rejection, and **Show / hide placement** reveals the evidence. [Building Blocks](<./Docs/Meta Building Blocks.md>) · [Placement tests](<./Docs/Verification/Observed floor placement.md>) |
