@@ -319,7 +319,8 @@ namespace FloorFracture.Editor
             Require(game.GetComponents<GameSound>().Length == 1, "Play added a second GameSound beside the saved one.");
             var sound = game.GetComponent<GameSound>();
             float music = game.transform.Find("Background music").GetComponent<AudioSource>().volume;
-            Require(music <= sound.MasterVolume * .12f + .001f, "The music is louder than the player's volume allows.");
+            float musicLevel = new SerializedObject(sound).FindProperty("music").floatValue;
+            Require(music <= sound.MasterVolume * musicLevel + .001f, "The music is louder than the player's volume allows.");
             if (Quick) Require(sound.MasterVolume == 0f && music == 0f, "A muted player's music was audible at Welcome.");
 
             var canvas = game.transform.Find(GamePanel.CanvasName);

@@ -86,9 +86,10 @@ The game adopts these objects by name and creates one only when it is missing. *
 | Menu colours: background, button idle, hovered and pressed, text, secondary text | **Floor Fracture** → `GamePanel` |
 | Menu width, margin, row height and row gap | **Floor Fracture** → `GamePanel` |
 | Wall and sky colour of each ending | **Floor Fracture** → `FallSequence` |
+| How loud each sound is: menu cues, music, lamp hum, opening draft, thunder, glass, fall and landing | **Floor Fracture** → `GameSound`, **Sound levels** |
 | A sound's 3D settings (distances, priority, loop), and the clip of **Background music**, **Opening draft**, **Thunder** and **Lamp hum** | that sound source |
 
-Colour fields show in the Scene view as soon as they change. The menu layout fields take effect at Play, or in the scene the next time the save command runs. The game still decides everything fitted to the room or animated: positions and sizes of the board, panes, fog, lamps and chamber, menu text, and sound loudness and pitch. The colours of fog, lamp beams and lightning are in their shader files. The mesh and material files under `Generated/` are snapshots that let the saved objects show in edit mode; the game regenerates all of them at Play and never reads them, so editing one changes nothing in the game.
+Colour fields show in the Scene view as soon as they change. The menu layout fields take effect at Play, or in the scene the next time the save command runs. A sound level changed during Play is heard at once, but Unity puts it back when Play stops, so set the value again in Edit Mode. Each sound source's own **Volume** is not a setting: the game sets it while it plays, to that sound's level times the player's Volume setting, so it is saved at 0 for most sounds. The game still decides everything fitted to the room or animated: positions and sizes of the board, panes, fog, lamps and chamber, menu text, and sound pitch. The colours of fog, lamp beams and lightning are in their shader files. The mesh and material files under `Generated/` are snapshots that let the saved objects show in edit mode; the game regenerates all of them at Play and never reads them, so editing one changes nothing in the game.
 
 | Responsibility | Unity source and verification point |
 |---|---|

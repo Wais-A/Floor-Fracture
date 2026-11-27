@@ -6,20 +6,42 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class GameSound : MonoBehaviour
 {
-    [SerializeField, Range(0, 1)] float volume = .75f;
+    [SerializeField, Range(0, 1), Tooltip("Replaced when the game starts by the player's Volume setting in the Settings menu.")]
+    float volume = .75f;
+
+    // The game sets each sound source's own Volume while it plays: one of these levels times the player's Volume setting.
+    [Header("Sound levels, before the player's Volume setting")]
+    [SerializeField, Range(0, 1)] float menuClick = .38f;
+    [SerializeField, Range(0, 1)] float levelComplete = .54f;
+    [SerializeField, Range(0, 1)] float countdownTick = .66f;
+    [SerializeField, Range(0, 1)] float countdownGo = .84f;
+    [SerializeField, Range(0, 1)] float music = .12f;
+    [SerializeField, Range(0, 1), Tooltip("A fully lit lamp. It fades with the lamp.")] float lampHum = .5f;
+    [SerializeField, Range(0, 1), Tooltip("The air rising from an open hole the player stands near.")] float openingDraft = .40f;
+    [SerializeField, Range(0, 1)] float thunder = 1f;
+    [SerializeField, Range(0, 1), Tooltip("One pane breaking.")] float paneImpact = .55f;
+    [SerializeField, Range(0, 1), Tooltip("Six or more panes breaking at once.")] float paneImpactMany = .68f;
+    [SerializeField, Range(0, 1), Tooltip("Times the pane impact.")] float glassFragments = .41f;
+    [SerializeField, Range(0, 1), Tooltip("Times the pane impact.")] float shaftEcho = .29f;
+    [SerializeField, Range(0, 1), Tooltip("A warned pane straining. Divided by the square root of the panes warned together, up to 16.")]
+    float glassStrain = .74f;
+    [SerializeField, Range(0, 1), Tooltip("At full fall speed.")] float fallAir = .88f;
+    [SerializeField, Range(0, 1), Tooltip("At full fall speed. It rises with the square of the speed.")] float fallRoar = .68f;
+    [SerializeField, Range(0, 1), Tooltip("The settling sound after a landing, and the tar bubbling.")] float endingAmbience = .55f;
+    [SerializeField, Range(0, 1), Tooltip("Landing in water, lava or tar.")] float landingImpact = .96f;
+    [SerializeField, Range(0, 1), Tooltip("Landing in sand or snow.")] float softLandingImpact = .94f;
+    [SerializeField, Range(0, 1)] float tarSuction = .48f;
+
     AudioSource ui, falling, roar, ambience, accent, tarBed;
-    AudioSource music;
+    AudioSource musicVoice;
     float musicFade = 1f, musicTarget = 1f;
-    const float MusicGain = .12f;
     const float MusicFadeSeconds = .30f;
     AudioSource holeDraft;
-    const float DraftGain = .40f;
     float draftFade;
-    const float LampGain = .135f; // clip +24 dB (-22.95 LUFS) x .135 = music at the ear (-40.3 LUFS), measured, inside minDistance
     readonly List<AudioSource> lampVoices = new();
     readonly List<float> lampLevels = new();
     // Two strikes per wave at most, each 7 s of thunder, plus one spare so a new wave's strike never cuts one off.
-    readonly AudioSource[] thunder = new AudioSource[3];
+    readonly AudioSource[] thunderVoices = new AudioSource[3];
     int nextThunder;
     AudioLowPassFilter tarFilter;
     readonly AudioSource[,] glass = new AudioSource[3, 3];
@@ -65,11 +87,11 @@ public sealed class GameSound : MonoBehaviour
         splash = Clip("WaterImpact");
         // A saved source keeps its own clip and 3D settings; these apply only to one created here.
         ui = Voice("Menu and countdown", false, out _);
-        music = Voice("Background music", false, out bool made);
+        musicVoice = Voice("Background music", false, out bool made);
         if (made)
         {
-            music.clip = Clip("BackgroundMusic");
-            music.loop = true;
+            musicVoice.clip = Clip("BackgroundMusic");
+            musicVoice.loop = true;
         }
         holeDraft = Voice("Opening draft", true, out made);
         if (made)
@@ -107,13 +129,13 @@ public sealed class GameSound : MonoBehaviour
             glass[i, 2] = Voice("Shaft echo " + i, true, out _);
         }
         var thunderClip = Clip("Thunder");
-        for (int i = 0; i < thunder.Length; i++)
+        for (int i = 0; i < thunderVoices.Length; i++)
         {
-            thunder[i] = Voice("Thunder " + i, true, out made);
+            thunderVoices[i] = Voice("Thunder " + i, true, out made);
             if (!made) continue;
-            thunder[i].clip = thunderClip;
-            thunder[i].minDistance = 8f;
-            thunder[i].maxDistance = 40f;
+            thunderVoices[i].clip = thunderClip;
+            thunderVoices[i].minDistance = 8f;
+            thunderVoices[i].maxDistance = 40f;
         }
         SetVolume(volume);
     }
@@ -131,6 +153,7 @@ public sealed class GameSound : MonoBehaviour
     }
 
     public float MasterVolume => volume;
+    public float GlassStrainLevel => glassStrain;
 
     internal AudioSource CreateCrackVoice(Transform pane, int cell)
     {
@@ -176,7 +199,7 @@ public sealed class GameSound : MonoBehaviour
     {
         var voice = lampVoices[index];
         if (!voice) return;
-        voice.volume = LampGain * lampLevels[index] * volume;
+        voice.volume = lampHum * lampLevels[index] * volume;
         if (voice.volume <= 0f) { if (voice.isPlaying) voice.Stop(); }
         else if (!voice.isPlaying && voice.isActiveAndEnabled && voice.clip)
         {
@@ -209,20 +232,20 @@ public sealed class GameSound : MonoBehaviour
             for (int j = 0; j < glass.GetLength(1); j++)
                 glass[i, j].volume = glassGains[i, j] * volume;
         for (int i = 0; i < lampVoices.Count; i++) ApplyLamp(i);
-        foreach (var voice in thunder) voice.volume = volume; // thunder plays at gain 1
+        foreach (var voice in thunderVoices) voice.volume = thunder * volume;
     }
 
     // A pooled spatial one-shot from the strike's direction, `delaySeconds` after the flash.
     public void PlayThunder(Vector3 worldPosition, double delaySeconds, float pitch)
     {
         if (!isActiveAndEnabled || volume == 0f) return;
-        var voice = thunder[nextThunder];
-        nextThunder = (nextThunder + 1) % thunder.Length;
+        var voice = thunderVoices[nextThunder];
+        nextThunder = (nextThunder + 1) % thunderVoices.Length;
         if (!voice.clip) return;
         voice.Stop();
         voice.transform.position = worldPosition;
         voice.pitch = pitch;
-        voice.volume = volume;
+        voice.volume = thunder * volume;
         voice.PlayScheduled(AudioSettings.dspTime + delaySeconds);
 #if UNITY_EDITOR
         ++EditorThunderCues;
@@ -233,11 +256,11 @@ public sealed class GameSound : MonoBehaviour
     // Stopping also cancels thunder that is scheduled but not yet audible.
     void StopThunder()
     {
-        foreach (var voice in thunder) if (voice) voice.Stop();
+        foreach (var voice in thunderVoices) if (voice) voice.Stop();
     }
 
-    public void Click() => Cue(click, .38f);
-    public void Completion() => Cue(clear, .54f);
+    public void Click() => Cue(click, menuClick);
+    public void Completion() => Cue(clear, levelComplete);
     // Let the fall effects take over without seeking or restarting the score.
     internal void SetMusicAudible(bool audible)
     {
@@ -249,7 +272,7 @@ public sealed class GameSound : MonoBehaviour
         }
     }
 
-    void ApplyMusicVolume() => music.volume = MusicGain * Mathf.SmoothStep(0f, 1f, musicFade) * volume;
+    void ApplyMusicVolume() => musicVoice.volume = music * Mathf.SmoothStep(0f, 1f, musicFade) * volume;
 
     internal void UpdateHoleDraft(Vector3? opening)
     {
@@ -270,7 +293,7 @@ public sealed class GameSound : MonoBehaviour
 
         draftFade = opening.HasValue ? Mathf.Min(1f, draftFade + dt / .32f) :
             Mathf.Max(0f, draftFade - dt / .45f);
-        holeDraft.volume = DraftGain * volume * Mathf.SmoothStep(0f, 1f, draftFade);
+        holeDraft.volume = openingDraft * volume * Mathf.SmoothStep(0f, 1f, draftFade);
         if (draftFade == 0f && !opening.HasValue) holeDraft.Stop();
     }
 
@@ -289,7 +312,7 @@ public sealed class GameSound : MonoBehaviour
 
     public void StartCountCue(bool go)
     {
-        if (volume > 0f) Cue(go ? startGo : startKnock, go ? .84f : .66f);
+        if (volume > 0f) Cue(go ? startGo : startKnock, go ? countdownGo : countdownTick);
     }
 
     void Cue(AudioClip clip, float gain)
@@ -315,11 +338,11 @@ public sealed class GameSound : MonoBehaviour
     {
         if (pendingCount == 0) return;
         Vector3 position = weightedPosition / pendingCount;
-        float gain = .55f + .13f * Mathf.Clamp01((pendingCount - 1) / 5f);
+        float gain = Mathf.Lerp(paneImpact, paneImpactMany, Mathf.Clamp01((pendingCount - 1) / 5f));
         double now = AudioSettings.dspTime + .02;
         PlayGlass(0, impact, position, now, gain);
-        PlayGlass(1, fragments, position + Vector3.down * .22f, now + .055, gain * .41f);
-        PlayGlass(2, echo, position + Vector3.down * 1.65f, now + .27, gain * .29f);
+        PlayGlass(1, fragments, position + Vector3.down * .22f, now + .055, gain * glassFragments);
+        PlayGlass(2, echo, position + Vector3.down * 1.65f, now + .27, gain * shaftEcho);
         nextGlass = (nextGlass + 1) % glass.GetLength(0);
         pendingCount = 0;
         weightedPosition = Vector3.zero;
@@ -392,9 +415,9 @@ public sealed class GameSound : MonoBehaviour
     internal void MixFall(float air, float environment)
     {
         float speed = spaceSilent ? 0f : Mathf.Clamp01(air);
-        fallGain = .88f * speed;
-        roarGain = .68f * speed * speed;
-        ambienceGain = Mathf.Clamp01(environment) * .55f;
+        fallGain = fallAir * speed;
+        roarGain = fallRoar * speed * speed;
+        ambienceGain = Mathf.Clamp01(environment) * endingAmbience;
         falling.volume = fallGain * volume;
         roar.volume = roarGain * volume;
         ambience.volume = ambienceGain * volume;
@@ -406,12 +429,12 @@ public sealed class GameSound : MonoBehaviour
         // Start each recording on contact so the impact leads into its own settling sound.
         switch (ending)
         {
-            case FloorEnding.Water: Accent(splash, position, .96f); ambience.clip = submerged; break;
-            case FloorEnding.Lava: Accent(lavaImpact, position, .96f); ambience.clip = heat; break;
-            case FloorEnding.Sand: Accent(sandImpact, position, .94f); ambience.clip = sand; break;
-            case FloorEnding.Snow: Accent(snowImpact, position, .94f); ambience.clip = snow; break;
+            case FloorEnding.Water: Accent(splash, position, landingImpact); ambience.clip = submerged; break;
+            case FloorEnding.Lava: Accent(lavaImpact, position, landingImpact); ambience.clip = heat; break;
+            case FloorEnding.Sand: Accent(sandImpact, position, softLandingImpact); ambience.clip = sand; break;
+            case FloorEnding.Snow: Accent(snowImpact, position, softLandingImpact); ambience.clip = snow; break;
             case FloorEnding.TarPit:
-                Accent(tarImpact, position, .96f);
+                Accent(tarImpact, position, landingImpact);
                 tarBed.transform.position = position;
                 tarFilter.cutoffFrequency = 3200;
                 tarBed.clip = tarBubbles;
@@ -422,7 +445,7 @@ public sealed class GameSound : MonoBehaviour
         ambience.Play();
     }
 
-    internal void TarSuction(Vector3 position, int pull) => Accent(tarPull, position, .48f, pull == 1 ? .94f : .78f);
+    internal void TarSuction(Vector3 position, int pull) => Accent(tarPull, position, tarSuction, pull == 1 ? .94f : .78f);
     internal void MuffleTar(float immersion) => tarFilter.cutoffFrequency = Mathf.Lerp(3200, 480, immersion);
 
     void Accent(AudioClip clip, Vector3 position, float gain, float pitch = 1f)
@@ -476,16 +499,21 @@ public sealed class GameSound : MonoBehaviour
         StopThunder();
     }
 
+#if UNITY_EDITOR
+    // A level changed in the Inspector during Play is heard at once. Unity puts Play Mode edits back when Play stops.
+    void OnValidate() { if (Application.isPlaying && ui) SetVolume(volume); }
+#endif
+
     void OnEnable()
     {
-        if (!music || !music.clip) return;
-        music.UnPause();
-        if (!music.isPlaying) music.Play();
+        if (!musicVoice || !musicVoice.clip) return;
+        musicVoice.UnPause();
+        if (!musicVoice.isPlaying) musicVoice.Play();
     }
 
     void OnDisable()
     {
         ResetSounds();
-        if (music) music.Pause();
+        if (musicVoice) musicVoice.Pause();
     }
 }

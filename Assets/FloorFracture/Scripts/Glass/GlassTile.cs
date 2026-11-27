@@ -107,7 +107,7 @@ namespace FloorFracture
             bool start = !crackVoice || !crackVoice.gameObject.activeSelf;
             if (!crackVoice) crackVoice = sound.CreateCrackVoice(transform, cell);
             // Keep simultaneous cracks legible and soften the end of short reveals.
-            float gain = .74f / Mathf.Sqrt(Mathf.Min(groupSize, 16));
+            float gain = sound.GlassStrainLevel / Mathf.Sqrt(Mathf.Min(groupSize, 16));
             crackVoice.volume = sound.MasterVolume * gain * Mathf.Clamp01((float)remaining / .035f);
             if (!start) return;
             crackVoice.gameObject.SetActive(true);

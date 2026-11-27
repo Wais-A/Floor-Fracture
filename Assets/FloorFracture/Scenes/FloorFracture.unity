@@ -1803,6 +1803,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameSound
   volume: 0.75
+  menuClick: 0.38
+  levelComplete: 0.54
+  countdownTick: 0.66
+  countdownGo: 0.84
+  music: 0.12
+  lampHum: 0.5
+  openingDraft: 0.4
+  thunder: 1
+  paneImpact: 0.55
+  paneImpactMany: 0.68
+  glassFragments: 0.41
+  shaftEcho: 0.29
+  glassStrain: 0.74
+  fallAir: 0.88
+  fallRoar: 0.68
+  endingAmbience: 0.55
+  landingImpact: 0.96
+  softLandingImpact: 0.94
+  tarSuction: 0.48
 --- !u!1001 &259588584
 PrefabInstance:
   m_ObjectHideFlags: 0
