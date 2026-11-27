@@ -44,6 +44,7 @@ namespace FloorFracture.Editor
             var scene = AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath);
             if (!scene) throw new FileNotFoundException("Prepare the actual gameplay scene first.", ScenePath);
             SessionState.SetBool(Key + "quick", false);
+            CheckDesktopXrProfile();
             // Refuse a scene with a game object missing: the game would rebuild it at Play and hide the loss.
             CheckSavedScene();
 
