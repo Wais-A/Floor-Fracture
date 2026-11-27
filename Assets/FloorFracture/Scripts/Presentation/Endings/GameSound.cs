@@ -172,7 +172,7 @@ public sealed class GameSound : MonoBehaviour
     // Over the middle of the lamp's spotlight, just above the player's head, so the hum is loudest in the lit spot.
     public void PlaceLampVoice(AudioSource voice, Vector3 pool)
     {
-        if (!listener) listener = FindFirstObjectByType<AudioListener>();
+        if (!listener) listener = FindAnyObjectByType<AudioListener>();
         float ear = listener ? listener.transform.position.y : pool.y + 1.6f;
         voice.transform.position = new Vector3(pool.x, ear + LampHumAboveHead, pool.z);
     }

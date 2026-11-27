@@ -51,7 +51,7 @@ namespace FloorFracture.Editor
                 Expect(hum, .5f, "A fully lit lamp's hum");
 
                 // The hum comes from its spotlight: full while the player stands in the lit spot, much quieter two panes away.
-                var ear = Object.FindFirstObjectByType<AudioListener>().transform.position;
+                var ear = Object.FindAnyObjectByType<AudioListener>().transform.position;
                 float Loudness(Vector3 pool)
                 {
                     sound.PlaceLampVoice(hum, pool);
